@@ -1,61 +1,126 @@
 # Ledger Engine
 
 A standalone Java 17/Spring Boot double-entry ledger core for customer wallets and balances. It owns ledger
-accounts, immutable journal entries, posting, balances, idempotency, and reversals.
+accounts, immutable journal entries, posting, derived balances, idempotency, and reversals.
 
 This is **ledger core**, not payment rails, identity, compliance UI, notification, tenant, or external
 settlement orchestration. It has no Kafka, Redis, private service, or private library dependency.
 
+## Naming conventions
+
+| Layer | Convention | Example |
+|---|---|---|
+| **PO (JPA entity)** | PascalCase class in `domain/` | `LedgerAccount`, `JournalTransaction`, `JournalEntry` |
+| **Database table** | snake_case | `ledger_account`, `journal_transaction`, `journal_entry` |
+| **Database column** | snake_case | `external_reference`, `idempotency_key`, `sequence_number` |
+| **Java field / getter** | camelCase | `externalReference`, `idempotencyKey`, `sequence` |
+| **JSON API** | camelCase | `externalReference`, `idempotencyKey`, `accountId` |
+
+PO classes map 1:1 to Flyway tables. `@Column(name = "...")` is used wherever the Java name differs from the
+column (for example `sequence` ↔ `sequence_number`).
+
+## Data model (PO ↔ table ↔ columns)
+
+### `LedgerAccount` → `ledger_account`
+
+Chart-of-accounts bucket. Customer wallet balances are modeled as `LIABILITY` (or `ASSET`) accounts.
+
+| Column | Java field | Type / values |
+|---|---|---|
+| `id` | `id` | UUID PK |
+| `external_reference` | `externalReference` | unique business key (wallet / tenant ref) |
+| `name` | `name` | display name |
+| `type` | `type` | `ASSET`, `LIABILITY`, `EQUITY`, `REVENUE`, `EXPENSE` |
+| `currency` | `currency` | ISO 4217, 3-letter uppercase |
+| `status` | `status` | `ACTIVE`, `FROZEN`, `CLOSED` |
+| `allow_negative` | `allowNegative` | posting policy flag |
+| `version` | `version` | optimistic lock |
+| `created_at` | `createdAt` | timestamp |
+| `updated_at` | `updatedAt` | timestamp |
+
+Balance is **not stored** on this row. It is derived from `journal_entry` (`debitTotal`, `creditTotal`, signed
+`balance` in the API).
+
+### `JournalTransaction` → `journal_transaction`
+
+One balanced posting (Earn, Burn, Process, transfer, etc.) identified by idempotency.
+
+| Column | Java field | Type / values |
+|---|---|---|
+| `id` | `id` | UUID PK |
+| `idempotency_key` | `idempotencyKey` | unique; required for idempotent posting |
+| `request_hash` | `requestHash` | SHA-256 of canonical payload |
+| `reference` | `reference` | optional business reference (order id, campaign id, …) |
+| `description` | `description` | optional narrative |
+| `status` | `status` | `POSTED`, `REVERSED` |
+| `effective_at` | `effectiveAt` | business effective time |
+| `created_at` | `createdAt` | insert time |
+| `reversal_of_id` | `reversalOf` | FK → original transaction when this row is a reversal |
+
+### `JournalEntry` → `journal_entry`
+
+Immutable debit/credit line. Append-only; never updated in place.
+
+| Column | Java field | Type / values |
+|---|---|---|
+| `id` | `id` | UUID PK |
+| `transaction_id` | `transaction` | FK → `journal_transaction` |
+| `account_id` | `account` | FK → `ledger_account` |
+| `side` | `side` | `DEBIT`, `CREDIT` |
+| `amount` | `amount` | positive `NUMERIC(38,18)` |
+| `currency` | `currency` | must match account currency |
+| `sequence_number` | `sequence` | unique per transaction |
+| `created_at` | `createdAt` | insert time |
+
+Unique: `(transaction_id, sequence_number)`.
+
 ## Three core operations
 
-All wallet/ledger mutations go through one of three operations:
+Product-facing mutations map to balanced `journal_transaction` + `journal_entry` rows:
 
-| Operation | Meaning | Effect on wallet |
+| Operation | Meaning | Ledger mapping (typical) |
 |---|---|---|
-| **Earn** | Award points/credits to the customer | `+ available_balance` + create ledger entry (credit) |
-| **Burn** | Redeem / consume points or credits | `- available_balance` + create ledger entry (debit) |
-| **Process** | Intermediate or system-driven action | Hold → release, expire points, adjustment, transfer, or settle a pending transaction |
+| **Earn** | Award points/credits | `CREDIT` customer `ledger_account`; offsetting `DEBIT` on pool/revenue account |
+| **Burn** | Redeem / consume | `DEBIT` customer account; offsetting `CREDIT` on pool/expense account |
+| **Process** | Hold, release, expire, adjust, transfer, settle | multi-leg `journal_entry` set under one `idempotency_key` |
 
-**Process** is intentionally flexible. Common sub-types:
+**Process** sub-types (roadmap — not separate tables yet):
 
-- **Hold** — reserve amount (`available` → `held`)
-- **Release** — un-hold (`held` → `available`)
-- **Expire** — burn expired points
-- **Adjust** — manual correction
-- **Transfer** — between wallets or accounts
-- **Settle** — finalize a pending earn/burn
+- **Hold** / **Release** — separate liability accounts or future `held` balance projection
+- **Expire**, **Adjust**, **Transfer**, **Settle** — expressed as additional balanced postings
 
 ## Operation pipeline
 
-Every Earn / Burn / Process call follows the same path:
+Target flow for Earn / Burn / Process (steps 3–4 partially implemented today):
 
 ```text
 Earn / Burn / Process
         ↓
-1. Validate rules + balance
-2. Create immutable Ledger Entry
-3. Update Wallet balance (available / held)
-4. Publish domain event
+1. Validate rules + balance          → LedgerService (locks ledger_account, checks allow_negative)
+2. Create immutable journal_entry    → append-only rows on journal_entry
+3. Update balance projection         → derived from entries (available/held split: roadmap)
+4. Publish domain event              → roadmap (no outbox in MVP)
 ```
 
 ## Shared operation guarantees
 
 All three operations must:
 
-- Be **idempotent** via `idempotency_key` or `reference_id`
-- Create an **append-only** ledger entry
-- **Never directly mutate history** — corrections use a new entry (or reversal), never rewrite past rows
+- Be **idempotent** via `journal_transaction.idempotency_key` (API: `idempotencyKey`); optional
+  `journal_transaction.reference` (API: `reference`) for business correlation only
+- Create **append-only** `journal_entry` rows
+- **Never mutate history** — corrections use a new transaction or `POST /transactions/{id}/reversal`
 
 ## Domain guarantees
 
 - Every transaction has at least two positive entries and balances debits and credits independently per currency.
-- Journal entries are append-only. Historical rows are never updated in place.
+- `journal_entry` rows are append-only. Historical rows are never updated in place.
 - Asset and expense balances increase with debits; liability, equity, and revenue balances increase with credits.
-- Posting locks all affected accounts in sorted UUID order and applies nonnegative policy while locks are held.
-- Account currency must equal entry currency, and only active accounts may be posted.
-- An idempotency key with the same canonical payload returns the existing transaction; a changed payload returns `409`.
-- Reversal appends opposite entries, links back to the original transaction, and cannot be performed twice.
-- Database constraints reinforce identifiers, references, positive amounts, sequence uniqueness, and single reversal.
+- Posting locks all affected `ledger_account` rows in sorted UUID order and applies `allow_negative` policy.
+- Entry `currency` must equal `ledger_account.currency`; only `status = ACTIVE` accounts may be posted.
+- Same `idempotency_key` + same payload → existing transaction (`200`); same key + different payload → `409`.
+- Reversal appends opposite `journal_entry` rows, sets `reversal_of_id`, marks original `REVERSED`.
+- Flyway constraints enforce unique keys, positive amounts, sequence uniqueness, and single reversal per txn.
 
 ## Run locally
 
@@ -149,12 +214,19 @@ curl -i -X POST localhost:8080/api/v1/transactions/<transaction-id>/reversal \
 
 ## Boundaries and layout
 
-- `domain`: JPA-backed ledger aggregates and enums.
-- `application`: transactional posting, reversal, locking, balance, and policy logic.
-- `infrastructure`: Spring Data repositories.
-- `api`: versioned HTTP resources, request/response records, validation, and consistent errors.
-- `db/migration`: Flyway-owned PostgreSQL-compatible schema.
+```text
+com.altech.ledger/
+├── domain/           PO entities (LedgerAccount, JournalTransaction, JournalEntry)
+├── application/      LedgerService — posting, reversal, balance derivation
+├── infrastructure/   Spring Data repositories
+├── api/              LedgerController, LedgerDtos (request/response records)
+└── resources/db/migration/   Flyway schema (V1__init.sql)
+```
 
-The MVP deliberately excludes event publishing and outbox infrastructure. Downstream systems should treat this
-service as the source of truth for ledger postings, while handling payment execution and business orchestration
-outside this boundary.
+- **PO layer** lives in `domain/` (same role as `entity/po/` in Quinsic services).
+- **DTOs** are Java records in `api/LedgerDtos`; JSON field names match Java camelCase.
+- **Balances** are computed from `journal_entry`, not columns on `ledger_account`.
+- **MVP excludes** domain events/outbox, `available_balance` / `held_balance` columns, and dedicated Earn/Burn/Process endpoints — those are product mappings on top of `POST /api/v1/transactions`.
+
+The service is the source of truth for `journal_transaction` and `journal_entry`. Payment execution and
+orchestration stay outside this boundary.
