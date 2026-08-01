@@ -1,15 +1,55 @@
 # Ledger Engine
 
-A standalone Java 17/Spring Boot double-entry ledger core. It owns ledger accounts, immutable journal
-entries, posting, balances, idempotency, and reversals.
+A standalone Java 17/Spring Boot double-entry ledger core for customer wallets and balances. It owns ledger
+accounts, immutable journal entries, posting, balances, idempotency, and reversals.
 
-This is **ledger core**, not wallet, payment, settlement, identity, compliance, notification, tenant, or
-workflow orchestration. It has no Kafka, Redis, private service, or private library dependency.
+This is **ledger core**, not payment rails, identity, compliance UI, notification, tenant, or external
+settlement orchestration. It has no Kafka, Redis, private service, or private library dependency.
+
+## Three core operations
+
+All wallet/ledger mutations go through one of three operations:
+
+| Operation | Meaning | Effect on wallet |
+|---|---|---|
+| **Earn** | Award points/credits to the customer | `+ available_balance` + create ledger entry (credit) |
+| **Burn** | Redeem / consume points or credits | `- available_balance` + create ledger entry (debit) |
+| **Process** | Intermediate or system-driven action | Hold → release, expire points, adjustment, transfer, or settle a pending transaction |
+
+**Process** is intentionally flexible. Common sub-types:
+
+- **Hold** — reserve amount (`available` → `held`)
+- **Release** — un-hold (`held` → `available`)
+- **Expire** — burn expired points
+- **Adjust** — manual correction
+- **Transfer** — between wallets or accounts
+- **Settle** — finalize a pending earn/burn
+
+## Operation pipeline
+
+Every Earn / Burn / Process call follows the same path:
+
+```text
+Earn / Burn / Process
+        ↓
+1. Validate rules + balance
+2. Create immutable Ledger Entry
+3. Update Wallet balance (available / held)
+4. Publish domain event
+```
+
+## Shared operation guarantees
+
+All three operations must:
+
+- Be **idempotent** via `idempotency_key` or `reference_id`
+- Create an **append-only** ledger entry
+- **Never directly mutate history** — corrections use a new entry (or reversal), never rewrite past rows
 
 ## Domain guarantees
 
 - Every transaction has at least two positive entries and balances debits and credits independently per currency.
-- Journal entries are append-only. Balances are derived from entries and are never stored as mutable account state.
+- Journal entries are append-only. Historical rows are never updated in place.
 - Asset and expense balances increase with debits; liability, equity, and revenue balances increase with credits.
 - Posting locks all affected accounts in sorted UUID order and applies nonnegative policy while locks are held.
 - Account currency must equal entry currency, and only active accounts may be posted.
