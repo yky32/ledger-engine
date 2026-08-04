@@ -10,3 +10,23 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+
+ledger:
+  integration:
+    enabled: true
+    program-setup-enabled: true
+    program-currencies:
+      - LP
+    kafka:
+      enabled: false
+    rules:
+      - event-type: PURCHASE
+        operation: EARN
+        min-amount: 10
+        point-currency: LP
+        formula: AMOUNT
+      - event-type: SIGNUP
+        operation: EARN
+        min-amount: 0
+        point-currency: LP
+        formula: FIXED:100

@@ -146,6 +146,13 @@ Run with PostgreSQL:
 docker compose up --build
 ```
 
+Run with the **event simulator** (see [INTEGRATION.md](INTEGRATION.md)):
+
+```bash
+cp .env.example .env
+docker compose --profile simulator up --build
+```
+
 For a separately managed PostgreSQL instance:
 
 ```bash

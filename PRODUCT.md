@@ -7,7 +7,98 @@ Clients deploy it in their own environment (on-prem, private cloud, or VPC), def
 (COA), and integrate via a stable HTTP API. The engine enforces double-entry rules, immutable history, and
 idempotent posting so downstream systems can treat it as the financial source of truth.
 
-For technical setup and API details, see [README.md](README.md).
+For technical setup and API details, see [README.md](README.md) and [INTEGRATION.md](INTEGRATION.md).
+
+---
+
+## Client go-live use case
+
+When an enterprise **purchases and deploys** Ledger Engine, integration happens in **two phases**.
+Phase 2 must not start until Phase 1 is complete.
+
+```text
+PHASE 1 — Wallet onboarding (CRM / legacy system)
+═══════════════════════════════════════════════════
+Client CRM or membership DB
+        │
+        │  export customers (userId, name, …)
+        ▼
+POST /api/v1/wallets          ← one customer at signup
+POST /api/v1/wallets/batch      ← bulk import at go-live
+        │
+        ▼
+ledger_account per customer (wallet:{userId}:LP)
+        │
+        ▼
+Client confirms: "all customers onboarded" ✓
+
+
+PHASE 2 — Transaction processing (runtime)
+══════════════════════════════════════════
+POS / e-commerce / campaign system
+        │
+        │  webhook or Kafka event (eventId, userId, eventType, amount)
+        ▼
+POST /api/v1/integrations/webhooks/transactions
+        or Kafka: ledger.transaction.events
+        │
+        ▼
+Rule check → Earn / Burn / Process
+        │
+        ▼
+Points posted (only if wallet exists from Phase 1)
+```
+
+| Phase | When | Who acts | Ledger API |
+|---|---|---|---|
+| **1. Open wallets** | Go-live / CRM sync | Client IT reads legacy CRM | `POST /api/v1/wallets`, `/wallets/batch` |
+| **2. Process events** | Live operations | Client transactional systems | Webhook + Kafka |
+
+If Phase 2 starts before Phase 1 finishes, events for missing customers return **`SKIPPED`**
+(`Wallet not onboarded`) — no silent wallet creation.
+
+### Phase 1 example — bulk CRM import
+
+```http
+POST /api/v1/wallets/batch
+Content-Type: application/json
+
+{
+  "wallets": [
+    { "userId": "CRM-0001", "currency": "LP", "name": "Alice" },
+    { "userId": "CRM-0002", "currency": "LP", "name": "Bob" }
+  ]
+}
+```
+
+Response:
+
+```json
+{
+  "requested": 2,
+  "created": 2,
+  "alreadyExists": 0,
+  "createdWallets": [ ... ],
+  "alreadyExistingUserIds": []
+}
+```
+
+Re-running the same batch is safe — existing wallets are counted in `alreadyExists`.
+
+### Phase 2 example — shoot transactional event
+
+```http
+POST /api/v1/integrations/webhooks/transactions
+Content-Type: application/json
+
+{
+  "eventId": "pos-20260805-001",
+  "userId": "CRM-0001",
+  "eventType": "PURCHASE",
+  "amount": 150.00,
+  "currency": "LP"
+}
+```
 
 ---
 
@@ -28,64 +119,45 @@ Epic 2  Earn / Burn / Process on wallet balance   (ledger core — shipped)
               └─▶ Epic 4  Process rules engine      (client pluggable — hold/expire/settle)
 ```
 
-### Epic 1 — User creation → wallet provisioning ⭐
+### Epic 1 — Wallet onboarding (product setup) ⭐
 
-**The first thing every enterprise must build.**
+**Phase 1 of go-live.** Client opens a wallet for each customer in their legacy CRM **before** sending
+transactional events.
 
-When a user registers in the client's membership / CRM / app, the client provisions **one wallet** in Ledger
-Engine to store that user's points balance.
+| Trigger | API |
+|---|---|
+| New customer at signup | `POST /api/v1/wallets` |
+| Go-live / CRM bulk sync | `POST /api/v1/wallets/batch` |
 
-```text
-User signs up (client identity system)
-        ↓
-Client calls POST /api/v1/accounts
-        ↓
-ledger_account created
-  external_reference = wallet:{userId}:LP
-  type               = LIABILITY
-  currency           = LP
-        ↓
-User now has a wallet — balance starts at 0
-```
+On startup, the product ensures **program COA pools** exist (expense + liability per currency).
 
 | Responsibility | Owner |
 |---|---|
-| User profile, login, KYC | Client identity / membership system |
-| **Create wallet account per user** | Client integration (triggered on signup) |
-| Store points balance truth | **Ledger Engine** |
-| Enforce 1 user = 1 wallet | Unique `external_reference` convention |
+| Customer master data (CRM) | Client legacy system |
+| **Open wallet per customer** | Client → Ledger Engine Phase 1 |
+| Program pool accounts | Product setup (`ProgramSetupRunner`) |
+| Store balance truth | Ledger Engine |
 
-This epic is **mandatory** for every deployment. Without it, Earn and Burn have nowhere to post.
-
-**Today:** wallet = `ledger_account` row (no separate Wallet API yet — convention via `externalReference`).
+Transaction processing (Phase 2) **never creates wallets**. Missing wallet → event skipped.
 
 ---
 
-### Epic 2 — Points balance lifecycle (Earn / Burn / Process)
+### Epic 2 — Transaction processing (Earn / Burn / Process)
 
-Once a wallet exists, all point movements go through three operations:
+**Phase 2 of go-live.** Starts only after Phase 1 wallets exist.
 
-| Operation | Effect on wallet balance | Example |
+External systems shoot events (webhook / Kafka). Ledger Engine:
+
+1. **Rule check** — match `eventType`, thresholds, operation
+2. **Earn / Burn / Process** — post journal if wallet exists
+
+| Operation | Trigger example | Effect |
 |---|---|---|
-| **Earn** | Add points | Purchase bonus, signup reward, campaign grant |
-| **Burn** | Deduct points | Redemption, voucher exchange |
-| **Process** | Add, deduct, hold, or move | Expiry, adjustment, transfer, settlement |
+| **Earn** | `PURCHASE` | Credit user wallet |
+| **Burn** | `REDEEM` | Debit user wallet |
+| **Process** | `ADJUST`, `HOLD`, … | Rule-specific lifecycle |
 
-```text
-                    ┌─────────────────┐
-  Earn  ──────────▶ │                 │
-  Burn  ──────────▶ │  User wallet    │ ◀── balance derived from journal_entry
-  Process ────────▶ │  (LP balance)   │
-                    └─────────────────┘
-```
-
-Each operation:
-
-1. Validates balance / policy (`allow_negative`)
-2. Writes immutable `journal_entry` rows (append-only)
-3. Updates derived balance (never mutates history)
-
-**Ledger Engine owns this epic.** Shipped in MVP via `POST /api/v1/transactions`.
+**Ledger Engine owns rule execution and posting.** External systems only send events.
 
 ---
 
@@ -116,38 +188,23 @@ Ledger Engine does **not** store tier today. It provides the **balance truth** t
 
 ### Epic 4 — Process rules engine
 
-**Process** covers lifecycle actions that are not simple earn or burn. Each enterprise configures different
-rules:
+**Process** rules are configured alongside Earn/Burn in `ledger.integration.rules`:
 
-| Process type | Rule examples |
-|---|---|
-| **Hold** | Reserve points for 24h pending order confirmation |
-| **Release** | Un-hold on cancellation |
-| **Expire** | Points older than 12 months → revenue account |
-| **Adjust** | CS manual correction with approval workflow |
-| **Transfer** | Gift points to another user's wallet |
-| **Settle** | Finalize a pending earn after return window |
-
-```text
-Business event
-      ↓
-┌─────────────────────┐
-│  Rules engine       │  ← client-owned (or pluggable module)
-│  (which Process?    │
-│   how many points?) │
-└─────────┬───────────┘
-          ↓
-   POST /transactions  →  Ledger Engine records outcome
+```yaml
+- event-type: ADJUST
+  operation: PROCESS
+  process-type: ADJUST
+  formula: FIXED:10
 ```
+
+Different enterprises plug different rule sets. Ledger Engine executes matching **Process** postings;
+advanced hold/expire/settle flows are extended per `process-type`.
 
 | Responsibility | Owner |
 |---|---|
-| Rule definitions, triggers, workflows | **Client rules engine** |
-| Execute posting, enforce double-entry | **Ledger Engine** |
-| Built-in rule DSL inside engine | Roadmap |
-
-Different enterprises plug in different Process engines ( Drools, custom JSON rules, campaign platform ).
-Ledger Engine stays the **execution layer** — it posts what the rules engine decides.
+| Rule definitions (`eventType`, thresholds, operation) | Config / client |
+| Rule check + Earn / Burn / Process posting | **Ledger Engine** |
+| Wallet creation | **Not here** — Epic 1 only |
 
 ---
 
@@ -155,8 +212,8 @@ Ledger Engine stays the **execution layer** — it posts what the rules engine d
 
 | Epic | What happens | Ledger Engine | Client |
 |---|---|---|---|
-| **1. User → wallet** | Signup creates wallet account | Stores balance | Triggers account creation |
-| **2. Earn / Burn / Process** | Points in/out of wallet | **Core product** | Sends posting requests |
+| **1. Wallet onboarding** | Signup creates wallet | Stores wallet + program pools | Calls `POST /api/v1/wallets` |
+| **2. Transaction processing** | External event → Earn/Burn/Process | **Rule check + posting** | Sends webhook/Kafka event |
 | **3. Tier / ranking** | Level up by balance/rules | Exposes balance API | Owns tier logic |
 | **4. Process rules** | Hold, expire, settle logic | Posts result | Owns rule engine |
 
@@ -384,18 +441,12 @@ happened*, exactly once.
 
 | Feature | Epic | Status |
 |---|---|---|
-| Wallet account per user (`external_reference`) | 1 | **Shipped** (convention) |
-| First-class `Wallet` API on user signup | 1 | Roadmap |
-| COA accounts + double-entry posting | 2 | **Shipped** |
-| Earn / Burn via `POST /transactions` | 2 | **Shipped** |
-| Idempotency + reversal | 2 | **Shipped** |
-| Derived balance API | 2 | **Shipped** |
-| Non-fiat currency (`LP`, etc.) | 2 | **Shipped** |
-| Dedicated Earn / Burn / Process endpoints | 2 | Roadmap |
-| `available_balance` / `held_balance` split | 2 / 4 | Roadmap |
-| Tier / ranking storage | 3 | Client-owned |
-| Process rules DSL inside engine | 4 | Roadmap (client plugs engine today) |
-| Domain event outbox | 2 | Roadmap |
+| Wallet onboarding API | 1 | **Shipped** |
+| Program pool setup on startup | 1 | **Shipped** |
+| Rule check + Earn / Burn posting | 2 | **Shipped** |
+| Webhook + Kafka ingestion | 2 | **Shipped** |
+| Process rules (ADJUST) | 4 | Partial |
+| Process HOLD / EXPIRE / SETTLE | 4 | Roadmap |
 | OAuth2 / API gateway auth | — | Client-side |
 | Multi-tenant admin UI | — | Out of scope |
 

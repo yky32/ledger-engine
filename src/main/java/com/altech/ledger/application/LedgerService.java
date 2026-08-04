@@ -36,7 +36,7 @@ public class LedgerService {
 
     @Transactional
     public AccountResponse createAccount(CreateAccountRequest request) {
-        requireIsoCurrency(request.currency());
+        requireLedgerCurrency(request.currency());
         if (accounts.existsByExternalReference(request.externalReference())) {
             throw LedgerException.conflict("EXTERNAL_REFERENCE_EXISTS", "External reference already exists");
         }
@@ -263,11 +263,9 @@ public class LedgerService {
     private String decimal(BigDecimal value) { return value.stripTrailingZeros().toPlainString(); }
     private String value(String value) { return value == null ? "" : value; }
 
-    private void requireIsoCurrency(String currency) {
-        try {
-            Currency.getInstance(currency);
-        } catch (IllegalArgumentException ex) {
-            throw LedgerException.badRequest("INVALID_CURRENCY", "Unsupported ISO 4217 currency: " + currency);
+    private void requireLedgerCurrency(String currency) {
+        if (currency == null || !currency.matches("[A-Z]{2,4}")) {
+            throw LedgerException.badRequest("INVALID_CURRENCY", "Currency must be 2-4 uppercase letters");
         }
     }
 

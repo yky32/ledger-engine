@@ -19,7 +19,7 @@ public class LedgerAccount {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Type type;
-    @Column(nullable = false, length = 3)
+    @Column(nullable = false, length = 4)
     private String currency;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

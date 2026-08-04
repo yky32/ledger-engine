@@ -25,7 +25,7 @@ public class JournalEntry {
     private Side side;
     @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal amount;
-    @Column(nullable = false, length = 3)
+    @Column(nullable = false, length = 4)
     private String currency;
     @Column(name = "sequence_number", nullable = false)
     private int sequence;

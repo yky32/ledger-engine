@@ -18,7 +18,7 @@ public final class LedgerDtos {
         @NotBlank @Size(max = 100) String externalReference,
         @NotBlank @Size(max = 200) String name,
         @NotNull LedgerAccount.Type type,
-        @NotBlank @Pattern(regexp = "[A-Z]{3}") String currency,
+        @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
         boolean allowNegative
     ) {}
 
@@ -31,7 +31,7 @@ public final class LedgerDtos {
         @NotNull UUID accountId,
         @NotNull JournalEntry.Side side,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
-        @NotBlank @Pattern(regexp = "[A-Z]{3}") String currency,
+        @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
         @Positive Integer sequence
     ) {}
 

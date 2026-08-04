@@ -13,6 +13,24 @@ services:
     volumes:
       - ledger-postgres:/var/lib/postgresql/data
 
+  kafka:
+    image: bitnami/kafka:3.7
+    environment:
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
   app:
     build: .
     ports:
@@ -22,9 +40,34 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/ledger
       DB_USERNAME: ledger
       DB_PASSWORD: ledger
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      LEDGER_KAFKA_ENABLED: ${LEDGER_KAFKA_ENABLED:-true}
+      LEDGER_KAFKA_TOPIC: ${LEDGER_KAFKA_TOPIC:-ledger.transaction.events}
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  simulator:
+    build: ./simulator
+    environment:
+      SIM_MODE: ${SIM_MODE:-webhook}
+      SIM_WEBHOOK_URL: ${SIM_WEBHOOK_URL:-http://app:8080/api/v1/integrations/webhooks/transactions}
+      SIM_KAFKA_BOOTSTRAP: ${SIM_KAFKA_BOOTSTRAP:-kafka:9092}
+      SIM_KAFKA_TOPIC: ${SIM_KAFKA_TOPIC:-ledger.transaction.events}
+      SIM_INTERVAL_SECONDS: ${SIM_INTERVAL_SECONDS:-2}
+      SIM_TRANSACTION_COUNT: ${SIM_TRANSACTION_COUNT:-20}
+      SIM_CURRENCY: ${SIM_CURRENCY:-LP}
+      SIM_AMOUNT_MIN: ${SIM_AMOUNT_MIN:-10}
+      SIM_AMOUNT_MAX: ${SIM_AMOUNT_MAX:-500}
+      SIM_EVENT_TYPE: ${SIM_EVENT_TYPE:-PURCHASE}
+      SIM_USER_ID_PREFIX: ${SIM_USER_ID_PREFIX:-CUST-}
+      SIM_USER_COUNT: ${SIM_USER_COUNT:-5}
+    depends_on:
+      - app
+    profiles:
+      - simulator
 
 volumes:
   ledger-postgres:

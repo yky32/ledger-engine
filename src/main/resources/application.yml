@@ -17,6 +17,36 @@ spring:
   flyway:
     enabled: true
 
+ledger:
+  integration:
+    enabled: true
+    program-setup-enabled: true
+    program-currencies:
+      - LP
+    wallet-ref-template: "wallet:{userId}:{currency}"
+    expense-pool-ref-template: "pool:loyalty-expense:{currency}"
+    liability-pool-ref-template: "pool:loyalty-liability:{currency}"
+    kafka:
+      enabled: false
+      topic: ledger.transaction.events
+      group-id: ledger-engine
+    rules:
+      - event-type: PURCHASE
+        operation: EARN
+        min-amount: 10
+        point-currency: LP
+        formula: AMOUNT
+      - event-type: SIGNUP
+        operation: EARN
+        min-amount: 0
+        point-currency: LP
+        formula: FIXED:100
+      - event-type: REDEEM
+        operation: BURN
+        min-amount: 1
+        point-currency: LP
+        formula: AMOUNT
+
 management:
   endpoints:
     web:
