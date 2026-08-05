@@ -26,6 +26,8 @@ ledger:
     wallet-ref-template: "wallet:{userId}:{currency}"
     expense-pool-ref-template: "pool:loyalty-expense:{currency}"
     liability-pool-ref-template: "pool:loyalty-liability:{currency}"
+    deposit-clearing-ref-template: "pool:clearing-deposit:{currency}"
+    withdrawal-clearing-ref-template: "pool:clearing-withdrawal:{currency}"
     kafka:
       enabled: false
       topic: ledger.transaction.events

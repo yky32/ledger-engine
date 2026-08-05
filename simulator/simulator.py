@@ -30,8 +30,8 @@ def env_float(name: str, default: float) -> float:
 
 
 def ledger_base_url() -> str:
-    webhook = env("SIM_WEBHOOK_URL", "http://app:8080/api/v1/integrations/webhooks/transactions")
-    marker = "/api/v1"
+    webhook = env("SIM_WEBHOOK_URL", "http://app:8080/integrations/webhooks/transactions")
+    marker = "/integrations/webhooks"
     if marker in webhook:
         return webhook.split(marker, 1)[0]
     return env("SIM_LEDGER_BASE_URL", "http://app:8080")
@@ -43,7 +43,7 @@ def onboard_wallets(users: list[str], currency: str) -> None:
         return
     base = ledger_base_url()
     for user_id in users:
-        url = f"{base}/api/v1/wallets"
+        url = f"{base}/wallets"
         payload = {"userId": user_id, "currency": currency, "name": f"Sim wallet {user_id}"}
         response = requests.post(url, json=payload, timeout=10)
         if response.status_code in (201, 409):
@@ -68,7 +68,7 @@ def build_event(user_id: str) -> dict:
 
 
 def send_webhook(event: dict) -> None:
-    url = env("SIM_WEBHOOK_URL", "http://app:8080/api/v1/integrations/webhooks/transactions")
+    url = env("SIM_WEBHOOK_URL", "http://app:8080/integrations/webhooks/transactions")
     response = requests.post(url, json=event, timeout=10)
     response.raise_for_status()
     print(f"[webhook] {event['eventId']} user={event['userId']} amount={event['amount']} -> {response.json()}")
@@ -101,7 +101,7 @@ def main() -> int:
         producer = KafkaProducer(bootstrap_servers=bootstrap.split(","))
         print(f"Kafka producer connected to {bootstrap}, topic={topic}")
 
-    webhook_url = env("SIM_WEBHOOK_URL", "http://app:8080/api/v1/integrations/webhooks/transactions")
+    webhook_url = env("SIM_WEBHOOK_URL", "http://app:8080/integrations/webhooks/transactions")
     print(f"Simulator mode={mode} interval={interval}s count={max_count or 'unlimited'} currency={env('SIM_CURRENCY', 'LP')}")
     if mode in ("webhook", "both"):
         print(f"Webhook URL={webhook_url}")

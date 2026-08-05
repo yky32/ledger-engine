@@ -1,6 +1,6 @@
 package com.altech.ledger.config;
 
-import com.altech.ledger.integration.IntegrationProperties;
+import com.altech.ledger.config.IntegrationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 

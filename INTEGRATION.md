@@ -7,7 +7,7 @@ External systems deliver **transactional events** via webhook or Kafka. Ledger E
 ┌─────────────────────────────────────────────────────────────────┐
 │  PRODUCT SETUP (Ledger Engine owns)                             │
 │  • ProgramSetupRunner → COA pool accounts (expense / liability) │
-│  • POST /api/v1/wallets → onboard one user wallet               │
+│  • POST /wallets → onboard one user wallet               │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
@@ -26,7 +26,7 @@ External systems deliver **transactional events** via webhook or Kafka. Ledger E
 ```text
 Step 0  Client purchases / deploys Ledger Engine
 Step 1  Program pools created on startup (automatic)
-Step 2  Client reads CRM → POST /api/v1/wallets/batch (Phase 1)
+Step 2  Client reads CRM → POST /wallets/batch (Phase 1)
 Step 3  Client verifies all customers have wallets
 Step 4  Client enables POS / campaign → webhook or Kafka (Phase 2)
 ```
@@ -37,7 +37,7 @@ Step 4  Client enables POS / campaign → webhook or Kafka (Phase 2)
 
 | Phase | Concept | Who triggers | API |
 |---|---|---|---|
-| **1** | Wallet onboarding | Client CRM / membership | `POST /api/v1/wallets`, `/wallets/batch` |
+| **1** | Wallet onboarding | Client CRM / membership | `POST /wallets`, `/wallets/batch` |
 | **2** | Transaction processing | POS / e-commerce / campaign | Webhook + Kafka |
 
 If Phase 2 runs before Phase 1 completes → **`SKIPPED`** (`Wallet not onboarded`).
@@ -49,7 +49,7 @@ If Phase 2 runs before Phase 1 completes → **`SKIPPED`** (`Wallet not onboarde
 ### Single customer (ongoing signup)
 
 ```http
-POST /api/v1/wallets
+POST /wallets
 Content-Type: application/json
 
 {
@@ -62,7 +62,7 @@ Content-Type: application/json
 ### Bulk import from legacy CRM (go-live)
 
 ```http
-POST /api/v1/wallets/batch
+POST /wallets/batch
 Content-Type: application/json
 
 {
@@ -106,7 +106,7 @@ Start only after Phase 1 wallet onboarding is complete.
 
 | Channel | Endpoint / topic |
 |---|---|
-| **Webhook** | `POST /api/v1/integrations/webhooks/transactions` |
+| **Webhook** | `POST /integrations/webhooks/transactions` |
 | **Kafka** | topic `ledger.transaction.events` |
 
 ### Processing pipeline
@@ -163,7 +163,7 @@ docker compose --profile simulator up --build
 | Variable | Default | Description |
 |---|---|---|
 | `SIM_MODE` | `webhook` | `webhook`, `kafka`, or `both` |
-| `SIM_WEBHOOK_URL` | `http://app:8080/api/v1/integrations/webhooks/transactions` | Ledger webhook |
+| `SIM_WEBHOOK_URL` | `http://app:8080/integrations/webhooks/transactions` | Ledger webhook |
 | `SIM_LEDGER_BASE_URL` | derived from webhook URL | Base URL for wallet onboarding |
 | `SIM_ONBOARD_WALLETS` | `true` | Call `POST /wallets` before sending events |
 | `SIM_INTERVAL_SECONDS` | `2` | Delay between events |

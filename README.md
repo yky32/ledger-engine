@@ -4,13 +4,41 @@ A standalone Java 17/Spring Boot double-entry ledger core for customer wallets a
 accounts, immutable journal entries, posting, derived balances, idempotency, and reversals.
 
 This is **ledger core**, not payment rails, identity, compliance UI, notification, tenant, or external
-settlement orchestration. It has no Kafka, Redis, private service, or private library dependency.
+settlement orchestration. The project layout follows the same **endpoint / usecase / entity / repository**
+pattern used in TGT services (e.g. `tgt.profile-service`, `sample-service`).
 
-## Naming conventions
+## Build and run
+
+```bash
+mvn clean package
+java -jar target/ledger-engine-0.1.0-SNAPSHOT.jar
+mvn spring-boot:run
+```
+
+## Project layout (TGT-style)
+
+```text
+src/main/java/com/altech/ledger/
+├── App.java
+├── config/              IntegrationProperties, IntegrationConfig
+├── endpoint/            REST controllers (Ledger, Wallet, Movement, Integration webhooks)
+├── usecase/             Business logic (LedgerUseCase, WalletOnboardingUseCase, …)
+├── entity/
+│   ├── po/              JPA entities (LedgerAccount, Wallet, JournalTransaction, …)
+│   └── dto/             Request/response records (ledger, wallet, movement, integration)
+├── repository/          Spring Data JPA repositories
+├── listener/            Kafka consumers (optional)
+├── exception/           LedgerException, GlobalExceptionHandler
+└── resources/db/migration/   Flyway schema
+```
 
 | Layer | Convention | Example |
 |---|---|---|
-| **PO (JPA entity)** | PascalCase class in `domain/` | `LedgerAccount`, `JournalTransaction`, `JournalEntry` |
+| **PO (JPA entity)** | PascalCase in `entity/po/` | `LedgerAccount`, `JournalTransaction` |
+| **Endpoint** | `*Endpoint` in `endpoint/{domain}/` | `LedgerEndpoint`, `WalletEndpoint` |
+| **Use case** | `*UseCase` in `usecase/{domain}/` | `LedgerUseCase`, `MovementUseCase` |
+| **DTO** | Records in `entity/dto/{domain}/` | `OnboardWalletRequest`, `MovementDto` |
+| **Repository** | `*Repository` in `repository/` | `LedgerAccountRepository` |
 | **Database table** | snake_case | `ledger_account`, `journal_transaction`, `journal_entry` |
 | **Database column** | snake_case | `external_reference`, `idempotency_key`, `sequence_number` |
 | **Java field / getter** | camelCase | `externalReference`, `idempotencyKey`, `sequence` |
@@ -168,15 +196,15 @@ mvn spring-boot:run
 Create source, destination, and equity accounts:
 
 ```bash
-curl -sS -X POST localhost:8080/api/v1/accounts \
+curl -sS -X POST localhost:8080/accounts \
   -H 'Content-Type: application/json' \
   -d '{"externalReference":"cash-001","name":"Cash","type":"ASSET","currency":"USD","allowNegative":false}'
 
-curl -sS -X POST localhost:8080/api/v1/accounts \
+curl -sS -X POST localhost:8080/accounts \
   -H 'Content-Type: application/json' \
   -d '{"externalReference":"cash-002","name":"Settlement","type":"ASSET","currency":"USD","allowNegative":false}'
 
-curl -sS -X POST localhost:8080/api/v1/accounts \
+curl -sS -X POST localhost:8080/accounts \
   -H 'Content-Type: application/json' \
   -d '{"externalReference":"equity-001","name":"Opening Equity","type":"EQUITY","currency":"USD","allowNegative":false}'
 ```
@@ -184,7 +212,7 @@ curl -sS -X POST localhost:8080/api/v1/accounts \
 Use returned IDs to post opening funds (debit cash, credit equity), then transfer:
 
 ```bash
-curl -i -X POST localhost:8080/api/v1/transactions \
+curl -i -X POST localhost:8080/transactions \
   -H 'Content-Type: application/json' \
   -d '{
     "idempotencyKey":"opening-2026-001",
@@ -195,7 +223,7 @@ curl -i -X POST localhost:8080/api/v1/transactions \
     ]
   }'
 
-curl -i -X POST localhost:8080/api/v1/transactions \
+curl -i -X POST localhost:8080/transactions \
   -H 'Content-Type: application/json' \
   -d '{
     "idempotencyKey":"transfer-2026-001",
@@ -210,30 +238,21 @@ curl -i -X POST localhost:8080/api/v1/transactions \
 Retrying an identical request returns `200`; its initial posting returns `201`. Query and reverse it:
 
 ```bash
-curl -sS localhost:8080/api/v1/accounts/<cash-id>/balance
-curl -sS 'localhost:8080/api/v1/accounts/<cash-id>/entries?page=0&size=20'
-curl -sS localhost:8080/api/v1/transactions/<transaction-id>
+curl -sS localhost:8080/accounts/<cash-id>/balance
+curl -sS 'localhost:8080/accounts/<cash-id>/entries?page=0&size=20'
+curl -sS localhost:8080/transactions/<transaction-id>
 
-curl -i -X POST localhost:8080/api/v1/transactions/<transaction-id>/reversal \
+curl -i -X POST localhost:8080/transactions/<transaction-id>/reversal \
   -H 'Content-Type: application/json' \
   -d '{"idempotencyKey":"reversal-2026-001","description":"Customer correction"}'
 ```
 
-## Boundaries and layout
+## Boundaries
 
-```text
-com.altech.ledger/
-├── domain/           PO entities (LedgerAccount, JournalTransaction, JournalEntry)
-├── application/      LedgerService — posting, reversal, balance derivation
-├── infrastructure/   Spring Data repositories
-├── api/              LedgerController, LedgerDtos (request/response records)
-└── resources/db/migration/   Flyway schema (V1__init.sql)
-```
-
-- **PO layer** lives in `domain/` (same role as `entity/po/` in Quinsic services).
-- **DTOs** are Java records in `api/LedgerDtos`; JSON field names match Java camelCase.
+- **PO layer** lives in `entity/po/` (same role as Quinsic/TGT services).
+- **DTOs** are Java records under `entity/dto/`; JSON field names match Java camelCase.
 - **Balances** are computed from `journal_entry`, not columns on `ledger_account`.
-- **MVP excludes** domain events/outbox, `available_balance` / `held_balance` columns, and dedicated Earn/Burn/Process endpoints — those are product mappings on top of `POST /api/v1/transactions`.
+- **MVP excludes** domain events/outbox, `available_balance` / `held_balance` columns, and dedicated Earn/Burn/Process endpoints — those are product mappings on top of `POST /transactions`.
 
 The service is the source of truth for `journal_transaction` and `journal_entry`. Payment execution and
 orchestration stay outside this boundary.

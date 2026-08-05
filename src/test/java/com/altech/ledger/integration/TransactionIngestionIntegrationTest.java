@@ -1,5 +1,6 @@
 package com.altech.ledger.integration;
 
+import com.altech.ledger.entity.dto.integration.TransactionalEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class TransactionIngestionIntegrationTest {
         TransactionalEvent event = new TransactionalEvent(
             eventId, "CUST-9001", "PURCHASE", new BigDecimal("125.50"), "LP", null, Map.of());
 
-        mockMvc.perform(post("/api/v1/integrations/webhooks/transactions")
+        mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
@@ -51,7 +52,7 @@ class TransactionIngestionIntegrationTest {
         TransactionalEvent event = new TransactionalEvent(
             "evt-no-wallet-" + UUID.randomUUID(), "CUST-9999", "PURCHASE", new BigDecimal("50"), "LP", null, Map.of());
 
-        mockMvc.perform(post("/api/v1/integrations/webhooks/transactions")
+        mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
@@ -65,7 +66,7 @@ class TransactionIngestionIntegrationTest {
         TransactionalEvent event = new TransactionalEvent(
             "evt-low-" + UUID.randomUUID(), "CUST-9002", "PURCHASE", new BigDecimal("5"), "LP", null, Map.of());
 
-        mockMvc.perform(post("/api/v1/integrations/webhooks/transactions")
+        mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
@@ -79,18 +80,18 @@ class TransactionIngestionIntegrationTest {
             eventId, "CUST-9003", "SIGNUP", BigDecimal.ZERO, "LP", null, Map.of());
         String body = objectMapper.writeValueAsString(event);
 
-        mockMvc.perform(post("/api/v1/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
+        mockMvc.perform(post("/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("EARNED"))
             .andExpect(jsonPath("$.points").value(100));
 
-        mockMvc.perform(post("/api/v1/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
+        mockMvc.perform(post("/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("DUPLICATE"));
     }
 
     private void ensureOnboarded(String userId) throws Exception {
-        var result = mockMvc.perform(post("/api/v1/wallets")
+        var result = mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"userId":"%s","currency":"LP","name":"Test wallet"}
