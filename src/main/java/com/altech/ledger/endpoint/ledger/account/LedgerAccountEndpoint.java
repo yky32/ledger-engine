@@ -1,5 +1,10 @@
 package com.altech.ledger.endpoint.ledger.account;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
+
+import java.util.List;
+
 import com.altech.ledger.usecase.account.AccountOperationUseCase;
 import com.altech.ledger.usecase.setup.AccountSetupUseCase;
 import jakarta.validation.Valid;
@@ -21,17 +26,17 @@ public class LedgerAccountEndpoint {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public LedgerAccountDtos.Response create(@Valid @RequestBody LedgerAccountDtos.CreateRequest dto) {
-        return accountSetupUseCase.create(dto);
+    public Result<LedgerAccountDtos.Response> create(@Valid @RequestBody LedgerAccountDtos.CreateRequest dto) {
+        return R.success(accountSetupUseCase.create(dto));
     }
 
     @GetMapping("/{id}")
-    public LedgerAccountDtos.Response getOne(@PathVariable Long id) {
-        return accountOperationUseCase.getOne(id);
+    public Result<LedgerAccountDtos.Response> getOne(@PathVariable Long id) {
+        return R.success(accountOperationUseCase.getOne(id));
     }
 
     @GetMapping
-    public Page<LedgerAccountDtos.Response> getAll(@PageableDefault(size = 50) Pageable pageable) {
-        return accountOperationUseCase.getAll(pageable);
+    public Result<List<LedgerAccountDtos.Response>> getAll(@PageableDefault(size = 50) Pageable pageable) {
+        return R.success(accountOperationUseCase.getAll(pageable));
     }
 }

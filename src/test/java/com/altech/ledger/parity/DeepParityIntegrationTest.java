@@ -32,17 +32,17 @@ class DeepParityIntegrationTest {
                 .param("amount", "50.00")
                 .param("movementKey", "manual-dep-1"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("PENDING_DOCS"))
+            .andExpect(jsonPath("$.data.status").value("PENDING_DOCS"))
             .andReturn();
 
-        long movementId = objectMapper.readTree(dep.getResponse().getContentAsString()).get("id").asLong();
+        long movementId = objectMapper.readTree(dep.getResponse().getContentAsString()).get("data").get("id").asLong();
 
         mockMvc.perform(put("/ledger-accounts/movements/" + movementId + "/settle"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("SETTLED"));
+            .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletId))
-            .andExpect(jsonPath("$.accounts[0].ledgerBalance").value(50.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(50.0));
     }
 
     @Test
@@ -55,10 +55,10 @@ class DeepParityIntegrationTest {
                     {"targetId":"%s","currency":"USD","amount":25.00,"mode":"AUTO","movementKey":"legacy-target-1"}
                     """.formatted(walletId)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("SETTLED"));
+            .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletId))
-            .andExpect(jsonPath("$.accounts[0].ledgerBalance").value(25.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(25.0));
     }
 
     @Test
@@ -88,7 +88,7 @@ class DeepParityIntegrationTest {
                 .param("ownerId", "FILTER-OWNER")
                 .param("statuses", "SETTLED"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content").isArray());
+            .andExpect(jsonPath("$.data").isArray());
     }
 
     @Test
@@ -107,7 +107,7 @@ class DeepParityIntegrationTest {
                     {"eventId":"earn-evt-1","userId":"EARN-USER-1","eventType":"PURCHASE","amount":100,"currency":"LP"}
                     """))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("EARNED"));
+            .andExpect(jsonPath("$.data.status").value("EARNED"));
     }
 
     private long createAndActivate(String ownerId, String currency) throws Exception {
@@ -116,7 +116,7 @@ class DeepParityIntegrationTest {
                 .param("currency", currency))
             .andExpect(status().isCreated())
             .andReturn();
-        long id = objectMapper.readTree(create.getResponse().getContentAsString()).get("id").asLong();
+        long id = objectMapper.readTree(create.getResponse().getContentAsString()).get("data").get("id").asLong();
         mockMvc.perform(post("/ledger-wallets/" + id + "/activations"))
             .andExpect(status().isOk());
         return id;

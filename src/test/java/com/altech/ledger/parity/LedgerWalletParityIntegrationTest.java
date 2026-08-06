@@ -29,10 +29,10 @@ class LedgerWalletParityIntegrationTest {
                 .param("extIdentifier", "tenant-a")
                 .param("extType", "tenant"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.data.status").value("PENDING"))
             .andReturn();
         JsonNode walletA = objectMapper.readTree(createA.getResponse().getContentAsString());
-        long walletAId = walletA.get("id").asLong();
+        long walletAId = walletA.get("data").get("id").asLong();
 
         // create wallet B
         MvcResult createB = mockMvc.perform(post("/ledger-wallets/full")
@@ -40,12 +40,12 @@ class LedgerWalletParityIntegrationTest {
                 .param("currency", "USD"))
             .andExpect(status().isCreated())
             .andReturn();
-        long walletBId = objectMapper.readTree(createB.getResponse().getContentAsString()).get("id").asLong();
+        long walletBId = objectMapper.readTree(createB.getResponse().getContentAsString()).get("data").get("id").asLong();
 
         // activate both
         mockMvc.perform(post("/ledger-wallets/" + walletAId + "/activations"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("ACTIVE"));
+            .andExpect(jsonPath("$.data.status").value("ACTIVE"));
         mockMvc.perform(post("/ledger-wallets/" + walletBId + "/activations"))
             .andExpect(status().isOk());
 
@@ -56,12 +56,12 @@ class LedgerWalletParityIntegrationTest {
                     {"targetWalletId":"%s","currency":"USD","amount":100.00,"mode":"AUTO","movementKey":"dep-parity-1"}
                     """.formatted(walletAId)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("SETTLED"))
-            .andExpect(jsonPath("$.orderType").value("DEPOSIT"));
+            .andExpect(jsonPath("$.data.status").value("SETTLED"))
+            .andExpect(jsonPath("$.data.orderType").value("DEPOSIT"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletAId))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accounts[0].ledgerBalance").value(100.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(100.0));
 
         // transfer
         mockMvc.perform(post("/ledger/wallet-transfers/in-wallet")
@@ -70,12 +70,12 @@ class LedgerWalletParityIntegrationTest {
                     {"fromWalletId":"%s","toWalletId":"%s","currency":"USD","amount":40.00,"mode":"AUTO","movementKey":"xfer-parity-1"}
                     """.formatted(walletAId, walletBId)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("SETTLED"));
+            .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletAId))
-            .andExpect(jsonPath("$.accounts[0].ledgerBalance").value(60.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(60.0));
         mockMvc.perform(get("/ledger-wallets/" + walletBId))
-            .andExpect(jsonPath("$.accounts[0].ledgerBalance").value(40.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(40.0));
 
         // withdraw
         mockMvc.perform(post("/ledger/withdrawals")
@@ -84,15 +84,15 @@ class LedgerWalletParityIntegrationTest {
                     {"originatorWalletId":"%s","currency":"USD","amount":10.00,"mode":"AUTO","movementKey":"wd-parity-1"}
                     """.formatted(walletAId)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("SETTLED"));
+            .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletAId))
-            .andExpect(jsonPath("$.accounts[0].ledgerBalance").value(50.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(50.0));
 
         // movements query
         mockMvc.perform(get("/ledger-accounts/movements/my-movements").param("ownerId", "OWNER-A"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content").isArray());
+            .andExpect(jsonPath("$.data").isArray());
 
         // fx + rules smoke
         mockMvc.perform(post("/fx-rates")
@@ -111,7 +111,7 @@ class LedgerWalletParityIntegrationTest {
 
         mockMvc.perform(get("/dashboards"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.walletCount").isNumber());
+            .andExpect(jsonPath("$.data.walletCount").isNumber());
 
         assertThat(walletAId).isPositive();
     }

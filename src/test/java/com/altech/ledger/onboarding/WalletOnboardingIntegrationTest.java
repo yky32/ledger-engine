@@ -31,12 +31,12 @@ class WalletOnboardingIntegrationTest {
 
         mockMvc.perform(post("/wallets/batch").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.created").value(2))
-            .andExpect(jsonPath("$.alreadyExists").value(0));
+            .andExpect(jsonPath("$.data.created").value(2))
+            .andExpect(jsonPath("$.data.alreadyExists").value(0));
 
         mockMvc.perform(post("/wallets/batch").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.created").value(0))
-            .andExpect(jsonPath("$.alreadyExists").value(2));
+            .andExpect(jsonPath("$.data.created").value(0))
+            .andExpect(jsonPath("$.data.alreadyExists").value(2));
     }
 }

@@ -32,12 +32,12 @@ class MovementIntegrationTest {
                     {"movementKey":"%s","ownerId":"%s","currency":"LP","amount":250.00,"description":"Top up"}
                     """.formatted(key, owner)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("SETTLED"))
-            .andExpect(jsonPath("$.orderType").value("DEPOSIT"));
+            .andExpect(jsonPath("$.data.status").value("SETTLED"))
+            .andExpect(jsonPath("$.data.orderType").value("DEPOSIT"));
 
         mockMvc.perform(get("/wallets/" + owner + "/LP"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.balance.ledgerBalance").value(250.00));
+            .andExpect(jsonPath("$.data.balance.ledgerBalance").value(250.00));
     }
 
     @Test
@@ -62,12 +62,12 @@ class MovementIntegrationTest {
                     {"movementKey":"%s","fromOwnerId":"%s","toOwnerId":"%s","currency":"LP","amount":40.00}
                     """.formatted(xferKey, ownerA, ownerB)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("SETTLED"));
+            .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/wallets/" + ownerA + "/LP"))
-            .andExpect(jsonPath("$.balance.ledgerBalance").value(60.00));
+            .andExpect(jsonPath("$.data.balance.ledgerBalance").value(60.00));
         mockMvc.perform(get("/wallets/" + ownerB + "/LP"))
-            .andExpect(jsonPath("$.balance.ledgerBalance").value(40.00));
+            .andExpect(jsonPath("$.data.balance.ledgerBalance").value(40.00));
     }
 
     @Test
@@ -84,7 +84,7 @@ class MovementIntegrationTest {
             .andExpect(status().isCreated());
         mockMvc.perform(post("/movements/deposits").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.movementKey").value(key));
+            .andExpect(jsonPath("$.data.movementKey").value(key));
     }
 
     private void onboard(String userId, String name) throws Exception {

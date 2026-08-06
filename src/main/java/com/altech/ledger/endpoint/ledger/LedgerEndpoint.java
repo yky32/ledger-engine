@@ -1,19 +1,20 @@
 package com.altech.ledger.endpoint.ledger;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.AccountResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.BalanceResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
 import com.altech.ledger.usecase.ledger.LedgerUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,18 +22,18 @@ public class LedgerEndpoint {
     private final LedgerUseCase useCase;
 
     @PostMapping("/accounts")
-    public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {
-        AccountResponse response = useCase.createAccount(request);
-        return ResponseEntity.created(URI.create("/accounts/" + response.id())).body(response);
+    @ResponseStatus(HttpStatus.CREATED)
+    public Result<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {
+        return R.success(useCase.createAccount(request));
     }
 
     @GetMapping("/accounts/{id}")
-    public AccountResponse getAccount(@PathVariable Long id) {
-        return useCase.getAccount(id);
+    public Result<AccountResponse> getAccount(@PathVariable Long id) {
+        return R.success(useCase.getAccount(id));
     }
 
     @GetMapping("/accounts/{id}/balance")
-    public BalanceResponse getBalance(@PathVariable Long id) {
-        return useCase.getBalance(id);
+    public Result<BalanceResponse> getBalance(@PathVariable Long id) {
+        return R.success(useCase.getBalance(id));
     }
 }

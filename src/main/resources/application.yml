@@ -2,10 +2,11 @@ spring:
   application:
     name: ledger-engine
   datasource:
-    url: jdbc:h2:file:./data/ledger;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    # Docker test-db (postgres) published on host 5433
+    url: jdbc:postgresql://localhost:5433/ledger-engine
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
   jpa:
     open-in-view: false
     hibernate:
@@ -14,8 +15,23 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     enabled: true
+  liquibase:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
 ledger:
   movement:

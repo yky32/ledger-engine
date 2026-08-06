@@ -1,5 +1,8 @@
 package com.altech.ledger.endpoint.usecase.withdrawal;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
+
 import com.altech.ledger.usecase.ledger.LedgerMovementPipelineUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,7 +18,7 @@ public class WithdrawalEndpoint {
 
     @PostMapping("/ledger/withdrawals")
     @ResponseStatus(HttpStatus.CREATED)
-    public LedgerMovementDtos.Response withdraw(@Valid @RequestBody LedgerMovementDtos.CreateWithdrawalRequest dto) {
-        return pipeline.withdraw(dto);
+    public Result<LedgerMovementDtos.Response> withdraw(@Valid @RequestBody LedgerMovementDtos.CreateWithdrawalRequest dto) {
+        return R.success(pipeline.withdraw(dto));
     }
 }

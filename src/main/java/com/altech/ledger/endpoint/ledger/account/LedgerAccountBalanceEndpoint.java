@@ -1,5 +1,8 @@
 package com.altech.ledger.endpoint.ledger.account;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
+
 import com.altech.ledger.usecase.account.WalletAccountBalanceUseCase;
 import com.altech.ledger.usecase.setup.AccountSetupUseCase;
 import org.springframework.web.bind.annotation.*;
@@ -17,17 +20,17 @@ public class LedgerAccountBalanceEndpoint {
     private final WalletAccountBalanceUseCase balanceUseCase;
 
     @GetMapping("/{id}/balances")
-    public LedgerAccountDtos.Response getBalance(@PathVariable Long id) {
-        return accountSetupUseCase.getOne(id);
+    public Result<LedgerAccountDtos.Response> getBalance(@PathVariable Long id) {
+        return R.success(accountSetupUseCase.getOne(id));
     }
 
     @GetMapping("/balances")
-    public List<LedgerAccountDtos.BalanceResponse> getAllBalances() {
-        return balanceUseCase.getAllBalances();
+    public Result<List<LedgerAccountDtos.BalanceResponse>> getAllBalances() {
+        return R.success(balanceUseCase.getAllBalances());
     }
 
     @GetMapping("/my-balances")
-    public List<LedgerAccountDtos.BalanceResponse> myBalances(@RequestParam String ownerId) {
-        return balanceUseCase.myBalances(ownerId);
+    public Result<List<LedgerAccountDtos.BalanceResponse>> myBalances(@RequestParam String ownerId) {
+        return R.success(balanceUseCase.myBalances(ownerId));
     }
 }

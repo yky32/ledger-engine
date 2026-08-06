@@ -1,17 +1,17 @@
 package com.altech.ledger.endpoint.integration;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
 import com.altech.ledger.entity.dto.integration.IngestionResult;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
 import com.altech.ledger.usecase.integration.TransactionIngestionUseCase;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/integrations/webhooks")
@@ -21,7 +21,7 @@ public class IntegrationWebhookEndpoint {
     private final TransactionIngestionUseCase ingestionUseCase;
 
     @PostMapping("/transactions")
-    public ResponseEntity<IngestionResult> receive(@Valid @RequestBody TransactionalEvent event) {
-        return ResponseEntity.ok(ingestionUseCase.ingest(event));
+    public Result<IngestionResult> receive(@Valid @RequestBody TransactionalEvent event) {
+        return R.success(ingestionUseCase.ingest(event));
     }
 }

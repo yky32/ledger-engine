@@ -1,50 +1,28 @@
 package com.altech.ledger.exception;
 
-import com.altech.ledger.exception.LedgerException;
+import com.altech.core.exception.BaseGlobalExceptionHandler;
+import com.altech.core.response.R;
+import com.altech.core.response.Response;
+import com.altech.core.response.Result;
+import com.altech.core.response.SystemResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.*;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 @RestControllerAdvice
-public class GlobalExceptionHandler {
-    public record ApiError(Instant timestamp, int status, String code, String message,
-                           String path, Map<String, String> fieldErrors) {}
+public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
     @ExceptionHandler(LedgerException.class)
-    ResponseEntity<ApiError> ledger(LedgerException ex, HttpServletRequest request) {
-        return response(ex.getStatus(), ex.getCode(), ex.getMessage(), request, Map.of());
+    public ResponseEntity<Object> ledger(LedgerException ex, HttpServletRequest request) {
+        Response response = new Response(ex.getCode(), ex.getMessage(), ex.getStatus());
+        Result<Object> body = withRequestId(R.error(response, null));
+        return new ResponseEntity<>(body, ex.getStatus());
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    ResponseEntity<ApiError> validation(MethodArgumentNotValidException ex, HttpServletRequest request) {
-        Map<String, String> fields = new LinkedHashMap<>();
-        ex.getBindingResult().getFieldErrors()
-            .forEach(error -> fields.putIfAbsent(error.getField(), error.getDefaultMessage()));
-        return response(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "Request validation failed", request, fields);
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    ResponseEntity<ApiError> unreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
-        return response(HttpStatus.BAD_REQUEST, "MALFORMED_JSON", "Request body is malformed", request, Map.of());
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    ResponseEntity<ApiError> integrity(DataIntegrityViolationException ex, HttpServletRequest request) {
-        return response(HttpStatus.CONFLICT, "DATA_CONFLICT",
-            "The request conflicts with existing ledger data", request, Map.of());
-    }
-
-    private ResponseEntity<ApiError> response(HttpStatus status, String code, String message,
-                                              HttpServletRequest request, Map<String, String> fields) {
-        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON)
-            .body(new ApiError(Instant.now(), status.value(), code, message, request.getRequestURI(), fields));
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Object> illegalArg(IllegalArgumentException ex, HttpServletRequest request) {
+        Result<Object> body = withRequestId(R.fail(SystemResponse.PAM0400, ex.getMessage()));
+        return new ResponseEntity<>(body, SystemResponse.PAM0400.getHttpStatus());
     }
 }

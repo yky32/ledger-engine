@@ -42,9 +42,9 @@ class TransactionIngestionIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("EARNED"))
-            .andExpect(jsonPath("$.operation").value("EARN"))
-            .andExpect(jsonPath("$.points").value(125.50));
+            .andExpect(jsonPath("$.data.status").value("EARNED"))
+            .andExpect(jsonPath("$.data.operation").value("EARN"))
+            .andExpect(jsonPath("$.data.points").value(125.50));
     }
 
     @Test
@@ -56,8 +56,8 @@ class TransactionIngestionIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("SKIPPED"))
-            .andExpect(jsonPath("$.reason").exists());
+            .andExpect(jsonPath("$.data.status").value("SKIPPED"))
+            .andExpect(jsonPath("$.data.reason").exists());
     }
 
     @Test
@@ -70,7 +70,7 @@ class TransactionIngestionIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("SKIPPED"));
+            .andExpect(jsonPath("$.data.status").value("SKIPPED"));
     }
 
     @Test
@@ -82,12 +82,12 @@ class TransactionIngestionIntegrationTest {
 
         mockMvc.perform(post("/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("EARNED"))
-            .andExpect(jsonPath("$.points").value(100));
+            .andExpect(jsonPath("$.data.status").value("EARNED"))
+            .andExpect(jsonPath("$.data.points").value(100));
 
         mockMvc.perform(post("/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("DUPLICATE"));
+            .andExpect(jsonPath("$.data.status").value("DUPLICATE"));
     }
 
     private void ensureOnboarded(String userId) throws Exception {

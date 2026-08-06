@@ -1,5 +1,8 @@
 package com.altech.ledger.endpoint.usecase.wallet_transfer;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
+
 import com.altech.ledger.usecase.ledger.LedgerMovementPipelineUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +20,7 @@ public class WalletTransferEndpoint {
 
     @PostMapping("/ledger/wallet-transfers/in-wallet")
     @ResponseStatus(HttpStatus.CREATED)
-    public LedgerMovementDtos.Response inWallet(@Valid @RequestBody LedgerMovementDtos.CreateInWalletTransferRequest dto) {
-        return pipeline.inWalletTransfer(dto);
+    public Result<LedgerMovementDtos.Response> inWallet(@Valid @RequestBody LedgerMovementDtos.CreateInWalletTransferRequest dto) {
+        return R.success(pipeline.inWalletTransfer(dto));
     }
 }

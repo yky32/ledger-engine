@@ -1,5 +1,10 @@
 package com.altech.ledger.endpoint.accounting;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
+
+import java.util.List;
+
 import com.altech.ledger.entity.dto.rule.RuleDtos;
 import com.altech.ledger.usecase.account.RuleExecutionUseCase;
 import jakarta.validation.Valid;
@@ -19,17 +24,17 @@ public class RuleExecutionEndpoint {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public RuleDtos.ExecutionResponse create(@Valid @RequestBody RuleDtos.CreateExecutionRequest dto) {
-        return useCase.create(dto);
+    public Result<RuleDtos.ExecutionResponse> create(@Valid @RequestBody RuleDtos.CreateExecutionRequest dto) {
+        return R.success(useCase.create(dto));
     }
 
     @GetMapping("/{id}")
-    public RuleDtos.ExecutionResponse getOne(@PathVariable Long id) {
-        return useCase.getOne(id);
+    public Result<RuleDtos.ExecutionResponse> getOne(@PathVariable Long id) {
+        return R.success(useCase.getOne(id));
     }
 
     @GetMapping
-    public Page<RuleDtos.ExecutionResponse> getAll(@PageableDefault(size = 50) Pageable pageable) {
-        return useCase.getAll(pageable);
+    public Result<List<RuleDtos.ExecutionResponse>> getAll(@PageableDefault(size = 50) Pageable pageable) {
+        return R.success(useCase.getAll(pageable));
     }
 }

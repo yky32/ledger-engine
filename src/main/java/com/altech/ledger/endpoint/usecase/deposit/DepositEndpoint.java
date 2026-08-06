@@ -1,5 +1,8 @@
 package com.altech.ledger.endpoint.usecase.deposit;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
+
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.usecase.ledger.LedgerDepositUseCase;
 import com.altech.ledger.util.MultipartFileMetadata;
@@ -23,13 +26,13 @@ public class DepositEndpoint {
 
     @PostMapping("/ledger/deposits")
     @ResponseStatus(HttpStatus.CREATED)
-    public LedgerMovementDtos.Response deposit(@Valid @RequestBody LedgerMovementDtos.CreateDepositRequest dto) {
-        return depositUseCase.execute(dto);
+    public Result<LedgerMovementDtos.Response> deposit(@Valid @RequestBody LedgerMovementDtos.CreateDepositRequest dto) {
+        return R.success(depositUseCase.execute(dto));
     }
 
     @PostMapping(value = "/ledger/deposits", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public LedgerMovementDtos.Response depositMultipart(
+    public Result<LedgerMovementDtos.Response> depositMultipart(
         @RequestParam String targetWalletId,
         @RequestParam String currency,
         @RequestParam BigDecimal amount,
@@ -38,17 +41,17 @@ public class DepositEndpoint {
         @RequestParam(required = false) List<MultipartFile> files
     ) {
         String fileMeta = MultipartFileMetadata.summarize(files);
-        return depositUseCase.execute(new LedgerMovementDtos.CreateDepositRequest(
+        return R.success(depositUseCase.execute(new LedgerMovementDtos.CreateDepositRequest(
             targetWalletId, currency, amount, LedgerMovementMode.MANUAL, null, movementKey,
-            description, fileMeta == null ? null : Map.of("files", fileMeta)));
+            description, fileMeta == null ? null : Map.of("files", fileMeta))));
     }
 
     @PostMapping("/ledger/deposits/card-session")
-    public Map<String, String> cardSession(
+    public Result<Map<String, String>> cardSession(
         @RequestParam Long walletId,
         @RequestParam String currency,
         @RequestParam BigDecimal amount
     ) {
-        return depositUseCase.initiateCardDeposit(walletId, currency, amount, Map.of());
+        return R.success(depositUseCase.initiateCardDeposit(walletId, currency, amount, Map.of()));
     }
 }

@@ -1,15 +1,15 @@
 package com.altech.ledger.endpoint.wallet;
 
+import com.altech.core.response.R;
+import com.altech.core.response.Result;
 import com.altech.ledger.entity.dto.wallet.*;
 import com.altech.ledger.usecase.wallet.WalletOnboardingUseCase;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/wallets")
@@ -18,24 +18,24 @@ public class WalletEndpoint {
     private final WalletOnboardingUseCase onboardingUseCase;
 
     @PostMapping
-    public ResponseEntity<WalletOnboardResponse> onboard(@Valid @RequestBody OnboardWalletRequest request) {
-        WalletOnboardResponse response = onboardingUseCase.onboard(request);
-        return ResponseEntity.created(URI.create("/wallets/" + response.walletId())).body(response);
+    @ResponseStatus(HttpStatus.CREATED)
+    public Result<WalletOnboardResponse> onboard(@Valid @RequestBody OnboardWalletRequest request) {
+        return R.success(onboardingUseCase.onboard(request));
     }
 
     @GetMapping("/{ownerId}/{currency}")
-    public WalletOnboardResponse get(@PathVariable String ownerId, @PathVariable String currency) {
-        return onboardingUseCase.getByOwner(ownerId, currency);
+    public Result<WalletOnboardResponse> get(@PathVariable String ownerId, @PathVariable String currency) {
+        return R.success(onboardingUseCase.getByOwner(ownerId, currency));
     }
 
     @GetMapping
-    public List<WalletOnboardResponse> list(@RequestParam String ownerId) {
-        return onboardingUseCase.listByOwner(ownerId);
+    public Result<List<WalletOnboardResponse>> list(@RequestParam String ownerId) {
+        return R.success(onboardingUseCase.listByOwner(ownerId));
     }
 
     /** Bulk import from client CRM / legacy membership system during go-live. */
     @PostMapping("/batch")
-    public BatchOnboardWalletResponse onboardBatch(@Valid @RequestBody BatchOnboardWalletRequest request) {
-        return onboardingUseCase.onboardBatch(request);
+    public Result<BatchOnboardWalletResponse> onboardBatch(@Valid @RequestBody BatchOnboardWalletRequest request) {
+        return R.success(onboardingUseCase.onboardBatch(request));
     }
 }
