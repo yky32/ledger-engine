@@ -1,6 +1,6 @@
 package com.altech.ledger.usecase.ledger;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.exception.LedgerException;
@@ -23,7 +23,7 @@ public class LedgerMovementOperationUseCase {
     private final MovementBus movementBus;
 
     @Transactional
-    public MovementResponse update(Long id, UpdateMovementStatusRequest req) {
+    public LedgerMovementDtos.Response update(Long id, LedgerMovementDtos.UpdateStatusRequest req) {
         LedgerMovement m = movement(id);
         if (req.status() == LedgerMovementStatus.SETTLED
             && m.getStatus() != LedgerMovementStatus.SETTLED) {
@@ -41,7 +41,7 @@ public class LedgerMovementOperationUseCase {
 
 
     @Transactional
-    public MovementResponse settle(Long id) {
+    public LedgerMovementDtos.Response settle(Long id) {
         LedgerMovement m = movement(id);
         if (m.getStatus() == LedgerMovementStatus.SETTLED) {
             return DtoMapper.toMovement(m);
@@ -54,7 +54,7 @@ public class LedgerMovementOperationUseCase {
     }
 
     @Transactional
-    public MovementResponse updateDocuments(Long id, UpdateTransferDocumentsRequest req) {
+    public LedgerMovementDtos.Response updateDocuments(Long id, LedgerMovementDtos.UpdateDocumentsRequest req) {
         LedgerMovement m = movement(id);
         if (req.files() != null) m.setFiles(req.files());
         if (req.remarks() != null) m.setRemarks(req.remarks());

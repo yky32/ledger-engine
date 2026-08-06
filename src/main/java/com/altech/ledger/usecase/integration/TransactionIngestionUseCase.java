@@ -3,7 +3,6 @@ package com.altech.ledger.usecase.integration;
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.integration.IngestionResult;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
-import com.altech.ledger.entity.dto.parity.ParityDtos.MovementResponse;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
@@ -19,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
 
 /**
  * Loyalty / transactional event ingest. Applies balances via movement execution
@@ -79,7 +79,7 @@ public class TransactionIngestionUseCase {
             return IngestionResult.duplicate(event.eventId(), rule.operation(), id, rule.points(), walletRef);
         }
 
-        MovementResponse applied = shooter.doEarnBurn(
+        LedgerMovementDtos.Response applied = shooter.doEarnBurn(
             wallet.get().getId(),
             orderType,
             rule.points(),

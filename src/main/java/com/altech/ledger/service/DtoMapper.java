@@ -1,6 +1,11 @@
 package com.altech.ledger.service;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.fx.FxRateDtos;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.rule.RuleDtos;
+import com.altech.ledger.entity.dto.system.SystemDtos;
+import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.entity.po.accounting.Rule;
 import com.altech.ledger.entity.po.accounting.RuleExecution;
@@ -14,16 +19,16 @@ import java.util.List;
 public final class DtoMapper {
     private DtoMapper() {}
 
-    public static AccountResponse toAccount(Account a) {
-        return new AccountResponse(
+    public static LedgerAccountDtos.Response toAccount(Account a) {
+        return new LedgerAccountDtos.Response(
             a.getId(), a.getFullNumber(), a.getEntity(), a.getType(), a.getSubType(),
             a.getMainAccount(), a.getSubAccount(), a.getBuffer(), a.getCurrency(),
             a.getLedgerBalance(), a.getAvailableBalance(), a.getStatus(),
             a.getCreateDt(), a.getUpdateDt());
     }
 
-    public static WalletWithBalancesResponse toWallet(Wallet w, List<Account> accounts) {
-        return new WalletWithBalancesResponse(
+    public static LedgerWalletDtos.WithBalancesResponse toWallet(Wallet w, List<Account> accounts) {
+        return new LedgerWalletDtos.WithBalancesResponse(
             w.getId(), w.getAlias(), w.getAccountId(), w.getNickname(),
             w.getExtIdentifier(), w.getExtType(), w.getType(), w.getWalletType(),
             w.getStatus(), w.getOwnerId(), w.getCurrency(),
@@ -31,8 +36,8 @@ public final class DtoMapper {
             w.getCreateDt(), w.getUpdateDt());
     }
 
-    public static MovementResponse toMovement(LedgerMovement m) {
-        return new MovementResponse(
+    public static LedgerMovementDtos.Response toMovement(LedgerMovement m) {
+        return new LedgerMovementDtos.Response(
             m.getId(), m.getMovementKey(), m.getWalletId(), m.getTxnId(), m.getAlias(),
             m.getOriginatorId(), m.getTargetId(), m.getAmount(), m.getCurrency(),
             m.getOrderType(), m.getStatus(), m.getMode(), m.getType(),
@@ -40,22 +45,22 @@ public final class DtoMapper {
             m.getCreateDt(), m.getUpdateDt());
     }
 
-    public static RuleResponse toRule(Rule r) {
-        return new RuleResponse(r.getId(), r.getName(), r.getDescription(), r.getDirection(),
+    public static RuleDtos.Response toRule(Rule r) {
+        return new RuleDtos.Response(r.getId(), r.getName(), r.getDescription(), r.getDirection(),
             r.getMultiplier(), r.getTargetAccount(), r.getContent(), r.getCreateDt());
     }
 
-    public static RuleExecutionResponse toRuleExecution(RuleExecution r) {
-        return new RuleExecutionResponse(r.getId(), r.getName(), r.getDescription(),
+    public static RuleDtos.ExecutionResponse toRuleExecution(RuleExecution r) {
+        return new RuleDtos.ExecutionResponse(r.getId(), r.getName(), r.getDescription(),
             r.getOrderType(), r.getMetadata(), r.getCreateDt());
     }
 
-    public static FxRateResponse toFx(FxRate r) {
-        return new FxRateResponse(r.getId(), r.getBase(), r.getTarget(), r.getRate(),
+    public static FxRateDtos.Response toFx(FxRate r) {
+        return new FxRateDtos.Response(r.getId(), r.getBase(), r.getTarget(), r.getRate(),
             r.getCreateDt(), r.getUpdateDt());
     }
 
-    public static ConfigurationResponse toConfig(SystemConfiguration c) {
-        return new ConfigurationResponse(c.getId(), c.getName(), c.getTarget(), c.getScope(), c.getValue());
+    public static SystemDtos.ConfigurationResponse toConfig(SystemConfiguration c) {
+        return new SystemDtos.ConfigurationResponse(c.getId(), c.getName(), c.getTarget(), c.getScope(), c.getValue());
     }
 }

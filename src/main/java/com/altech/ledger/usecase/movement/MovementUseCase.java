@@ -2,7 +2,7 @@ package com.altech.ledger.usecase.movement;
 
 import com.altech.ledger.entity.dto.ledger.LedgerDto.PageResponse;
 import com.altech.ledger.entity.dto.movement.MovementDto.*;
-import com.altech.ledger.entity.dto.parity.ParityDtos;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.WalletStatus;
@@ -32,7 +32,7 @@ public class MovementUseCase {
     @Transactional
     public MovementResponse deposit(DepositRequest request) {
         Wallet wallet = requireActiveWallet(request.ownerId(), request.currency());
-        ParityDtos.MovementResponse r = pipeline.deposit(new ParityDtos.CreateDepositRequest(
+        LedgerMovementDtos.Response r = pipeline.deposit(new LedgerMovementDtos.CreateDepositRequest(
             String.valueOf(wallet.getId()),
             request.currency(),
             request.amount(),
@@ -48,7 +48,7 @@ public class MovementUseCase {
     @Transactional
     public MovementResponse withdraw(WithdrawalRequest request) {
         Wallet wallet = requireActiveWallet(request.ownerId(), request.currency());
-        ParityDtos.MovementResponse r = pipeline.withdraw(new ParityDtos.CreateWithdrawalRequest(
+        LedgerMovementDtos.Response r = pipeline.withdraw(new LedgerMovementDtos.CreateWithdrawalRequest(
             String.valueOf(wallet.getId()),
             request.currency(),
             request.amount(),
@@ -64,7 +64,7 @@ public class MovementUseCase {
     public MovementResponse transfer(InWalletTransferRequest request) {
         Wallet from = requireActiveWallet(request.fromOwnerId(), request.currency());
         Wallet to = requireActiveWallet(request.toOwnerId(), request.currency());
-        ParityDtos.MovementResponse r = pipeline.inWalletTransfer(new ParityDtos.CreateInWalletTransferRequest(
+        LedgerMovementDtos.Response r = pipeline.inWalletTransfer(new LedgerMovementDtos.CreateInWalletTransferRequest(
             String.valueOf(from.getId()),
             String.valueOf(to.getId()),
             request.currency(),
@@ -94,7 +94,7 @@ public class MovementUseCase {
             page.getTotalElements(), page.getTotalPages());
     }
 
-    private MovementResponse toDto(ParityDtos.MovementResponse r) {
+    private MovementResponse toDto(LedgerMovementDtos.Response r) {
         return new MovementResponse(
             r.id(), r.movementKey(), r.walletId(), r.orderType(), r.status(), r.mode(),
             r.originatorId(), r.targetId(), r.amount(), r.currency(),

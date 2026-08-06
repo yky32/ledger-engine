@@ -1,7 +1,5 @@
 package com.altech.ledger.usecase.setup;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.AccountResponse;
-import com.altech.ledger.entity.dto.parity.ParityDtos.CreateLedgerAccountRequest;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.AccountRepository;
@@ -16,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +23,7 @@ public class AccountSetupUseCase {
     private final CommonService commonService;
 
     @Transactional
-    public AccountResponse create(CreateLedgerAccountRequest dto) {
+    public LedgerAccountDtos.Response create(LedgerAccountDtos.CreateRequest dto) {
         String currency = dto.currency() == null ? null : dto.currency().toUpperCase();
         if (currency == null || !currency.matches("[A-Z]{2,4}")) {
             throw LedgerException.badRequest("INVALID_CURRENCY", "Currency must be 2-4 uppercase letters");
@@ -52,10 +51,10 @@ public class AccountSetupUseCase {
     }
 
     @Transactional
-    public List<AccountResponse> createByAssociatedCurrencies(String mainAccount, List<String> currencies) {
-        List<AccountResponse> created = new ArrayList<>();
+    public List<LedgerAccountDtos.Response> createByAssociatedCurrencies(String mainAccount, List<String> currencies) {
+        List<LedgerAccountDtos.Response> created = new ArrayList<>();
         for (String currency : currencies) {
-            CreateLedgerAccountRequest req = new CreateLedgerAccountRequest(
+            LedgerAccountDtos.CreateRequest req = new LedgerAccountDtos.CreateRequest(
                 "10", "99", "00", "NA", mainAccount, commonService.getNextSubAccount(mainAccount),
                 currency.toUpperCase(), false);
             created.add(create(req));
@@ -64,13 +63,13 @@ public class AccountSetupUseCase {
     }
 
     @Transactional(readOnly = true)
-    public AccountResponse getOne(Long id) {
+    public LedgerAccountDtos.Response getOne(Long id) {
         return DtoMapper.toAccount(accounts.findById(id)
             .orElseThrow(() -> LedgerException.notFound("Account not found: " + id)));
     }
 
     @Transactional(readOnly = true)
-    public Page<AccountResponse> getAll(Pageable pageable) {
+    public Page<LedgerAccountDtos.Response> getAll(Pageable pageable) {
         return accounts.findAll(pageable).map(DtoMapper::toAccount);
     }
 

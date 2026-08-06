@@ -1,6 +1,11 @@
 package com.altech.ledger.service;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.fx.FxRateDtos;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.rule.RuleDtos;
+import com.altech.ledger.entity.dto.system.SystemDtos;
+import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.entity.po.accounting.Rule;
 import com.altech.ledger.entity.po.accounting.RuleExecution;
@@ -15,31 +20,31 @@ import java.util.List;
 public final class DtoWrapper {
     private DtoWrapper() {}
 
-    public static AccountResponse getLedgerAccountResponseDto(Account a) {
+    public static LedgerAccountDtos.Response getLedgerAccountResponseDto(Account a) {
         return DtoMapper.toAccount(a);
     }
 
-    public static WalletWithBalancesResponse getAccountBalanceResponseDto(Wallet w, List<Account> accounts) {
+    public static LedgerWalletDtos.WithBalancesResponse getAccountBalanceResponseDto(Wallet w, List<Account> accounts) {
         return DtoMapper.toWallet(w, accounts);
     }
 
-    public static MovementResponse getLedgerMovementResponseDto(LedgerMovement m) {
+    public static LedgerMovementDtos.Response getLedgerMovementResponseDto(LedgerMovement m) {
         return DtoMapper.toMovement(m);
     }
 
-    public static RuleResponse getRuleResponseDto(Rule r) {
+    public static RuleDtos.Response getRuleResponseDto(Rule r) {
         return DtoMapper.toRule(r);
     }
 
-    public static RuleExecutionResponse getRuleExecutionResponseDto(RuleExecution r) {
+    public static RuleDtos.ExecutionResponse getRuleExecutionResponseDto(RuleExecution r) {
         return DtoMapper.toRuleExecution(r);
     }
 
-    public static FxRateResponse getFxRateResponseDto(FxRate r) {
+    public static FxRateDtos.Response getFxRateResponseDto(FxRate r) {
         return DtoMapper.toFx(r);
     }
 
-    public static ConfigurationResponse getConfigurationResponseDto(SystemConfiguration c) {
+    public static SystemDtos.ConfigurationResponse getConfigurationResponseDto(SystemConfiguration c) {
         return DtoMapper.toConfig(c);
     }
 }

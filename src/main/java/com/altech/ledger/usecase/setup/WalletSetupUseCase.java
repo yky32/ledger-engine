@@ -1,6 +1,7 @@
 package com.altech.ledger.usecase.setup;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
@@ -35,22 +36,22 @@ public class WalletSetupUseCase {
      * main account (+ optional multi-ccy) then wallet.
      */
     @Transactional
-    public WalletWithBalancesResponse createFull(String ownerId, String mainCurrency,
+    public LedgerWalletDtos.WithBalancesResponse createFull(String ownerId, String mainCurrency,
                                                  List<String> extraCurrencies,
                                                  String extIdentifier, String extType) {
         String mainAccountNo = commonService.getNextMainAccount();
-        AccountResponse main = accountSetupUseCase.create(new CreateLedgerAccountRequest(
+        LedgerAccountDtos.Response main = accountSetupUseCase.create(new LedgerAccountDtos.CreateRequest(
             "10", "99", "00", "NA", mainAccountNo, "0000", mainCurrency.toUpperCase(), false));
         if (extraCurrencies != null && !extraCurrencies.isEmpty()) {
             accountSetupUseCase.createByAssociatedCurrencies(mainAccountNo, extraCurrencies);
         }
-        return create(new CreateLedgerWalletRequest(
+        return create(new LedgerWalletDtos.CreateRequest(
             main.id(), extIdentifier, extType, WalletAssociationType.CUSTODIAN,
             ownerId, mainCurrency.toUpperCase(), ownerId == null ? "NA" : ownerId));
     }
 
     @Transactional
-    public WalletWithBalancesResponse create(CreateLedgerWalletRequest dto) {
+    public LedgerWalletDtos.WithBalancesResponse create(LedgerWalletDtos.CreateRequest dto) {
         Account account = accounts.findById(dto.accountId())
             .orElseThrow(() -> LedgerException.notFound("Account not found: " + dto.accountId()));
 
@@ -75,13 +76,13 @@ public class WalletSetupUseCase {
     }
 
     @Transactional
-    public WalletWithBalancesResponse activate(Long id, LedgerWalletActivationRequest ignored) {
+    public LedgerWalletDtos.WithBalancesResponse activate(Long id, LedgerWalletDtos.ActivationRequest ignored) {
         // Standalone: no IDV client — activate immediately (parity endpoint retained)
         return markActive(id);
     }
 
     @Transactional
-    public WalletWithBalancesResponse markActive(Long id) {
+    public LedgerWalletDtos.WithBalancesResponse markActive(Long id) {
         Wallet wallet = wallet(id);
         wallet.setStatus(WalletStatus.ACTIVE);
         wallets.save(wallet);
@@ -89,7 +90,7 @@ public class WalletSetupUseCase {
     }
 
     @Transactional
-    public WalletWithBalancesResponse update(Long id, UpdateLedgerWalletRequest dto) {
+    public LedgerWalletDtos.WithBalancesResponse update(Long id, LedgerWalletDtos.UpdateRequest dto) {
         Wallet wallet = wallet(id);
         if (dto.status() != null) wallet.setStatus(dto.status());
         if (dto.accountId() != null) wallet.setAccountId(dto.accountId());

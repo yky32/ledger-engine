@@ -1,6 +1,6 @@
 package com.altech.ledger.usecase.account;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.rule.RuleDtos;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.accounting.RuleExecution;
 import com.altech.ledger.exception.LedgerException;
@@ -19,7 +19,7 @@ public class RuleExecutionUseCase {
     private final RuleExecutionRepository executions;
 
     @Transactional
-    public RuleExecutionResponse create(CreateRuleExecutionRequest dto) {
+    public RuleDtos.ExecutionResponse create(RuleDtos.CreateExecutionRequest dto) {
         if (executions.findByName(dto.name()).isPresent()) {
             throw LedgerException.conflict("RULE_EXECUTION_EXISTS", "Name exists: " + dto.name());
         }
@@ -28,25 +28,25 @@ public class RuleExecutionUseCase {
     }
 
     @Transactional(readOnly = true)
-    public RuleExecutionResponse getOne(Long id) {
+    public RuleDtos.ExecutionResponse getOne(Long id) {
         return DtoMapper.toRuleExecution(executions.findById(id)
             .orElseThrow(() -> LedgerException.notFound("RuleExecution not found: " + id)));
     }
 
     @Transactional(readOnly = true)
-    public Page<RuleExecutionResponse> getAll(Pageable pageable) {
+    public Page<RuleDtos.ExecutionResponse> getAll(Pageable pageable) {
         return executions.findAll(pageable).map(DtoMapper::toRuleExecution);
     }
 
     @Transactional(readOnly = true)
-    public RuleExecutionResponse fetchByOrderType(OrderType orderType) {
+    public RuleDtos.ExecutionResponse fetchByOrderType(OrderType orderType) {
         return findByOrderType(orderType)
             .orElseThrow(() -> LedgerException.notFound("No rule execution for " + orderType));
     }
 
     /** Soft lookup — does not throw (for execution path). */
     @Transactional(readOnly = true)
-    public java.util.Optional<RuleExecutionResponse> findByOrderType(OrderType orderType) {
+    public java.util.Optional<RuleDtos.ExecutionResponse> findByOrderType(OrderType orderType) {
         return executions.findAll().stream()
             .filter(r -> r.getOrderType() == orderType)
             .findFirst()

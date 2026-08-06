@@ -1,6 +1,5 @@
 package com.altech.ledger.endpoint.dashboard;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.DashboardResponse;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import com.altech.ledger.entity.dto.system.SystemDtos;
 
 @RestController
 @RequestMapping("/dashboards")
@@ -20,13 +20,13 @@ public class DashboardEndpoint {
     private final LedgerMovementRepository movements;
 
     @GetMapping
-    public DashboardResponse summary() {
+    public SystemDtos.DashboardResponse summary() {
         long open = movements.findAll().stream()
             .filter(m -> m.getStatus() != LedgerMovementStatus.SETTLED
                 && m.getStatus() != LedgerMovementStatus.REJECTED
                 && m.getStatus() != LedgerMovementStatus.ERROR)
             .count();
-        return new DashboardResponse(
+        return new SystemDtos.DashboardResponse(
             wallets.count(), accounts.count(), movements.count(), open);
     }
 }

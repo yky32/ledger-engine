@@ -1,6 +1,7 @@
 package com.altech.ledger.usecase.account;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
@@ -30,45 +31,45 @@ public class WalletAccountBalanceUseCase {
     private final FxRateRepository fxRates;
 
     @Transactional(readOnly = true)
-    public WalletWithBalancesResponse getOne(Long id, String fxTarget) {
+    public LedgerWalletDtos.WithBalancesResponse getOne(Long id, String fxTarget) {
         Wallet wallet = wallets.findById(id)
             .orElseThrow(() -> LedgerException.notFound("Wallet not found: " + id));
         return withFx(wallet, fxTarget);
     }
 
     @Transactional(readOnly = true)
-    public WalletWithBalancesResponse getByAlias(String alias, String fxTarget) {
+    public LedgerWalletDtos.WithBalancesResponse getByAlias(String alias, String fxTarget) {
         Wallet wallet = wallets.findByAlias(alias)
             .orElseThrow(() -> LedgerException.notFound("Wallet not found alias: " + alias));
         return withFx(wallet, fxTarget);
     }
 
     @Transactional(readOnly = true)
-    public WalletWithBalancesResponse getByExtIdentifier(String id, String type) {
+    public LedgerWalletDtos.WithBalancesResponse getByExtIdentifier(String id, String type) {
         Wallet wallet = wallets.findByExtIdentifierAndExtType(id, type)
             .orElseThrow(() -> LedgerException.notFound("Wallet not found ext: " + type + "/" + id));
         return withFx(wallet, null);
     }
 
     @Transactional(readOnly = true)
-    public Page<WalletWithBalancesResponse> getAll(Pageable pageable, String fxTarget) {
+    public Page<LedgerWalletDtos.WithBalancesResponse> getAll(Pageable pageable, String fxTarget) {
         return wallets.findAll(pageable).map(w -> withFx(w, fxTarget));
     }
 
     @Transactional(readOnly = true)
-    public List<WalletWithBalancesResponse> myWallets(String ownerId, String fxTarget) {
+    public List<LedgerWalletDtos.WithBalancesResponse> myWallets(String ownerId, String fxTarget) {
         return wallets.findByOwnerId(ownerId).stream().map(w -> withFx(w, fxTarget)).toList();
     }
 
     @Transactional(readOnly = true)
-    public AccountResponse findMyAccount(String ownerId, String currency) {
+    public LedgerAccountDtos.Response findMyAccount(String ownerId, String currency) {
         Wallet wallet = wallets.findByOwnerIdAndCurrency(ownerId, currency)
             .orElseThrow(() -> LedgerException.notFound("Wallet not found for " + ownerId + "/" + currency));
         return DtoMapper.toAccount(account(wallet.getAccountId()));
     }
 
     @Transactional(readOnly = true)
-    public AccountResponse find(Long walletId, String currency) {
+    public LedgerAccountDtos.Response find(Long walletId, String currency) {
         Wallet wallet = wallets.findById(walletId)
             .orElseThrow(() -> LedgerException.notFound("Wallet not found: " + walletId));
         Account primary = account(wallet.getAccountId());
@@ -82,43 +83,43 @@ public class WalletAccountBalanceUseCase {
     }
 
     @Transactional(readOnly = true)
-    public List<BalanceResponse> getAllBalances() {
+    public List<LedgerAccountDtos.BalanceResponse> getAllBalances() {
         return accounts.findAll().stream()
-            .map(a -> new BalanceResponse(a.getId(), a.getCurrency(), a.getLedgerBalance(),
+            .map(a -> new LedgerAccountDtos.BalanceResponse(a.getId(), a.getCurrency(), a.getLedgerBalance(),
                 a.getAvailableBalance(), null))
             .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<BalanceResponse> myBalances(String ownerId) {
-        List<BalanceResponse> result = new ArrayList<>();
+    public List<LedgerAccountDtos.BalanceResponse> myBalances(String ownerId) {
+        List<LedgerAccountDtos.BalanceResponse> result = new ArrayList<>();
         for (Wallet w : wallets.findByOwnerId(ownerId)) {
             Account primary = account(w.getAccountId());
             for (Account a : accounts.findAllByMainAccount(primary.getMainAccount())) {
-                result.add(new BalanceResponse(a.getId(), a.getCurrency(), a.getLedgerBalance(),
+                result.add(new LedgerAccountDtos.BalanceResponse(a.getId(), a.getCurrency(), a.getLedgerBalance(),
                     a.getAvailableBalance(), null));
             }
         }
         return result;
     }
 
-    private WalletWithBalancesResponse withFx(Wallet wallet, String fxTarget) {
+    private LedgerWalletDtos.WithBalancesResponse withFx(Wallet wallet, String fxTarget) {
         Account primary = account(wallet.getAccountId());
         List<Account> list = new ArrayList<>(accounts.findAllByMainAccount(primary.getMainAccount()));
-        WalletWithBalancesResponse base = DtoMapper.toWallet(wallet, list);
+        LedgerWalletDtos.WithBalancesResponse base = DtoMapper.toWallet(wallet, list);
         if (fxTarget == null || fxTarget.isBlank()) {
             return base;
         }
         // Display-only FX conversion attached via account list balances (no mutation)
         String target = fxTarget.toUpperCase();
-        List<AccountResponse> converted = base.accounts().stream().map(a -> {
+        List<LedgerAccountDtos.Response> converted = base.accounts().stream().map(a -> {
             BigDecimal fx = convert(a.ledgerBalance(), a.currency(), target);
-            return new AccountResponse(a.id(), a.fullNumber(), a.entity(), a.type(), a.subType(),
+            return new LedgerAccountDtos.Response(a.id(), a.fullNumber(), a.entity(), a.type(), a.subType(),
                 a.mainAccount(), a.subAccount(), a.buffer(), a.currency(),
                 a.ledgerBalance(), a.availableBalance(), a.status(), a.createDt(), a.updateDt());
         }).toList();
         // keep structure; conversion available via getAllBalances with rate if needed
-        return new WalletWithBalancesResponse(
+        return new LedgerWalletDtos.WithBalancesResponse(
             base.id(), base.alias(), base.accountId(), base.nickname(), base.extIdentifier(),
             base.extType(), base.type(), base.walletType(), base.status(), base.ownerId(),
             base.currency(), converted, base.createDt(), base.updateDt());

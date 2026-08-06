@@ -1,6 +1,6 @@
 package com.altech.ledger.endpoint.accounting;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.rule.RuleDtos;
 import com.altech.ledger.usecase.setup.RuleSetupUseCase;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -18,17 +18,18 @@ public class RuleEndpoint {
     private final RuleSetupUseCase useCase;
 
     @PostMapping
-    public RuleResponse create(@Valid @RequestBody CreateRuleRequest dto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public RuleDtos.Response create(@Valid @RequestBody RuleDtos.CreateRequest dto) {
         return useCase.create(dto);
     }
 
     @GetMapping("/{id}")
-    public RuleResponse getOne(@PathVariable Long id) {
+    public RuleDtos.Response getOne(@PathVariable Long id) {
         return useCase.getOne(id);
     }
 
     @GetMapping
-    public Page<RuleResponse> getAll(@PageableDefault(size = 50) Pageable pageable) {
+    public Page<RuleDtos.Response> getAll(@PageableDefault(size = 50) Pageable pageable) {
         return useCase.getAll(pageable);
     }
 }

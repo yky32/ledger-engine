@@ -1,7 +1,5 @@
 package com.altech.ledger.usecase;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.CreateFxRateRequest;
-import com.altech.ledger.entity.dto.parity.ParityDtos.FxRateResponse;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.FxRateRepository;
@@ -12,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import com.altech.ledger.entity.dto.fx.FxRateDtos;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +18,7 @@ public class FxRateSetupUseCase {
     private final FxRateRepository fxRates;
 
     @Transactional
-    public FxRateResponse create(CreateFxRateRequest dto) {
+    public FxRateDtos.Response create(FxRateDtos.CreateRequest dto) {
         String base = dto.base().toUpperCase();
         String target = dto.target().toUpperCase();
         if (fxRates.findByBaseAndTarget(base, target).isPresent()) {
@@ -29,7 +28,7 @@ public class FxRateSetupUseCase {
     }
 
     @Transactional
-    public FxRateResponse update(Long id, CreateFxRateRequest dto) {
+    public FxRateDtos.Response update(Long id, FxRateDtos.CreateRequest dto) {
         FxRate rate = fxRates.findById(id)
             .orElseThrow(() -> LedgerException.notFound("FxRate not found: " + id));
         rate.setBase(dto.base().toUpperCase());
@@ -39,13 +38,13 @@ public class FxRateSetupUseCase {
     }
 
     @Transactional(readOnly = true)
-    public FxRateResponse getOne(Long id) {
+    public FxRateDtos.Response getOne(Long id) {
         return DtoMapper.toFx(fxRates.findById(id)
             .orElseThrow(() -> LedgerException.notFound("FxRate not found: " + id)));
     }
 
     @Transactional(readOnly = true)
-    public Page<FxRateResponse> getAll(Pageable pageable) {
+    public Page<FxRateDtos.Response> getAll(Pageable pageable) {
         return fxRates.findAll(pageable).map(DtoMapper::toFx);
     }
 }

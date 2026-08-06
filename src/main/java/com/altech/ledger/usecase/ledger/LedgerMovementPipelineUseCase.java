@@ -1,6 +1,6 @@
 package com.altech.ledger.usecase.ledger;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,54 +20,54 @@ public class LedgerMovementPipelineUseCase {
     private final LedgerDepositUseCase depositUseCase;
 
     @Transactional
-    public MovementResponse deposit(CreateDepositRequest req) {
+    public LedgerMovementDtos.Response deposit(LedgerMovementDtos.CreateDepositRequest req) {
         return depositUseCase.execute(req);
     }
 
     @Transactional
-    public MovementResponse withdraw(CreateWithdrawalRequest req) {
+    public LedgerMovementDtos.Response withdraw(LedgerMovementDtos.CreateWithdrawalRequest req) {
         return shooter.doWithdrawal(req);
     }
 
     @Transactional
-    public MovementResponse inWalletTransfer(CreateInWalletTransferRequest req) {
+    public LedgerMovementDtos.Response inWalletTransfer(LedgerMovementDtos.CreateInWalletTransferRequest req) {
         return shooter.doInWalletTransfer(req);
     }
 
 
     @Transactional
-    public MovementResponse settle(Long id) {
+    public LedgerMovementDtos.Response settle(Long id) {
         return operationUseCase.settle(id);
     }
 
     @Transactional
-    public MovementResponse updateStatus(Long id, UpdateMovementStatusRequest req) {
+    public LedgerMovementDtos.Response updateStatus(Long id, LedgerMovementDtos.UpdateStatusRequest req) {
         return operationUseCase.update(id, req);
     }
 
 
     @Transactional
-    public MovementResponse updateDocuments(Long id, UpdateTransferDocumentsRequest req) {
+    public LedgerMovementDtos.Response updateDocuments(Long id, LedgerMovementDtos.UpdateDocumentsRequest req) {
         return operationUseCase.updateDocuments(id, req);
     }
 
     @Transactional(readOnly = true)
-    public MovementResponse getOne(Long id) {
+    public LedgerMovementDtos.Response getOne(Long id) {
         return queryUseCase.getOne(id);
     }
 
     @Transactional(readOnly = true)
-    public Page<MovementResponse> getAll(Pageable pageable) {
+    public Page<LedgerMovementDtos.Response> getAll(Pageable pageable) {
         return queryUseCase.getAll(pageable, null, null, null);
     }
 
     @Transactional(readOnly = true)
-    public Page<MovementResponse> myMovements(String ownerId, Pageable pageable) {
+    public Page<LedgerMovementDtos.Response> myMovements(String ownerId, Pageable pageable) {
         return queryUseCase.myMovements(ownerId, pageable, null, null, null);
     }
 
     @Transactional(readOnly = true)
-    public Page<MovementResponse> byWallet(Long walletId, Pageable pageable) {
+    public Page<LedgerMovementDtos.Response> byWallet(Long walletId, Pageable pageable) {
         return queryUseCase.byWallet(walletId, pageable);
     }
 }

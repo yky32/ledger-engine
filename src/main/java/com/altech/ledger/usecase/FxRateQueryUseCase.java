@@ -1,6 +1,5 @@
 package com.altech.ledger.usecase;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.FxRateResponse;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.FxRateRepository;
@@ -15,6 +14,7 @@ import java.math.RoundingMode;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import com.altech.ledger.entity.dto.fx.FxRateDtos;
 
 /**
  * Port of the-wallet-ledger FxRateQueryUseCase.
@@ -25,16 +25,16 @@ public class FxRateQueryUseCase {
     private final FxRateRepository fxRates;
 
     @Transactional(readOnly = true)
-    public FxRateResponse getOne(Long id) {
+    public FxRateDtos.Response getOne(Long id) {
         return DtoMapper.toFx(fxRates.findById(id)
             .orElseThrow(() -> LedgerException.notFound("FxRate not found: " + id)));
     }
 
     @Transactional(readOnly = true)
-    public Page<FxRateResponse> getAll(Pageable pageable, String base, String target) {
+    public Page<FxRateDtos.Response> getAll(Pageable pageable, String base, String target) {
         if (base != null && target != null) {
             return fxRates.findByBaseAndTarget(base.toUpperCase(), target.toUpperCase())
-                .<Page<FxRateResponse>>map(r -> new org.springframework.data.domain.PageImpl<>(
+                .<Page<FxRateDtos.Response>>map(r -> new org.springframework.data.domain.PageImpl<>(
                     java.util.List.of(DtoMapper.toFx(r)), pageable, 1))
                 .orElseGet(() -> Page.empty(pageable));
         }

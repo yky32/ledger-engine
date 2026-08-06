@@ -1,6 +1,5 @@
 package com.altech.ledger.listener.usecase;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.WalletWithBalancesResponse;
 import com.altech.ledger.usecase.setup.WalletSetupUseCase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
 
 /**
  * Port of WalletAccountSetupListener — WALLET_CREATED → create accounts + wallet.
@@ -44,7 +44,7 @@ public class WalletAccountSetupListener {
             if (node.has("accountCurrencies") && node.get("accountCurrencies").isArray()) {
                 node.get("accountCurrencies").forEach(c -> extras.add(c.asText()));
             }
-            WalletWithBalancesResponse created = walletSetupUseCase.createFull(
+            LedgerWalletDtos.WithBalancesResponse created = walletSetupUseCase.createFull(
                 ownerId, currency, extras, extId, extType);
             log.info("WALLET_CREATED processed walletId={}", created.id());
         } catch (Exception ex) {

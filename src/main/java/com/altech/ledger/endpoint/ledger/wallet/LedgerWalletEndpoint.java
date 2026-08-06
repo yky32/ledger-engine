@@ -1,6 +1,6 @@
 package com.altech.ledger.endpoint.ledger.wallet;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
 import com.altech.ledger.usecase.MyWalletUseCase;
 import com.altech.ledger.usecase.account.WalletAccountBalanceUseCase;
 import com.altech.ledger.usecase.setup.WalletSetupUseCase;
@@ -25,14 +25,14 @@ public class LedgerWalletEndpoint {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public WalletWithBalancesResponse create(@Valid @RequestBody CreateLedgerWalletRequest dto) {
+    public LedgerWalletDtos.WithBalancesResponse create(@Valid @RequestBody LedgerWalletDtos.CreateRequest dto) {
         return walletSetupUseCase.create(dto);
     }
 
     /** Convenience: create main account + wallet (legacy associatedWithAccountsCreation). */
     @PostMapping("/full")
     @ResponseStatus(HttpStatus.CREATED)
-    public WalletWithBalancesResponse createFull(
+    public LedgerWalletDtos.WithBalancesResponse createFull(
         @RequestParam String ownerId,
         @RequestParam String currency,
         @RequestParam(required = false) String extIdentifier,
@@ -43,24 +43,24 @@ public class LedgerWalletEndpoint {
     }
 
     @PostMapping("/{id}/activations")
-    public WalletWithBalancesResponse activate(
+    public LedgerWalletDtos.WithBalancesResponse activate(
         @PathVariable Long id,
-        @RequestBody(required = false) LedgerWalletActivationRequest dto
+        @RequestBody(required = false) LedgerWalletDtos.ActivationRequest dto
     ) {
         return walletSetupUseCase.activate(id, dto == null
-            ? new LedgerWalletActivationRequest(null, null) : dto);
+            ? new LedgerWalletDtos.ActivationRequest(null, null) : dto);
     }
 
     @PutMapping("/{id}/statuses")
-    public WalletWithBalancesResponse updateStatuses(
+    public LedgerWalletDtos.WithBalancesResponse updateStatuses(
         @PathVariable Long id,
-        @Valid @RequestBody UpdateLedgerWalletRequest putDto
+        @Valid @RequestBody LedgerWalletDtos.UpdateRequest putDto
     ) {
         return walletSetupUseCase.update(id, putDto);
     }
 
     @GetMapping("/{id}")
-    public WalletWithBalancesResponse getOne(
+    public LedgerWalletDtos.WithBalancesResponse getOne(
         @PathVariable Long id,
         @RequestParam(required = false) String fxTarget
     ) {
@@ -68,7 +68,7 @@ public class LedgerWalletEndpoint {
     }
 
     @GetMapping
-    public Page<WalletWithBalancesResponse> getAll(
+    public Page<LedgerWalletDtos.WithBalancesResponse> getAll(
         @PageableDefault(size = 50) Pageable pageable,
         @RequestParam(required = false) String fxTarget
     ) {
@@ -76,7 +76,7 @@ public class LedgerWalletEndpoint {
     }
 
     @GetMapping("/my-wallets")
-    public List<WalletWithBalancesResponse> myWallets(
+    public List<LedgerWalletDtos.WithBalancesResponse> myWallets(
         @RequestParam String ownerId,
         @RequestParam(required = false) String fxTarget
     ) {
@@ -87,7 +87,7 @@ public class LedgerWalletEndpoint {
     }
 
     @GetMapping("/ext/{type}/{id}")
-    public WalletWithBalancesResponse getByExtIdentifier(
+    public LedgerWalletDtos.WithBalancesResponse getByExtIdentifier(
         @PathVariable String type,
         @PathVariable String id
     ) {

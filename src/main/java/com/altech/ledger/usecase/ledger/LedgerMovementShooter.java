@@ -1,7 +1,7 @@
 package com.altech.ledger.usecase.ledger;
 
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
-import com.altech.ledger.entity.dto.parity.ParityDtos.*;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.*;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
@@ -30,7 +30,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     }
 
     @Transactional
-    public MovementResponse doDeposit(CreateDepositRequest req) {
+    public LedgerMovementDtos.Response doDeposit(LedgerMovementDtos.CreateDepositRequest req) {
         String target = req.resolvedTargetWalletId();
         if (target == null || target.isBlank()) {
             throw LedgerException.badRequest("MISSING_TARGET", "targetWalletId or targetId required");
@@ -48,7 +48,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     }
 
     @Transactional
-    public MovementResponse doWithdrawal(CreateWithdrawalRequest req) {
+    public LedgerMovementDtos.Response doWithdrawal(LedgerMovementDtos.CreateWithdrawalRequest req) {
         String origin = req.resolvedOriginatorWalletId();
         if (origin == null || origin.isBlank()) {
             throw LedgerException.badRequest("MISSING_ORIGINATOR", "originatorWalletId or originatorId required");
@@ -66,7 +66,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     }
 
     @Transactional
-    public MovementResponse doInWalletTransfer(CreateInWalletTransferRequest req) {
+    public LedgerMovementDtos.Response doInWalletTransfer(LedgerMovementDtos.CreateInWalletTransferRequest req) {
         Wallet from = walletService.resolve(req.fromWalletId());
         Wallet to = walletService.resolve(req.toWalletId());
         requireActive(from);
@@ -83,7 +83,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
 
 
     @Transactional
-    public MovementResponse doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
+    public LedgerMovementDtos.Response doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
                                        String currency, String movementKey, String description) {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);

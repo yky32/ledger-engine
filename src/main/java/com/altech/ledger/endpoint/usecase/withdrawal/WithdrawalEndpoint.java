@@ -1,13 +1,12 @@
 package com.altech.ledger.endpoint.usecase.withdrawal;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.CreateWithdrawalRequest;
-import com.altech.ledger.entity.dto.parity.ParityDtos.MovementResponse;
 import com.altech.ledger.usecase.ledger.LedgerMovementPipelineUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,7 +15,7 @@ public class WithdrawalEndpoint {
 
     @PostMapping("/ledger/withdrawals")
     @ResponseStatus(HttpStatus.CREATED)
-    public MovementResponse withdraw(@Valid @RequestBody CreateWithdrawalRequest dto) {
+    public LedgerMovementDtos.Response withdraw(@Valid @RequestBody LedgerMovementDtos.CreateWithdrawalRequest dto) {
         return pipeline.withdraw(dto);
     }
 }

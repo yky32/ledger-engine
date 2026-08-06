@@ -1,6 +1,5 @@
 package com.altech.ledger.endpoint.ledger.movement;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.MovementResponse;
 import com.altech.ledger.usecase.ledger.LedgerMovementQueryUseCase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
 
 @RestController
 @RequestMapping("/ledger-accounts/movements")
@@ -20,12 +20,12 @@ public class LedgerMovementQueryEndpoint {
     private final LedgerMovementQueryUseCase queryUseCase;
 
     @GetMapping("/{id}")
-    public MovementResponse getOne(@PathVariable Long id) {
+    public LedgerMovementDtos.Response getOne(@PathVariable Long id) {
         return queryUseCase.getOne(id);
     }
 
     @GetMapping
-    public Page<MovementResponse> getAll(
+    public Page<LedgerMovementDtos.Response> getAll(
         @PageableDefault(size = 50) Pageable pageable,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDt,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDt,
@@ -35,7 +35,7 @@ public class LedgerMovementQueryEndpoint {
     }
 
     @GetMapping("/my-movements")
-    public Page<MovementResponse> myMovements(
+    public Page<LedgerMovementDtos.Response> myMovements(
         @RequestParam String ownerId,
         @PageableDefault(size = 50) Pageable pageable,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDt,

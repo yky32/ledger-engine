@@ -1,7 +1,5 @@
 package com.altech.ledger.usecase.ledger;
 
-import com.altech.ledger.entity.dto.parity.ParityDtos.CreateDepositRequest;
-import com.altech.ledger.entity.dto.parity.ParityDtos.MovementResponse;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.service.PaymentRailPort;
 import org.springframework.stereotype.Service;
@@ -11,6 +9,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
+import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
 
 /**
  * Port of the-wallet-ledger LedgerDepositUseCase (bank auto + card session + webhook).
@@ -22,7 +21,7 @@ public class LedgerDepositUseCase {
     private final PaymentRailPort paymentRailPort;
 
     @Transactional
-    public MovementResponse execute(CreateDepositRequest dto) {
+    public LedgerMovementDtos.Response execute(LedgerMovementDtos.CreateDepositRequest dto) {
         return shooter.doDeposit(dto);
     }
 
@@ -43,14 +42,14 @@ public class LedgerDepositUseCase {
      * GrandPay-style deposit callback (flexible payload keys).
      */
     @Transactional
-    public MovementResponse webhookCallback(Map<String, Object> payload) {
+    public LedgerMovementDtos.Response webhookCallback(Map<String, Object> payload) {
         String walletId = first(payload, "targetWalletId", "walletId", "targetId");
         String currency = first(payload, "currency", "ccy");
         if (currency == null) currency = "USD";
         String amountStr = first(payload, "amount", "txnAmount", "value");
         BigDecimal amount = new BigDecimal(amountStr == null ? "0" : amountStr);
         String movementKey = first(payload, "movementKey", "eventId", "txnId", "id");
-        return shooter.doDeposit(new CreateDepositRequest(
+        return shooter.doDeposit(new LedgerMovementDtos.CreateDepositRequest(
             walletId, currency, amount, LedgerMovementMode.AUTO, null, movementKey,
             "webhook deposit", payload));
     }
