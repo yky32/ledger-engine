@@ -1,5 +1,7 @@
 # Ledger Engine
 
+**Version `1.0.0`** — production baseline paired with [ledger-engine-sdk](https://github.com/yky32/ledger-engine-sdk) `1.0.0` (first client: UAfinance).
+
 A standalone Java 17/Spring Boot double-entry ledger core for customer wallets and balances. It owns ledger
 accounts, immutable journal entries, posting, derived balances, idempotency, and reversals.
 
@@ -11,7 +13,7 @@ pattern used in TGT services (e.g. `tgt.profile-service`, `sample-service`).
 
 ```bash
 mvn clean package
-java -jar target/ledger-engine-0.1.0-SNAPSHOT.jar
+java -jar target/ledger-engine-1.0.0.jar
 mvn spring-boot:run
 ```
 
