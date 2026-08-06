@@ -13,20 +13,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/ledger-wallets")
+@RequiredArgsConstructor
 public class LedgerWalletEndpoint {
     private final WalletSetupUseCase walletSetupUseCase;
     private final WalletAccountBalanceUseCase balanceUseCase;
     private final MyWalletUseCase myWalletUseCase;
-
-    public LedgerWalletEndpoint(WalletSetupUseCase walletSetupUseCase,
-                                WalletAccountBalanceUseCase balanceUseCase,
-                                MyWalletUseCase myWalletUseCase) {
-        this.walletSetupUseCase = walletSetupUseCase;
-        this.balanceUseCase = balanceUseCase;
-        this.myWalletUseCase = myWalletUseCase;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

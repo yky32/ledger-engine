@@ -8,15 +8,14 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class TransactionRuleEngine {
     public enum Operation { EARN, BURN, PROCESS }
 
     private final IntegrationProperties properties;
-
-    public TransactionRuleEngine(IntegrationProperties properties) {
-        this.properties = properties;
-    }
 
     public Optional<RuleDecision> evaluate(TransactionalEvent event) {
         for (IntegrationProperties.TransactionRule rule : properties.getRules()) {

@@ -39,15 +39,8 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         requireActive(wallet);
         String key = key(req.movementKey(), "dep");
         return movements().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
-            // Prefer explicit targetId when it differs (e.g. linked bank) so execution can skip wallet credit
-            String movementTarget = String.valueOf(wallet.getId());
-            if (req.targetId() != null && !req.targetId().isBlank()
-                && !req.targetId().equals(String.valueOf(wallet.getId()))
-                && !req.targetId().equals(target)) {
-                movementTarget = req.targetId();
-            }
             LedgerMovement m = newMovement(key, wallet.getId(), OrderType.DEPOSIT, req.mode(),
-                req.originatorId(), movementTarget, req.amount(),
+                req.originatorId(), String.valueOf(wallet.getId()), req.amount(),
                 req.currency().toUpperCase(), req.description());
             movements().save(m);
             return DtoMapper.toMovement(execute(m));
@@ -88,20 +81,6 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         });
     }
 
-    @Transactional
-    public MovementResponse doSwiftTransfer(CreateSwiftTransferRequest req) {
-        Wallet from = walletService.resolve(req.fromWalletId());
-        requireActive(from);
-        String key = key(req.movementKey(), "swift");
-        return movements().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
-            LedgerMovement m = newMovement(key, from.getId(), OrderType.SWIFT_TRANSFER, req.mode(),
-                String.valueOf(from.getId()), req.targetId(), req.amount(),
-                req.currency().toUpperCase(), req.description());
-            m.setFiles(req.documents());
-            movements().save(m);
-            return DtoMapper.toMovement(execute(m));
-        });
-    }
 
     @Transactional
     public MovementResponse doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,

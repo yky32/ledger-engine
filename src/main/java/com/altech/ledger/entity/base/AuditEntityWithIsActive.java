@@ -3,10 +3,11 @@ package com.altech.ledger.entity.base;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
+import lombok.Getter;
+import lombok.Setter;
 
-/**
- * Port of {@code com.altech.core.entity.AuditEntityWithIsActive} (standalone, no app-core).
- */
+@Getter
+@Setter
 @MappedSuperclass
 public abstract class AuditEntityWithIsActive extends AuditEntity {
 
@@ -18,13 +19,5 @@ public abstract class AuditEntityWithIsActive extends AuditEntity {
         if (isActive == null) {
             isActive = true;
         }
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
     }
 }

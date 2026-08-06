@@ -14,21 +14,19 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of WalletAccountSetupListener — WALLET_CREATED → create accounts + wallet.
  */
 @Component
 @ConditionalOnProperty(prefix = "ledger.movement.kafka", name = "enabled", havingValue = "true")
+@RequiredArgsConstructor
 public class WalletAccountSetupListener {
     private static final Logger log = LoggerFactory.getLogger(WalletAccountSetupListener.class);
 
     private final ObjectMapper objectMapper;
     private final WalletSetupUseCase walletSetupUseCase;
-
-    public WalletAccountSetupListener(ObjectMapper objectMapper, WalletSetupUseCase walletSetupUseCase) {
-        this.objectMapper = objectMapper;
-        this.walletSetupUseCase = walletSetupUseCase;
-    }
 
     @KafkaListener(
         topics = "${ledger.movement.kafka.wallet-created-topic:ledger.wallet.created}",

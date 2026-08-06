@@ -6,13 +6,12 @@ import com.altech.ledger.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class WalletService {
     private final WalletRepository wallets;
-
-    public WalletService(WalletRepository wallets) {
-        this.wallets = wallets;
-    }
 
     @Transactional(readOnly = true)
     public Wallet get(Long id) {

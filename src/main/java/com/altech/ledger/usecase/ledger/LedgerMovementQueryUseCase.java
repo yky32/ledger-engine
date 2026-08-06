@@ -20,18 +20,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of the-wallet-ledger LedgerMovementQueryUseCase.
  */
 @Service
+@RequiredArgsConstructor
 public class LedgerMovementQueryUseCase {
     private final LedgerMovementRepository movements;
     private final WalletRepository wallets;
-
-    public LedgerMovementQueryUseCase(LedgerMovementRepository movements, WalletRepository wallets) {
-        this.movements = movements;
-        this.wallets = wallets;
-    }
 
     @Transactional(readOnly = true)
     public MovementResponse getOne(Long id) {

@@ -11,13 +11,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class FxRateSetupUseCase {
     private final FxRateRepository fxRates;
-
-    public FxRateSetupUseCase(FxRateRepository fxRates) {
-        this.fxRates = fxRates;
-    }
 
     @Transactional
     public FxRateResponse create(CreateFxRateRequest dto) {

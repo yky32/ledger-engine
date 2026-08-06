@@ -11,17 +11,14 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/ledger-accounts")
+@RequiredArgsConstructor
 public class LedgerAccountEndpoint {
     private final AccountSetupUseCase accountSetupUseCase;
     private final AccountOperationUseCase accountOperationUseCase;
-
-    public LedgerAccountEndpoint(AccountSetupUseCase accountSetupUseCase,
-                                 AccountOperationUseCase accountOperationUseCase) {
-        this.accountSetupUseCase = accountSetupUseCase;
-        this.accountOperationUseCase = accountOperationUseCase;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

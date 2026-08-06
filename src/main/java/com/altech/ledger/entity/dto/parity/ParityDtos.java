@@ -182,29 +182,8 @@ public final class ParityDtos {
         }
     }
 
-    public record CreateSwiftTransferRequest(
-        @NotBlank String fromWalletId,
-        @NotBlank String targetId,
-        @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
-        @NotNull BigDecimal amount,
-        LedgerMovementMode mode,
-        String movementKey,
-        String description,
-        String documents
-    ) {
-        public CreateSwiftTransferRequest {
-            if (mode == null) mode = LedgerMovementMode.MANUAL;
-        }
-    }
-
     public record UpdateMovementStatusRequest(
         @NotNull LedgerMovementStatus status,
-        String remarks
-    ) {}
-
-    public record UpdateComplianceRequest(
-        String complianceContext,
-        String files,
         String remarks
     ) {}
 
@@ -261,88 +240,6 @@ public final class ParityDtos {
 
     public record RuleExecutionResponse(
         Long id, String name, String description, OrderType orderType, String metadata, Instant createDt
-    ) {}
-
-    // ---- Recipients / banks / PM ----
-    public record CreateRecipientRequest(
-        RecipientTransferChannel transferChannel,
-        RecipientStatus status,
-        String metadata,
-        Long tenantId
-    ) {}
-
-    public record UpdateRecipientRequest(
-        RecipientStatus status,
-        RecipientTransferChannel transferChannel,
-        String metadata
-    ) {}
-
-    public record RecipientResponse(
-        Long id, Long tenantId, RecipientTransferChannel transferChannel,
-        RecipientStatus status, String metadata, Instant createDt
-    ) {}
-
-    public record CreateLinkedBankAccountRequest(
-        RecipientStatus status,
-        String metadata,
-        Long tenantId
-    ) {}
-
-    public record UpdateLinkedBankAccountRequest(
-        RecipientStatus status,
-        String metadata
-    ) {}
-
-    public record LinkedBankAccountResponse(
-        Long id, Long tenantId, RecipientStatus status, String metadata, Instant createDt
-    ) {}
-
-    public record CreatePaymentMethodRequest(
-        @NotNull PaymentMethodType type,
-        PaymentMethodStatus status,
-        String metadata,
-        String tokenizationValue,
-        String tokenizationProvider
-    ) {}
-
-    public record PaymentMethodResponse(
-        Long id, Long walletId, PaymentMethodType type, PaymentMethodStatus status,
-        String metadata, String tokenizationValue, String tokenizationProvider, String hash, Instant createDt
-    ) {}
-
-    // ---- Virtual accounts ----
-    public record CreateVirtualAccountApplicationRequest(
-        @NotNull VirtualAccountType type,
-        String extIdentifier,
-        String extType,
-        String remark,
-        String metadata
-    ) {}
-
-    public record PatchVirtualAccountApplicationStatusRequest(
-        @NotNull VirtualAccountApplicationStatus status,
-        String remark
-    ) {}
-
-    public record PatchVirtualAccountApplicationMetadataRequest(
-        String metadata
-    ) {}
-
-    public record VirtualAccountApplicationResponse(
-        Long id, VirtualAccountApplicationStatus status, VirtualAccountType type,
-        String extIdentifier, String extType, String remark, String metadata,
-        Long virtualAccountId, Instant createDt
-    ) {}
-
-    public record VirtualAccountResponse(
-        Long id, String extIdentifier, String extType, VirtualAccountStatus status,
-        String nickName, VirtualAccountType type, String metadata,
-        List<VirtualSubAccountResponse> subAccounts, Instant createDt
-    ) {}
-
-    public record VirtualSubAccountResponse(
-        Long id, String currency, AccountStatus status,
-        BigDecimal ledgerBalance, BigDecimal availableBalance
     ) {}
 
     // ---- FX / config / dashboard ----

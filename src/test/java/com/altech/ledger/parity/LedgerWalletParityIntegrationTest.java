@@ -94,7 +94,7 @@ class LedgerWalletParityIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray());
 
-        // fx + rules + recipients smoke
+        // fx + rules smoke
         mockMvc.perform(post("/fx-rates")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -109,34 +109,9 @@ class LedgerWalletParityIntegrationTest {
                     """))
             .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/recipients")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"transferChannel":"SWIFT","status":"ACTIVE","tenantId":1,"metadata":"{}"}
-                    """))
-            .andExpect(status().isCreated());
-
         mockMvc.perform(get("/dashboards"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.walletCount").isNumber());
-
-        // VA application
-        MvcResult vaApp = mockMvc.perform(post("/virtual-accounts/applications")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"type":"HONG_KONG","extIdentifier":"VA-1","extType":"tenant"}
-                    """))
-            .andExpect(status().isCreated())
-            .andReturn();
-        long appId = objectMapper.readTree(vaApp.getResponse().getContentAsString()).get("id").asLong();
-        mockMvc.perform(patch("/virtual-accounts/applications/" + appId + "/status")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"status":"APPROVED"}
-                    """))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("APPROVED"))
-            .andExpect(jsonPath("$.virtualAccountId").isNumber());
 
         assertThat(walletAId).isPositive();
     }

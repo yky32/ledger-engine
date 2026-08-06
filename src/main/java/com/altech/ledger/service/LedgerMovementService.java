@@ -6,13 +6,12 @@ import com.altech.ledger.repository.LedgerMovementRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class LedgerMovementService {
     private final LedgerMovementRepository movements;
-
-    public LedgerMovementService(LedgerMovementRepository movements) {
-        this.movements = movements;
-    }
 
     @Transactional(readOnly = true)
     public LedgerMovement get(Long id) {

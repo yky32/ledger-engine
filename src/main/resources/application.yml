@@ -25,7 +25,6 @@ ledger:
       done-topic: ledger.movement.done
       balance-update-topic: ledger.movement.balance-update
       wallet-created-topic: ledger.wallet.created
-      recipient-created-topic: ledger.recipient.created
       group-id: ledger-engine-movement
   integration:
     enabled: true
@@ -57,3 +56,17 @@ ledger:
         min-amount: 1
         point-currency: LP
         formula: AMOUNT
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

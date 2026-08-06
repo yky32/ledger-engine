@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.ledger;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.base.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.AccountStatus;
 import jakarta.persistence.*;
@@ -24,6 +27,8 @@ import java.math.BigDecimal;
         @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
     }
 )
+@Getter
+@Setter
 public class Account extends AuditEntityWithIsActive {
 
     @Id
@@ -87,106 +92,6 @@ public class Account extends AuditEntityWithIsActive {
         this.ledgerBalance = BigDecimal.ZERO;
         this.availableBalance = BigDecimal.ZERO;
         this.status = AccountStatus.ACTIVE;
-        this.allowNegative = allowNegative;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getFullNumber() {
-        return fullNumber;
-    }
-
-    public void setFullNumber(String fullNumber) {
-        this.fullNumber = fullNumber;
-    }
-
-    public String getEntity() {
-        return entity;
-    }
-
-    public void setEntity(String entity) {
-        this.entity = entity;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getSubType() {
-        return subType;
-    }
-
-    public void setSubType(String subType) {
-        this.subType = subType;
-    }
-
-    public String getMainAccount() {
-        return mainAccount;
-    }
-
-    public void setMainAccount(String mainAccount) {
-        this.mainAccount = mainAccount;
-    }
-
-    public String getSubAccount() {
-        return subAccount;
-    }
-
-    public void setSubAccount(String subAccount) {
-        this.subAccount = subAccount;
-    }
-
-    public String getBuffer() {
-        return buffer;
-    }
-
-    public void setBuffer(String buffer) {
-        this.buffer = buffer;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public BigDecimal getLedgerBalance() {
-        return ledgerBalance;
-    }
-
-    public void setLedgerBalance(BigDecimal ledgerBalance) {
-        this.ledgerBalance = ledgerBalance;
-    }
-
-    public BigDecimal getAvailableBalance() {
-        return availableBalance;
-    }
-
-    public void setAvailableBalance(BigDecimal availableBalance) {
-        this.availableBalance = availableBalance;
-    }
-
-    public AccountStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(AccountStatus status) {
-        this.status = status;
-    }
-
-    public boolean isAllowNegative() {
-        return allowNegative;
-    }
-
-    public void setAllowNegative(boolean allowNegative) {
         this.allowNegative = allowNegative;
     }
 }

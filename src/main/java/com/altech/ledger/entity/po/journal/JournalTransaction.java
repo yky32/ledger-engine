@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.journal;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -13,6 +16,8 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "journal_transaction")
+@Getter
+@Setter
 public class JournalTransaction {
     public enum Status { POSTED, REVERSED }
 
@@ -61,42 +66,6 @@ public class JournalTransaction {
 
     public void markReversed() {
         status = Status.REVERSED;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getIdempotencyKey() {
-        return idempotencyKey;
-    }
-
-    public String getRequestHash() {
-        return requestHash;
-    }
-
-    public String getReference() {
-        return reference;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public Instant getEffectiveAt() {
-        return effectiveAt;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public JournalTransaction getReversalOf() {
-        return reversalOf;
     }
 
     public List<JournalEntry> getEntries() {

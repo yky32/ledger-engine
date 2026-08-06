@@ -8,13 +8,12 @@ import com.altech.ledger.service.DtoMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class SystemConfigurationUseCase {
     private final SystemConfigurationRepository configs;
-
-    public SystemConfigurationUseCase(SystemConfigurationRepository configs) {
-        this.configs = configs;
-    }
 
     @Transactional(readOnly = true)
     public ConfigurationResponse myConfigurations(String target, String scope) {

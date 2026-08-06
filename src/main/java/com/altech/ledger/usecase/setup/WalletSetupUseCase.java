@@ -19,23 +19,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class WalletSetupUseCase {
     private final AccountRepository accounts;
     private final WalletRepository wallets;
     private final AccountSetupUseCase accountSetupUseCase;
     private final CommonService commonService;
     private final WalletAccountBalanceUseCase balanceUseCase;
-
-    public WalletSetupUseCase(AccountRepository accounts, WalletRepository wallets,
-                              AccountSetupUseCase accountSetupUseCase, CommonService commonService,
-                              WalletAccountBalanceUseCase balanceUseCase) {
-        this.accounts = accounts;
-        this.wallets = wallets;
-        this.accountSetupUseCase = accountSetupUseCase;
-        this.commonService = commonService;
-        this.balanceUseCase = balanceUseCase;
-    }
 
     /**
      * Full wallet create like legacy associatedWithAccountsCreation + create:

@@ -75,34 +75,7 @@ class DeepParityIntegrationTest {
     }
 
     @Test
-    void linkedBankDepositSkipsWalletCredit() throws Exception {
-        long walletId = createAndActivate("LB-OWNER", "USD");
-
-        MvcResult bank = mockMvc.perform(post("/linked-bank-accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"status":"ACTIVE","tenantId":1,"metadata":"{}"}
-                    """))
-            .andExpect(status().isCreated())
-            .andReturn();
-        long bankId = objectMapper.readTree(bank.getResponse().getContentAsString()).get("id").asLong();
-
-        // targetWalletId = wallet (belong-to), targetId = linked bank → skip wallet credit
-        mockMvc.perform(post("/ledger/deposits")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"targetWalletId":"%s","targetId":"%s","currency":"USD","amount":99.00,"mode":"AUTO","movementKey":"lb-dep-1"}
-                    """.formatted(walletId, bankId)))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value("SETTLED"));
-
-        mockMvc.perform(get("/ledger-wallets/" + walletId))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accounts[0].ledgerBalance").value(0.0));
-    }
-
-    @Test
-    void movementStatusFilterAndWalletApplication() throws Exception {
+    void movementStatusFilter() throws Exception {
         long walletId = createAndActivate("FILTER-OWNER", "USD");
         mockMvc.perform(post("/ledger/deposits")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -116,20 +89,6 @@ class DeepParityIntegrationTest {
                 .param("statuses", "SETTLED"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray());
-
-        MvcResult app = mockMvc.perform(post("/ledger-wallet-applications")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"extIdentifier":"APP-USER-1","extType":"tenant","alias":"app1"}
-                    """))
-            .andExpect(status().isCreated())
-            .andReturn();
-        long appId = objectMapper.readTree(app.getResponse().getContentAsString()).get("id").asLong();
-
-        mockMvc.perform(post("/ledger-wallet-applications/" + appId + "/complete")
-                .param("currency", "USD"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
 
     @Test

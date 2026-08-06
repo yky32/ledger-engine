@@ -15,13 +15,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
+@RequiredArgsConstructor
 public class DepositEndpoint {
     private final LedgerDepositUseCase depositUseCase;
-
-    public DepositEndpoint(LedgerDepositUseCase depositUseCase) {
-        this.depositUseCase = depositUseCase;
-    }
 
     @PostMapping("/ledger/deposits")
     @ResponseStatus(HttpStatus.CREATED)

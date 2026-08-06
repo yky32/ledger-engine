@@ -11,16 +11,14 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/fx-rates")
+@RequiredArgsConstructor
 public class FxRateEndpoint {
     private final FxRateSetupUseCase setupUseCase;
     private final FxRateQueryUseCase queryUseCase;
-
-    public FxRateEndpoint(FxRateSetupUseCase setupUseCase, FxRateQueryUseCase queryUseCase) {
-        this.setupUseCase = setupUseCase;
-        this.queryUseCase = queryUseCase;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

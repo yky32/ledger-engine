@@ -12,13 +12,12 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
+@RequiredArgsConstructor
 public class LedgerEndpoint {
     private final LedgerUseCase useCase;
-
-    public LedgerEndpoint(LedgerUseCase useCase) {
-        this.useCase = useCase;
-    }
 
     @PostMapping("/accounts")
     public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {

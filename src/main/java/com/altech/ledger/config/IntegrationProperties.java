@@ -1,11 +1,15 @@
 package com.altech.ledger.config;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 @ConfigurationProperties(prefix = "ledger.integration")
 public class IntegrationProperties {
     private boolean enabled = true;
@@ -18,33 +22,8 @@ public class IntegrationProperties {
     private String withdrawalClearingRefTemplate = "pool:clearing-withdrawal:{currency}";
     private List<TransactionRule> rules = new ArrayList<>();
 
-    public boolean isEnabled() { return enabled; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public boolean isProgramSetupEnabled() { return programSetupEnabled; }
-    public void setProgramSetupEnabled(boolean programSetupEnabled) { this.programSetupEnabled = programSetupEnabled; }
-    public List<String> getProgramCurrencies() { return programCurrencies; }
-    public void setProgramCurrencies(List<String> programCurrencies) { this.programCurrencies = programCurrencies; }
-    public String getWalletRefTemplate() { return walletRefTemplate; }
-    public void setWalletRefTemplate(String walletRefTemplate) { this.walletRefTemplate = walletRefTemplate; }
-    public String getExpensePoolRefTemplate() { return expensePoolRefTemplate; }
-    public void setExpensePoolRefTemplate(String expensePoolRefTemplate) {
-        this.expensePoolRefTemplate = expensePoolRefTemplate;
-    }
-    public String getLiabilityPoolRefTemplate() { return liabilityPoolRefTemplate; }
-    public void setLiabilityPoolRefTemplate(String liabilityPoolRefTemplate) {
-        this.liabilityPoolRefTemplate = liabilityPoolRefTemplate;
-    }
-    public String getDepositClearingRefTemplate() { return depositClearingRefTemplate; }
-    public void setDepositClearingRefTemplate(String depositClearingRefTemplate) {
-        this.depositClearingRefTemplate = depositClearingRefTemplate;
-    }
-    public String getWithdrawalClearingRefTemplate() { return withdrawalClearingRefTemplate; }
-    public void setWithdrawalClearingRefTemplate(String withdrawalClearingRefTemplate) {
-        this.withdrawalClearingRefTemplate = withdrawalClearingRefTemplate;
-    }
-    public List<TransactionRule> getRules() { return rules; }
-    public void setRules(List<TransactionRule> rules) { this.rules = rules; }
-
+    @Getter
+    @Setter
     public static class TransactionRule {
         private String eventType;
         /** EARN | BURN | PROCESS */
@@ -55,18 +34,5 @@ public class IntegrationProperties {
         private String formula = "AMOUNT";
         /** HOLD | RELEASE | EXPIRE | ADJUST | TRANSFER | SETTLE — for PROCESS only */
         private String processType;
-
-        public String getEventType() { return eventType; }
-        public void setEventType(String eventType) { this.eventType = eventType; }
-        public String getOperation() { return operation; }
-        public void setOperation(String operation) { this.operation = operation; }
-        public BigDecimal getMinAmount() { return minAmount; }
-        public void setMinAmount(BigDecimal minAmount) { this.minAmount = minAmount; }
-        public String getPointCurrency() { return pointCurrency; }
-        public void setPointCurrency(String pointCurrency) { this.pointCurrency = pointCurrency; }
-        public String getFormula() { return formula; }
-        public void setFormula(String formula) { this.formula = formula; }
-        public String getProcessType() { return processType; }
-        public void setProcessType(String processType) { this.processType = processType; }
     }
 }

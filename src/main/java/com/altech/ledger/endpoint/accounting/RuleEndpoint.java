@@ -9,14 +9,13 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/rules")
+@RequiredArgsConstructor
 public class RuleEndpoint {
     private final RuleSetupUseCase useCase;
-
-    public RuleEndpoint(RuleSetupUseCase useCase) {
-        this.useCase = useCase;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

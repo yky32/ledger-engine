@@ -12,14 +12,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/movements")
+@RequiredArgsConstructor
 public class MovementEndpoint {
     private final MovementUseCase movementUseCase;
-
-    public MovementEndpoint(MovementUseCase movementUseCase) {
-        this.movementUseCase = movementUseCase;
-    }
 
     @PostMapping("/deposits")
     public ResponseEntity<MovementResponse> deposit(@Valid @RequestBody DepositRequest request) {

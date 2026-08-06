@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.ledger;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.base.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
@@ -24,6 +27,8 @@ import java.util.UUID;
         @UniqueConstraint(name = "uk_wallet_owner_currency", columnNames = {"owner_id", "currency"})
     }
 )
+@Getter
+@Setter
 public class Wallet extends AuditEntityWithIsActive {
 
     @Id
@@ -84,85 +89,5 @@ public class Wallet extends AuditEntityWithIsActive {
         this.currency = currency;
         this.hash = "wx" + UUID.randomUUID().toString().replace("-", "")
             + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getAccountId() {
-        return accountId;
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public String getNickname() {
-        return nickname;
-    }
-
-    public String getExtIdentifier() {
-        return extIdentifier;
-    }
-
-    public String getExtType() {
-        return extType;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public WalletAssociationType getType() {
-        return type;
-    }
-
-    public WalletType getWalletType() {
-        return walletType;
-    }
-
-    public WalletStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(WalletStatus status) {
-        this.status = status;
-    }
-
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
-    }
-
-    public void setExtIdentifier(String extIdentifier) {
-        this.extIdentifier = extIdentifier;
-    }
-
-    public void setExtType(String extType) {
-        this.extType = extType;
-    }
-
-    public void setType(WalletAssociationType type) {
-        this.type = type;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public String getOwnerId() {
-        return ownerId;
-    }
-
-    public String getCurrency() {
-        return currency;
     }
 }

@@ -17,20 +17,15 @@ import com.altech.ledger.usecase.ledger.LedgerUseCase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class WalletOnboardingUseCase {
     private final IntegrationProperties properties;
     private final LedgerUseCase ledgerUseCase;
     private final AccountRepository accounts;
     private final WalletRepository wallets;
-
-    public WalletOnboardingUseCase(IntegrationProperties properties, LedgerUseCase ledgerUseCase,
-                                   AccountRepository accounts, WalletRepository wallets) {
-        this.properties = properties;
-        this.ledgerUseCase = ledgerUseCase;
-        this.accounts = accounts;
-        this.wallets = wallets;
-    }
 
     @Transactional
     public WalletOnboardResponse onboard(OnboardWalletRequest request) {

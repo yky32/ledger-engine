@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.log;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.base.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
@@ -27,6 +30,8 @@ import java.util.UUID;
         @Index(name = "ledger_movement_idx_walletId", columnList = "wallet_id")
     }
 )
+@Getter
+@Setter
 public class LedgerMovement extends AuditEntityWithIsActive {
 
     @Id
@@ -133,121 +138,5 @@ public class LedgerMovement extends AuditEntityWithIsActive {
 
     public void markRejected() {
         this.status = LedgerMovementStatus.REJECTED;
-    }
-
-    public void setStatus(LedgerMovementStatus status) {
-        this.status = status;
-    }
-
-    public void setRemarks(String remarks) {
-        this.remarks = remarks;
-    }
-
-    public void setMetadata(String metadata) {
-        this.metadata = metadata;
-    }
-
-    public void setComplianceContext(String complianceContext) {
-        this.complianceContext = complianceContext;
-    }
-
-    public void setFiles(String files) {
-        this.files = files;
-    }
-
-    public void setEvent(String event) {
-        this.event = event;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getTxnId() {
-        return txnId;
-    }
-
-    public void setTxnId(Long txnId) {
-        this.txnId = txnId;
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public Long getWalletId() {
-        return walletId;
-    }
-
-    public String getOriginatorId() {
-        return originatorId;
-    }
-
-    public String getTargetId() {
-        return targetId;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public OrderType getOrderType() {
-        return orderType;
-    }
-
-    public LedgerMovementStatus getStatus() {
-        return status;
-    }
-
-    public String getRemarks() {
-        return remarks;
-    }
-
-    public String getEvent() {
-        return event;
-    }
-
-    public String getMetadata() {
-        return metadata;
-    }
-
-    public LedgerMovementType getType() {
-        return type;
-    }
-
-    public String getPayerContext() {
-        return payerContext;
-    }
-
-    public String getRecipientContext() {
-        return recipientContext;
-    }
-
-    public String getFiles() {
-        return files;
-    }
-
-    public String getComplianceContext() {
-        return complianceContext;
-    }
-
-    public Long getAssociatedLedgerMovementId() {
-        return associatedLedgerMovementId;
-    }
-
-    public String getMovementKey() {
-        return movementKey;
-    }
-
-    public LedgerMovementMode getMode() {
-        return mode;
-    }
-
-    public UUID getJournalTransactionId() {
-        return journalTransactionId;
     }
 }

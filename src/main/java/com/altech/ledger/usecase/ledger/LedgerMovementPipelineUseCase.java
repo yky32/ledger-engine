@@ -6,25 +6,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Facade keeping existing callers stable; delegates to split use cases (old naming).
  */
 @Service
+@RequiredArgsConstructor
 public class LedgerMovementPipelineUseCase {
     private final LedgerMovementShooter shooter;
     private final LedgerMovementQueryUseCase queryUseCase;
     private final LedgerMovementOperationUseCase operationUseCase;
     private final LedgerDepositUseCase depositUseCase;
-
-    public LedgerMovementPipelineUseCase(LedgerMovementShooter shooter,
-                                         LedgerMovementQueryUseCase queryUseCase,
-                                         LedgerMovementOperationUseCase operationUseCase,
-                                         LedgerDepositUseCase depositUseCase) {
-        this.shooter = shooter;
-        this.queryUseCase = queryUseCase;
-        this.operationUseCase = operationUseCase;
-        this.depositUseCase = depositUseCase;
-    }
 
     @Transactional
     public MovementResponse deposit(CreateDepositRequest req) {
@@ -41,10 +34,6 @@ public class LedgerMovementPipelineUseCase {
         return shooter.doInWalletTransfer(req);
     }
 
-    @Transactional
-    public MovementResponse swiftTransfer(CreateSwiftTransferRequest req) {
-        return shooter.doSwiftTransfer(req);
-    }
 
     @Transactional
     public MovementResponse settle(Long id) {
@@ -56,10 +45,6 @@ public class LedgerMovementPipelineUseCase {
         return operationUseCase.update(id, req);
     }
 
-    @Transactional
-    public MovementResponse updateCompliance(Long id, UpdateComplianceRequest req) {
-        return operationUseCase.updateCompliance(id, req);
-    }
 
     @Transactional
     public MovementResponse updateDocuments(Long id, UpdateTransferDocumentsRequest req) {

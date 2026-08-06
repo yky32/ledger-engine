@@ -23,7 +23,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class TransactionIngestionUseCase {
     private final IntegrationProperties properties;
     private final TransactionRuleEngine ruleEngine;
@@ -32,19 +35,6 @@ public class TransactionIngestionUseCase {
     private final WalletRepository wallets;
     private final LedgerMovementRepository movements;
     private final WalletOnboardingUseCase walletOnboardingUseCase;
-
-    public TransactionIngestionUseCase(IntegrationProperties properties, TransactionRuleEngine ruleEngine,
-                                       LedgerUseCase ledgerUseCase, AccountRepository accounts,
-                                       WalletRepository wallets, LedgerMovementRepository movements,
-                                       WalletOnboardingUseCase walletOnboardingUseCase) {
-        this.properties = properties;
-        this.ruleEngine = ruleEngine;
-        this.ledgerUseCase = ledgerUseCase;
-        this.accounts = accounts;
-        this.wallets = wallets;
-        this.movements = movements;
-        this.walletOnboardingUseCase = walletOnboardingUseCase;
-    }
 
     @Transactional
     public IngestionResult ingest(TransactionalEvent event) {

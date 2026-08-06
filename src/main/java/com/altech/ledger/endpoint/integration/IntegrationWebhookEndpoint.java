@@ -11,15 +11,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/integrations/webhooks")
 @ConditionalOnProperty(name = "ledger.integration.enabled", havingValue = "true", matchIfMissing = true)
+@RequiredArgsConstructor
 public class IntegrationWebhookEndpoint {
     private final TransactionIngestionUseCase ingestionUseCase;
-
-    public IntegrationWebhookEndpoint(TransactionIngestionUseCase ingestionUseCase) {
-        this.ingestionUseCase = ingestionUseCase;
-    }
 
     @PostMapping("/transactions")
     public ResponseEntity<IngestionResult> receive(@Valid @RequestBody TransactionalEvent event) {

@@ -9,14 +9,13 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/wallets")
+@RequiredArgsConstructor
 public class WalletEndpoint {
     private final WalletOnboardingUseCase onboardingUseCase;
-
-    public WalletEndpoint(WalletOnboardingUseCase onboardingUseCase) {
-        this.onboardingUseCase = onboardingUseCase;
-    }
 
     @PostMapping
     public ResponseEntity<WalletOnboardResponse> onboard(@Valid @RequestBody OnboardWalletRequest request) {

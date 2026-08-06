@@ -2,12 +2,11 @@ package com.altech.ledger.service;
 
 import com.altech.ledger.entity.dto.parity.ParityDtos.*;
 import com.altech.ledger.entity.po.FxRate;
-import com.altech.ledger.entity.po.LinkedBankAccount;
-import com.altech.ledger.entity.po.Recipient;
 import com.altech.ledger.entity.po.accounting.Rule;
 import com.altech.ledger.entity.po.accounting.RuleExecution;
 import com.altech.ledger.entity.po.configuration.SystemConfiguration;
-import com.altech.ledger.entity.po.ledger.*;
+import com.altech.ledger.entity.po.ledger.Account;
+import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 
 import java.util.List;
@@ -49,41 +48,6 @@ public final class DtoMapper {
     public static RuleExecutionResponse toRuleExecution(RuleExecution r) {
         return new RuleExecutionResponse(r.getId(), r.getName(), r.getDescription(),
             r.getOrderType(), r.getMetadata(), r.getCreateDt());
-    }
-
-    public static RecipientResponse toRecipient(Recipient r) {
-        return new RecipientResponse(r.getId(), r.getTenantId(), r.getTransferChannel(),
-            r.getStatus(), r.getMetadata(), r.getCreateDt());
-    }
-
-    public static LinkedBankAccountResponse toLinkedBank(LinkedBankAccount a) {
-        return new LinkedBankAccountResponse(a.getId(), a.getTenantId(), a.getStatus(),
-            a.getMetadata(), a.getCreateDt());
-    }
-
-    public static PaymentMethodResponse toPaymentMethod(PaymentMethod p) {
-        return new PaymentMethodResponse(p.getId(), p.getWalletId(), p.getType(), p.getStatus(),
-            p.getMetadata(), p.getTokenizationValue(), p.getTokenizationProvider(),
-            p.getHash(), p.getCreateDt());
-    }
-
-    public static VirtualSubAccountResponse toVirtualSub(VirtualSubAccount s) {
-        return new VirtualSubAccountResponse(s.getId(), s.getCurrency(), s.getStatus(),
-            s.getLedgerBalance(), s.getAvailableBalance());
-    }
-
-    public static VirtualAccountResponse toVirtualAccount(VirtualAccount va, List<VirtualSubAccount> subs) {
-        return new VirtualAccountResponse(va.getId(), va.getExtIdentifier(), va.getExtType(),
-            va.getStatus(), va.getNickName(), va.getType(), va.getMetadata(),
-            subs.stream().map(DtoMapper::toVirtualSub).toList(), va.getCreateDt());
-    }
-
-    public static VirtualAccountApplicationResponse toVaApp(VirtualAccountApplication app) {
-        return new VirtualAccountApplicationResponse(
-            app.getId(), app.getStatus(), app.getType(), app.getExtIdentifier(), app.getExtType(),
-            app.getRemark(), app.getMetadata(),
-            app.getVirtualAccount() == null ? null : app.getVirtualAccount().getId(),
-            app.getCreateDt());
     }
 
     public static FxRateResponse toFx(FxRate r) {

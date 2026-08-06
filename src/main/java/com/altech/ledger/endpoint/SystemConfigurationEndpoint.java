@@ -6,14 +6,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/configurations")
+@RequiredArgsConstructor
 public class SystemConfigurationEndpoint {
     private final SystemConfigurationUseCase useCase;
-
-    public SystemConfigurationEndpoint(SystemConfigurationUseCase useCase) {
-        this.useCase = useCase;
-    }
 
     @GetMapping
     public ConfigurationResponse get(

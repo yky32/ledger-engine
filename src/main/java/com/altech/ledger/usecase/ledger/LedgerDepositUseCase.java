@@ -10,18 +10,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.Map;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of the-wallet-ledger LedgerDepositUseCase (bank auto + card session + webhook).
  */
 @Service
+@RequiredArgsConstructor
 public class LedgerDepositUseCase {
     private final LedgerMovementShooter shooter;
     private final PaymentRailPort paymentRailPort;
-
-    public LedgerDepositUseCase(LedgerMovementShooter shooter, PaymentRailPort paymentRailPort) {
-        this.shooter = shooter;
-        this.paymentRailPort = paymentRailPort;
-    }
 
     @Transactional
     public MovementResponse execute(CreateDepositRequest dto) {

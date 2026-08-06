@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.base.AuditEntityWithIsActive;
 import jakarta.persistence.*;
 
@@ -14,6 +17,8 @@ import java.math.BigDecimal;
     name = "fx_rate",
     uniqueConstraints = @UniqueConstraint(name = "uniqueFxRateKey", columnNames = {"base", "target"})
 )
+@Getter
+@Setter
 public class FxRate extends AuditEntityWithIsActive {
 
     @Id
@@ -36,12 +41,4 @@ public class FxRate extends AuditEntityWithIsActive {
         this.target = target;
         this.rate = rate;
     }
-
-    public Long getId() { return id; }
-    public String getBase() { return base; }
-    public void setBase(String base) { this.base = base; }
-    public String getTarget() { return target; }
-    public void setTarget(String target) { this.target = target; }
-    public BigDecimal getRate() { return rate; }
-    public void setRate(BigDecimal rate) { this.rate = rate; }
 }

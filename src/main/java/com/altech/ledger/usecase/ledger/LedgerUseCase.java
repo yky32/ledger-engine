@@ -23,18 +23,14 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class LedgerUseCase {
     private final AccountRepository accounts;
     private final JournalTransactionRepository transactions;
     private final JournalEntryRepository entries;
-
-    public LedgerUseCase(AccountRepository accounts, JournalTransactionRepository transactions,
-                         JournalEntryRepository entries) {
-        this.accounts = accounts;
-        this.transactions = transactions;
-        this.entries = entries;
-    }
 
     @Transactional
     public AccountResponse createAccount(CreateAccountRequest request) {

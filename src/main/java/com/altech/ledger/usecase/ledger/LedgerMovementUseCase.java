@@ -18,18 +18,16 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of the-wallet-ledger LedgerMovementUseCase — log movement + create ledger entry legs.
  */
 @Service
+@RequiredArgsConstructor
 public class LedgerMovementUseCase {
     private final LedgerMovementRepository movements;
     private final LedgerEntryRepository entries;
-
-    public LedgerMovementUseCase(LedgerMovementRepository movements, LedgerEntryRepository entries) {
-        this.movements = movements;
-        this.entries = entries;
-    }
 
     @Transactional
     public LedgerMovement log(LedgerMovementEvent event) {

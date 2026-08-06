@@ -20,18 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class WalletAccountBalanceUseCase {
     private final WalletRepository wallets;
     private final AccountRepository accounts;
     private final FxRateRepository fxRates;
-
-    public WalletAccountBalanceUseCase(WalletRepository wallets, AccountRepository accounts,
-                                       FxRateRepository fxRates) {
-        this.wallets = wallets;
-        this.accounts = accounts;
-        this.fxRates = fxRates;
-    }
 
     @Transactional(readOnly = true)
     public WalletWithBalancesResponse getOne(Long id, String fxTarget) {

@@ -7,13 +7,12 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
+@RequiredArgsConstructor
 public class WithdrawalEndpoint {
     private final LedgerMovementPipelineUseCase pipeline;
-
-    public WithdrawalEndpoint(LedgerMovementPipelineUseCase pipeline) {
-        this.pipeline = pipeline;
-    }
 
     @PostMapping("/ledger/withdrawals")
     @ResponseStatus(HttpStatus.CREATED)

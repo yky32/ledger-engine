@@ -52,7 +52,9 @@ services:
   simulator:
     build: ./simulator
     environment:
+      # backfill | webhook | kafka | both
       SIM_MODE: ${SIM_MODE:-webhook}
+      SIM_LEDGER_BASE_URL: ${SIM_LEDGER_BASE_URL:-http://app:8080}
       SIM_WEBHOOK_URL: ${SIM_WEBHOOK_URL:-http://app:8080/integrations/webhooks/transactions}
       SIM_KAFKA_BOOTSTRAP: ${SIM_KAFKA_BOOTSTRAP:-kafka:9092}
       SIM_KAFKA_TOPIC: ${SIM_KAFKA_TOPIC:-ledger.transaction.events}
@@ -62,12 +64,24 @@ services:
       SIM_AMOUNT_MIN: ${SIM_AMOUNT_MIN:-10}
       SIM_AMOUNT_MAX: ${SIM_AMOUNT_MAX:-500}
       SIM_EVENT_TYPE: ${SIM_EVENT_TYPE:-PURCHASE}
-      SIM_USER_ID_PREFIX: ${SIM_USER_ID_PREFIX:-CUST-}
+      # UAfinance-style Phase 1: SIM_MODE=backfill SIM_USER_COUNT=70000
+      SIM_USER_ID_PREFIX: ${SIM_USER_ID_PREFIX:-UAF-}
       SIM_USER_COUNT: ${SIM_USER_COUNT:-5}
+      SIM_BATCH_SIZE: ${SIM_BATCH_SIZE:-500}
+      SIM_BATCH_PAUSE_SECONDS: ${SIM_BATCH_PAUSE_SECONDS:-0.05}
+      SIM_EXTERNAL_TYPE: ${SIM_EXTERNAL_TYPE:-uafinance}
+      SIM_ONBOARD_WALLETS: ${SIM_ONBOARD_WALLETS:-true}
+      SIM_CUSTOMER_FILE: ${SIM_CUSTOMER_FILE:-}
+      SIM_SMOKE_EVENTS_AFTER_BACKFILL: ${SIM_SMOKE_EVENTS_AFTER_BACKFILL:-0}
+      SIM_WAIT_FOR_HEALTH: ${SIM_WAIT_FOR_HEALTH:-true}
+    volumes:
+      # mount CRM export for real backfill: - ./data/customers.csv:/data/customers.csv
+      - ./simulator/data:/data:ro
     depends_on:
       - app
     profiles:
       - simulator
+
 
 volumes:
   ledger-postgres:

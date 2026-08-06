@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.log;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.base.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.MovementDirection;
 import jakarta.persistence.*;
@@ -13,6 +16,8 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "ledger_entry")
+@Getter
+@Setter
 public class LedgerEntry extends AuditEntityWithIsActive {
 
     @Id
@@ -44,29 +49,5 @@ public class LedgerEntry extends AuditEntityWithIsActive {
         this.amount = amount;
         this.direction = direction;
         this.currency = currency;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getTxnId() {
-        return txnId;
-    }
-
-    public String getTargetId() {
-        return targetId;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public MovementDirection getDirection() {
-        return direction;
-    }
-
-    public String getCurrency() {
-        return currency;
     }
 }

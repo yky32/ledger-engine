@@ -24,23 +24,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class MovementUseCase {
     private final IntegrationProperties properties;
     private final LedgerUseCase ledgerUseCase;
     private final WalletRepository wallets;
     private final AccountRepository accounts;
     private final LedgerMovementRepository movements;
-
-    public MovementUseCase(IntegrationProperties properties, LedgerUseCase ledgerUseCase,
-                           WalletRepository wallets, AccountRepository accounts,
-                           LedgerMovementRepository movements) {
-        this.properties = properties;
-        this.ledgerUseCase = ledgerUseCase;
-        this.wallets = wallets;
-        this.accounts = accounts;
-        this.movements = movements;
-    }
 
     @Transactional
     public MovementResponse deposit(DepositRequest request) {

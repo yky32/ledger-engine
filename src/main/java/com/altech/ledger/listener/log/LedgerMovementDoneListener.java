@@ -9,19 +9,18 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of LedgerMovementDoneListener — BALANCE_UPDATE_DONE log sink.
  */
 @Component
 @ConditionalOnProperty(prefix = "ledger.movement.kafka", name = "enabled", havingValue = "true")
+@RequiredArgsConstructor
 public class LedgerMovementDoneListener {
     private static final Logger log = LoggerFactory.getLogger(LedgerMovementDoneListener.class);
 
     private final ObjectMapper objectMapper;
-
-    public LedgerMovementDoneListener(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
 
     @KafkaListener(
         topics = "${ledger.movement.kafka.done-topic:ledger.movement.done}",

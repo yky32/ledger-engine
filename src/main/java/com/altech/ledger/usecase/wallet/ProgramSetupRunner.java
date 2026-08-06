@@ -9,18 +9,14 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class ProgramSetupRunner implements ApplicationRunner {
     private final IntegrationProperties properties;
     private final LedgerUseCase ledgerUseCase;
     private final AccountRepository accounts;
-
-    public ProgramSetupRunner(IntegrationProperties properties, LedgerUseCase ledgerUseCase,
-                              AccountRepository accounts) {
-        this.properties = properties;
-        this.ledgerUseCase = ledgerUseCase;
-        this.accounts = accounts;
-    }
 
     @Override
     public void run(ApplicationArguments args) {

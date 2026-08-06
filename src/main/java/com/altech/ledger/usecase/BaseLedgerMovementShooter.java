@@ -6,6 +6,7 @@ import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.service.MovementBus;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,19 +14,13 @@ import org.slf4j.LoggerFactory;
  * Port of the-wallet-ledger BaseLedgerMovementShooter.
  * Handles mode branching (AUTO vs MANUAL) before dispatch.
  */
+@RequiredArgsConstructor
 public abstract class BaseLedgerMovementShooter {
     private static final Logger log = LoggerFactory.getLogger(BaseLedgerMovementShooter.class);
 
     private final MovementBus movementBus;
     private final LedgerMovementRepository movements;
     private final LedgerMovementMode defaultMode;
-
-    protected BaseLedgerMovementShooter(MovementBus movementBus, LedgerMovementRepository movements,
-                                        LedgerMovementMode defaultMode) {
-        this.movementBus = movementBus;
-        this.movements = movements;
-        this.defaultMode = defaultMode == null ? LedgerMovementMode.AUTO : defaultMode;
-    }
 
     protected LedgerMovement execute(LedgerMovement movement) {
         beforeExecute(movement);

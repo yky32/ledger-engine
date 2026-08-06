@@ -13,10 +13,13 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Dispatches movements: sync execute (default) or Kafka MOVEMENT_INITIATED when enabled.
  */
 @Service
+@RequiredArgsConstructor
 public class MovementBus {
     private static final Logger log = LoggerFactory.getLogger(MovementBus.class);
 
@@ -24,16 +27,6 @@ public class MovementBus {
     private final LedgerMovementExecutionUseCase execution;
     private final ObjectMapper objectMapper;
     private final ObjectProvider<KafkaTemplate<String, String>> kafkaTemplate;
-
-    public MovementBus(MovementKafkaProperties kafkaProperties,
-                       LedgerMovementExecutionUseCase execution,
-                       ObjectMapper objectMapper,
-                       ObjectProvider<KafkaTemplate<String, String>> kafkaTemplate) {
-        this.kafkaProperties = kafkaProperties;
-        this.execution = execution;
-        this.objectMapper = objectMapper;
-        this.kafkaTemplate = kafkaTemplate;
-    }
 
     public LedgerMovement dispatch(LedgerMovement movement) {
         if (movement.getMode() != LedgerMovementMode.AUTO) {

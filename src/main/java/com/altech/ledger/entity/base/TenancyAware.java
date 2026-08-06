@@ -2,22 +2,14 @@ package com.altech.ledger.entity.base;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import lombok.Setter;
 
-/**
- * Port of payment-gateway {@code TenancyAware}.
- * Tenant is optional here (no platform TenantContextHolder).
- */
+@Getter
+@Setter
 @MappedSuperclass
 public abstract class TenancyAware extends AuditEntityWithIsActive {
 
     @Column(name = "tenant_id")
     private Long tenantId;
-
-    public Long getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(Long tenantId) {
-        this.tenantId = tenantId;
-    }
 }

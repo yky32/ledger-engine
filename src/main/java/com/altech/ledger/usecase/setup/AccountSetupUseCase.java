@@ -15,15 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class AccountSetupUseCase {
     private final AccountRepository accounts;
     private final CommonService commonService;
-
-    public AccountSetupUseCase(AccountRepository accounts, CommonService commonService) {
-        this.accounts = accounts;
-        this.commonService = commonService;
-    }
 
     @Transactional
     public AccountResponse create(CreateLedgerAccountRequest dto) {

@@ -5,13 +5,14 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.Instant;
 
-/**
- * Port of {@code com.altech.core.entity.AuditEntity} (standalone, no app-core).
- */
+@Getter
+@Setter
 @MappedSuperclass
 public abstract class AuditEntity implements Serializable {
 
@@ -43,41 +44,5 @@ public abstract class AuditEntity implements Serializable {
     @PreUpdate
     protected void onUpdate() {
         updateDt = Instant.now();
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public Instant getCreateDt() {
-        return createDt;
-    }
-
-    public void setCreateDt(Instant createDt) {
-        this.createDt = createDt;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public Instant getUpdateDt() {
-        return updateDt;
-    }
-
-    public void setUpdateDt(Instant updateDt) {
-        this.updateDt = updateDt;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
     }
 }

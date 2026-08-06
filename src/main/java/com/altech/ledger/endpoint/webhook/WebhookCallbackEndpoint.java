@@ -8,17 +8,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/webhooks")
+@RequiredArgsConstructor
 public class WebhookCallbackEndpoint {
     private final WalletSetupUseCase walletSetupUseCase;
     private final LedgerDepositUseCase depositUseCase;
-
-    public WebhookCallbackEndpoint(WalletSetupUseCase walletSetupUseCase,
-                                   LedgerDepositUseCase depositUseCase) {
-        this.walletSetupUseCase = walletSetupUseCase;
-        this.depositUseCase = depositUseCase;
-    }
 
     @PostMapping("/ledger-wallets/{walletId}/activations")
     public WalletWithBalancesResponse walletActivation(

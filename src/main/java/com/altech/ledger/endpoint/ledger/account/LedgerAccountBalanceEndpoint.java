@@ -8,17 +8,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/ledger-accounts")
+@RequiredArgsConstructor
 public class LedgerAccountBalanceEndpoint {
     private final AccountSetupUseCase accountSetupUseCase;
     private final WalletAccountBalanceUseCase balanceUseCase;
-
-    public LedgerAccountBalanceEndpoint(AccountSetupUseCase accountSetupUseCase,
-                                        WalletAccountBalanceUseCase balanceUseCase) {
-        this.accountSetupUseCase = accountSetupUseCase;
-        this.balanceUseCase = balanceUseCase;
-    }
 
     @GetMapping("/{id}/balances")
     public AccountResponse getBalance(@PathVariable Long id) {

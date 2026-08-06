@@ -14,16 +14,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of the-wallet-ledger FxRateQueryUseCase.
  */
 @Service
+@RequiredArgsConstructor
 public class FxRateQueryUseCase {
     private final FxRateRepository fxRates;
-
-    public FxRateQueryUseCase(FxRateRepository fxRates) {
-        this.fxRates = fxRates;
-    }
 
     @Transactional(readOnly = true)
     public FxRateResponse getOne(Long id) {

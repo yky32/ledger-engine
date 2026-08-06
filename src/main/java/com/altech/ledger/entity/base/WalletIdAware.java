@@ -2,21 +2,14 @@ package com.altech.ledger.entity.base;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import lombok.Setter;
 
-/**
- * Port of payment-gateway {@code WalletIdAware} (without tenancy filters / app-core).
- */
+@Getter
+@Setter
 @MappedSuperclass
 public abstract class WalletIdAware extends AuditEntityWithIsActive {
 
     @Column(name = "wallet_id")
     private Long walletId;
-
-    public Long getWalletId() {
-        return walletId;
-    }
-
-    public void setWalletId(Long walletId) {
-        this.walletId = walletId;
-    }
 }

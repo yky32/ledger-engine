@@ -18,7 +18,6 @@ import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.MovementBus;
 import com.altech.ledger.usecase.account.RuleExecutionUseCase;
-import com.altech.ledger.usecase.setup.LinkedBankAccountUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -28,11 +27,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of the-wallet-ledger LedgerMovementExecutionUseCase.
  * Structure: fetch rules → rulesExecution (command) → updateBalances → ledger entries.
  */
 @Service
+@RequiredArgsConstructor
 public class LedgerMovementExecutionUseCase implements LedgerHandler {
     private static final Logger log = LoggerFactory.getLogger(LedgerMovementExecutionUseCase.class);
 
@@ -40,23 +42,10 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     private final WalletRepository wallets;
     private final LedgerMovementRepository movements;
     private final LedgerEntryRepository entries;
+    /** @Lazy breaks cycle MovementBus ↔ this use case */
+    @Lazy
     private final MovementBus movementBus;
-    private final LinkedBankAccountUseCase linkedBankAccountUseCase;
     private final RuleExecutionUseCase ruleExecutionUseCase;
-
-    public LedgerMovementExecutionUseCase(AccountRepository accounts, WalletRepository wallets,
-                                          LedgerMovementRepository movements, LedgerEntryRepository entries,
-                                          @Lazy MovementBus movementBus,
-                                          LinkedBankAccountUseCase linkedBankAccountUseCase,
-                                          RuleExecutionUseCase ruleExecutionUseCase) {
-        this.accounts = accounts;
-        this.wallets = wallets;
-        this.movements = movements;
-        this.entries = entries;
-        this.movementBus = movementBus;
-        this.linkedBankAccountUseCase = linkedBankAccountUseCase;
-        this.ruleExecutionUseCase = ruleExecutionUseCase;
-    }
 
     @Override
     @Transactional
@@ -120,8 +109,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
 
     /**
      * Port of rulesExecution — builds BalanceExecutionResultCommand from OrderType.
-     * Linked-bank deposit target → skip wallet credit (old behaviour).
-     */
+         */
     public BalanceExecutionResultCommand rulesExecution(LedgerMovement movement) {
         BalanceExecutionResultCommand command = new BalanceExecutionResultCommand();
         BigDecimal amount = movement.getAmount();
@@ -129,10 +117,6 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
 
         switch (movement.getOrderType()) {
             case DEPOSIT, PAYMENT_LINK -> {
-                if (isLinkedBankTarget(movement.getTargetId())) {
-                    log.info("deposit target is linked bank {}; skip wallet credit", movement.getTargetId());
-                    break;
-                }
                 Account target = resolveAccount(movement.getTargetId(), currency);
                 command.add(target, amount, BalanceOperation.ADD);
             }
@@ -166,14 +150,6 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         return command;
     }
 
-    private boolean isLinkedBankTarget(String targetId) {
-        if (targetId == null || targetId.isBlank()) return false;
-        try {
-            return linkedBankAccountUseCase.getOptionalById(Long.valueOf(targetId)).isPresent();
-        } catch (NumberFormatException ex) {
-            return false;
-        }
-    }
 
     private void applyCommand(BalanceExecutionResultCommand command, LedgerMovement movement) {
         for (BalanceExecutionResultCommand.CommandDetail detail : command.getDetails()) {

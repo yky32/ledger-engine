@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.accounting;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.base.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.MovementDirection;
 import jakarta.persistence.*;
@@ -11,6 +14,8 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "rule")
+@Getter
+@Setter
 public class Rule extends AuditEntityWithIsActive {
 
     @Id
@@ -48,18 +53,4 @@ public class Rule extends AuditEntityWithIsActive {
         this.targetAccount = targetAccount;
         this.content = content;
     }
-
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public MovementDirection getDirection() { return direction; }
-    public void setDirection(MovementDirection direction) { this.direction = direction; }
-    public BigDecimal getMultiplier() { return multiplier; }
-    public void setMultiplier(BigDecimal multiplier) { this.multiplier = multiplier; }
-    public String getTargetAccount() { return targetAccount; }
-    public void setTargetAccount(String targetAccount) { this.targetAccount = targetAccount; }
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
 }

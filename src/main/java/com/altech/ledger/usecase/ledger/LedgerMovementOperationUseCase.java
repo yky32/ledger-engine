@@ -10,22 +10,17 @@ import com.altech.ledger.service.MovementBus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 /**
- * Port of the-wallet-ledger LedgerMovementOperationUseCase (status + compliance).
+ * Movement status / settle operations.
  */
 @Service
+@RequiredArgsConstructor
 public class LedgerMovementOperationUseCase {
     private final LedgerMovementRepository movements;
     private final LedgerMovementExecutionUseCase execution;
     private final MovementBus movementBus;
-
-    public LedgerMovementOperationUseCase(LedgerMovementRepository movements,
-                                          LedgerMovementExecutionUseCase execution,
-                                          MovementBus movementBus) {
-        this.movements = movements;
-        this.execution = execution;
-        this.movementBus = movementBus;
-    }
 
     @Transactional
     public MovementResponse update(Long id, UpdateMovementStatusRequest req) {
@@ -44,14 +39,6 @@ public class LedgerMovementOperationUseCase {
         return DtoMapper.toMovement(movements.save(m));
     }
 
-    @Transactional
-    public MovementResponse updateCompliance(Long id, UpdateComplianceRequest req) {
-        LedgerMovement m = movement(id);
-        if (req.complianceContext() != null) m.setComplianceContext(req.complianceContext());
-        if (req.files() != null) m.setFiles(req.files());
-        if (req.remarks() != null) m.setRemarks(req.remarks());
-        return DtoMapper.toMovement(movements.save(m));
-    }
 
     @Transactional
     public MovementResponse settle(Long id) {

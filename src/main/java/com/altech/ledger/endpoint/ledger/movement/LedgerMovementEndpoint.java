@@ -6,14 +6,13 @@ import com.altech.ledger.usecase.ledger.LedgerMovementOperationUseCase;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/ledger-accounts/movements")
+@RequiredArgsConstructor
 public class LedgerMovementEndpoint {
     private final LedgerMovementOperationUseCase operationUseCase;
-
-    public LedgerMovementEndpoint(LedgerMovementOperationUseCase operationUseCase) {
-        this.operationUseCase = operationUseCase;
-    }
 
     @PutMapping("/{id}/statuses")
     public MovementResponse updateStatus(

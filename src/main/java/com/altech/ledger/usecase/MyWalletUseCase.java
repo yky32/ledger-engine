@@ -7,14 +7,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 /** Port of the-wallet-ledger MyWalletUseCase. */
 @Service
+@RequiredArgsConstructor
 public class MyWalletUseCase {
     private final WalletAccountBalanceUseCase balanceUseCase;
-
-    public MyWalletUseCase(WalletAccountBalanceUseCase balanceUseCase) {
-        this.balanceUseCase = balanceUseCase;
-    }
 
     @Transactional(readOnly = true)
     public List<WalletWithBalancesResponse> execute(String ownerId) {

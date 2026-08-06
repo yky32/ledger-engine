@@ -11,14 +11,13 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/ledger-accounts/movements")
+@RequiredArgsConstructor
 public class LedgerMovementQueryEndpoint {
     private final LedgerMovementQueryUseCase queryUseCase;
-
-    public LedgerMovementQueryEndpoint(LedgerMovementQueryUseCase queryUseCase) {
-        this.queryUseCase = queryUseCase;
-    }
 
     @GetMapping("/{id}")
     public MovementResponse getOne(@PathVariable Long id) {

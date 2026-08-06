@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.journal;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.po.ledger.Account;
 import jakarta.persistence.*;
 
@@ -19,6 +22,8 @@ import java.util.UUID;
         columnNames = {"transaction_id", "sequence_number"}
     )
 )
+@Getter
+@Setter
 public class JournalEntry {
     public enum Side { DEBIT, CREDIT }
 
@@ -54,37 +59,5 @@ public class JournalEntry {
         this.currency = currency;
         this.sequence = sequence;
         this.createdAt = Instant.now();
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public JournalTransaction getTransaction() {
-        return transaction;
-    }
-
-    public Account getAccount() {
-        return account;
-    }
-
-    public Side getSide() {
-        return side;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public int getSequence() {
-        return sequence;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
     }
 }

@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.accounting;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.base.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.OrderType;
 import jakarta.persistence.*;
@@ -9,6 +12,8 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "rule_execution")
+@Getter
+@Setter
 public class RuleExecution extends AuditEntityWithIsActive {
 
     @Id
@@ -37,14 +42,4 @@ public class RuleExecution extends AuditEntityWithIsActive {
         this.orderType = orderType;
         this.metadata = metadata;
     }
-
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public OrderType getOrderType() { return orderType; }
-    public void setOrderType(OrderType orderType) { this.orderType = orderType; }
-    public String getMetadata() { return metadata; }
-    public void setMetadata(String metadata) { this.metadata = metadata; }
 }

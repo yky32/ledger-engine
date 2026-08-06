@@ -1,5 +1,8 @@
 package com.altech.ledger.entity.po.configuration;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import com.altech.ledger.entity.base.AuditEntityWithIsActive;
 import jakarta.persistence.*;
 
@@ -11,6 +14,8 @@ import jakarta.persistence.*;
     name = "system_configuration",
     uniqueConstraints = @UniqueConstraint(name = "uniqueTargetAndScope", columnNames = {"target", "scope"})
 )
+@Getter
+@Setter
 public class SystemConfiguration extends AuditEntityWithIsActive {
 
     @Id
@@ -37,14 +42,4 @@ public class SystemConfiguration extends AuditEntityWithIsActive {
         this.scope = scope;
         this.value = value;
     }
-
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getTarget() { return target; }
-    public void setTarget(String target) { this.target = target; }
-    public String getScope() { return scope; }
-    public void setScope(String scope) { this.scope = scope; }
-    public String getValue() { return value; }
-    public void setValue(String value) { this.value = value; }
 }

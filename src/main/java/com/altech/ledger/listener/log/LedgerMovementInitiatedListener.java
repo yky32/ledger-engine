@@ -11,22 +11,19 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of LedgerMovementInitiatedListener — MOVEMENT_INITIATED → execute balances.
  */
 @Component
 @ConditionalOnProperty(prefix = "ledger.movement.kafka", name = "enabled", havingValue = "true")
+@RequiredArgsConstructor
 public class LedgerMovementInitiatedListener {
     private static final Logger log = LoggerFactory.getLogger(LedgerMovementInitiatedListener.class);
 
     private final ObjectMapper objectMapper;
     private final LedgerMovementExecutionUseCase execution;
-
-    public LedgerMovementInitiatedListener(ObjectMapper objectMapper,
-                                           LedgerMovementExecutionUseCase execution) {
-        this.objectMapper = objectMapper;
-        this.execution = execution;
-    }
 
     @KafkaListener(
         topics = "${ledger.movement.kafka.initiated-topic:ledger.movement.initiated}",

@@ -8,16 +8,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Port of the-wallet-ledger AccountOperationUseCase (account queries).
  */
 @Service
+@RequiredArgsConstructor
 public class AccountOperationUseCase {
     private final AccountSetupUseCase accountSetupUseCase;
-
-    public AccountOperationUseCase(AccountSetupUseCase accountSetupUseCase) {
-        this.accountSetupUseCase = accountSetupUseCase;
-    }
 
     @Transactional(readOnly = true)
     public AccountResponse getOne(Long id) {
