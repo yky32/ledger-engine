@@ -1,0 +1,72 @@
+package com.altech.ledger.entity.po.log;
+
+import com.altech.ledger.entity.base.AuditEntityWithIsActive;
+import com.altech.ledger.entity.enu.MovementDirection;
+import jakarta.persistence.*;
+
+import java.math.BigDecimal;
+
+/**
+ * Port of the-wallet-ledger {@code LedgerEntry} (movement-side log leg).
+ * <p>
+ * Distinct from double-entry {@code JournalEntry} (new layer on top).
+ */
+@Entity
+@Table(name = "ledger_entry")
+public class LedgerEntry extends AuditEntityWithIsActive {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "txn_id")
+    private Long txnId;
+
+    @Column(name = "target_id", length = 100)
+    private String targetId;
+
+    @Column(nullable = false, precision = 38, scale = 18)
+    private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private MovementDirection direction;
+
+    @Column(nullable = false, length = 4)
+    private String currency;
+
+    protected LedgerEntry() {}
+
+    public LedgerEntry(Long txnId, String targetId, BigDecimal amount,
+                       MovementDirection direction, String currency) {
+        this.txnId = txnId;
+        this.targetId = targetId;
+        this.amount = amount;
+        this.direction = direction;
+        this.currency = currency;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Long getTxnId() {
+        return txnId;
+    }
+
+    public String getTargetId() {
+        return targetId;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public MovementDirection getDirection() {
+        return direction;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+}

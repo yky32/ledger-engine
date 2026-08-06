@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/movements")
@@ -47,19 +46,19 @@ public class MovementEndpoint {
     }
 
     @PutMapping("/{id}/settle")
-    public MovementResponse settle(@PathVariable UUID id, @Valid @RequestBody SettleMovementRequest request) {
+    public MovementResponse settle(@PathVariable Long id, @Valid @RequestBody SettleMovementRequest request) {
         return movementUseCase.settle(id, request);
     }
 
     @GetMapping("/{id}")
-    public MovementResponse get(@PathVariable UUID id) {
+    public MovementResponse get(@PathVariable Long id) {
         return movementUseCase.get(id);
     }
 
     @GetMapping
     public PageResponse<MovementResponse> list(
-        @RequestParam UUID walletId,
-        @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
+        @RequestParam Long walletId,
+        @PageableDefault(size = 20, sort = "createDt") Pageable pageable
     ) {
         return movementUseCase.listByWallet(walletId, pageable);
     }

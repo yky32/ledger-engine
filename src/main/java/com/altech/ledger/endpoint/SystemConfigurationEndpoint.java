@@ -1,0 +1,34 @@
+package com.altech.ledger.endpoint;
+
+import com.altech.ledger.entity.dto.parity.ParityDtos.ConfigurationResponse;
+import com.altech.ledger.usecase.SystemConfigurationUseCase;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/configurations")
+public class SystemConfigurationEndpoint {
+    private final SystemConfigurationUseCase useCase;
+
+    public SystemConfigurationEndpoint(SystemConfigurationUseCase useCase) {
+        this.useCase = useCase;
+    }
+
+    @GetMapping
+    public ConfigurationResponse get(
+        @RequestParam String target,
+        @RequestParam(required = false, defaultValue = "global") String scope
+    ) {
+        return useCase.myConfigurations(target, scope);
+    }
+
+    @PutMapping
+    public ConfigurationResponse upsert(@RequestBody Map<String, String> body) {
+        return useCase.upsert(
+            body.getOrDefault("name", body.get("target")),
+            body.get("target"),
+            body.getOrDefault("scope", "global"),
+            body.get("value"));
+    }
+}

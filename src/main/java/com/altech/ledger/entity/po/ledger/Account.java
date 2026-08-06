@@ -1,0 +1,192 @@
+package com.altech.ledger.entity.po.ledger;
+
+import com.altech.ledger.entity.base.AuditEntityWithIsActive;
+import com.altech.ledger.entity.enu.AccountStatus;
+import jakarta.persistence.*;
+
+import java.math.BigDecimal;
+
+/**
+ * Port of the-wallet-ledger {@code Account} (COA + mutable balances).
+ * <p>
+ * New-on-top: {@link #allowNegative} for posting policy used by double-entry journal.
+ */
+@Entity
+@Table(
+    name = "account",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uniqueAccountKey", columnNames = {
+            "entity", "type", "sub_type", "main_account", "sub_account", "buffer", "currency"
+        }),
+        @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
+            "main_account", "sub_account"
+        }),
+        @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
+    }
+)
+public class Account extends AuditEntityWithIsActive {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "full_number", length = 200)
+    private String fullNumber; // entity + type + subType + mainAccount + subAccount + buffer
+
+    // === Chart of Account - COA
+    @Column(length = 50)
+    private String entity;
+    @Column(length = 50)
+    private String type;
+    @Column(name = "sub_type", length = 50)
+    private String subType;
+
+    // === ASSOCIATION
+    @Column(name = "main_account", length = 100)
+    private String mainAccount;
+    @Column(name = "sub_account", length = 200)
+    private String subAccount;
+    // === ASSOCIATION
+
+    @Column(length = 50)
+    private String buffer;
+
+    /** ISO / loyalty unit (USD, LP, …) — string to support non-fiat without platform Currency enum. */
+    @Column(nullable = false, length = 4)
+    private String currency;
+    // === Chart of Account - COA
+
+    @Column(name = "ledger_balance", nullable = false, precision = 38, scale = 18)
+    private BigDecimal ledgerBalance;
+
+    @Column(name = "available_balance", nullable = false, precision = 38, scale = 18)
+    private BigDecimal availableBalance;
+    // === BALANCE
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AccountStatus status;
+
+    /** Engine extension — posting may refuse negative signed balance when false. */
+    @Column(name = "allow_negative", nullable = false)
+    private boolean allowNegative;
+
+    protected Account() {}
+
+    public Account(String fullNumber, String entity, String type, String subType,
+                   String mainAccount, String subAccount, String buffer, String currency,
+                   boolean allowNegative) {
+        this.fullNumber = fullNumber;
+        this.entity = entity;
+        this.type = type;
+        this.subType = subType;
+        this.mainAccount = mainAccount;
+        this.subAccount = subAccount;
+        this.buffer = buffer;
+        this.currency = currency;
+        this.ledgerBalance = BigDecimal.ZERO;
+        this.availableBalance = BigDecimal.ZERO;
+        this.status = AccountStatus.ACTIVE;
+        this.allowNegative = allowNegative;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getFullNumber() {
+        return fullNumber;
+    }
+
+    public void setFullNumber(String fullNumber) {
+        this.fullNumber = fullNumber;
+    }
+
+    public String getEntity() {
+        return entity;
+    }
+
+    public void setEntity(String entity) {
+        this.entity = entity;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getSubType() {
+        return subType;
+    }
+
+    public void setSubType(String subType) {
+        this.subType = subType;
+    }
+
+    public String getMainAccount() {
+        return mainAccount;
+    }
+
+    public void setMainAccount(String mainAccount) {
+        this.mainAccount = mainAccount;
+    }
+
+    public String getSubAccount() {
+        return subAccount;
+    }
+
+    public void setSubAccount(String subAccount) {
+        this.subAccount = subAccount;
+    }
+
+    public String getBuffer() {
+        return buffer;
+    }
+
+    public void setBuffer(String buffer) {
+        this.buffer = buffer;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public BigDecimal getLedgerBalance() {
+        return ledgerBalance;
+    }
+
+    public void setLedgerBalance(BigDecimal ledgerBalance) {
+        this.ledgerBalance = ledgerBalance;
+    }
+
+    public BigDecimal getAvailableBalance() {
+        return availableBalance;
+    }
+
+    public void setAvailableBalance(BigDecimal availableBalance) {
+        this.availableBalance = availableBalance;
+    }
+
+    public AccountStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
+    }
+
+    public boolean isAllowNegative() {
+        return allowNegative;
+    }
+
+    public void setAllowNegative(boolean allowNegative) {
+        this.allowNegative = allowNegative;
+    }
+}

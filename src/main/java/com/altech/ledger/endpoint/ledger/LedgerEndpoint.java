@@ -27,18 +27,18 @@ public class LedgerEndpoint {
     }
 
     @GetMapping("/accounts/{id}")
-    public AccountResponse getAccount(@PathVariable UUID id) {
+    public AccountResponse getAccount(@PathVariable Long id) {
         return useCase.getAccount(id);
     }
 
     @GetMapping("/accounts/{id}/balance")
-    public BalanceResponse getBalance(@PathVariable UUID id) {
+    public BalanceResponse getBalance(@PathVariable Long id) {
         return useCase.getBalance(id);
     }
 
     @GetMapping("/accounts/{id}/entries")
     public PageResponse<EntryResponse> getEntries(
-        @PathVariable UUID id,
+        @PathVariable Long id,
         @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
     ) {
         return useCase.getEntries(id, pageable);

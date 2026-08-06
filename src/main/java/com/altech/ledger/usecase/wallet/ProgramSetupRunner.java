@@ -1,10 +1,10 @@
 package com.altech.ledger.usecase.wallet;
 
-import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
-import com.altech.ledger.usecase.ledger.LedgerUseCase;
-import com.altech.ledger.entity.po.LedgerAccount;
 import com.altech.ledger.config.IntegrationProperties;
-import com.altech.ledger.repository.LedgerAccountRepository;
+import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
+import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
+import com.altech.ledger.repository.AccountRepository;
+import com.altech.ledger.usecase.ledger.LedgerUseCase;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 public class ProgramSetupRunner implements ApplicationRunner {
     private final IntegrationProperties properties;
     private final LedgerUseCase ledgerUseCase;
-    private final LedgerAccountRepository accounts;
+    private final AccountRepository accounts;
 
     public ProgramSetupRunner(IntegrationProperties properties, LedgerUseCase ledgerUseCase,
-                              LedgerAccountRepository accounts) {
+                              AccountRepository accounts) {
         this.properties = properties;
         this.ledgerUseCase = ledgerUseCase;
         this.accounts = accounts;
@@ -28,20 +28,16 @@ public class ProgramSetupRunner implements ApplicationRunner {
             return;
         }
         for (String currency : properties.getProgramCurrencies()) {
-            ensurePool(properties.getExpensePoolRefTemplate(), "Loyalty expense pool", currency,
-                LedgerAccount.Type.EXPENSE);
-            ensurePool(properties.getLiabilityPoolRefTemplate(), "Loyalty liability pool", currency,
-                LedgerAccount.Type.LIABILITY);
-            ensurePool(properties.getDepositClearingRefTemplate(), "Deposit clearing pool", currency,
-                LedgerAccount.Type.ASSET);
-            ensurePool(properties.getWithdrawalClearingRefTemplate(), "Withdrawal clearing pool", currency,
-                LedgerAccount.Type.ASSET);
+            ensurePool(properties.getExpensePoolRefTemplate(), "Loyalty expense pool", currency, CoaType.EXPENSE);
+            ensurePool(properties.getLiabilityPoolRefTemplate(), "Loyalty liability pool", currency, CoaType.LIABILITY);
+            ensurePool(properties.getDepositClearingRefTemplate(), "Deposit clearing pool", currency, CoaType.ASSET);
+            ensurePool(properties.getWithdrawalClearingRefTemplate(), "Withdrawal clearing pool", currency, CoaType.ASSET);
         }
     }
 
-    private void ensurePool(String template, String name, String currency, LedgerAccount.Type type) {
+    private void ensurePool(String template, String name, String currency, CoaType type) {
         String ref = template.replace("{currency}", currency);
-        if (accounts.existsByExternalReference(ref)) {
+        if (accounts.existsByFullNumber(ref)) {
             return;
         }
         ledgerUseCase.createAccount(new CreateAccountRequest(ref, name, type, currency, true));

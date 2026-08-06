@@ -1,6 +1,8 @@
 package com.altech.ledger.entity.dto.movement;
 
-import com.altech.ledger.entity.po.LedgerMovement;
+import com.altech.ledger.entity.enu.LedgerMovementMode;
+import com.altech.ledger.entity.enu.LedgerMovementStatus;
+import com.altech.ledger.entity.enu.OrderType;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
@@ -15,11 +17,11 @@ public final class MovementDto {
         @NotBlank @Size(max = 100) String ownerId,
         @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
-        LedgerMovement.Mode mode,
+        LedgerMovementMode mode,
         @Size(max = 500) String description
     ) {
         public DepositRequest {
-            if (mode == null) mode = LedgerMovement.Mode.AUTO;
+            if (mode == null) mode = LedgerMovementMode.AUTO;
         }
     }
 
@@ -28,12 +30,12 @@ public final class MovementDto {
         @NotBlank @Size(max = 100) String ownerId,
         @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
-        LedgerMovement.Mode mode,
+        LedgerMovementMode mode,
         @Size(max = 100) String targetId,
         @Size(max = 500) String description
     ) {
         public WithdrawalRequest {
-            if (mode == null) mode = LedgerMovement.Mode.AUTO;
+            if (mode == null) mode = LedgerMovementMode.AUTO;
         }
     }
 
@@ -43,11 +45,11 @@ public final class MovementDto {
         @NotBlank @Size(max = 100) String toOwnerId,
         @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
-        LedgerMovement.Mode mode,
+        LedgerMovementMode mode,
         @Size(max = 500) String description
     ) {
         public InWalletTransferRequest {
-            if (mode == null) mode = LedgerMovement.Mode.AUTO;
+            if (mode == null) mode = LedgerMovementMode.AUTO;
         }
     }
 
@@ -56,12 +58,12 @@ public final class MovementDto {
     ) {}
 
     public record MovementResponse(
-        UUID id,
+        Long id,
         String movementKey,
-        UUID walletId,
-        LedgerMovement.OrderType orderType,
-        LedgerMovement.Status status,
-        LedgerMovement.Mode mode,
+        Long walletId,
+        OrderType orderType,
+        LedgerMovementStatus status,
+        LedgerMovementMode mode,
         String originatorId,
         String targetId,
         BigDecimal amount,

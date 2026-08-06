@@ -1,8 +1,8 @@
 package com.altech.ledger.entity.dto.ledger;
 
-import com.altech.ledger.entity.po.JournalEntry;
-import com.altech.ledger.entity.po.JournalTransaction;
-import com.altech.ledger.entity.po.LedgerAccount;
+import com.altech.ledger.entity.enu.AccountStatus;
+import com.altech.ledger.entity.po.journal.JournalEntry;
+import com.altech.ledger.entity.po.journal.JournalTransaction;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
@@ -14,21 +14,34 @@ import java.util.UUID;
 public final class LedgerDto {
     private LedgerDto() {}
 
+    /** Classic accounting classification stored in Account.type (COA segment). */
+    public enum CoaType { ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE }
+
     public record CreateAccountRequest(
         @NotBlank @Size(max = 100) String externalReference,
         @NotBlank @Size(max = 200) String name,
-        @NotNull LedgerAccount.Type type,
+        @NotNull CoaType type,
         @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
         boolean allowNegative
     ) {}
 
     public record AccountResponse(
-        UUID id, String externalReference, String name, LedgerAccount.Type type, String currency,
-        LedgerAccount.Status status, boolean allowNegative, long version, Instant createdAt, Instant updatedAt
+        Long id,
+        String externalReference,
+        String name,
+        CoaType type,
+        String currency,
+        AccountStatus status,
+        boolean allowNegative,
+        BigDecimal ledgerBalance,
+        BigDecimal availableBalance,
+        int version,
+        Instant createdAt,
+        Instant updatedAt
     ) {}
 
     public record EntryRequest(
-        @NotNull UUID accountId,
+        @NotNull Long accountId,
         @NotNull JournalEntry.Side side,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
         @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
@@ -49,7 +62,7 @@ public final class LedgerDto {
     ) {}
 
     public record EntryResponse(
-        UUID id, UUID transactionId, UUID accountId, JournalEntry.Side side, BigDecimal amount,
+        UUID id, UUID transactionId, Long accountId, JournalEntry.Side side, BigDecimal amount,
         String currency, int sequence, Instant createdAt
     ) {}
 
@@ -60,8 +73,9 @@ public final class LedgerDto {
     ) {}
 
     public record BalanceResponse(
-        UUID accountId, String currency, BigDecimal debitTotal, BigDecimal creditTotal,
-        BigDecimal balance
+        Long accountId, String currency,
+        BigDecimal debitTotal, BigDecimal creditTotal, BigDecimal balance,
+        BigDecimal ledgerBalance, BigDecimal availableBalance
     ) {}
 
     public record PageResponse<T>(List<T> content, int page, int size, long totalElements, int totalPages) {}

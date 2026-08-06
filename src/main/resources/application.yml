@@ -18,6 +18,15 @@ spring:
     enabled: true
 
 ledger:
+  movement:
+    kafka:
+      enabled: false
+      initiated-topic: ledger.movement.initiated
+      done-topic: ledger.movement.done
+      balance-update-topic: ledger.movement.balance-update
+      wallet-created-topic: ledger.wallet.created
+      recipient-created-topic: ledger.recipient.created
+      group-id: ledger-engine-movement
   integration:
     enabled: true
     program-setup-enabled: true

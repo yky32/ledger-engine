@@ -1,13 +1,14 @@
 package com.altech.ledger.usecase.ledger;
 
 import com.altech.ledger.entity.dto.ledger.LedgerDto.*;
+import com.altech.ledger.entity.enu.AccountStatus;
+import com.altech.ledger.entity.po.journal.JournalEntry;
+import com.altech.ledger.entity.po.journal.JournalTransaction;
+import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.exception.LedgerException;
-import com.altech.ledger.entity.po.JournalEntry;
-import com.altech.ledger.entity.po.JournalTransaction;
-import com.altech.ledger.entity.po.LedgerAccount;
+import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.JournalEntryRepository;
 import com.altech.ledger.repository.JournalTransactionRepository;
-import com.altech.ledger.repository.LedgerAccountRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class LedgerUseCase {
-    private final LedgerAccountRepository accounts;
+    private final AccountRepository accounts;
     private final JournalTransactionRepository transactions;
     private final JournalEntryRepository entries;
 
-    public LedgerUseCase(LedgerAccountRepository accounts, JournalTransactionRepository transactions,
+    public LedgerUseCase(AccountRepository accounts, JournalTransactionRepository transactions,
                          JournalEntryRepository entries) {
         this.accounts = accounts;
         this.transactions = transactions;
@@ -38,28 +39,41 @@ public class LedgerUseCase {
     @Transactional
     public AccountResponse createAccount(CreateAccountRequest request) {
         requireLedgerCurrency(request.currency());
-        if (accounts.existsByExternalReference(request.externalReference())) {
+        if (accounts.existsByFullNumber(request.externalReference())) {
             throw LedgerException.conflict("EXTERNAL_REFERENCE_EXISTS", "External reference already exists");
         }
-        return accountResponse(accounts.save(new LedgerAccount(request.externalReference(), request.name(),
-            request.type(), request.currency(), request.allowNegative())));
+        // Map simplified API → legacy COA Account shape
+        Account account = new Account(
+            request.externalReference(),
+            "10",
+            request.type().name(),
+            "00",
+            request.externalReference(),
+            request.name(),
+            "NA",
+            request.currency(),
+            request.allowNegative()
+        );
+        return accountResponse(accounts.save(account));
     }
 
     @Transactional(readOnly = true)
-    public AccountResponse getAccount(UUID id) {
+    public AccountResponse getAccount(Long id) {
         return accountResponse(account(id));
     }
 
     @Transactional(readOnly = true)
-    public BalanceResponse getBalance(UUID id) {
-        LedgerAccount account = account(id);
+    public BalanceResponse getBalance(Long id) {
+        Account account = account(id);
         BigDecimal debits = zero(entries.debitTotal(id));
         BigDecimal credits = zero(entries.creditTotal(id));
-        return new BalanceResponse(id, account.getCurrency(), debits, credits, signed(account, debits, credits));
+        return new BalanceResponse(
+            id, account.getCurrency(), debits, credits, signed(account, debits, credits),
+            account.getLedgerBalance(), account.getAvailableBalance());
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<EntryResponse> getEntries(UUID id, Pageable pageable) {
+    public PageResponse<EntryResponse> getEntries(Long id, Pageable pageable) {
         account(id);
         Page<JournalEntry> page = entries.findByAccountId(id, pageable);
         return new PageResponse<>(page.map(this::entryResponse).getContent(), page.getNumber(), page.getSize(),
@@ -79,7 +93,7 @@ public class LedgerUseCase {
             return new PostingResult(transactionResponse(existing.get()), false);
         }
 
-        Map<UUID, LedgerAccount> locked = lockAccounts(normalized.stream()
+        Map<Long, Account> locked = lockAccounts(normalized.stream()
             .map(NormalizedEntry::accountId).collect(Collectors.toSet()));
         validateEntries(normalized, locked);
         validateNonnegative(normalized, locked);
@@ -91,6 +105,7 @@ public class LedgerUseCase {
                 item.currency(), item.sequence());
             tx.addEntry(entry);
         }
+        applyLegacyBalances(normalized, locked);
         return new PostingResult(transactionResponse(transactions.save(tx)), true);
     }
 
@@ -117,9 +132,9 @@ public class LedgerUseCase {
 
         JournalTransaction original = transactions.findWithEntriesById(originalId)
             .orElseThrow(() -> LedgerException.notFound("Transaction not found: " + originalId));
-        Set<UUID> accountIds = original.getEntries().stream()
+        Set<Long> accountIds = original.getEntries().stream()
             .map(e -> e.getAccount().getId()).collect(Collectors.toSet());
-        Map<UUID, LedgerAccount> locked = lockAccounts(accountIds);
+        Map<Long, Account> locked = lockAccounts(accountIds);
         Optional<JournalTransaction> priorReversal = transactions.findByReversalOfId(originalId);
         if (priorReversal.isPresent()) {
             throw LedgerException.conflict("ALREADY_REVERSED", "Transaction has already been reversed");
@@ -138,8 +153,25 @@ public class LedgerUseCase {
                 item.amount(), item.currency(), item.sequence());
             reversal.addEntry(entry);
         }
+        applyLegacyBalances(reversed, locked);
         original.markReversed();
         return new PostingResult(transactionResponse(transactions.save(reversal)), true);
+    }
+
+    /** Dual-write legacy ledgerBalance / availableBalance on top of journal posts. */
+    private void applyLegacyBalances(List<NormalizedEntry> normalized, Map<Long, Account> locked) {
+        Map<Long, BigDecimal> deltas = new HashMap<>();
+        for (NormalizedEntry item : normalized) {
+            Account account = locked.get(item.accountId());
+            BigDecimal delta = normalIncrease(account, item.side()) ? item.amount() : item.amount().negate();
+            deltas.merge(account.getId(), delta, BigDecimal::add);
+        }
+        for (Map.Entry<Long, BigDecimal> change : deltas.entrySet()) {
+            Account account = locked.get(change.getKey());
+            BigDecimal next = account.getLedgerBalance().add(change.getValue());
+            account.setLedgerBalance(next);
+            account.setAvailableBalance(next);
+        }
     }
 
     private List<NormalizedEntry> normalize(List<EntryRequest> requested) {
@@ -161,23 +193,23 @@ public class LedgerUseCase {
         return result.stream().sorted(Comparator.comparingInt(NormalizedEntry::sequence)).toList();
     }
 
-    private Map<UUID, LedgerAccount> lockAccounts(Set<UUID> ids) {
-        List<UUID> sorted = ids.stream().sorted().toList();
-        Map<UUID, LedgerAccount> locked = accounts.lockAllById(sorted).stream()
-            .collect(Collectors.toMap(LedgerAccount::getId, Function.identity()));
+    private Map<Long, Account> lockAccounts(Set<Long> ids) {
+        List<Long> sorted = ids.stream().sorted().toList();
+        Map<Long, Account> locked = accounts.lockAllById(sorted).stream()
+            .collect(Collectors.toMap(Account::getId, Function.identity()));
         if (locked.size() != ids.size()) {
-            Set<UUID> missing = new LinkedHashSet<>(sorted);
+            Set<Long> missing = new LinkedHashSet<>(sorted);
             missing.removeAll(locked.keySet());
             throw LedgerException.notFound("Accounts not found: " + missing);
         }
         return locked;
     }
 
-    private void validateEntries(List<NormalizedEntry> normalized, Map<UUID, LedgerAccount> locked) {
+    private void validateEntries(List<NormalizedEntry> normalized, Map<Long, Account> locked) {
         Map<String, BigDecimal[]> totals = new HashMap<>();
         for (NormalizedEntry item : normalized) {
-            LedgerAccount account = locked.get(item.accountId());
-            if (account.getStatus() != LedgerAccount.Status.ACTIVE) {
+            Account account = locked.get(item.accountId());
+            if (account.getStatus() != AccountStatus.ACTIVE) {
                 throw LedgerException.conflict("ACCOUNT_NOT_ACTIVE", "Account is not active: " + account.getId());
             }
             if (!account.getCurrency().equals(item.currency())) {
@@ -200,16 +232,16 @@ public class LedgerUseCase {
         });
     }
 
-    private void validateNonnegative(List<NormalizedEntry> normalized, Map<UUID, LedgerAccount> locked) {
-        Map<UUID, BigDecimal> deltas = new HashMap<>();
+    private void validateNonnegative(List<NormalizedEntry> normalized, Map<Long, Account> locked) {
+        Map<Long, BigDecimal> deltas = new HashMap<>();
         for (NormalizedEntry item : normalized) {
-            LedgerAccount account = locked.get(item.accountId());
-            BigDecimal delta = normalIncrease(account.getType(), item.side())
+            Account account = locked.get(item.accountId());
+            BigDecimal delta = normalIncrease(account, item.side())
                 ? item.amount() : item.amount().negate();
             deltas.merge(account.getId(), delta, BigDecimal::add);
         }
-        for (Map.Entry<UUID, BigDecimal> change : deltas.entrySet()) {
-            LedgerAccount account = locked.get(change.getKey());
+        for (Map.Entry<Long, BigDecimal> change : deltas.entrySet()) {
+            Account account = locked.get(change.getKey());
             if (!account.isAllowNegative()) {
                 BigDecimal current = signed(account, zero(entries.debitTotal(account.getId())),
                     zero(entries.creditTotal(account.getId())));
@@ -240,29 +272,48 @@ public class LedgerUseCase {
         }
     }
 
-    private LedgerAccount account(UUID id) {
+    private Account account(Long id) {
         return accounts.findById(id).orElseThrow(() -> LedgerException.notFound("Account not found: " + id));
     }
 
-    private BigDecimal signed(LedgerAccount account, BigDecimal debits, BigDecimal credits) {
-        return switch (account.getType()) {
+    private BigDecimal signed(Account account, BigDecimal debits, BigDecimal credits) {
+        CoaType coa = coaType(account);
+        return switch (coa) {
             case ASSET, EXPENSE -> debits.subtract(credits);
             case LIABILITY, EQUITY, REVENUE -> credits.subtract(debits);
         };
     }
 
-    private boolean normalIncrease(LedgerAccount.Type type, JournalEntry.Side side) {
-        boolean debitNormal = type == LedgerAccount.Type.ASSET || type == LedgerAccount.Type.EXPENSE;
+    private boolean normalIncrease(Account account, JournalEntry.Side side) {
+        CoaType coa = coaType(account);
+        boolean debitNormal = coa == CoaType.ASSET || coa == CoaType.EXPENSE;
         return debitNormal ? side == JournalEntry.Side.DEBIT : side == JournalEntry.Side.CREDIT;
+    }
+
+    private CoaType coaType(Account account) {
+        try {
+            return CoaType.valueOf(account.getType());
+        } catch (Exception ex) {
+            // Legacy free-form COA segments default to liability-style (credit normal)
+            return CoaType.LIABILITY;
+        }
     }
 
     private JournalEntry.Side opposite(JournalEntry.Side side) {
         return side == JournalEntry.Side.DEBIT ? JournalEntry.Side.CREDIT : JournalEntry.Side.DEBIT;
     }
 
-    private BigDecimal zero(BigDecimal value) { return value == null ? BigDecimal.ZERO : value; }
-    private String decimal(BigDecimal value) { return value.stripTrailingZeros().toPlainString(); }
-    private String value(String value) { return value == null ? "" : value; }
+    private BigDecimal zero(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private String decimal(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
+    }
+
+    private String value(String value) {
+        return value == null ? "" : value;
+    }
 
     private void requireLedgerCurrency(String currency) {
         if (currency == null || !currency.matches("[A-Z]{2,4}")) {
@@ -270,9 +321,17 @@ public class LedgerUseCase {
         }
     }
 
-    private AccountResponse accountResponse(LedgerAccount a) {
-        return new AccountResponse(a.getId(), a.getExternalReference(), a.getName(), a.getType(), a.getCurrency(),
-            a.getStatus(), a.isAllowNegative(), a.getVersion(), a.getCreatedAt(), a.getUpdatedAt());
+    private AccountResponse accountResponse(Account a) {
+        CoaType coa;
+        try {
+            coa = CoaType.valueOf(a.getType());
+        } catch (Exception ex) {
+            coa = CoaType.LIABILITY;
+        }
+        return new AccountResponse(
+            a.getId(), a.getFullNumber(), a.getSubAccount(), coa, a.getCurrency(), a.getStatus(),
+            a.isAllowNegative(), a.getLedgerBalance(), a.getAvailableBalance(), a.getVersion(),
+            a.getCreateDt(), a.getUpdateDt());
     }
 
     private EntryResponse entryResponse(JournalEntry e) {
@@ -287,7 +346,8 @@ public class LedgerUseCase {
             tx.getEntries().stream().map(this::entryResponse).toList());
     }
 
-    private record NormalizedEntry(UUID accountId, JournalEntry.Side side, BigDecimal amount,
+    private record NormalizedEntry(Long accountId, JournalEntry.Side side, BigDecimal amount,
                                    String currency, int sequence) {}
+
     public record PostingResult(TransactionResponse transaction, boolean created) {}
 }
