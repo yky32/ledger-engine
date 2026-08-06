@@ -31,7 +31,7 @@ public class SystemConfiguration extends AuditEntityWithIsActive {
     @Column(length = 100)
     private String scope;
 
-    @Column(name = "value", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String value;
 
     protected SystemConfiguration() {}

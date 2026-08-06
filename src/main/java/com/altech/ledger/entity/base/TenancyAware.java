@@ -10,6 +10,5 @@ import lombok.Setter;
 @MappedSuperclass
 public abstract class TenancyAware extends AuditEntityWithIsActive {
 
-    @Column(name = "tenant_id")
     private Long tenantId;
 }

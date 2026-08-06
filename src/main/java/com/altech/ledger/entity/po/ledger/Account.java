@@ -35,7 +35,7 @@ public class Account extends AuditEntityWithIsActive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "full_number", length = 200)
+    @Column(length = 200)
     private String fullNumber; // entity + type + subType + mainAccount + subAccount + buffer
 
     // === Chart of Account - COA
@@ -43,13 +43,13 @@ public class Account extends AuditEntityWithIsActive {
     private String entity;
     @Column(length = 50)
     private String type;
-    @Column(name = "sub_type", length = 50)
+    @Column(length = 50)
     private String subType;
 
     // === ASSOCIATION
-    @Column(name = "main_account", length = 100)
+    @Column(length = 100)
     private String mainAccount;
-    @Column(name = "sub_account", length = 200)
+    @Column(length = 200)
     private String subAccount;
     // === ASSOCIATION
 
@@ -61,10 +61,10 @@ public class Account extends AuditEntityWithIsActive {
     private String currency;
     // === Chart of Account - COA
 
-    @Column(name = "ledger_balance", nullable = false, precision = 38, scale = 18)
+    @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal ledgerBalance;
 
-    @Column(name = "available_balance", nullable = false, precision = 38, scale = 18)
+    @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal availableBalance;
     // === BALANCE
 
@@ -73,7 +73,7 @@ public class Account extends AuditEntityWithIsActive {
     private AccountStatus status;
 
     /** Engine extension — posting may refuse negative signed balance when false. */
-    @Column(name = "allow_negative", nullable = false)
+    @Column(nullable = false)
     private boolean allowNegative;
 
     protected Account() {}

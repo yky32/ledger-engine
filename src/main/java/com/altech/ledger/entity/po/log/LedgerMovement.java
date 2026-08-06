@@ -38,19 +38,18 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "txn_id")
     private Long txnId;
 
     @Column(length = 100)
     private String alias;
 
-    @Column(name = "wallet_id", nullable = false)
+    @Column(nullable = false)
     private Long walletId;
 
-    @Column(name = "originator_id", length = 100)
+    @Column(length = 100)
     private String originatorId;
 
-    @Column(name = "target_id", length = 100)
+    @Column(length = 100)
     private String targetId;
 
     @Column(nullable = false, precision = 38, scale = 18)
@@ -60,7 +59,7 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     private String currency;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "order_type", nullable = false, length = 30)
+    @Column(nullable = false, length = 30)
     private OrderType orderType;
 
     @Enumerated(EnumType.STRING)
@@ -80,30 +79,28 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     @Column(nullable = false, length = 20)
     private LedgerMovementType type = LedgerMovementType.TRANSFER;
 
-    @Column(name = "payer_context", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String payerContext;
 
-    @Column(name = "recipient_context", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String recipientContext;
 
     @Column(columnDefinition = "TEXT")
     private String files;
 
-    @Column(name = "compliance_context", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String complianceContext;
 
-    @Column(name = "associated_ledger_movement_id")
     private Long associatedLedgerMovementId;
 
     // --- engine extensions ---
-    @Column(name = "movement_key", nullable = false, unique = true, length = 150)
+    @Column(nullable = false, unique = true, length = 150)
     private String movementKey;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private LedgerMovementMode mode = LedgerMovementMode.AUTO;
 
-    @Column(name = "journal_transaction_id")
     private UUID journalTransactionId;
 
     protected LedgerMovement() {}

@@ -44,7 +44,7 @@ public class JournalEntry {
     private String currency;
     @Column(name = "sequence_number", nullable = false)
     private int sequence;
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     protected JournalEntry() {}

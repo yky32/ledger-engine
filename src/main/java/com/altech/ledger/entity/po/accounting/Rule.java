@@ -35,7 +35,7 @@ public class Rule extends AuditEntityWithIsActive {
     @Column(precision = 38, scale = 18)
     private BigDecimal multiplier;
 
-    @Column(name = "target_account", length = 200)
+    @Column(length = 200)
     private String targetAccount;
 
     /** JSON blob — legacy RuleMetadata. */

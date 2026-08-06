@@ -23,9 +23,9 @@ public class JournalTransaction {
 
     @Id
     private UUID id;
-    @Column(name = "idempotency_key", nullable = false, unique = true, length = 150)
+    @Column(nullable = false, unique = true, length = 150)
     private String idempotencyKey;
-    @Column(name = "request_hash", nullable = false, length = 64)
+    @Column(nullable = false, length = 64)
     private String requestHash;
     @Column(length = 150)
     private String reference;
@@ -34,9 +34,9 @@ public class JournalTransaction {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Status status;
-    @Column(name = "effective_at", nullable = false)
+    @Column(nullable = false)
     private Instant effectiveAt;
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reversal_of_id")

@@ -11,7 +11,7 @@ import lombok.Setter;
 @MappedSuperclass
 public abstract class AuditEntityWithIsActive extends AuditEntity {
 
-    @Column(name = "is_active", nullable = false)
+    @Column(nullable = false)
     private Boolean isActive = true;
 
     @PrePersist

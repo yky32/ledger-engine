@@ -35,7 +35,7 @@ public class Wallet extends AuditEntityWithIsActive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "account_id", nullable = false)
+    @Column(nullable = false)
     private Long accountId;
 
     @Column(nullable = false, length = 100)
@@ -44,10 +44,10 @@ public class Wallet extends AuditEntityWithIsActive {
     @Column(length = 200)
     private String nickname;
 
-    @Column(name = "ext_identifier", length = 100)
+    @Column(length = 100)
     private String extIdentifier;
 
-    @Column(name = "ext_type", length = 50)
+    @Column(length = 50)
     private String extType;
 
     @Column(length = 66)
@@ -58,7 +58,7 @@ public class Wallet extends AuditEntityWithIsActive {
     private WalletAssociationType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "wallet_type", length = 20)
+    @Column(length = 20)
     private WalletType walletType;
 
     @Enumerated(EnumType.STRING)
@@ -66,7 +66,7 @@ public class Wallet extends AuditEntityWithIsActive {
     private WalletStatus status;
 
     // --- engine extensions ---
-    @Column(name = "owner_id", nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String ownerId;
 
     @Column(nullable = false, length = 4)

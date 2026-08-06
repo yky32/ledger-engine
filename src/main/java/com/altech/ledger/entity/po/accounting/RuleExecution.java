@@ -27,7 +27,7 @@ public class RuleExecution extends AuditEntityWithIsActive {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "order_type", length = 30)
+    @Column(length = 30)
     private OrderType orderType;
 
     /** JSON blob — legacy RuleExecutionMetadata (list of rule ids). */

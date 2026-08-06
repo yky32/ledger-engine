@@ -24,10 +24,9 @@ public class LedgerEntry extends AuditEntityWithIsActive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "txn_id")
     private Long txnId;
 
-    @Column(name = "target_id", length = 100)
+    @Column(length = 100)
     private String targetId;
 
     @Column(nullable = false, precision = 38, scale = 18)

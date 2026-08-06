@@ -10,6 +10,5 @@ import lombok.Setter;
 @MappedSuperclass
 public abstract class WalletIdAware extends AuditEntityWithIsActive {
 
-    @Column(name = "wallet_id")
     private Long walletId;
 }

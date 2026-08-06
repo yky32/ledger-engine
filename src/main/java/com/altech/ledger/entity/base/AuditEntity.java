@@ -17,19 +17,14 @@ import java.time.Instant;
 public abstract class AuditEntity implements Serializable {
 
     @Version
-    @Column(name = "version")
     protected int version;
 
-    @Column(name = "create_dt")
     protected Instant createDt;
 
-    @Column(name = "created_by")
     protected String createdBy;
 
-    @Column(name = "update_dt")
     protected Instant updateDt;
 
-    @Column(name = "updated_by")
     protected String updatedBy;
 
     @PrePersist
