@@ -1,77 +1,84 @@
 package com.altech.ledger.usecase.movement;
 
-import com.altech.ledger.config.IntegrationProperties;
-import com.altech.ledger.entity.dto.ledger.LedgerDto.*;
+import com.altech.ledger.entity.dto.ledger.LedgerDto.PageResponse;
 import com.altech.ledger.entity.dto.movement.MovementDto.*;
+import com.altech.ledger.entity.dto.parity.ParityDtos;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
-import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.enu.WalletStatus;
-import com.altech.ledger.entity.po.journal.JournalEntry;
-import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.exception.LedgerException;
-import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
-import com.altech.ledger.usecase.ledger.LedgerUseCase;
+import com.altech.ledger.usecase.ledger.LedgerMovementPipelineUseCase;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-
-import lombok.RequiredArgsConstructor;
-
+/**
+ * Owner-centric movement API. Posts via movement pipeline (account balances + movement log);
+ * no classic journal layer.
+ */
 @Service
 @RequiredArgsConstructor
 public class MovementUseCase {
-    private final IntegrationProperties properties;
-    private final LedgerUseCase ledgerUseCase;
     private final WalletRepository wallets;
-    private final AccountRepository accounts;
     private final LedgerMovementRepository movements;
+    private final LedgerMovementPipelineUseCase pipeline;
 
     @Transactional
     public MovementResponse deposit(DepositRequest request) {
         Wallet wallet = requireActiveWallet(request.ownerId(), request.currency());
-        return createMovement(request.movementKey(), wallet, OrderType.DEPOSIT, request.mode(),
-            wallet.getOwnerId(), null, request.amount(), request.currency(), request.description());
+        ParityDtos.MovementResponse r = pipeline.deposit(new ParityDtos.CreateDepositRequest(
+            String.valueOf(wallet.getId()),
+            request.currency(),
+            request.amount(),
+            request.mode() == null ? LedgerMovementMode.AUTO : request.mode(),
+            request.ownerId(),
+            request.movementKey(),
+            request.description(),
+            null
+        ));
+        return toDto(r);
     }
 
     @Transactional
     public MovementResponse withdraw(WithdrawalRequest request) {
         Wallet wallet = requireActiveWallet(request.ownerId(), request.currency());
-        return createMovement(request.movementKey(), wallet, OrderType.WITHDRAWAL, request.mode(),
-            wallet.getOwnerId(), request.targetId(), request.amount(), request.currency(), request.description());
+        ParityDtos.MovementResponse r = pipeline.withdraw(new ParityDtos.CreateWithdrawalRequest(
+            String.valueOf(wallet.getId()),
+            request.currency(),
+            request.amount(),
+            request.mode() == null ? LedgerMovementMode.AUTO : request.mode(),
+            request.targetId(),
+            request.movementKey(),
+            request.description()
+        ));
+        return toDto(r);
     }
 
     @Transactional
     public MovementResponse transfer(InWalletTransferRequest request) {
-        Wallet source = requireActiveWallet(request.fromOwnerId(), request.currency());
-        requireActiveWallet(request.toOwnerId(), request.currency());
-        return createMovement(request.movementKey(), source, OrderType.IN_WALLET_TRANSFER,
-            request.mode(), source.getOwnerId(), request.toOwnerId(), request.amount(), request.currency(),
-            request.description());
+        Wallet from = requireActiveWallet(request.fromOwnerId(), request.currency());
+        Wallet to = requireActiveWallet(request.toOwnerId(), request.currency());
+        ParityDtos.MovementResponse r = pipeline.inWalletTransfer(new ParityDtos.CreateInWalletTransferRequest(
+            String.valueOf(from.getId()),
+            String.valueOf(to.getId()),
+            request.currency(),
+            request.amount(),
+            request.mode() == null ? LedgerMovementMode.AUTO : request.mode(),
+            request.movementKey(),
+            request.description()
+        ));
+        return toDto(r);
     }
 
     @Transactional
     public MovementResponse settle(Long movementId, SettleMovementRequest request) {
-        LedgerMovement movement = movement(movementId);
-        if (movement.getStatus() != LedgerMovementStatus.PENDING
-            && movement.getStatus() != LedgerMovementStatus.PROCESSING) {
-            throw LedgerException.conflict("MOVEMENT_NOT_SETTLABLE",
-                "Movement is not pending settlement: " + movement.getStatus());
-        }
-        if (movement.getJournalTransactionId() != null) {
-            return response(movement);
-        }
-        Wallet wallet = wallet(movement.getWalletId());
-        postForMovement(movement, wallet, request.description());
-        return response(movements.save(movement));
+        return toDto(pipeline.settle(movementId));
     }
 
     @Transactional(readOnly = true)
@@ -87,83 +94,18 @@ public class MovementUseCase {
             page.getTotalElements(), page.getTotalPages());
     }
 
-    private MovementResponse createMovement(String movementKey, Wallet wallet, OrderType orderType,
-                                            LedgerMovementMode mode, String originatorId, String targetId,
-                                            java.math.BigDecimal amount, String currency, String description) {
-        Optional<LedgerMovement> existing = movements.findByMovementKey(movementKey);
-        if (existing.isPresent()) {
-            return response(existing.get());
-        }
-
-        LedgerMovement movement = new LedgerMovement(movementKey, wallet.getId(), orderType, mode,
-            originatorId, targetId, amount, currency, null);
-        movements.save(movement);
-
-        if (mode == LedgerMovementMode.AUTO) {
-            postForMovement(movement, wallet, description);
-            movements.save(movement);
-        } else {
-            movement.markProcessing();
-            movements.save(movement);
-        }
-        return response(movement);
+    private MovementResponse toDto(ParityDtos.MovementResponse r) {
+        return new MovementResponse(
+            r.id(), r.movementKey(), r.walletId(), r.orderType(), r.status(), r.mode(),
+            r.originatorId(), r.targetId(), r.amount(), r.currency(),
+            r.createDt(), r.updateDt());
     }
 
-    private void postForMovement(LedgerMovement movement, Wallet wallet, String description) {
-        List<EntryRequest> legs = buildLegs(movement, wallet);
-        PostTransactionRequest post = new PostTransactionRequest(
-            "movement:" + movement.getMovementKey(),
-            movement.getMovementKey(),
-            description,
-            null,
-            legs
-        );
-        LedgerUseCase.PostingResult result = ledgerUseCase.post(post);
-        movement.markSettled(result.transaction().id());
-    }
-
-    private List<EntryRequest> buildLegs(LedgerMovement movement, Wallet wallet) {
-        Long walletAccountId = wallet.getAccountId();
-        java.math.BigDecimal amount = movement.getAmount();
-        String currency = movement.getCurrency();
-
-        return switch (movement.getOrderType()) {
-            case DEPOSIT -> List.of(
-                entry(clearingDeposit(currency).getId(), JournalEntry.Side.DEBIT, amount, currency, 1),
-                entry(walletAccountId, JournalEntry.Side.CREDIT, amount, currency, 2));
-            case WITHDRAWAL -> List.of(
-                entry(walletAccountId, JournalEntry.Side.DEBIT, amount, currency, 1),
-                entry(clearingWithdrawal(currency).getId(), JournalEntry.Side.CREDIT, amount, currency, 2));
-            case IN_WALLET_TRANSFER, WALLET_TRANSFER -> {
-                Wallet target = wallets.findByOwnerIdAndCurrency(movement.getTargetId(), currency)
-                    .orElseThrow(() -> LedgerException.notFound("WALLET_NOT_FOUND",
-                        "Target wallet not found: " + movement.getTargetId()));
-                yield List.of(
-                    entry(walletAccountId, JournalEntry.Side.DEBIT, amount, currency, 1),
-                    entry(target.getAccountId(), JournalEntry.Side.CREDIT, amount, currency, 2));
-            }
-            default -> throw LedgerException.badRequest("UNSUPPORTED_ORDER_TYPE",
-                "Order type not supported for posting: " + movement.getOrderType());
-        };
-    }
-
-    private EntryRequest entry(Long accountId, JournalEntry.Side side, java.math.BigDecimal amount,
-                               String currency, int sequence) {
-        return new EntryRequest(accountId, side, amount, currency, sequence);
-    }
-
-    private Account clearingDeposit(String currency) {
-        return requirePool(properties.getDepositClearingRefTemplate(), currency);
-    }
-
-    private Account clearingWithdrawal(String currency) {
-        return requirePool(properties.getWithdrawalClearingRefTemplate(), currency);
-    }
-
-    private Account requirePool(String template, String currency) {
-        String ref = template.replace("{currency}", currency);
-        return accounts.findByFullNumber(ref)
-            .orElseThrow(() -> LedgerException.notFound("POOL_NOT_FOUND", "Program pool missing: " + ref));
+    private MovementResponse response(LedgerMovement movement) {
+        return new MovementResponse(movement.getId(), movement.getMovementKey(), movement.getWalletId(),
+            movement.getOrderType(), movement.getStatus(), movement.getMode(), movement.getOriginatorId(),
+            movement.getTargetId(), movement.getAmount(), movement.getCurrency(),
+            movement.getCreateDt(), movement.getUpdateDt());
     }
 
     private Wallet requireActiveWallet(String ownerId, String currency) {
@@ -184,12 +126,5 @@ public class MovementUseCase {
     private Wallet wallet(Long id) {
         return wallets.findById(id)
             .orElseThrow(() -> LedgerException.notFound("WALLET_NOT_FOUND", "Wallet not found: " + id));
-    }
-
-    private MovementResponse response(LedgerMovement movement) {
-        return new MovementResponse(movement.getId(), movement.getMovementKey(), movement.getWalletId(),
-            movement.getOrderType(), movement.getStatus(), movement.getMode(), movement.getOriginatorId(),
-            movement.getTargetId(), movement.getAmount(), movement.getCurrency(),
-            movement.getJournalTransactionId(), movement.getCreateDt(), movement.getUpdateDt());
     }
 }

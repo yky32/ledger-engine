@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 /**
  * Port of the-wallet-ledger {@code LedgerEntry} (movement-side log leg).
  * <p>
- * Distinct from double-entry {@code JournalEntry} (new layer on top).
+ * Per-movement balance leg log (not a full double-entry journal).
  */
 @Entity
 @Table(name = "ledger_entry")

@@ -33,12 +33,11 @@ class MovementIntegrationTest {
                     """.formatted(key, owner)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.status").value("SETTLED"))
-            .andExpect(jsonPath("$.orderType").value("DEPOSIT"))
-            .andExpect(jsonPath("$.journalTransactionId").exists());
+            .andExpect(jsonPath("$.orderType").value("DEPOSIT"));
 
         mockMvc.perform(get("/wallets/" + owner + "/LP"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.balance.balance").value(250.00));
+            .andExpect(jsonPath("$.balance.ledgerBalance").value(250.00));
     }
 
     @Test
@@ -66,9 +65,9 @@ class MovementIntegrationTest {
             .andExpect(jsonPath("$.status").value("SETTLED"));
 
         mockMvc.perform(get("/wallets/" + ownerA + "/LP"))
-            .andExpect(jsonPath("$.balance.balance").value(60.00));
+            .andExpect(jsonPath("$.balance.ledgerBalance").value(60.00));
         mockMvc.perform(get("/wallets/" + ownerB + "/LP"))
-            .andExpect(jsonPath("$.balance.balance").value(40.00));
+            .andExpect(jsonPath("$.balance.ledgerBalance").value(40.00));
     }
 
     @Test

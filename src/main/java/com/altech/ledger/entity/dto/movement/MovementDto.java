@@ -7,7 +7,6 @@ import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 
 public final class MovementDto {
     private MovementDto() {}
@@ -68,7 +67,6 @@ public final class MovementDto {
         String targetId,
         BigDecimal amount,
         String currency,
-        UUID journalTransactionId,
         Instant createdAt,
         Instant updatedAt
     ) {}

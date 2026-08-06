@@ -1,18 +1,19 @@
 package com.altech.ledger.endpoint.ledger;
 
-import com.altech.ledger.entity.dto.ledger.LedgerDto.*;
+import com.altech.ledger.entity.dto.ledger.LedgerDto.AccountResponse;
+import com.altech.ledger.entity.dto.ledger.LedgerDto.BalanceResponse;
+import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
 import com.altech.ledger.usecase.ledger.LedgerUseCase;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.UUID;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,40 +34,5 @@ public class LedgerEndpoint {
     @GetMapping("/accounts/{id}/balance")
     public BalanceResponse getBalance(@PathVariable Long id) {
         return useCase.getBalance(id);
-    }
-
-    @GetMapping("/accounts/{id}/entries")
-    public PageResponse<EntryResponse> getEntries(
-        @PathVariable Long id,
-        @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
-    ) {
-        return useCase.getEntries(id, pageable);
-    }
-
-    @PostMapping("/transactions")
-    public ResponseEntity<TransactionResponse> post(@Valid @RequestBody PostTransactionRequest request) {
-        return postingResponse(useCase.post(request));
-    }
-
-    @GetMapping("/transactions/{id}")
-    public TransactionResponse getTransaction(@PathVariable UUID id) {
-        return useCase.getTransaction(id);
-    }
-
-    @PostMapping("/transactions/{id}/reversal")
-    public ResponseEntity<TransactionResponse> reverse(
-        @PathVariable UUID id,
-        @Valid @RequestBody ReversalRequest request
-    ) {
-        return postingResponse(useCase.reverse(id, request));
-    }
-
-    private ResponseEntity<TransactionResponse> postingResponse(LedgerUseCase.PostingResult result) {
-        if (result.created()) {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                .location(URI.create("/transactions/" + result.transaction().id()))
-                .body(result.transaction());
-        }
-        return ResponseEntity.ok(result.transaction());
     }
 }

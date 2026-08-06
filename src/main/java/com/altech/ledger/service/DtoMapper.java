@@ -37,7 +37,7 @@ public final class DtoMapper {
             m.getOriginatorId(), m.getTargetId(), m.getAmount(), m.getCurrency(),
             m.getOrderType(), m.getStatus(), m.getMode(), m.getType(),
             m.getRemarks(), m.getMetadata(), m.getComplianceContext(), m.getFiles(),
-            m.getJournalTransactionId(), m.getCreateDt(), m.getUpdateDt());
+            m.getCreateDt(), m.getUpdateDt());
     }
 
     public static RuleResponse toRule(Rule r) {

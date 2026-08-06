@@ -16,7 +16,7 @@ import java.util.UUID;
 /**
  * Port of the-wallet-ledger {@code LedgerMovement} (business operation log).
  * <p>
- * New-on-top: {@link #movementKey}, {@link #mode}, {@link #journalTransactionId}, simplified metadata.
+ * New-on-top: {@link #movementKey}, {@link #mode}, simplified metadata.
  * JSONB context fields from legacy are kept as TEXT for later product parity.
  */
 @Entity
@@ -101,8 +101,6 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     @Column(nullable = false, length = 10)
     private LedgerMovementMode mode = LedgerMovementMode.AUTO;
 
-    private UUID journalTransactionId;
-
     protected LedgerMovement() {}
 
     public LedgerMovement(String movementKey, Long walletId, OrderType orderType, LedgerMovementMode mode,
@@ -124,9 +122,8 @@ public class LedgerMovement extends AuditEntityWithIsActive {
         this.alias = movementKey;
     }
 
-    public void markSettled(UUID journalTransactionId) {
+    public void markSettled() {
         this.status = LedgerMovementStatus.SETTLED;
-        this.journalTransactionId = journalTransactionId;
     }
 
     public void markProcessing() {

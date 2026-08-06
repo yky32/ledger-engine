@@ -210,7 +210,6 @@ public final class ParityDtos {
         String metadata,
         String complianceContext,
         String files,
-        UUID journalTransactionId,
         Instant createDt,
         Instant updateDt
     ) {}
