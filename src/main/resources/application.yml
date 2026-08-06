@@ -56,17 +56,3 @@ ledger:
         min-amount: 1
         point-currency: LP
         formula: AMOUNT
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      probes:
-        enabled: true
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
