@@ -3,6 +3,20 @@
 External systems deliver **transactional events** via webhook or Kafka. Ledger Engine applies
 **rule check → Earn / Burn / Process** only. It does **not** onboard wallets during transaction processing.
 
+## Java client SDK
+
+Product backends may integrate with the **ledger-engine-sdk** (Java 17 library) instead of hand-written HTTP.
+
+| Topic | Where |
+|-------|--------|
+| SDK overview & channels | [ledger-engine-sdk docs/OVERVIEW.md](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/OVERVIEW.md) |
+| How we deliver the JAR (contract → email) | [docs/DELIVERY.md](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md) |
+| Client install & Phase 1 / 2 | [docs/INTEGRATION.md](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/INTEGRATION.md) |
+
+SDK is **not** published to Maven Central. Delivery is **manual** (versioned thin JAR + checksum by email after contract).
+
+---
+
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  PRODUCT SETUP (Ledger Engine owns)                             │

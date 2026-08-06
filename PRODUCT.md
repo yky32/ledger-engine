@@ -11,6 +11,8 @@ idempotent posting so downstream systems can treat it as the financial source of
 
 For technical setup and API details, see [README.md](README.md) and [INTEGRATION.md](INTEGRATION.md).
 
+**Java SDK:** clients may receive **ledger-engine-sdk** as a versioned JAR under contract (manual email delivery — not Maven Central). See [SDK OVERVIEW](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/OVERVIEW.md) and [SDK DELIVERY](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md).
+
 ---
 
 ## Product summary

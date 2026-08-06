@@ -1,6 +1,6 @@
 # Ledger Engine
 
-**Version `1.0.0`** — production baseline paired with [ledger-engine-sdk](https://github.com/yky32/ledger-engine-sdk) `1.0.0` (first client: UAfinance).
+**Version `1.0.0`** — production baseline. Pairs with [ledger-engine-sdk](https://github.com/yky32/ledger-engine-sdk) **1.0.x / 1.1.x** (Java client; [manual JAR delivery](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md)).
 
 A standalone Java 17/Spring Boot double-entry ledger core for customer wallets and balances. It owns ledger
 accounts, immutable journal entries, posting, derived balances, idempotency, and reversals.
