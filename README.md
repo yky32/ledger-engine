@@ -154,23 +154,26 @@ All three operations must:
 
 ## Run locally
 
-Requirements: Java 17+ and Maven 3.9+.
+Requirements: Java 17+, Maven 3.9+, and PostgreSQL (Docker `test-db` on host port **5433** by default).
 
 ```bash
+# ensure DB exists, e.g.
+#   docker exec test-db psql -U postgres -c 'CREATE DATABASE "ledger-engine";'
 mvn spring-boot:run
 ```
 
-The default profile uses a file-backed H2 database in PostgreSQL compatibility mode under `./data`.
+Default datasource: `jdbc:postgresql://localhost:5433/ledger-engine` (user/password `postgres`).
 Swagger UI is at <http://localhost:8080/swagger-ui.html>; health is at
 <http://localhost:8080/actuator/health>.
 
-Run tests:
+Run tests (uses DB `ledger-engine-test` on the same Postgres):
 
 ```bash
+# docker exec test-db psql -U postgres -c 'CREATE DATABASE "ledger-engine-test";'
 mvn test
 ```
 
-Run with PostgreSQL:
+Run with Docker Compose:
 
 ```bash
 docker compose up --build
@@ -183,13 +186,12 @@ cp .env.example .env
 docker compose --profile simulator up --build
 ```
 
-For a separately managed PostgreSQL instance:
+For a custom PostgreSQL instance:
 
 ```bash
-SPRING_PROFILES_ACTIVE=postgres \
-DB_URL=jdbc:postgresql://localhost:5432/ledger \
-DB_USERNAME=ledger \
-DB_PASSWORD=change-me \
+SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/ledger-engine \
+SPRING_DATASOURCE_USERNAME=postgres \
+SPRING_DATASOURCE_PASSWORD=postgres \
 mvn spring-boot:run
 ```
 

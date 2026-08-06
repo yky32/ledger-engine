@@ -99,7 +99,7 @@ Re-run is safe: batch returns `alreadyExists` for ids already onboarded.
 | Setting | Suggestion |
 |---|---|
 | `SIM_BATCH_SIZE` | `500` (API max `1000`) |
-| DB | Prefer **Postgres** (`docker compose` / `postgres` profile), not H2 file for 70K |
+| DB | Prefer **Postgres** (`docker compose` / `postgres` profile), Postgres required for 70K |
 | Heap | Give JVM more RAM if needed: `JAVA_OPTS=-Xmx1g` on app |
 | Pause | `SIM_BATCH_PAUSE_SECONDS=0.05` reduces spikes |
 
