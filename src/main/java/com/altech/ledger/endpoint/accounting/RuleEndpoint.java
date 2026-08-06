@@ -18,7 +18,6 @@ public class RuleEndpoint {
     private final RuleSetupUseCase useCase;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public RuleResponse create(@Valid @RequestBody CreateRuleRequest dto) {
         return useCase.create(dto);
     }
