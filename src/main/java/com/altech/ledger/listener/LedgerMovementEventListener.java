@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Port of the-wallet-ledger LedgerMovementEventListener (BALANCE_UPDATE → execute).
+ * LedgerMovementEventListener (BALANCE_UPDATE → execute).
  * Uses same topic as initiated when only one bus is configured, or dedicated balance-update topic.
  */
 @Component

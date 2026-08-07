@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * Port of the-wallet-ledger {@code Rule}.
+ * Rule — .
  */
 @Entity
 @Table(name = "rule")

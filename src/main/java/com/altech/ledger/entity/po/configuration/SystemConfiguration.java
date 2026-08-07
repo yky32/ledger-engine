@@ -7,7 +7,7 @@ import com.altech.core.entity.AuditEntityWithIsActive;
 import jakarta.persistence.*;
 
 /**
- * Port of the-wallet-ledger {@code SystemConfiguration}.
+ * SystemConfiguration — .
  */
 @Entity
 @Table(

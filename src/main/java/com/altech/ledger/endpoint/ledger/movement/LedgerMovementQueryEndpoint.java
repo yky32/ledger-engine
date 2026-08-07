@@ -1,20 +1,22 @@
 package com.altech.ledger.endpoint.ledger.movement;
 
+import com.altech.core.response.Pagination;
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
-
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.usecase.ledger.LedgerMovementQueryUseCase;
-import org.springframework.data.domain.Page;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.List;
-
-import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 
 @RestController
 @RequestMapping("/ledger-accounts/movements")
@@ -24,7 +26,7 @@ public class LedgerMovementQueryEndpoint {
 
     @GetMapping("/{id}")
     public Result<LedgerMovementDtos.Response> getOne(@PathVariable Long id) {
-        return R.success(queryUseCase.getOne(id));
+        return R.success(queryUseCase.one(id));
     }
 
     @GetMapping
@@ -34,7 +36,8 @@ public class LedgerMovementQueryEndpoint {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDt,
         @RequestParam(required = false) List<String> statuses
     ) {
-        return R.success(queryUseCase.getAll(pageable, startDt, endDt, statuses));
+        var page = queryUseCase.list(pageable, startDt, endDt, statuses);
+        return R.success(page.getContent(), Pagination.create(page));
     }
 
     @GetMapping("/my-movements")
@@ -45,6 +48,7 @@ public class LedgerMovementQueryEndpoint {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDt,
         @RequestParam(required = false) List<String> statuses
     ) {
-        return R.success(queryUseCase.myMovements(ownerId, pageable, startDt, endDt, statuses));
+        var page = queryUseCase.myMovements(ownerId, pageable, startDt, endDt, statuses);
+        return R.success(page.getContent(), Pagination.create(page));
     }
 }

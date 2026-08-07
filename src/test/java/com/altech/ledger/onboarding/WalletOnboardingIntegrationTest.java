@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Phase-1 onboarding against TGT-style DTOs / Create+Query use cases.
+ * Phase-1 wallet onboarding integration tests.
  */
 @SpringBootTest
 @AutoConfigureMockMvc

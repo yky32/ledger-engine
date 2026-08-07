@@ -4,7 +4,7 @@ import com.altech.core.response.Response;
 import org.springframework.http.HttpStatus;
 
 /**
- * Wallet domain errors (TGT {@code *ErrorResponse} pattern).
+ * Wallet domain error codes.
  */
 public interface WalletErrorResponse {
     Response WAL0400 = new Response("WAL0400", "Invalid wallet request.", HttpStatus.BAD_REQUEST);

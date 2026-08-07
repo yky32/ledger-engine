@@ -1,6 +1,6 @@
 package com.altech.ledger.entity.enu;
 
-/** Port of payment-gateway {@code WalletType}. */
+/** WalletType. */
 public enum WalletType {
     INDIVIDUAL,
     CORPORATE

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
- * Phase-1 wallet onboarding response (TGT: {@code Get*ResponseDto}).
+ * Phase-1 wallet onboarding response.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

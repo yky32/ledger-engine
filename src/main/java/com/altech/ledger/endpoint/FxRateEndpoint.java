@@ -1,41 +1,41 @@
 package com.altech.ledger.endpoint;
 
+import com.altech.core.response.Pagination;
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
-
-import java.util.List;
-
-import com.altech.ledger.usecase.FxRateQueryUseCase;
-import com.altech.ledger.usecase.FxRateSetupUseCase;
+import com.altech.ledger.entity.dto.parity.FxRateDtos;
+import com.altech.ledger.usecase.fx.CreateFxRateUseCase;
+import com.altech.ledger.usecase.fx.QueryFxRateUseCase;
+import com.altech.ledger.usecase.fx.UpdateFxRateUseCase;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
-import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.FxRateDtos;
+import java.util.List;
 
 @RestController
 @RequestMapping("/fx-rates")
 @RequiredArgsConstructor
 public class FxRateEndpoint {
-    private final FxRateSetupUseCase setupUseCase;
-    private final FxRateQueryUseCase queryUseCase;
+    private final CreateFxRateUseCase createFxRateUseCase;
+    private final UpdateFxRateUseCase updateFxRateUseCase;
+    private final QueryFxRateUseCase queryFxRateUseCase;
 
     @PostMapping
     public Result<FxRateDtos.Response> create(@Valid @RequestBody FxRateDtos.CreateRequest dto) {
-        return R.success(setupUseCase.create(dto));
+        return R.success(createFxRateUseCase.execute(dto));
     }
 
     @PutMapping("/{id}")
     public Result<FxRateDtos.Response> update(@PathVariable Long id, @Valid @RequestBody FxRateDtos.CreateRequest dto) {
-        return R.success(setupUseCase.update(id, dto));
+        return R.success(updateFxRateUseCase.execute(id, dto));
     }
 
     @GetMapping("/{id}")
     public Result<FxRateDtos.Response> getOne(@PathVariable Long id) {
-        return R.success(queryUseCase.getOne(id));
+        return R.success(queryFxRateUseCase.one(id));
     }
 
     @GetMapping
@@ -44,6 +44,7 @@ public class FxRateEndpoint {
         @RequestParam(required = false) String base,
         @RequestParam(required = false) String target
     ) {
-        return R.success(queryUseCase.getAll(pageable, base, target));
+        var page = queryFxRateUseCase.list(pageable, base, target);
+        return R.success(page.getContent(), Pagination.create(page));
     }
 }

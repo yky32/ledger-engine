@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Port of the-wallet-ledger LedgerMovementShooter extends BaseLedgerMovementShooter.
+ * LedgerMovementShooter extends BaseLedgerMovementShooter.
  */
 @Service
 public class LedgerMovementShooter extends BaseLedgerMovementShooter {

@@ -1,9 +1,9 @@
-# TGT-style config: every environment-sensitive value uses ${ENV_VAR:default}.
+# Environment-sensitive values use ${ENV_VAR:default}.
 # Override via env / docker-compose / K8s without editing this file.
 
 server:
   port: ${SERVER_PORT:8080}
-  max-http-header-size: 10MB
+  max-http-header-size: ${SERVER_MAX_HTTP_HEADER_SIZE:10MB}
   servlet:
     context-path: ${CONTEXT_PATH:/}
 
@@ -22,7 +22,7 @@ spring:
     password: ${DB_PASSWORD:postgres}
     driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
   jpa:
-    open-in-view: false
+    open-in-view: ${JPA_OPEN_IN_VIEW:false}
     properties:
       hibernate:
         dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
@@ -45,7 +45,7 @@ spring:
       sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_USERNAME:}" password="${KAFKA_PASSWORD:}";
     consumer:
       properties:
-        allow.auto.create.topics: true
+        allow.auto.create.topics: ${KAFKA_ALLOW_AUTO_CREATE_TOPICS:true}
 
 # Product domain (bound to @ConfigurationProperties)
 ledger:
@@ -71,19 +71,20 @@ ledger:
       enabled: ${LEDGER_KAFKA_ENABLED:false}
       topic: ${LEDGER_KAFKA_TOPIC:ledger.transaction.events}
       group-id: ${LEDGER_KAFKA_GROUP:ledger-engine}
+    # Domain seed rules (not secrets); override via profile YAML if needed.
     rules:
-      - event-type: PURCHASE
-        operation: EARN
-        min-amount: 10
-        point-currency: LP
-        formula: AMOUNT
-      - event-type: SIGNUP
-        operation: EARN
-        min-amount: 0
-        point-currency: LP
-        formula: FIXED:100
-      - event-type: REDEEM
-        operation: BURN
-        min-amount: 1
-        point-currency: LP
-        formula: AMOUNT
+      - event-type: ${LEDGER_RULE_PURCHASE_EVENT_TYPE:PURCHASE}
+        operation: ${LEDGER_RULE_PURCHASE_OPERATION:EARN}
+        min-amount: ${LEDGER_RULE_PURCHASE_MIN_AMOUNT:10}
+        point-currency: ${LEDGER_RULE_PURCHASE_POINT_CURRENCY:LP}
+        formula: ${LEDGER_RULE_PURCHASE_FORMULA:AMOUNT}
+      - event-type: ${LEDGER_RULE_SIGNUP_EVENT_TYPE:SIGNUP}
+        operation: ${LEDGER_RULE_SIGNUP_OPERATION:EARN}
+        min-amount: ${LEDGER_RULE_SIGNUP_MIN_AMOUNT:0}
+        point-currency: ${LEDGER_RULE_SIGNUP_POINT_CURRENCY:LP}
+        formula: ${LEDGER_RULE_SIGNUP_FORMULA:FIXED:100}
+      - event-type: ${LEDGER_RULE_REDEEM_EVENT_TYPE:REDEEM}
+        operation: ${LEDGER_RULE_REDEEM_OPERATION:BURN}
+        min-amount: ${LEDGER_RULE_REDEEM_MIN_AMOUNT:1}
+        point-currency: ${LEDGER_RULE_REDEEM_POINT_CURRENCY:LP}
+        formula: ${LEDGER_RULE_REDEEM_FORMULA:AMOUNT}

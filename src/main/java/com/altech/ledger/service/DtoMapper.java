@@ -17,7 +17,7 @@ import com.altech.ledger.entity.po.log.LedgerMovement;
 import java.util.List;
 
 /**
- * Parity-layer PO → DTO mapping. Prefer {@link DtoWrapper} at call sites (TGT name).
+ * Parity-layer PO → DTO mapping. Prefer {@link DtoWrapper} at call sites.
  */
 public final class DtoMapper {
     private DtoMapper() {}

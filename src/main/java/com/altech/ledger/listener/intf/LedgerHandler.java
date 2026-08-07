@@ -7,7 +7,7 @@ import com.altech.ledger.entity.po.ledger.Account;
 import java.util.List;
 
 /**
- * Port of the-wallet-ledger LedgerHandler.
+ * LedgerHandler.
  */
 public interface LedgerHandler {
     List<Account> fetchAccounts(String identifier);

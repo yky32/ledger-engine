@@ -1,6 +1,6 @@
 package com.altech.ledger.entity.enu;
 
-/** Port of payment-gateway {@code WalletStatus}. */
+/** WalletStatus. */
 public enum WalletStatus {
     PENDING(false),
     VERIFIED(false),

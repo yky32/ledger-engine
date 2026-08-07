@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Port of LedgerMovementInitiatedListener — MOVEMENT_INITIATED → execute balances.
+ * LedgerMovementInitiatedListener — MOVEMENT_INITIATED → execute balances.
  */
 @Component
 @ConditionalOnProperty(prefix = "ledger.movement.kafka", name = "enabled", havingValue = "true")

@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * Port of the-wallet-ledger {@code LedgerEntry} (movement-side log leg).
+ * LedgerEntry — (movement-side log leg).
  * <p>
  * Per-movement balance leg log (not a full double-entry journal).
  */

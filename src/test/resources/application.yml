@@ -1,6 +1,9 @@
-# Test defaults (same ${ENV:default} practice as main; override with env if needed)
+# Environment-sensitive values use ${ENV_VAR:default}.
+# Test defaults; override with env if needed.
+
 server:
   port: ${SERVER_PORT:0}
+  max-http-header-size: ${SERVER_MAX_HTTP_HEADER_SIZE:10MB}
   servlet:
     context-path: ${CONTEXT_PATH:/}
 
@@ -11,43 +14,67 @@ config:
 
 spring:
   application:
-    name: LEDGER-ENGINE-TEST
+    name: ${SPRING_APPLICATION_NAME:LEDGER-ENGINE-TEST}
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/ledger-engine-test}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
   jpa:
-    open-in-view: false
+    open-in-view: ${JPA_OPEN_IN_VIEW:false}
     properties:
       hibernate:
         dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        format_sql: ${HIBERNATE_FORMAT_SQL:false}
         jdbc:
           time_zone: ${MICROSERVICE_TIME_ZONE:UTC}
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
   liquibase:
     enabled: ${LIQUIBASE_ENABLED:false}
     change-log: ${LIQUIBASE_CHANGELOG:classpath:db/changelog/db.changelog-master.yaml}
   kafka:
     bootstrap-servers: ${KAFKA_URL:localhost:9092}
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_USERNAME:}" password="${KAFKA_PASSWORD:}";
+    consumer:
+      properties:
+        allow.auto.create.topics: ${KAFKA_ALLOW_AUTO_CREATE_TOPICS:true}
 
 ledger:
-  integration:
-    enabled: true
-    program-setup-enabled: true
-    program-currencies:
-      - LP
+  movement:
     kafka:
-      enabled: false
+      enabled: ${LEDGER_MOVEMENT_KAFKA_ENABLED:false}
+      initiated-topic: ${LEDGER_MOVEMENT_INITIATED_TOPIC:ledger.movement.initiated}
+      done-topic: ${LEDGER_MOVEMENT_DONE_TOPIC:ledger.movement.done}
+      balance-update-topic: ${LEDGER_MOVEMENT_BALANCE_TOPIC:ledger.movement.balance-update}
+      wallet-created-topic: ${LEDGER_WALLET_CREATED_TOPIC:ledger.wallet.created}
+      group-id: ${LEDGER_MOVEMENT_KAFKA_GROUP:ledger-engine-movement-test}
+  integration:
+    enabled: ${LEDGER_INTEGRATION_ENABLED:true}
+    program-setup-enabled: ${LEDGER_PROGRAM_SETUP_ENABLED:true}
+    program-currencies:
+      - ${LEDGER_PROGRAM_CURRENCY:LP}
+    wallet-ref-template: ${LEDGER_WALLET_REF_TEMPLATE:wallet:{userId}:{currency}}
+    expense-pool-ref-template: ${LEDGER_EXPENSE_POOL_REF:pool:loyalty-expense:{currency}}
+    liability-pool-ref-template: ${LEDGER_LIABILITY_POOL_REF:pool:loyalty-liability:{currency}}
+    deposit-clearing-ref-template: ${LEDGER_DEPOSIT_CLEARING_REF:pool:clearing-deposit:{currency}}
+    withdrawal-clearing-ref-template: ${LEDGER_WITHDRAWAL_CLEARING_REF:pool:clearing-withdrawal:{currency}}
+    kafka:
+      enabled: ${LEDGER_KAFKA_ENABLED:false}
+      topic: ${LEDGER_KAFKA_TOPIC:ledger.transaction.events}
+      group-id: ${LEDGER_KAFKA_GROUP:ledger-engine-test}
     rules:
-      - event-type: PURCHASE
-        operation: EARN
-        min-amount: 10
-        point-currency: LP
-        formula: AMOUNT
-      - event-type: SIGNUP
-        operation: EARN
-        min-amount: 0
-        point-currency: LP
-        formula: FIXED:100
+      - event-type: ${LEDGER_RULE_PURCHASE_EVENT_TYPE:PURCHASE}
+        operation: ${LEDGER_RULE_PURCHASE_OPERATION:EARN}
+        min-amount: ${LEDGER_RULE_PURCHASE_MIN_AMOUNT:10}
+        point-currency: ${LEDGER_RULE_PURCHASE_POINT_CURRENCY:LP}
+        formula: ${LEDGER_RULE_PURCHASE_FORMULA:AMOUNT}
+      - event-type: ${LEDGER_RULE_SIGNUP_EVENT_TYPE:SIGNUP}
+        operation: ${LEDGER_RULE_SIGNUP_OPERATION:EARN}
+        min-amount: ${LEDGER_RULE_SIGNUP_MIN_AMOUNT:0}
+        point-currency: ${LEDGER_RULE_SIGNUP_POINT_CURRENCY:LP}
+        formula: ${LEDGER_RULE_SIGNUP_FORMULA:FIXED:100}

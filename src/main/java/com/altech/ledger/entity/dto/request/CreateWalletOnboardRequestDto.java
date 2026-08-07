@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
- * Phase-1 single wallet onboarding (TGT: {@code Create*RequestDto}).
+ * Phase-1 single wallet onboarding request.
  */
 public record CreateWalletOnboardRequestDto(
     @NotBlank @Size(max = 100) String userId,

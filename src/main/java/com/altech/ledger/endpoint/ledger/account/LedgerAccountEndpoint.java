@@ -1,40 +1,39 @@
 package com.altech.ledger.endpoint.ledger.account;
 
+import com.altech.core.response.Pagination;
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
-
-import java.util.List;
-
-import com.altech.ledger.usecase.account.AccountOperationUseCase;
-import com.altech.ledger.usecase.setup.AccountSetupUseCase;
+import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
+import com.altech.ledger.usecase.account.CreateAccountUseCase;
+import com.altech.ledger.usecase.account.QueryAccountUseCase;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
-import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
+import java.util.List;
 
 @RestController
 @RequestMapping("/ledger-accounts")
 @RequiredArgsConstructor
 public class LedgerAccountEndpoint {
-    private final AccountSetupUseCase accountSetupUseCase;
-    private final AccountOperationUseCase accountOperationUseCase;
+    private final CreateAccountUseCase createAccountUseCase;
+    private final QueryAccountUseCase queryAccountUseCase;
 
     @PostMapping
     public Result<LedgerAccountDtos.Response> create(@Valid @RequestBody LedgerAccountDtos.CreateRequest dto) {
-        return R.success(accountSetupUseCase.create(dto));
+        return R.success(createAccountUseCase.execute(dto));
     }
 
     @GetMapping("/{id}")
     public Result<LedgerAccountDtos.Response> getOne(@PathVariable Long id) {
-        return R.success(accountOperationUseCase.getOne(id));
+        return R.success(queryAccountUseCase.one(id));
     }
 
     @GetMapping
     public Result<List<LedgerAccountDtos.Response>> getAll(@PageableDefault(size = 50) Pageable pageable) {
-        return R.success(accountOperationUseCase.getAll(pageable));
+        var page = queryAccountUseCase.list(pageable);
+        return R.success(page.getContent(), Pagination.create(page));
     }
 }

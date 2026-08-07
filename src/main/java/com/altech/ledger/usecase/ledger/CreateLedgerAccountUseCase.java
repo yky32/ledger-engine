@@ -1,30 +1,29 @@
 package com.altech.ledger.usecase.ledger;
 
 import com.altech.core.exception.BizException;
-import com.altech.ledger.exception.response.AccountErrorResponse;
-
 import com.altech.ledger.entity.dto.ledger.LedgerDto.AccountResponse;
-import com.altech.ledger.entity.dto.ledger.LedgerDto.BalanceResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
 import com.altech.ledger.entity.po.ledger.Account;
+import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
+import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Account setup and balance lookup. Classic journal posting was removed;
- * balances are maintained on {@link Account} via movement execution.
+ * Product ledger account create (external reference COA).
  */
-@Service
+@Component
 @RequiredArgsConstructor
-public class LedgerUseCase {
+public class CreateLedgerAccountUseCase {
     private final AccountRepository accounts;
+    private final CommonUseCase commonUseCase;
 
     @Transactional
-    public AccountResponse createAccount(CreateAccountRequest request) {
-        requireLedgerCurrency(request.currency());
+    public AccountResponse execute(CreateAccountRequest request) {
+        commonUseCase.requireCurrency(request.currency());
         if (accounts.existsByFullNumber(request.externalReference())) {
             throw new BizException(AccountErrorResponse.ACC0409, "External reference already exists");
         }
@@ -39,32 +38,10 @@ public class LedgerUseCase {
             request.currency(),
             request.allowNegative()
         );
-        return accountResponse(accounts.save(account));
+        return _toResponse(accounts.save(account));
     }
 
-    @Transactional(readOnly = true)
-    public AccountResponse getAccount(Long id) {
-        return accountResponse(account(id));
-    }
-
-    @Transactional(readOnly = true)
-    public BalanceResponse getBalance(Long id) {
-        Account account = account(id);
-        return new BalanceResponse(
-            id, account.getCurrency(), account.getLedgerBalance(), account.getAvailableBalance());
-    }
-
-    private Account account(Long id) {
-        return accounts.findById(id).orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
-    }
-
-    private void requireLedgerCurrency(String currency) {
-        if (currency == null || !currency.matches("[A-Z]{2,4}")) {
-            throw new BizException(AccountErrorResponse.ACC0400, "Currency must be 2-4 uppercase letters");
-        }
-    }
-
-    private AccountResponse accountResponse(Account a) {
+    private AccountResponse _toResponse(Account a) {
         CoaType coa;
         try {
             coa = CoaType.valueOf(a.getType());

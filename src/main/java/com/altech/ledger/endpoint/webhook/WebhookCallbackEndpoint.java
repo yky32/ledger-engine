@@ -2,22 +2,20 @@ package com.altech.ledger.endpoint.webhook;
 
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
-
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 import com.altech.ledger.usecase.ledger.LedgerDepositUseCase;
-import com.altech.ledger.usecase.setup.WalletSetupUseCase;
+import com.altech.ledger.usecase.wallet.ActivateWalletUseCase;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-
-import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
-import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 
 @RestController
 @RequestMapping("/webhooks")
 @RequiredArgsConstructor
 public class WebhookCallbackEndpoint {
-    private final WalletSetupUseCase walletSetupUseCase;
+    private final ActivateWalletUseCase activateWalletUseCase;
     private final LedgerDepositUseCase depositUseCase;
 
     @PostMapping("/ledger-wallets/{walletId}/activations")
@@ -25,11 +23,11 @@ public class WebhookCallbackEndpoint {
         @PathVariable Long walletId,
         @RequestBody(required = false) Map<String, Object> payload
     ) {
-        return R.success(walletSetupUseCase.markActive(walletId));
+        return R.success(activateWalletUseCase.execute(walletId));
     }
 
     @PostMapping("/ledger-wallets/movements/deposits")
     public Result<LedgerMovementDtos.Response> depositCallback(@RequestBody Map<String, Object> payload) {
-        return R.success(depositUseCase.webhookCallback(payload));
+        return R.success(depositUseCase.executeWebhook(payload));
     }
 }

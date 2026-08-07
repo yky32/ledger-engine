@@ -6,8 +6,7 @@ A standalone Java 17/Spring Boot double-entry ledger core for customer wallets a
 accounts, immutable journal entries, posting, derived balances, idempotency, and reversals.
 
 This is **ledger core**, not payment rails, identity, compliance UI, notification, tenant, or external
-settlement orchestration. The project layout follows the same **endpoint / usecase / entity / repository**
-pattern used in TGT services (e.g. `tgt.profile-service`, `sample-service`).
+settlement orchestration. The project layout follows an **endpoint / usecase / entity / repository** pattern.
 
 ## Build and run
 
@@ -17,28 +16,28 @@ java -jar target/ledger-engine-1.0.0.jar
 mvn spring-boot:run
 ```
 
-## Project layout (TGT-style)
+## Project layout (standard)
 
 ```text
 src/main/java/com/altech/ledger/
 ├── App.java
-├── config/              IntegrationProperties, IntegrationConfig
-├── endpoint/            REST controllers (Ledger, Wallet, Movement, Integration webhooks)
-├── usecase/             Business logic (LedgerUseCase, WalletOnboardingUseCase, …)
+├── config/ IntegrationProperties, IntegrationConfig
+├── endpoint/ REST controllers (Ledger, Wallet, Movement, Integration webhooks)
+├── usecase/ Verb use cases ($ActionVerb$UseCase.execute + CommonUseCase)
 ├── entity/
-│   ├── po/              JPA entities (LedgerAccount, Wallet, JournalTransaction, …)
-│   └── dto/             Request/response records (ledger, wallet, movement, integration)
-├── repository/          Spring Data JPA repositories
-├── listener/            Kafka consumers (optional)
-├── exception/           LedgerException, GlobalExceptionHandler
-└── resources/          application.yml (JPA ddl-auto)
+│ ├── po/ JPA entities (LedgerAccount, Wallet, JournalTransaction, …)
+│ └── dto/ Request/response records (ledger, wallet, movement, integration)
+├── repository/ Spring Data JPA repositories
+├── listener/ Kafka consumers (optional)
+├── exception/ LedgerException, GlobalExceptionHandler
+└── resources/ application.yml (JPA ddl-auto)
 ```
 
 | Layer | Convention | Example |
 |---|---|---|
 | **PO (JPA entity)** | PascalCase in `entity/po/` | `LedgerAccount`, `JournalTransaction` |
 | **Endpoint** | `*Endpoint` in `endpoint/{domain}/` | `LedgerEndpoint`, `WalletEndpoint` |
-| **Use case** | `*UseCase` in `usecase/{domain}/` | `LedgerUseCase`, `MovementUseCase` |
+| **Use case** | `$ActionVerb$UseCase` in `usecase/{domain}/` | `CreateWalletOnboardingUseCase`, `CreateDepositUseCase` |
 | **DTO** | Records in `entity/dto/{domain}/` | `OnboardWalletRequest`, `MovementDto` |
 | **Repository** | `*Repository` in `repository/` | `LedgerAccountRepository` |
 | **Database table** | snake_case | `ledger_account`, `journal_transaction`, `journal_entry` |
@@ -125,11 +124,11 @@ Target flow for Earn / Burn / Process (steps 3–4 partially implemented today):
 
 ```text
 Earn / Burn / Process
-        ↓
-1. Validate rules + balance          → LedgerService (locks ledger_account, checks allow_negative)
-2. Create immutable journal_entry    → append-only rows on journal_entry
-3. Update balance projection         → derived from entries (available/held split: roadmap)
-4. Publish domain event              → roadmap (no outbox in MVP)
+ ↓
+1. Validate rules + balance → LedgerService (locks ledger_account, checks allow_negative)
+2. Create immutable journal_entry → append-only rows on journal_entry
+3. Update balance projection → derived from entries (available/held split: roadmap)
+4. Publish domain event → roadmap (no outbox in MVP)
 ```
 
 ## Shared operation guarantees
@@ -137,7 +136,7 @@ Earn / Burn / Process
 All three operations must:
 
 - Be **idempotent** via `journal_transaction.idempotency_key` (API: `idempotencyKey`); optional
-  `journal_transaction.reference` (API: `reference`) for business correlation only
+ `journal_transaction.reference` (API: `reference`) for business correlation only
 - Create **append-only** `journal_entry` rows
 - **Never mutate history** — corrections use a new transaction or `POST /transactions/{id}/reversal`
 
@@ -158,7 +157,7 @@ Requirements: Java 17+, Maven 3.9+, and PostgreSQL (Docker `test-db` on host por
 
 ```bash
 # ensure DB exists, e.g.
-#   docker exec test-db psql -U postgres -c 'CREATE DATABASE "ledger-engine";'
+# docker exec test-db psql -U postgres -c 'CREATE DATABASE "ledger-engine";'
 mvn spring-boot:run
 ```
 
@@ -201,42 +200,42 @@ Create source, destination, and equity accounts:
 
 ```bash
 curl -sS -X POST localhost:8080/accounts \
-  -H 'Content-Type: application/json' \
-  -d '{"externalReference":"cash-001","name":"Cash","type":"ASSET","currency":"USD","allowNegative":false}'
+ -H 'Content-Type: application/json' \
+ -d '{"externalReference":"cash-001","name":"Cash","type":"ASSET","currency":"USD","allowNegative":false}'
 
 curl -sS -X POST localhost:8080/accounts \
-  -H 'Content-Type: application/json' \
-  -d '{"externalReference":"cash-002","name":"Settlement","type":"ASSET","currency":"USD","allowNegative":false}'
+ -H 'Content-Type: application/json' \
+ -d '{"externalReference":"cash-002","name":"Settlement","type":"ASSET","currency":"USD","allowNegative":false}'
 
 curl -sS -X POST localhost:8080/accounts \
-  -H 'Content-Type: application/json' \
-  -d '{"externalReference":"equity-001","name":"Opening Equity","type":"EQUITY","currency":"USD","allowNegative":false}'
+ -H 'Content-Type: application/json' \
+ -d '{"externalReference":"equity-001","name":"Opening Equity","type":"EQUITY","currency":"USD","allowNegative":false}'
 ```
 
 Use returned IDs to post opening funds (debit cash, credit equity), then transfer:
 
 ```bash
 curl -i -X POST localhost:8080/transactions \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "idempotencyKey":"opening-2026-001",
-    "reference":"opening-balance",
-    "entries":[
-      {"accountId":"<cash-id>","side":"DEBIT","amount":100,"currency":"USD"},
-      {"accountId":"<equity-id>","side":"CREDIT","amount":100,"currency":"USD"}
-    ]
-  }'
+ -H 'Content-Type: application/json' \
+ -d '{
+ "idempotencyKey":"opening-2026-001",
+ "reference":"opening-balance",
+ "entries":[
+ {"accountId":"<cash-id>","side":"DEBIT","amount":100,"currency":"USD"},
+ {"accountId":"<equity-id>","side":"CREDIT","amount":100,"currency":"USD"}
+ ]
+ }'
 
 curl -i -X POST localhost:8080/transactions \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "idempotencyKey":"transfer-2026-001",
-    "reference":"order-123",
-    "entries":[
-      {"accountId":"<cash-id>","side":"CREDIT","amount":25,"currency":"USD"},
-      {"accountId":"<settlement-id>","side":"DEBIT","amount":25,"currency":"USD"}
-    ]
-  }'
+ -H 'Content-Type: application/json' \
+ -d '{
+ "idempotencyKey":"transfer-2026-001",
+ "reference":"order-123",
+ "entries":[
+ {"accountId":"<cash-id>","side":"CREDIT","amount":25,"currency":"USD"},
+ {"accountId":"<settlement-id>","side":"DEBIT","amount":25,"currency":"USD"}
+ ]
+ }'
 ```
 
 Retrying an identical request returns `200`; its initial posting returns `201`. Query and reverse it:
@@ -247,13 +246,13 @@ curl -sS 'localhost:8080/accounts/<cash-id>/entries?page=0&size=20'
 curl -sS localhost:8080/transactions/<transaction-id>
 
 curl -i -X POST localhost:8080/transactions/<transaction-id>/reversal \
-  -H 'Content-Type: application/json' \
-  -d '{"idempotencyKey":"reversal-2026-001","description":"Customer correction"}'
+ -H 'Content-Type: application/json' \
+ -d '{"idempotencyKey":"reversal-2026-001","description":"Customer correction"}'
 ```
 
 ## Boundaries
 
-- **PO layer** lives in `entity/po/` (same role as Quinsic/TGT services).
+- **PO layer lives in `entity/po/` as JPA domain entities.
 - **DTOs** are Java records under `entity/dto/`; JSON field names match Java camelCase.
 - **Balances** are computed from `journal_entry`, not columns on `ledger_account`.
 - **MVP excludes** domain events/outbox, `available_balance` / `held_balance` columns, and dedicated Earn/Burn/Process endpoints — those are product mappings on top of `POST /transactions`.

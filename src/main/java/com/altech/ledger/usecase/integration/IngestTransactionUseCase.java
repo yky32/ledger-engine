@@ -3,6 +3,7 @@ package com.altech.ledger.usecase.integration;
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.integration.IngestionResult;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
@@ -13,20 +14,18 @@ import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
 import com.altech.ledger.usecase.wallet.CreateWalletOnboardingUseCase;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 
 /**
- * Loyalty / transactional event ingest. Applies balances via movement execution
- * (no classic journal layer).
+ * Loyalty / transactional event ingest. Applies balances via movement execution.
  */
-@Service
+@Component
 @RequiredArgsConstructor
-public class TransactionIngestionUseCase {
+public class IngestTransactionUseCase {
     private final IntegrationProperties properties;
     private final TransactionRuleEngine ruleEngine;
     private final AccountRepository accounts;
@@ -36,7 +35,7 @@ public class TransactionIngestionUseCase {
     private final LedgerMovementShooter shooter;
 
     @Transactional
-    public IngestionResult ingest(TransactionalEvent event) {
+    public IngestionResult execute(TransactionalEvent event) {
         if (!properties.isEnabled()) {
             return IngestionResult.skipped(event.eventId(), "Integration disabled");
         }

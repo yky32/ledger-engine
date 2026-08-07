@@ -2,7 +2,7 @@ package com.altech.ledger.entity.json_context;
 
 import java.math.BigDecimal;
 
-/** Port of the-wallet-ledger DepositDetailMetadata. */
+/** DepositDetailMetadata. */
 public record DepositDetailMetadata(
     String bankName,
     String reference,

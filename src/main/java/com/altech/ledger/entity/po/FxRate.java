@@ -9,7 +9,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * Port of the-wallet-ledger {@code FxRate}.
+ * FxRate — .
  * Currency codes are strings (supports non-fiat later).
  */
 @Entity

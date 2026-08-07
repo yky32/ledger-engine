@@ -1,0 +1,29 @@
+package com.altech.ledger.usecase.fx;
+
+import com.altech.core.exception.BizException;
+import com.altech.ledger.entity.dto.parity.FxRateDtos;
+import com.altech.ledger.entity.po.FxRate;
+import com.altech.ledger.exception.response.FxErrorResponse;
+import com.altech.ledger.repository.FxRateRepository;
+import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.usecase.CommonUseCase;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+@Component
+@RequiredArgsConstructor
+public class CreateFxRateUseCase {
+    private final FxRateRepository fxRates;
+    private final CommonUseCase commonUseCase;
+
+    @Transactional
+    public FxRateDtos.Response execute(FxRateDtos.CreateRequest dto) {
+        String base = commonUseCase.normalizeCurrency(dto.base());
+        String target = commonUseCase.normalizeCurrency(dto.target());
+        if (fxRates.findByBaseAndTarget(base, target).isPresent()) {
+            throw new BizException(FxErrorResponse.FX0409, "Rate exists for " + base + "/" + target);
+        }
+        return DtoMapper.toFx(fxRates.save(new FxRate(base, target, dto.rate())));
+    }
+}

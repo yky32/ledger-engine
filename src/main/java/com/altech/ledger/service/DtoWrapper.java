@@ -21,7 +21,7 @@ import com.altech.ledger.entity.po.log.LedgerMovement;
 import java.util.List;
 
 /**
- * Static PO ↔ DTO mappers only (TGT {@code DtoWrapper} pattern). No business rules.
+ * Static PO ↔ DTO mappers only. No business rules.
  */
 public final class DtoWrapper {
     private DtoWrapper() {}
@@ -82,7 +82,7 @@ public final class DtoWrapper {
             .build();
     }
 
-    // ---------- parity (the-wallet-ledger surface) ----------
+    // ---------- parity API surface ----------
 
     public static LedgerAccountDtos.Response getLedgerAccountResponseDto(Account a) {
         return DtoMapper.toAccount(a);

@@ -1,6 +1,6 @@
 package com.altech.ledger.entity.enu;
 
-/** Port of payment-gateway {@code MovementDirection}. */
+/** MovementDirection. */
 public enum MovementDirection {
     DEBIT("DR"),
     CREDIT("CR");

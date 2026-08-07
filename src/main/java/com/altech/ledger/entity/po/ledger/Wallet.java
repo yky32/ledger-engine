@@ -12,7 +12,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 /**
- * Port of the-wallet-ledger {@code Wallet} (account association).
+ * Wallet — (account association).
  * <p>
  * New-on-top: {@link #ownerId}, {@link #currency} for CRM onboarding uniqueness.
  */

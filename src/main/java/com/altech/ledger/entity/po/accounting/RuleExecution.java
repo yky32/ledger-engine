@@ -8,7 +8,7 @@ import com.altech.ledger.entity.enu.OrderType;
 import jakarta.persistence.*;
 
 /**
- * Port of the-wallet-ledger {@code RuleExecution}.
+ * RuleExecution — .
  */
 @Entity
 @Table(name = "rule_execution")

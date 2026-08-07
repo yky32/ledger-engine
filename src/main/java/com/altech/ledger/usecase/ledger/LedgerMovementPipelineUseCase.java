@@ -1,17 +1,16 @@
 package com.altech.ledger.usecase.ledger;
 
 import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * Facade keeping existing callers stable; delegates to split use cases (old naming).
+ * Facade for movement pipeline callers; delegates to Verb / query use cases.
  */
-@Service
+@Component
 @RequiredArgsConstructor
 public class LedgerMovementPipelineUseCase {
     private final LedgerMovementShooter shooter;
@@ -34,7 +33,6 @@ public class LedgerMovementPipelineUseCase {
         return shooter.doInWalletTransfer(req);
     }
 
-
     @Transactional
     public LedgerMovementDtos.Response settle(Long id) {
         return operationUseCase.settle(id);
@@ -45,7 +43,6 @@ public class LedgerMovementPipelineUseCase {
         return operationUseCase.update(id, req);
     }
 
-
     @Transactional
     public LedgerMovementDtos.Response updateDocuments(Long id, LedgerMovementDtos.UpdateDocumentsRequest req) {
         return operationUseCase.updateDocuments(id, req);
@@ -53,12 +50,12 @@ public class LedgerMovementPipelineUseCase {
 
     @Transactional(readOnly = true)
     public LedgerMovementDtos.Response getOne(Long id) {
-        return queryUseCase.getOne(id);
+        return queryUseCase.one(id);
     }
 
     @Transactional(readOnly = true)
     public Page<LedgerMovementDtos.Response> getAll(Pageable pageable) {
-        return queryUseCase.getAll(pageable, null, null, null);
+        return queryUseCase.list(pageable, null, null, null);
     }
 
     @Transactional(readOnly = true)

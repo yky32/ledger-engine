@@ -4,7 +4,7 @@ import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
 import com.altech.ledger.repository.AccountRepository;
-import com.altech.ledger.usecase.ledger.LedgerUseCase;
+import com.altech.ledger.usecase.ledger.CreateLedgerAccountUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -23,7 +23,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @RequiredArgsConstructor
 public class App implements ApplicationRunner {
     private final IntegrationProperties integrationProperties;
-    private final LedgerUseCase ledgerUseCase;
+    private final CreateLedgerAccountUseCase createLedgerAccountUseCase;
     private final AccountRepository accounts;
 
     public static void main(String[] args) {
@@ -59,7 +59,7 @@ public class App implements ApplicationRunner {
         if (accounts.existsByFullNumber(ref)) {
             return;
         }
-        ledgerUseCase.createAccount(new CreateAccountRequest(ref, name, type, currency, true));
+        createLedgerAccountUseCase.execute(new CreateAccountRequest(ref, name, type, currency, true));
         log.info("Created program pool account fullNumber={} type={} currency={}", ref, type, currency);
     }
 }

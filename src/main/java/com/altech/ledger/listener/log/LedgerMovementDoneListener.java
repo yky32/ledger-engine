@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Port of LedgerMovementDoneListener — BALANCE_UPDATE_DONE log sink.
+ * LedgerMovementDoneListener — BALANCE_UPDATE_DONE log sink.
  */
 @Component
 @ConditionalOnProperty(prefix = "ledger.movement.kafka", name = "enabled", havingValue = "true")

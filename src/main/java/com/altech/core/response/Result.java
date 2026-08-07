@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Result<T> {
+public class Result <T> {
     @JsonUnwrapped
     private Response response;
     private T data;
     private String requestId;
-    private String tenantKey;
+    private String tenantKey; // REMINDER: only for PG using....
     private Pagination pagination;
 
     public Result(Response response) {

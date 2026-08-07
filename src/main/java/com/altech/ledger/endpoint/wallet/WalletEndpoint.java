@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Phase-1 wallet onboarding (TGT-style thin endpoint → use case → {@code R.success}).
+ * Phase-1 wallet onboarding HTTP API.
  */
 @RestController
 @RequestMapping("/wallets")
@@ -44,7 +44,7 @@ public class WalletEndpoint {
 
     @GetMapping("/{ownerId}/{currency}")
     public Result<GetWalletOnboardResponseDto> get(@PathVariable String ownerId, @PathVariable String currency) {
-        return R.success(queryWalletUseCase.get(ownerId, currency));
+        return R.success(queryWalletUseCase.one(ownerId, currency));
     }
 
     @GetMapping

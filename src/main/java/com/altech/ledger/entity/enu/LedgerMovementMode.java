@@ -1,6 +1,6 @@
 package com.altech.ledger.entity.enu;
 
-/** Port of payment-gateway {@code LedgerMovementMode}. */
+/** LedgerMovementMode. */
 public enum LedgerMovementMode {
     AUTO,
     MANUAL,

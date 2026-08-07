@@ -1,6 +1,6 @@
 package com.altech.ledger.entity.json_context.transfer;
 
-/** Port of the-wallet-ledger transfer TargetMetadata. */
+/** transfer TargetMetadata. */
 public record TargetMetadata(
     String name,
     String accountId,

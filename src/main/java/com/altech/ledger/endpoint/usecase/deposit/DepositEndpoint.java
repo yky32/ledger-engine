@@ -2,11 +2,12 @@ package com.altech.ledger.endpoint.usecase.deposit;
 
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
-
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.usecase.ledger.LedgerDepositUseCase;
 import com.altech.ledger.util.MultipartFileMetadata;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,9 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-
-import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,6 +47,6 @@ public class DepositEndpoint {
         @RequestParam String currency,
         @RequestParam BigDecimal amount
     ) {
-        return R.success(depositUseCase.initiateCardDeposit(walletId, currency, amount, Map.of()));
+        return R.success(depositUseCase.executeCardSession(walletId, currency, amount, Map.of()));
     }
 }

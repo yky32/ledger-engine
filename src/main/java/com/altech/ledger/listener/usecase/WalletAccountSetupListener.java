@@ -1,6 +1,6 @@
 package com.altech.ledger.listener.usecase;
 
-import com.altech.ledger.usecase.setup.WalletSetupUseCase;
+import com.altech.ledger.usecase.wallet.CreateWalletUseCase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 
 /**
- * Port of WalletAccountSetupListener — WALLET_CREATED → create accounts + wallet.
+ * WalletAccountSetupListener — WALLET_CREATED → create accounts + wallet.
  */
 @Component
 @ConditionalOnProperty(prefix = "ledger.movement.kafka", name = "enabled", havingValue = "true")
@@ -26,7 +26,7 @@ public class WalletAccountSetupListener {
     private static final Logger log = LoggerFactory.getLogger(WalletAccountSetupListener.class);
 
     private final ObjectMapper objectMapper;
-    private final WalletSetupUseCase walletSetupUseCase;
+    private final CreateWalletUseCase createWalletUseCase;
 
     @KafkaListener(
         topics = "${ledger.movement.kafka.wallet-created-topic:ledger.wallet.created}",
@@ -44,7 +44,7 @@ public class WalletAccountSetupListener {
             if (node.has("accountCurrencies") && node.get("accountCurrencies").isArray()) {
                 node.get("accountCurrencies").forEach(c -> extras.add(c.asText()));
             }
-            LedgerWalletDtos.WithBalancesResponse created = walletSetupUseCase.createFull(
+            LedgerWalletDtos.WithBalancesResponse created = createWalletUseCase.executeFull(
                 ownerId, currency, extras, extId, extType);
             log.info("WALLET_CREATED processed walletId={}", created.id());
         } catch (Exception ex) {

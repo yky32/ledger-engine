@@ -1,6 +1,6 @@
 package com.altech.ledger.entity.enu;
 
-/** Port of payment-gateway {@code LedgerMovementStatus}. */
+/** LedgerMovementStatus. */
 public enum LedgerMovementStatus {
     PROCESSING,
     PENDING_DOCS,

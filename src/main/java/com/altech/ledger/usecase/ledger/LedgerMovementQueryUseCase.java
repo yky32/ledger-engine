@@ -1,18 +1,18 @@
 package com.altech.ledger.usecase.ledger;
 
-import com.altech.core.exception.BizException;
-import com.altech.ledger.exception.response.AccountErrorResponse;
-
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.usecase.CommonUseCase;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -21,38 +21,35 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
-
 /**
- * Port of the-wallet-ledger LedgerMovementQueryUseCase.
+ * Ledger movement query surface (parity).
  */
-@Service
+@Component
 @RequiredArgsConstructor
 public class LedgerMovementQueryUseCase {
     private final LedgerMovementRepository movements;
     private final WalletRepository wallets;
+    private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
-    public LedgerMovementDtos.Response getOne(Long id) {
-        return DtoMapper.toMovement(movements.findById(id)
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found: " + id)));
+    public LedgerMovementDtos.Response one(Long id) {
+        return DtoMapper.toMovement(commonUseCase.requireMovement(id));
     }
 
     @Transactional(readOnly = true)
-    public Page<LedgerMovementDtos.Response> getAll(Pageable pageable, Instant startDt, Instant endDt,
-                                         List<String> statuses) {
-        return filter(movements.findAll(pageable), startDt, endDt, statuses);
+    public Page<LedgerMovementDtos.Response> list(Pageable pageable, Instant startDt, Instant endDt,
+                                                  List<String> statuses) {
+        return _filter(movements.findAll(pageable), startDt, endDt, statuses);
     }
 
     @Transactional(readOnly = true)
     public Page<LedgerMovementDtos.Response> myMovements(String ownerId, Pageable pageable,
-                                              Instant startDt, Instant endDt, List<String> statuses) {
+                                                         Instant startDt, Instant endDt, List<String> statuses) {
         List<Long> ids = wallets.findByOwnerId(ownerId).stream().map(Wallet::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        return filter(movements.findByWalletIdIn(ids, pageable), startDt, endDt, statuses);
+        return _filter(movements.findByWalletIdIn(ids, pageable), startDt, endDt, statuses);
     }
 
     @Transactional(readOnly = true)
@@ -60,9 +57,9 @@ public class LedgerMovementQueryUseCase {
         return movements.findByWalletId(walletId, pageable).map(DtoMapper::toMovement);
     }
 
-    private Page<LedgerMovementDtos.Response> filter(Page<LedgerMovement> page, Instant startDt, Instant endDt,
-                                          List<String> statuses) {
-        Set<LedgerMovementStatus> statusSet = parseStatuses(statuses);
+    private Page<LedgerMovementDtos.Response> _filter(Page<LedgerMovement> page, Instant startDt, Instant endDt,
+                                                      List<String> statuses) {
+        Set<LedgerMovementStatus> statusSet = _parseStatuses(statuses);
         List<LedgerMovementDtos.Response> filtered = page.getContent().stream()
             .filter(m -> startDt == null || m.getCreateDt() == null || !m.getCreateDt().isBefore(startDt))
             .filter(m -> endDt == null || m.getCreateDt() == null || !m.getCreateDt().isAfter(endDt))
@@ -73,8 +70,10 @@ public class LedgerMovementQueryUseCase {
             statusSet == null && startDt == null && endDt == null ? page.getTotalElements() : filtered.size());
     }
 
-    private Set<LedgerMovementStatus> parseStatuses(List<String> statuses) {
-        if (statuses == null || statuses.isEmpty()) return null;
+    private Set<LedgerMovementStatus> _parseStatuses(List<String> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            return null;
+        }
         return statuses.stream()
             .flatMap(s -> Arrays.stream(s.split(",")))
             .map(String::trim)
@@ -83,3 +82,4 @@ public class LedgerMovementQueryUseCase {
             .collect(Collectors.toSet());
     }
 }
+

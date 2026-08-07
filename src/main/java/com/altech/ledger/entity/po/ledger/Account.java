@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * Port of the-wallet-ledger {@code Account} (COA + mutable balances).
+ * Account — (COA + mutable balances).
  * <p>
  * New-on-top: {@link #allowNegative} for posting policy used by double-entry journal.
  */

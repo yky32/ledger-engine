@@ -21,24 +21,19 @@ public class BizException extends RuntimeException {
     }
 
     public BizException(Response response, String message) {
-        super(message);
         this.response = response;
         this.data = Map.of("detail", message);
     }
 
     public <T, U> BizException(Response response, Map<T, U> map) {
-        super(response.getMessage());
         this.response = response;
         this.data = map;
     }
 
     public <T> BizException(Response response, T data) {
-        super(response.getMessage());
         this.response = response;
-        if (data instanceof String s) {
-            this.data = Map.of("detail", s);
-        } else {
-            this.data = Objects.requireNonNullElseGet(data, Map::of);
-        }
+        if (data instanceof String) {
+            this.data = Map.of("detail", data);
+        } else this.data = Objects.requireNonNullElseGet(data, Map::of);
     }
 }

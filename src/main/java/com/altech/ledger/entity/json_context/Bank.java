@@ -1,6 +1,6 @@
 package com.altech.ledger.entity.json_context;
 
-/** Port of the-wallet-ledger Bank json context. */
+/** Bank json context. */
 public record Bank(
     String bankName,
     String bankCode,

@@ -25,7 +25,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Port of the-wallet-ledger LedgerMovementUseCase — log movement + create ledger entry legs.
+ * LedgerMovementUseCase — log movement + create ledger entry legs.
  */
 @Service
 @RequiredArgsConstructor

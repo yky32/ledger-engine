@@ -1,7 +1,7 @@
 package com.altech.ledger.entity.enu;
 
 /**
- * Port of payment-gateway {@code OrderType}, extended with engine loyalty / transfer types.
+ * OrderType. extended with engine loyalty / transfer types.
  */
 public enum OrderType {
     PAYMENT_LINK,

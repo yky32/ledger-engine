@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
- * Port of the-wallet-ledger {@code LedgerMovement} (business operation log).
+ * LedgerMovement — (business operation log).
  * <p>
  * New-on-top: {@link #movementKey}, {@link #mode}, simplified metadata.
  * JSONB context fields from legacy are kept as TEXT for later product parity.

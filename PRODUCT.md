@@ -1,7 +1,6 @@
 # Ledger Engine — Product Overview
 
-**Ledger Engine** is a standalone, deployable **wallet + ledger** product for enterprise clients — the
-successor to the legacy **the-wallet-ledger** service, rebuilt without platform dependencies. It supports
+**Ledger Engine** is a standalone, deployable **wallet + ledger** product for enterprise clients. It supports
 custodial wallets (deposits, withdrawals, transfers), loyalty points/credits, and full double-entry
 accounting.
 
@@ -17,8 +16,7 @@ For technical setup and API details, see [README.md](README.md) and [INTEGRATION
 
 ## Product summary
 
-Ledger Engine is a **standalone wallet + ledger product** — the deployable successor to the legacy
-**the-wallet-ledger** microservice, rebuilt without `app-core` or platform lock-in. It supports loyalty
+Ledger Engine is a **standalone wallet + ledger product** built as a Spring Boot service. It supports loyalty
 points, custodial wallets, deposits, withdrawals, transfers, and full audit-grade double-entry accounting.
 
 Clients deploy it in their own infrastructure and integrate over HTTP (and optionally Kafka).
@@ -32,9 +30,9 @@ Clients deploy it in their own infrastructure and integrate over HTTP (and optio
 | **Go-live** | **Phase 1** onboard wallets from CRM → **Phase 2** ingest transactional events |
 | **Guarantees** | Double-entry, idempotent posting, append-only history, reversal support |
 
-**Standalone:** no `app-core`, GitLab Maven token, OAuth2 platform, or payment-gateway coupling required.
+**Standalone:** no shared foundation JAR required; pure Spring Boot with an embedded core package.
 
-**In scope (product vision):** everything the-wallet-ledger did — wallets, movements, deposits, withdrawals,
+**In scope (product vision):** wallets, movements, deposits, withdrawals,
 transfers, virtual accounts, recipients, FX, compliance workflows, Kafka pipeline — implemented on a clean
 double-entry core.
 
@@ -42,15 +40,13 @@ double-entry core.
 
 ---
 
-## Successor to the-wallet-ledger
-
-Ledger Engine replaces **the-wallet-ledger** as the **single standalone product** you ship to enterprise
+## Successor to Ledger Engine replaces  as the **single standalone product** you ship to enterprise
 clients. Same product domain; different (better) accounting foundation.
 
-| Dimension | the-wallet-ledger (legacy) | Ledger Engine (standalone) |
+| Dimension | (legacy) | Ledger Engine (standalone) |
 |---|---|---|
-| **Deployment** | Inside Altech payment-gateway platform | Client self-hosted (on-prem / VPC) |
-| **Dependencies** | `app-core` 2.1, shared Kafka enums, Retrofit clients | Pure Spring Boot — no vendor libs |
+| **Deployment** | Shared multi-tenant platform | Client self-hosted (on-prem / VPC) |
+| **Dependencies** | Shared platform libraries | Pure Spring Boot — embedded `com.altech.core` |
 | **Balance storage** | Mutable `ledgerBalance` / `availableBalance` columns | **Derived** from `journal_entry` (hold via COA sub-accounts) |
 | **Wallet model** | `Wallet` + `Account` (Snowflake IDs) | `Wallet` + `ledger_account` (UUID) |
 | **Movement log** | `LedgerMovement` + Kafka pipeline | `ledger_movement` + journal link (Kafka optional) |
@@ -59,11 +55,11 @@ clients. Same product domain; different (better) accounting foundation.
 
 ### Design upgrade (not a port)
 
-Capabilities from the-wallet-ledger are **reimplemented**, not copied:
+Capabilities from are **reimplemented**, not copied:
 
 ```text
-Legacy:  movement → mutate account.ledgerBalance
-Engine:  movement → journal_transaction → derive balance
+Legacy: movement → mutate account.ledgerBalance
+Engine: movement → journal_transaction → derive balance
 ```
 
 Hold / available split uses **COA hold accounts** (`hold:{ownerId}:{currency}`) instead of a second balance
@@ -75,7 +71,7 @@ column — same product behaviour, audit-grade history.
 
 Status key: **Shipped** | **Partial** | **Planned**
 
-| Domain | the-wallet-ledger capability | Ledger Engine | Status |
+| Domain | capability | Ledger Engine | Status |
 |---|---|---|---|
 | **Wallet** | Create, activate, status, my-wallets, ext lookup | `POST /wallets`, `GET /wallets`, batch CRM import | **Partial** (no activation/IDV yet) |
 | **Account / COA** | Multi-currency sub-accounts, COA segments | `ledger_account` + templates; pools on startup | **Partial** |
@@ -105,7 +101,7 @@ Status key: **Shipped** | **Partial** | **Planned**
 ## Domain model & relationships
 
 The product is built around **five persistent domain entities**. Journal entries remain the source of truth;
-wallets and movements are the **product layer** clients interact with (matching the-wallet-ledger surface).
+wallets and movements are the **product layer** clients interact with (matching surface).
 
 ### Core entities
 
@@ -120,17 +116,17 @@ wallets and movements are the **product layer** clients interact with (matching 
 ### Entity relationships
 
 ```text
-wallet                                  ledger_movement
-┌──────────────────┐                   ┌─────────────────────────┐
-│ id               │                   │ id                      │
-│ account_id ──────┼──▶ ledger_account│ movement_key (unique)   │
-│ owner_id         │◀──┐               │ wallet_id               │
-│ alias, status    │   │               │ order_type, status, mode│
-└──────────────────┘   │               │ journal_transaction_id ─┼──▶ journal_transaction
-                       │               └─────────────────────────┘
-ledger_account         │                        │
-┌──────────────────┐   │                        ▼
-│ id (PK)          │◀──┘               journal_entry (debit/credit legs)
+wallet ledger_movement
+┌──────────────────┐ ┌─────────────────────────┐
+│ id │ │ id │
+│ account_id ──────┼──▶ ledger_account│ movement_key (unique) │
+│ owner_id │◀──┐ │ wallet_id │
+│ alias, status │ │ │ order_type, status, mode│
+└──────────────────┘ │ │ journal_transaction_id ─┼──▶ journal_transaction
+ │ └─────────────────────────┘
+ledger_account │ │
+┌──────────────────┐ │ ▼
+│ id (PK) │◀──┘ journal_entry (debit/credit legs)
 │ external_reference
 │ type (COA), currency
 └──────────────────┘
@@ -145,7 +141,7 @@ ledger_account         │                        │
 **Balance is not stored.** A wallet balance is **derived** at query time:
 
 ```text
-balance(account) = Σ CREDIT amounts − Σ DEBIT amounts   (for that account's currency)
+balance(account) = Σ CREDIT amounts − Σ DEBIT amounts (for that account's currency)
 ```
 
 ### Account roles (same entity, different purpose)
@@ -162,15 +158,15 @@ All accounts share the `ledger_account` table. Role is determined by `type` + `e
 | **Held balance** (planned) | `ASSET` | `hold:{userId}:{currency}` | Process HOLD operation |
 
 ```text
-Customer (client CRM)          Program (Ledger Engine)
-        │                              │
-        │ 1 : 1                        │ 1 pool per currency
-        ▼                              ▼
- wallet:CUST-001:LP              pool:loyalty-expense:LP
- (LIABILITY)                     pool:loyalty-liability:LP
-        │                              │
-        └──────── journal_entry ───────┘
-                 (Earn / Burn legs)
+Customer (client CRM) Program (Ledger Engine)
+ │ │
+ │ 1 : 1 │ 1 pool per currency
+ ▼ ▼
+ wallet:CUST-001:LP pool:loyalty-expense:LP
+ (LIABILITY) pool:loyalty-liability:LP
+ │ │
+ └──────── journal_entry ───────┘
+ (Earn / Burn legs)
 ```
 
 **One customer → one wallet** is enforced by unique `external_reference` on `ledger_account`.
@@ -191,15 +187,15 @@ Ingestion path (Phase 2):
 
 ```text
 TransactionalEvent
-        │
-        ▼
-TransactionRuleEngine  →  RuleDecision (EARN | BURN | PROCESS, points, currency)
-        │
-        ▼
-WalletOnboardingService.walletRef(userId)  →  lookup ledger_account
-        │
-        ▼
-LedgerService.post()  →  journal_transaction + journal_entry rows
+ │
+ ▼
+TransactionRuleEngine → RuleDecision (EARN | BURN | PROCESS, points, currency)
+ │
+ ▼
+WalletOnboardingService.walletRef(userId) → lookup ledger_account
+ │
+ ▼
+LedgerService.post() → journal_transaction + journal_entry rows
 ```
 
 ### Application layers
@@ -221,9 +217,9 @@ application layer enforces COA rules and double-entry integrity.
 
 ## Expanded product epics
 
-Building on the four loyalty epics below, standalone wallet-ledger parity adds **Epics 5–12**:
+Building on the four loyalty epics below, standalone product capabilities adds **Epics 5–12**:
 
-| Epic | Domain | the-wallet-ledger equivalent |
+| Epic | Domain | equivalent |
 |---|---|---|
 | **5** | Deposits & withdrawals | `DepositEndpoint`, `WithdrawalEndpoint` |
 | **6** | Transfers (in-wallet, SWIFT) | `WalletTransferEndpoint`, `SwiftTransferEndpoint` |
@@ -243,32 +239,32 @@ Phase 2 must not start until Phase 1 is complete.
 PHASE 1 — Wallet onboarding (CRM / legacy system)
 ═══════════════════════════════════════════════════
 Client CRM or membership DB
-        │
-        │  export customers (userId, name, …)
-        ▼
-POST /wallets          ← one customer at signup
-POST /wallets/batch      ← bulk import at go-live
-        │
-        ▼
+ │
+ │ export customers (userId, name, …)
+ ▼
+POST /wallets ← one customer at signup
+POST /wallets/batch ← bulk import at go-live
+ │
+ ▼
 ledger_account per customer (wallet:{userId}:LP)
-        │
-        ▼
+ │
+ ▼
 Client confirms: "all customers onboarded" ✓
 
 
 PHASE 2 — Transaction processing (runtime)
 ══════════════════════════════════════════
 POS / e-commerce / campaign system
-        │
-        │  webhook or Kafka event (eventId, userId, eventType, amount)
-        ▼
+ │
+ │ webhook or Kafka event (eventId, userId, eventType, amount)
+ ▼
 POST /integrations/webhooks/transactions
-        or Kafka: ledger.transaction.events
-        │
-        ▼
+ or Kafka: ledger.transaction.events
+ │
+ ▼
 Rule check → Earn / Burn / Process
-        │
-        ▼
+ │
+ ▼
 Points posted (only if wallet exists from Phase 1)
 ```
 
@@ -287,10 +283,10 @@ POST /wallets/batch
 Content-Type: application/json
 
 {
-  "wallets": [
-    { "userId": "CRM-0001", "currency": "LP", "name": "Alice" },
-    { "userId": "CRM-0002", "currency": "LP", "name": "Bob" }
-  ]
+ "wallets": [
+ { "userId": "CRM-0001", "currency": "LP", "name": "Alice" },
+ { "userId": "CRM-0002", "currency": "LP", "name": "Bob" }
+ ]
 }
 ```
 
@@ -298,11 +294,11 @@ Response:
 
 ```json
 {
-  "requested": 2,
-  "created": 2,
-  "alreadyExists": 0,
-  "createdWallets": [ ... ],
-  "alreadyExistingUserIds": []
+ "requested": 2,
+ "created": 2,
+ "alreadyExists": 0,
+ "createdWallets": [ ... ],
+ "alreadyExistingUserIds": []
 }
 ```
 
@@ -315,11 +311,11 @@ POST /integrations/webhooks/transactions
 Content-Type: application/json
 
 {
-  "eventId": "pos-20260805-001",
-  "userId": "CRM-0001",
-  "eventType": "PURCHASE",
-  "amount": 150.00,
-  "currency": "LP"
+ "eventId": "pos-20260805-001",
+ "userId": "CRM-0001",
+ "eventType": "PURCHASE",
+ "amount": 150.00,
+ "currency": "LP"
 }
 ```
 
@@ -332,14 +328,14 @@ When an enterprise adopts Ledger Engine, they are not just deploying a database 
 without a wallet per user.
 
 ```text
-Epic 1  User Creation ──▶ Wallet Provisioning     (foundation)
-              │
-              ▼
-Epic 2  Earn / Burn / Process on wallet balance   (ledger core — shipped)
-              │
-              ├─▶ Epic 3  Tier & ranking            (client rules — reads balance)
-              │
-              └─▶ Epic 4  Process rules engine      (client pluggable — hold/expire/settle)
+Epic 1 User Creation ──▶ Wallet Provisioning (foundation)
+ │
+ ▼
+Epic 2 Earn / Burn / Process on wallet balance (ledger core — shipped)
+ │
+ ├─▶ Epic 3 Tier & ranking (client rules — reads balance)
+ │
+ └─▶ Epic 4 Process rules engine (client pluggable — hold/expire/settle)
 ```
 
 ### Epic 1 — Wallet onboarding (product setup) ⭐
@@ -390,13 +386,13 @@ When a user reaches a certain balance or lifetime earn threshold, the client pro
 **tier** (Silver → Gold → Platinum).
 
 ```text
-Ledger Engine                    Client tier service
-     │                                  │
-     │  GET /accounts/{id}/balance      │
-     │  GET /accounts/{id}/entries      │
-     └──────────────────────────────────▶│ evaluate rules
-                                         │ update tier / ranking
-                                         │ trigger perks (outside ledger)
+Ledger Engine Client tier service
+ │ │
+ │ GET /accounts/{id}/balance │
+ │ GET /accounts/{id}/entries │
+ └──────────────────────────────────▶│ evaluate rules
+ │ update tier / ranking
+ │ trigger perks (outside ledger)
 ```
 
 | Responsibility | Owner |
@@ -415,9 +411,9 @@ Ledger Engine does **not** store tier today. It provides the **balance truth** t
 
 ```yaml
 - event-type: ADJUST
-  operation: PROCESS
-  process-type: ADJUST
-  formula: FIXED:10
+ operation: PROCESS
+ process-type: ADJUST
+ formula: FIXED:10
 ```
 
 Different enterprises plug different rule sets. Ledger Engine executes matching **Process** postings;
@@ -464,11 +460,11 @@ Each end customer maps to **exactly one wallet** in the ledger:
 
 ```text
 Customer ID (from client CRM / membership system)
-        ↓
-ledger_account.external_reference  =  unique customer key
-        ↓
+ ↓
+ledger_account.external_reference = unique customer key
+ ↓
 One LIABILITY account per customer per currency (e.g. LP)
-        =  the customer's wallet balance
+ = the customer's wallet balance
 ```
 
 Rules:
@@ -482,8 +478,8 @@ Example:
 | Customer | `external_reference` | Account type | Currency | Role |
 |---|---|---|---|---|
 | `CUST-10001` | `wallet:CUST-10001:LP` | `LIABILITY` | `LP` | Customer wallet |
-| (platform) | `pool:loyalty-expense:LP` | `EXPENSE` | `LP` | Points issuance pool |
-| (platform) | `pool:loyalty-liability:LP` | `LIABILITY` | `LP` | Outstanding points liability |
+| (system) | `pool:loyalty-expense:LP` | `EXPENSE` | `LP` | Points issuance pool |
+| (system) | `pool:loyalty-liability:LP` | `LIABILITY` | `LP` | Outstanding points liability |
 
 ---
 
@@ -505,12 +501,12 @@ finance and audit teams a familiar model instead of ad-hoc balance columns.
 
 ```text
 Earn 100 LP (purchase bonus)
-  DEBIT   pool:loyalty-expense:LP        100
-  CREDIT  wallet:CUST-10001:LP          100
+ DEBIT pool:loyalty-expense:LP 100
+ CREDIT wallet:CUST-10001:LP 100
 
 Burn 50 LP (redemption)
-  DEBIT   wallet:CUST-10001:LP           50
-  CREDIT  pool:loyalty-liability:LP      50
+ DEBIT wallet:CUST-10001:LP 50
+ CREDIT pool:loyalty-liability:LP 50
 ```
 
 Points calculation logic (rules, tiers, multipliers) lives in the **client's application layer**. Ledger
@@ -562,7 +558,7 @@ Every operation follows the same pipeline:
 
 ```text
 Earn / Burn / Process
-        ↓
+ ↓
 1. Validate rules + balance
 2. Create immutable journal_entry
 3. Update balance projection (derived from entries)
@@ -606,25 +602,25 @@ Shared guarantees:
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
-│  Enterprise environment                                          │
-│                                                                  │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────────────────┐  │
-│  │ User /      │  │ Tier &       │  │ Process rules engine   │  │
-│  │ Membership  │  │ ranking      │  │ (hold, expire, settle) │  │
-│  │ (Epic 1)    │  │ (Epic 3)     │  │ (Epic 4)               │  │
-│  └──────┬──────┘  └──────┬───────┘  └───────────┬────────────┘  │
-│         │ signup          │ read balance          │ decide posting │
-│         │ create wallet   │                       │                │
-│         └─────────────────┴───────────────────────┘                │
-│                              │ POST /transactions                  │
-│                              ▼                                     │
-│                   ┌─────────────────────────┐                      │
-│                   │  Ledger Engine (Epic 2) │                      │
-│                   │  Earn / Burn / Process  │                      │
-│                   └─────────────────────────┘                      │
-│                              │                                     │
-│                              ▼                                     │
-│                   ledger_account / journal_entry                   │
+│ Enterprise environment │
+│ │
+│ ┌─────────────┐ ┌──────────────┐ ┌────────────────────────┐ │
+│ │ User / │ │ Tier & │ │ Process rules engine │ │
+│ │ Membership │ │ ranking │ │ (hold, expire, settle) │ │
+│ │ (Epic 1) │ │ (Epic 3) │ │ (Epic 4) │ │
+│ └──────┬──────┘ └──────┬───────┘ └───────────┬────────────┘ │
+│ │ signup │ read balance │ decide posting │
+│ │ create wallet │ │ │
+│ └─────────────────┴───────────────────────┘ │
+│ │ POST /transactions │
+│ ▼ │
+│ ┌─────────────────────────┐ │
+│ │ Ledger Engine (Epic 2) │ │
+│ │ Earn / Burn / Process │ │
+│ └─────────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ledger_account / journal_entry │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -691,14 +687,14 @@ Ledger Engine **includes** wallet operations, movement workflow, and ledger trut
 - Marketing campaign management or notification/email
 - Loyalty tier / multiplier calculation (client reads balance API — Epic 3)
 
-It **is** the standalone successor to the-wallet-ledger: **system of record for balances, movements, and
+It **is** the standalone successor to : **system of record for balances, movements, and
 why they happened** — on double-entry COA with immutable journal history.
 
 ---
 
 ## Summary
 
-Ledger Engine is the **standalone wallet + ledger product** — successor to the-wallet-ledger — built for
+Ledger Engine is the **standalone wallet + ledger product** — successor to — built for
 enterprise deployment without platform dependencies:
 
 1. **Wallet provisioning** — `Wallet` + `ledger_account` per owner/currency; CRM batch import
@@ -710,6 +706,6 @@ enterprise deployment without platform dependencies:
 **Domain in one line:** `Wallet` is the product handle; `LedgerMovement` records the business operation;
 `JournalTransaction` + `JournalEntry` are the accounting truth; balance is always derived from entries.
 
-Clients **own their infrastructure** and get **the-wallet-ledger capabilities** on a **proper double-entry
+Clients **own their infrastructure** and get **capabilities** on a **proper double-entry
 foundation** — one unique customer → one wallet, every change recorded as balanced, idempotent, append-only
 journal history.

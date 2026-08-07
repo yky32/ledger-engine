@@ -1,6 +1,6 @@
 package com.altech.ledger.entity.json_context.ledger_movement;
 
-/** Port of the-wallet-ledger LedgerMovementPayerMetadata. */
+/** LedgerMovementPayerMetadata. */
 public record LedgerMovementPayerMetadata(
     String name,
     String identifier,

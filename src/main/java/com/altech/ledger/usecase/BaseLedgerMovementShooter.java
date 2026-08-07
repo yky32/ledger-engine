@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Port of the-wallet-ledger BaseLedgerMovementShooter.
+ * BaseLedgerMovementShooter.
  * Handles mode branching (AUTO vs MANUAL) before dispatch.
  */
 @RequiredArgsConstructor

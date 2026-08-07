@@ -20,7 +20,7 @@ import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.MovementBus;
-import com.altech.ledger.usecase.account.RuleExecutionUseCase;
+import com.altech.ledger.usecase.rule.QueryRuleExecutionUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -33,7 +33,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Port of the-wallet-ledger LedgerMovementExecutionUseCase.
+ * LedgerMovementExecutionUseCase.
  * Structure: fetch rules → rulesExecution (command) → updateBalances → ledger entries.
  */
 @Service
@@ -48,7 +48,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     /** @Lazy breaks cycle MovementBus ↔ this use case */
     @Lazy
     private final MovementBus movementBus;
-    private final RuleExecutionUseCase ruleExecutionUseCase;
+    private final QueryRuleExecutionUseCase queryRuleExecutionUseCase;
 
     @Override
     @Transactional
@@ -91,7 +91,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         }
         try {
             // Old always fetched accounting rules by OrderType; empty rules list still OK
-            ruleExecutionUseCase.findByOrderType(movement.getOrderType()).ifPresent(re ->
+            queryRuleExecutionUseCase.findByOrderType(movement.getOrderType()).ifPresent(re ->
                 log.debug("RuleExecution found for {}: {}", movement.getOrderType(), re.name()));
 
             BalanceExecutionResultCommand command = rulesExecution(movement);
@@ -111,7 +111,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     }
 
     /**
-     * Port of rulesExecution — builds BalanceExecutionResultCommand from OrderType.
+     * rulesExecution — builds BalanceExecutionResultCommand from OrderType.
          */
     public BalanceExecutionResultCommand rulesExecution(LedgerMovement movement) {
         BalanceExecutionResultCommand command = new BalanceExecutionResultCommand();
