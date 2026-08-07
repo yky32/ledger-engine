@@ -22,10 +22,9 @@ public final class LedgerDto {
     public enum CoaType { ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE }
 
     /**
-     * Create a product ledger account by external reference + COA type + currency.
+     * Create a product ledger account (fullNumber allocated as numeric COA).
      */
     public record CreateAccountRequest(
-        @NotBlank @Size(max = 100) String externalReference,
         @NotBlank @Size(max = 200) String name,
         @NotNull CoaType type,
         @NotNull Currency currency,
@@ -34,10 +33,11 @@ public final class LedgerDto {
 
     /**
      * Account snapshot returned after create/get (balances + version).
+     * {@code fullNumber} matches DB {@code account.full_number}.
      */
     public record AccountResponse(
         Long id,
-        String externalReference,
+        String fullNumber,
         String name,
         CoaType type,
         Currency currency,

@@ -23,9 +23,9 @@ class LedgerUseCaseIntegrationTest {
     @Test
     void createAccountAndReadBalance() {
         AccountResponse cash = createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "ignored-label", "Cash USD", CoaType.ASSET, Currency.USD, false));
+            "Cash USD", CoaType.ASSET, Currency.USD, false));
         assertThat(cash.id()).isNotNull();
-        assertThat(cash.externalReference()).matches("\\d+");
+        assertThat(cash.fullNumber()).matches("\\d+");
         assertThat(cash.ledgerBalance()).isEqualByComparingTo("0");
 
         BalanceResponse bal = queryLedgerAccountUseCase.balance(cash.id());
@@ -37,11 +37,11 @@ class LedgerUseCaseIntegrationTest {
     @Test
     void eachCreateGetsUniqueNumericFullNumber() {
         AccountResponse a = createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "a", "One", CoaType.ASSET, Currency.USD, false));
+            "One", CoaType.ASSET, Currency.USD, false));
         AccountResponse b = createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "b", "Two", CoaType.ASSET, Currency.USD, false));
-        assertThat(a.externalReference()).matches("\\d+");
-        assertThat(b.externalReference()).matches("\\d+");
-        assertThat(a.externalReference()).isNotEqualTo(b.externalReference());
+            "Two", CoaType.ASSET, Currency.USD, false));
+        assertThat(a.fullNumber()).matches("\\d+");
+        assertThat(b.fullNumber()).matches("\\d+");
+        assertThat(a.fullNumber()).isNotEqualTo(b.fullNumber());
     }
 }

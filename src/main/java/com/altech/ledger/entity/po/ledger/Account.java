@@ -5,8 +5,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
+import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import com.altech.ledger.entity.enu.AccountStatus;
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 
@@ -36,7 +38,8 @@ import java.math.BigDecimal;
 public class Account extends AuditEntityWithIsActive {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GenericGenerator(name = "account_id_generator", type = SnowflakeIdGenerator.class)
+    @GeneratedValue(generator = "account_id_generator")
     private Long id;
 
     @Column(length = 200)

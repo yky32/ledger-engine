@@ -85,7 +85,7 @@ public final class DtoWrapper {
         String name = displayName != null && !displayName.isBlank() ? displayName : a.getSubAccount();
         return GetWalletAccountResponseDto.builder()
             .id(a.getId())
-            .externalReference(a.getFullNumber())
+            .fullNumber(a.getFullNumber())
             .name(name)
             .refCode(refCode)
             .primary(primary)
