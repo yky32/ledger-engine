@@ -15,7 +15,9 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
     @ExceptionHandler(LedgerException.class)
     public ResponseEntity<Object> ledger(LedgerException ex, HttpServletRequest request) {
-        Response response = new Response(ex.getCode(), ex.getMessage(), ex.getStatus());
+        Response response = ex.getResponse() != null
+            ? ex.getResponse()
+            : new Response(ex.getCode(), ex.getMessage(), ex.getStatus());
         Result<Object> body = withRequestId(R.error(response, null));
         return new ResponseEntity<>(body, ex.getStatus());
     }

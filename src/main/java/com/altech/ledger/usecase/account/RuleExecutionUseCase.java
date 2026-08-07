@@ -1,6 +1,6 @@
 package com.altech.ledger.usecase.account;
 
-import com.altech.ledger.entity.dto.rule.RuleDtos;
+import com.altech.ledger.entity.dto.parity.RuleDtos;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.accounting.RuleExecution;
 import com.altech.ledger.exception.LedgerException;

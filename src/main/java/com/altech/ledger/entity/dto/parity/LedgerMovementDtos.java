@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.dto.movement;
+package com.altech.ledger.entity.dto.parity;
 
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;

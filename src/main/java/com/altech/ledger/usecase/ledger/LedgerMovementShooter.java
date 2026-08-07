@@ -1,7 +1,7 @@
 package com.altech.ledger.usecase.ledger;
 
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
-import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.*;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;

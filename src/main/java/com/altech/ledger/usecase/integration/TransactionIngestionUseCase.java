@@ -11,14 +11,14 @@ import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
-import com.altech.ledger.usecase.wallet.WalletOnboardingUseCase;
+import com.altech.ledger.usecase.wallet.CreateWalletOnboardingUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
-import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 
 /**
  * Loyalty / transactional event ingest. Applies balances via movement execution
@@ -32,7 +32,7 @@ public class TransactionIngestionUseCase {
     private final AccountRepository accounts;
     private final WalletRepository wallets;
     private final LedgerMovementRepository movements;
-    private final WalletOnboardingUseCase walletOnboardingUseCase;
+    private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
     private final LedgerMovementShooter shooter;
 
     @Transactional
@@ -47,7 +47,7 @@ public class TransactionIngestionUseCase {
         }
 
         TransactionRuleEngine.RuleDecision rule = decision.get();
-        String walletRef = walletOnboardingUseCase.walletRef(event.userId(), rule.pointCurrency());
+        String walletRef = createWalletOnboardingUseCase.walletRef(event.userId(), rule.pointCurrency());
         Optional<Account> walletAccount = accounts.findByFullNumber(walletRef);
         if (walletAccount.isEmpty()) {
             return IngestionResult.skipped(event.eventId(), "Wallet not onboarded: " + walletRef);

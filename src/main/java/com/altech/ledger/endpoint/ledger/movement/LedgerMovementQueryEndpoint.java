@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 
 @RestController
 @RequestMapping("/ledger-accounts/movements")

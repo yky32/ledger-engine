@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 
 /**
  * Port of the-wallet-ledger LedgerMovementQueryUseCase.

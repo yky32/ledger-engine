@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.dto.rule;
+package com.altech.ledger.entity.dto.parity;
 
 import com.altech.ledger.entity.enu.MovementDirection;
 import com.altech.ledger.entity.enu.OrderType;

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 
 /**
  * Port of the-wallet-ledger LedgerDepositUseCase (bank auto + card session + webhook).

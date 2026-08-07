@@ -1,11 +1,11 @@
 package com.altech.ledger.service;
 
-import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
-import com.altech.ledger.entity.dto.fx.FxRateDtos;
-import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
-import com.altech.ledger.entity.dto.rule.RuleDtos;
-import com.altech.ledger.entity.dto.system.SystemDtos;
-import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.parity.FxRateDtos;
+import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.parity.RuleDtos;
+import com.altech.ledger.entity.dto.parity.SystemDtos;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.entity.po.accounting.Rule;
 import com.altech.ledger.entity.po.accounting.RuleExecution;
@@ -16,6 +16,9 @@ import com.altech.ledger.entity.po.log.LedgerMovement;
 
 import java.util.List;
 
+/**
+ * Parity-layer PO → DTO mapping. Prefer {@link DtoWrapper} at call sites (TGT name).
+ */
 public final class DtoMapper {
     private DtoMapper() {}
 

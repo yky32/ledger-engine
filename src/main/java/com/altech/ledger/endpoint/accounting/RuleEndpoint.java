@@ -5,7 +5,7 @@ import com.altech.core.response.Result;
 
 import java.util.List;
 
-import com.altech.ledger.entity.dto.rule.RuleDtos;
+import com.altech.ledger.entity.dto.parity.RuleDtos;
 import com.altech.ledger.usecase.setup.RuleSetupUseCase;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;

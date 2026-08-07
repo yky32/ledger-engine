@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
 
 @RestController
 @RequestMapping("/ledger-accounts")

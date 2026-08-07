@@ -1,7 +1,7 @@
 package com.altech.ledger.usecase.account;
 
-import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
-import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;

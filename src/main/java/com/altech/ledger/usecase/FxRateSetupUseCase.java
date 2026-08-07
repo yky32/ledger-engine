@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.fx.FxRateDtos;
+import com.altech.ledger.entity.dto.parity.FxRateDtos;
 
 @Service
 @RequiredArgsConstructor

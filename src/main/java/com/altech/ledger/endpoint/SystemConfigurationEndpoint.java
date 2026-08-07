@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.system.SystemDtos;
+import com.altech.ledger.entity.dto.parity.SystemDtos;
 
 @RestController
 @RequestMapping("/configurations")

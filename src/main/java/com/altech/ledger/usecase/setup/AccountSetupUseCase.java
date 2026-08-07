@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
 
 @Service
 @RequiredArgsConstructor

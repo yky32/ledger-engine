@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.system.SystemDtos;
+import com.altech.ledger.entity.dto.parity.SystemDtos;
 
 @Service
 @RequiredArgsConstructor

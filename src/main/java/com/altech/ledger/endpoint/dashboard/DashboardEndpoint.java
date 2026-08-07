@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.system.SystemDtos;
+import com.altech.ledger.entity.dto.parity.SystemDtos;
 
 @RestController
 @RequestMapping("/dashboards")

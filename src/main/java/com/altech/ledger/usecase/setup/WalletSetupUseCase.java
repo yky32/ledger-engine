@@ -1,7 +1,7 @@
 package com.altech.ledger.usecase.setup;
 
-import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
-import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;

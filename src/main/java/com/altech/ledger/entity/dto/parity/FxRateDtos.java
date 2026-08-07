@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.dto.fx;
+package com.altech.ledger.entity.dto.parity;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

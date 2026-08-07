@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 
 /**
  * Port of WalletAccountSetupListener — WALLET_CREATED → create accounts + wallet.

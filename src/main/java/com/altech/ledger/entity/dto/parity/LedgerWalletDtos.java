@@ -1,6 +1,5 @@
-package com.altech.ledger.entity.dto.wallet;
+package com.altech.ledger.entity.dto.parity;
 
-import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;

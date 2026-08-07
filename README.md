@@ -31,7 +31,7 @@ src/main/java/com/altech/ledger/
 ├── repository/          Spring Data JPA repositories
 ├── listener/            Kafka consumers (optional)
 ├── exception/           LedgerException, GlobalExceptionHandler
-└── resources/db/migration/   Flyway schema
+└── resources/db/changelog/ Liquibase changelogs
 ```
 
 | Layer | Convention | Example |
@@ -46,7 +46,7 @@ src/main/java/com/altech/ledger/
 | **Java field / getter** | camelCase | `externalReference`, `idempotencyKey`, `sequence` |
 | **JSON API** | camelCase | `externalReference`, `idempotencyKey`, `accountId` |
 
-PO classes map 1:1 to Flyway tables. `@Column(name = "...")` is used wherever the Java name differs from the
+PO classes map 1:1 to Liquibase-managed tables. `@Column(name = "...")` is used wherever the Java name differs from the
 column (for example `sequence` ↔ `sequence_number`).
 
 ## Data model (PO ↔ table ↔ columns)
@@ -150,7 +150,7 @@ All three operations must:
 - Entry `currency` must equal `ledger_account.currency`; only `status = ACTIVE` accounts may be posted.
 - Same `idempotency_key` + same payload → existing transaction (`200`); same key + different payload → `409`.
 - Reversal appends opposite `journal_entry` rows, sets `reversal_of_id`, marks original `REVERSED`.
-- Flyway constraints enforce unique keys, positive amounts, sequence uniqueness, and single reversal per txn.
+- DB constraints enforce unique keys, positive amounts, sequence uniqueness, and single reversal per txn.
 
 ## Run locally
 

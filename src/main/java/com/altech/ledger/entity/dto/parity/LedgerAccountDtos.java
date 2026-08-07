@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.dto.account;
+package com.altech.ledger.entity.dto.parity;
 
 import com.altech.ledger.entity.enu.AccountStatus;
 import jakarta.validation.constraints.NotBlank;

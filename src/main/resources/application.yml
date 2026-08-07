@@ -10,16 +10,16 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
+      # Schema owned by Liquibase
       ddl-auto: validate
     properties:
       hibernate:
         jdbc:
           time_zone: UTC
         dialect: org.hibernate.dialect.PostgreSQLDialect
-  flyway:
-    enabled: true
   liquibase:
-    enabled: false
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
 
 ledger:
   movement:

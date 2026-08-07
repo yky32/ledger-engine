@@ -14,7 +14,7 @@ import java.math.RoundingMode;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.fx.FxRateDtos;
+import com.altech.ledger.entity.dto.parity.FxRateDtos;
 
 /**
  * Port of the-wallet-ledger FxRateQueryUseCase.

@@ -2,7 +2,7 @@ package com.altech.ledger.usecase.movement;
 
 import com.altech.ledger.entity.dto.ledger.LedgerDto.PageResponse;
 import com.altech.ledger.entity.dto.movement.MovementDto.*;
-import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.WalletStatus;

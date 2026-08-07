@@ -7,27 +7,71 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
+import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Phase-1 onboarding against TGT-style DTOs / Create+Query use cases.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 class WalletOnboardingIntegrationTest {
     @Autowired MockMvc mockMvc;
 
     @Test
+    void singleOnboardCreatesActiveWalletAndIsQueryable() throws Exception {
+        String userId = "ONB-" + UUID.randomUUID();
+
+        mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"userId":"%s","currency":"LP","name":"Alice"}
+                    """.formatted(userId)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.code").value("SYS0000"))
+            .andExpect(jsonPath("$.data.ownerId").value(userId))
+            .andExpect(jsonPath("$.data.currency").value("LP"))
+            .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+            .andExpect(jsonPath("$.data.walletId").isNumber())
+            .andExpect(jsonPath("$.data.balance.ledgerBalance").value(0))
+            .andExpect(jsonPath("$.data.account.externalReference").value("wallet:" + userId + ":LP"))
+            .andExpect(jsonPath("$.data.createDt").exists());
+
+        mockMvc.perform(get("/wallets/" + userId + "/LP"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+            .andExpect(jsonPath("$.data.ownerId").value(userId));
+
+        mockMvc.perform(get("/wallets").param("ownerId", userId))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").isArray())
+            .andExpect(jsonPath("$.data.length()").value(1));
+
+        mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"userId":"%s","currency":"LP","name":"Alice again"}
+                    """.formatted(userId)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("WAL0409"));
+    }
+
+    @Test
     void batchOnboardsFromCrmAndIsIdempotent() throws Exception {
+        String a = "CRM-" + UUID.randomUUID();
+        String b = "CRM-" + UUID.randomUUID();
         String body = """
             {
               "wallets": [
-                {"userId":"CRM-BATCH-1","currency":"LP","name":"Alice"},
-                {"userId":"CRM-BATCH-2","currency":"LP","name":"Bob"}
+                {"userId":"%s","currency":"LP","name":"Alice"},
+                {"userId":"%s","currency":"LP","name":"Bob"}
               ]
             }
-            """;
+            """.formatted(a, b);
 
         mockMvc.perform(post("/wallets/batch").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())

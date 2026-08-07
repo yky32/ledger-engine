@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.account.LedgerAccountDtos;
+import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
 
 @RestController
 @RequestMapping("/ledger-accounts")

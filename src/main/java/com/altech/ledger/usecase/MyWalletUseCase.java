@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 
 /** Port of the-wallet-ledger MyWalletUseCase. */
 @Service

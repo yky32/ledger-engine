@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.fx.FxRateDtos;
+import com.altech.ledger.entity.dto.parity.FxRateDtos;
 
 @RestController
 @RequestMapping("/fx-rates")

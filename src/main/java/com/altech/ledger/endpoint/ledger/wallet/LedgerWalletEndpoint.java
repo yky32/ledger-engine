@@ -3,7 +3,7 @@ package com.altech.ledger.endpoint.ledger.wallet;
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
 
-import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 import com.altech.ledger.usecase.MyWalletUseCase;
 import com.altech.ledger.usecase.account.WalletAccountBalanceUseCase;
 import com.altech.ledger.usecase.setup.WalletSetupUseCase;

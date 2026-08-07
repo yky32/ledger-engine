@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.dto.system;
+package com.altech.ledger.entity.dto.parity;
 
 /** System configuration and ops dashboard API. */
 public final class SystemDtos {

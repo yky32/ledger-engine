@@ -585,7 +585,7 @@ Shared guarantees:
 |---|---|
 | Double-entry ledger core | Yes |
 | REST API | Yes |
-| PostgreSQL + Flyway schema | Yes |
+| PostgreSQL + Liquibase schema | Yes |
 | Docker / docker-compose | Yes |
 | Swagger UI | Yes |
 | Health / metrics (Actuator) | Yes |

@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.movement.LedgerMovementDtos;
-import com.altech.ledger.entity.dto.wallet.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 
 @RestController
 @RequestMapping("/webhooks")
