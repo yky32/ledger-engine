@@ -150,7 +150,7 @@ All accounts share the `ledger_account` table. Role is determined by `type` + `e
 
 | Role | `type` | `external_reference` pattern | Created by |
 |---|---|---|---|
-| **Customer wallet** | `LIABILITY` | `wallet:{userId}:{currency}` | Phase 1 — `POST /wallets` |
+| **Customer wallet** | `LIABILITY` | `wallet:{extIdentifier}:{currency}` | Phase 1 — `POST /wallets` |
 | **Issuance / expense pool** | `EXPENSE` | `pool:loyalty-expense:{currency}` | Optional — create via account API if needed |
 | **Outstanding liability pool** | `LIABILITY` | `pool:loyalty-liability:{currency}` | Optional — create via account API if needed |
 | **Deposit clearing** | `ASSET` | `pool:clearing-deposit:{currency}` | Optional — create via account API if needed |
@@ -246,7 +246,7 @@ POST /wallets ← one customer at signup
 POST /wallets/batch ← bulk import at go-live
  │
  ▼
-ledger_account per customer (wallet:{userId}:LP)
+ledger_account per customer (wallet:{extIdentifier}:LP)
  │
  ▼
 Client confirms: "all customers onboarded" ✓
@@ -284,8 +284,8 @@ Content-Type: application/json
 
 {
  "wallets": [
- { "userId": "CRM-0001", "currency": "LP", "name": "Alice" },
- { "userId": "CRM-0002", "currency": "LP", "name": "Bob" }
+ { "extIdentifier": "CRM-0001", "currency": "LP", "name": "Alice" },
+ { "extIdentifier": "CRM-0002", "currency": "LP", "name": "Bob" }
  ]
 }
 ```
@@ -298,7 +298,7 @@ Response:
  "created": 2,
  "alreadyExists": 0,
  "createdWallets": [ ... ],
- "alreadyExistingUserIds": []
+ "alreadyExistingExtIdentifiers": []
 }
 ```
 
@@ -643,7 +643,7 @@ Maps to epics above:
 
 | Step | Epic | Action |
 |---|---|---|
-| User registers | **1** | Client creates `ledger_account` — `externalReference = wallet:{userId}:LP` |
+| User registers | **1** | Client creates `ledger_account` — `externalReference = wallet:{extIdentifier}:LP` |
 | User earns points | **2** | Client rules calculate amount → `POST /transactions` (Earn legs) |
 | User redeems | **2** | `POST /transactions` (Burn legs); engine rejects if insufficient balance |
 | User hits tier threshold | **3** | Client reads balance/entries → updates tier in membership system |

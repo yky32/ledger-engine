@@ -3,7 +3,6 @@ package com.altech.ledger.usecase.wallet;
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
-import com.altech.ledger.entity.enu.WalletAccountRole;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.repository.AccountRepository;
@@ -43,8 +42,10 @@ public class QueryWalletUseCase {
 
     private GetWalletOnboardResponseDto _toDto(Wallet wallet) {
         Account primary = commonUseCase.requireAccount(wallet.getAccountId());
+        String id = wallet.getExtIdentifier() != null ? wallet.getExtIdentifier()
+            : (wallet.getOwnerId() == null ? "" : wallet.getOwnerId());
         String baseRef = integrationProperties.getWalletRefTemplate()
-            .replace("{userId}", wallet.getOwnerId() == null ? "" : wallet.getOwnerId())
+            .replace("{extIdentifier}", id)
             .replace("{currency}", wallet.getCurrency().getIsoCode());
         List<Account> set = accountRepository.findAccountSetByWalletRef(baseRef);
         if (set.isEmpty()) {
@@ -52,24 +53,22 @@ public class QueryWalletUseCase {
         }
         List<GetWalletAccountResponseDto> accounts = new ArrayList<>();
         for (Account a : set) {
-            accounts.add(DtoWrapper.getWalletAccountResponseDto(a, _inferRole(baseRef, a.getFullNumber())));
+            boolean isPrimary = a.getFullNumber() != null && a.getFullNumber().equals(baseRef)
+                || (primary.getId() != null && primary.getId().equals(a.getId()));
+            String refCode = _refCode(baseRef, a.getFullNumber());
+            accounts.add(DtoWrapper.getWalletAccountResponseDto(a, refCode, isPrimary));
         }
         return DtoWrapper.getWalletOnboardResponseDto(wallet, primary, accounts);
     }
 
-    private WalletAccountRole _inferRole(String baseRef, String fullNumber) {
+    /** Suffix after base ref, or null for primary. Opaque — no product enum. */
+    private String _refCode(String baseRef, String fullNumber) {
         if (fullNumber == null || fullNumber.equals(baseRef)) {
-            return WalletAccountRole.MAIN;
+            return null;
         }
         if (!fullNumber.startsWith(baseRef + ":")) {
             return null;
         }
-        String code = fullNumber.substring(baseRef.length() + 1);
-        for (WalletAccountRole role : WalletAccountRole.values()) {
-            if (role.getRefCode().equalsIgnoreCase(code) || role.name().equalsIgnoreCase(code)) {
-                return role;
-            }
-        }
-        return null;
+        return fullNumber.substring(baseRef.length() + 1);
     }
 }

@@ -24,29 +24,31 @@ class WalletOnboardingIntegrationTest {
 
     @Test
     void singleOnboardCreatesActiveWalletAndIsQueryable() throws Exception {
-        String userId = "ONB-" + UUID.randomUUID();
+        String extIdentifier = "ONB-" + UUID.randomUUID();
 
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"userId":"%s","currency":"LP","name":"Alice"}
-                    """.formatted(userId)))
+                    {"extIdentifier":"%s","currency":"LP","name":"Alice"}
+                    """.formatted(extIdentifier)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SYS0000"))
-            .andExpect(jsonPath("$.data.ownerId").value(userId))
+            .andExpect(jsonPath("$.data.ownerId").value(extIdentifier))
+            .andExpect(jsonPath("$.data.extIdentifier").value(extIdentifier))
             .andExpect(jsonPath("$.data.currency").value("LP"))
             .andExpect(jsonPath("$.data.status").value("ACTIVE"))
             .andExpect(jsonPath("$.data.walletId").isNumber())
             .andExpect(jsonPath("$.data.balance.ledgerBalance").value(0))
-            .andExpect(jsonPath("$.data.account.externalReference").value("wallet:" + userId + ":LP"))
+            .andExpect(jsonPath("$.data.account.externalReference").value("wallet:" + extIdentifier + ":LP"))
             .andExpect(jsonPath("$.data.createDt").exists());
 
-        mockMvc.perform(get("/wallets/" + userId + "/LP"))
+        mockMvc.perform(get("/wallets/" + extIdentifier + "/LP"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("ACTIVE"))
-            .andExpect(jsonPath("$.data.ownerId").value(userId));
+            .andExpect(jsonPath("$.data.ownerId").value(extIdentifier))
+            .andExpect(jsonPath("$.data.extIdentifier").value(extIdentifier));
 
-        mockMvc.perform(get("/wallets").param("ownerId", userId))
+        mockMvc.perform(get("/wallets").param("ownerId", extIdentifier))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data").isArray())
             .andExpect(jsonPath("$.data.length()").value(1));
@@ -54,8 +56,8 @@ class WalletOnboardingIntegrationTest {
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"userId":"%s","currency":"LP","name":"Alice again"}
-                    """.formatted(userId)))
+                    {"extIdentifier":"%s","currency":"LP","name":"Alice again"}
+                    """.formatted(extIdentifier)))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("WAL0409"));
     }
@@ -67,8 +69,8 @@ class WalletOnboardingIntegrationTest {
         String body = """
             {
               "wallets": [
-                {"userId":"%s","currency":"LP","name":"Alice"},
-                {"userId":"%s","currency":"LP","name":"Bob"}
+                {"extIdentifier":"%s","currency":"LP","name":"Alice"},
+                {"extIdentifier":"%s","currency":"LP","name":"Bob"}
               ]
             }
             """.formatted(a, b);
@@ -81,6 +83,8 @@ class WalletOnboardingIntegrationTest {
         mockMvc.perform(post("/wallets/batch").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.created").value(0))
-            .andExpect(jsonPath("$.data.alreadyExists").value(2));
+            .andExpect(jsonPath("$.data.alreadyExists").value(2))
+            .andExpect(jsonPath("$.data.alreadyExistingExtIdentifiers").isArray())
+            .andExpect(jsonPath("$.data.alreadyExistingExtIdentifiers.length()").value(2));
     }
 }

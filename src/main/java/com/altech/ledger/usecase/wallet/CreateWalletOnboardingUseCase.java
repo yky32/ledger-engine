@@ -11,7 +11,6 @@ import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
 import com.altech.ledger.entity.dto.response.BatchCreateWalletOnboardResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
-import com.altech.ledger.entity.enu.WalletAccountRole;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
@@ -34,10 +33,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Wallet create use case: one wallet + flexible account-set.
+ * Wallet create: one wallet + flexible account-set.
  * <p>
- * Callers indicate which accounts to open via {@code accountSet}; if omitted, only MAIN.
- * Prod bulk convert can pass product mix without SQL / downtime.
+ * Customer identity is {@code extIdentifier}. Account lines are free-form
+ * ({@code refCode}) — product catalogs live in the client / SDK, not this core.
  */
 @Component
 @RequiredArgsConstructor
@@ -50,10 +49,11 @@ public class CreateWalletOnboardingUseCase {
 
     @Transactional
     public GetWalletOnboardResponseDto execute(CreateWalletOnboardRequestDto request) {
+        String extIdentifier = request.extIdentifier();
         Currency currency = commonUseCase.requireCurrency(request.currency());
-        if (_exists(request.userId(), currency)) {
+        if (_exists(extIdentifier, currency)) {
             throw new BizException(WalletErrorResponse.WAL0409,
-                "Wallet already onboarded: " + request.userId() + " / " + currency);
+                "Wallet already onboarded: " + extIdentifier + " / " + currency);
         }
         return _createWallet(request);
     }
@@ -66,13 +66,14 @@ public class CreateWalletOnboardingUseCase {
         int created = 0;
         int alreadyExists = 0;
         List<GetWalletOnboardResponseDto> createdWallets = new ArrayList<>();
-        List<String> existingUserIds = new ArrayList<>();
+        List<String> existingExtIdentifiers = new ArrayList<>();
 
         for (CreateWalletOnboardRequestDto item : request.wallets()) {
+            String extIdentifier = item.extIdentifier();
             Currency currency = commonUseCase.requireCurrency(item.currency());
-            if (_exists(item.userId(), currency)) {
+            if (_exists(extIdentifier, currency)) {
                 alreadyExists++;
-                existingUserIds.add(item.userId());
+                existingExtIdentifiers.add(extIdentifier);
                 continue;
             }
             try {
@@ -83,7 +84,7 @@ public class CreateWalletOnboardingUseCase {
                 if (WalletErrorResponse.WAL0409.getCode().equals(code)
                     || AccountErrorResponse.ACC0409.getCode().equals(code)) {
                     alreadyExists++;
-                    existingUserIds.add(item.userId());
+                    existingExtIdentifiers.add(extIdentifier);
                 } else {
                     throw ex;
                 }
@@ -95,123 +96,144 @@ public class CreateWalletOnboardingUseCase {
             .created(created)
             .alreadyExists(alreadyExists)
             .createdWallets(createdWallets)
-            .alreadyExistingUserIds(existingUserIds)
+            .alreadyExistingExtIdentifiers(existingExtIdentifiers)
             .build();
     }
 
-    public String walletRef(String userId, Currency currency) {
+    public String walletRef(String extIdentifier, Currency currency) {
         Currency ccy = commonUseCase.requireCurrency(currency);
+        String id = extIdentifier == null ? "" : extIdentifier;
         return integrationProperties.getWalletRefTemplate()
-            .replace("{userId}", userId == null ? "" : userId)
+            .replace("{extIdentifier}", id)
             .replace("{currency}", ccy.getIsoCode());
     }
 
-    public String walletRef(String userId, String currency) {
-        return walletRef(userId, commonUseCase.requireCurrency(currency));
+    public String walletRef(String extIdentifier, String currency) {
+        return walletRef(extIdentifier, commonUseCase.requireCurrency(currency));
     }
 
     /**
-     * Account fullNumber for a role under the wallet base ref.
-     * MAIN → base; others → base:refCode (e.g. …:LOAN, …:88, …:89).
+     * Account fullNumber: primary → base ref; others → base:refCode.
      */
-    public String accountRef(String userId, Currency currency, AccountOpenSpecDto spec) {
-        String base = walletRef(userId, currency);
-        if (spec.role().isPrimary()) {
+    public String accountRef(String extIdentifier, Currency currency, AccountOpenSpecDto spec) {
+        String base = walletRef(extIdentifier, currency);
+        if (spec.isPrimaryLine()) {
             return base;
         }
-        return base + ":" + spec.resolvedRefCode();
+        return base + ":" + spec.refCode();
     }
 
-    private boolean _exists(String userId, Currency currency) {
-        if (walletRepository.existsByOwnerIdAndCurrency(userId, currency)) {
+    private boolean _exists(String extIdentifier, Currency currency) {
+        if (walletRepository.existsByOwnerIdAndCurrency(extIdentifier, currency)) {
             return true;
         }
-        return accountRepository.existsByFullNumber(walletRef(userId, currency));
+        return accountRepository.existsByFullNumber(walletRef(extIdentifier, currency));
     }
 
     private GetWalletOnboardResponseDto _createWallet(CreateWalletOnboardRequestDto request) {
-        String userId = request.userId();
+        String extIdentifier = request.extIdentifier();
         Currency currency = commonUseCase.requireCurrency(request.currency());
-        String baseRef = walletRef(userId, currency);
+        String baseRef = walletRef(extIdentifier, currency);
         List<AccountOpenSpecDto> specs = _normalizeAccountSet(request.accountSet());
 
-        if (walletRepository.existsByOwnerIdAndCurrency(userId, currency)
+        if (walletRepository.existsByOwnerIdAndCurrency(extIdentifier, currency)
             || accountRepository.existsByFullNumber(baseRef)) {
-            throw new BizException(WalletErrorResponse.WAL0409, "Wallet already onboarded: " + userId + " / " + currency);
+            throw new BizException(WalletErrorResponse.WAL0409,
+                "Wallet already onboarded: " + extIdentifier + " / " + currency);
         }
 
         String name = request.name() == null || request.name().isBlank()
-            ? "Wallet " + userId
+            ? "Wallet " + extIdentifier
             : request.name();
 
-        Map<WalletAccountRole, Account> opened = new LinkedHashMap<>();
+        // key: fullNumber
+        Map<String, AccountOpenSpecDto> byRef = new LinkedHashMap<>();
+        Map<String, Account> opened = new LinkedHashMap<>();
         Account primary = null;
 
         for (AccountOpenSpecDto spec : specs) {
-            String ref = accountRef(userId, currency, spec);
+            String ref = accountRef(extIdentifier, currency, spec);
+            if (byRef.containsKey(ref)) {
+                continue;
+            }
+            byRef.put(ref, spec);
             if (accountRepository.existsByFullNumber(ref)) {
                 throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + ref);
             }
-            String accountName = name + " / " + spec.role().name();
+            String accountName = name + " / " + spec.label();
             boolean allowNegative = Boolean.TRUE.equals(spec.allowNegative());
             createLedgerAccountUseCase.execute(new CreateAccountRequest(
                 ref, accountName, CoaType.LIABILITY, currency, allowNegative));
             Account account = accountRepository.findByFullNumber(ref)
                 .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account missing after create: " + ref));
-            opened.put(spec.role(), account);
-            if (spec.role().isPrimary()) {
+            opened.put(ref, account);
+            if (spec.isPrimaryLine()) {
                 primary = account;
             }
         }
 
         if (primary == null) {
-            throw new BizException(AccountErrorResponse.ACC0400, "MAIN account is required in accountSet");
+            throw new BizException(AccountErrorResponse.ACC0400, "Primary account is required in accountSet");
         }
 
-        String alias = _uniqueAlias(userId, currency);
-        String extId = request.externalId() == null || request.externalId().isBlank()
-            ? userId : request.externalId();
-        String extType = request.externalType() == null || request.externalType().isBlank()
-            ? "CRM" : request.externalType();
+        String alias = _uniqueAlias(extIdentifier, currency);
+        String extType = request.extType() == null || request.extType().isBlank()
+            ? "CRM" : request.extType();
 
         Wallet wallet = walletRepository.save(new Wallet(
             primary.getId(),
             alias,
             name,
-            extId,
+            extIdentifier,
             extType,
             WalletAssociationType.CUSTODIAN,
             WalletType.INDIVIDUAL,
             WalletStatus.ACTIVE,
-            userId,
+            extIdentifier,
             currency));
 
         List<GetWalletAccountResponseDto> accountDtos = new ArrayList<>();
-        for (Map.Entry<WalletAccountRole, Account> e : opened.entrySet()) {
-            accountDtos.add(DtoWrapper.getWalletAccountResponseDto(e.getValue(), e.getKey()));
+        for (Map.Entry<String, Account> e : opened.entrySet()) {
+            AccountOpenSpecDto spec = byRef.get(e.getKey());
+            accountDtos.add(DtoWrapper.getWalletAccountResponseDto(
+                e.getValue(),
+                spec != null && !spec.isPrimaryLine() ? spec.refCode() : null,
+                spec != null && spec.isPrimaryLine()));
         }
         return DtoWrapper.getWalletOnboardResponseDto(wallet, primary, accountDtos);
     }
 
     /**
-     * Ensure MAIN first; dedupe by role (first wins). Empty → MAIN only.
+     * Ensure primary first; dedupe by account fullNumber key (via refCode).
+     * Empty → primary only. Product-line codes are opaque strings.
      */
     private List<AccountOpenSpecDto> _normalizeAccountSet(List<AccountOpenSpecDto> raw) {
-        LinkedHashMap<WalletAccountRole, AccountOpenSpecDto> byRole = new LinkedHashMap<>();
-        byRole.put(WalletAccountRole.MAIN, AccountOpenSpecDto.of(WalletAccountRole.MAIN));
-        if (raw != null) {
-            for (AccountOpenSpecDto spec : raw) {
-                if (spec == null || spec.role() == null) {
-                    continue;
-                }
-                byRole.putIfAbsent(spec.role(), spec);
-            }
+        List<AccountOpenSpecDto> out = new ArrayList<>();
+        out.add(AccountOpenSpecDto.primaryLine());
+        if (raw == null || raw.isEmpty()) {
+            return out;
         }
-        return new ArrayList<>(byRole.values());
+        LinkedHashMap<String, AccountOpenSpecDto> extra = new LinkedHashMap<>();
+        for (AccountOpenSpecDto spec : raw) {
+            if (spec == null) {
+                continue;
+            }
+            if (spec.isPrimaryLine()) {
+                // allow caller to override primary allowNegative / name
+                out.set(0, new AccountOpenSpecDto(null, spec.name(), true, spec.allowNegative()));
+                continue;
+            }
+            if (spec.refCode() == null) {
+                continue;
+            }
+            extra.putIfAbsent(spec.refCode(), spec);
+        }
+        out.addAll(extra.values());
+        return out;
     }
 
-    private String _uniqueAlias(String userId, Currency currency) {
-        String base = userId + "-" + currency.getIsoCode();
+    private String _uniqueAlias(String extIdentifier, Currency currency) {
+        String base = extIdentifier + "-" + currency.getIsoCode();
         if (!walletRepository.existsByAlias(base)) {
             return base;
         }

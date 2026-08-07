@@ -99,7 +99,7 @@ src/main/java/
 | **PO** | `entity/po/**` | `Wallet`, `Account`, `LedgerMovement` |
 | **Repository** | `*Repository` | `WalletRepository` |
 | **Field names** | type camelCase | `ledgerMovementRepository` |
-| **JSON** | camelCase | `userId`, `currency` |
+| **JSON** | camelCase | `extIdentifier`, `currency` |
 
 ## Core tables (simplified)
 
@@ -130,95 +130,79 @@ Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) an
 
 ### Flexible account-set
 
-`POST /wallets` opens **1 wallet + N accounts**. Callers indicate product lines via optional `accountSet`.
-
-| Role | Ref suffix | Typical use |
-|---|---|---|
-| `MAIN` | *(base ref)* | Primary balance (always opened; omit is fine) |
-| `LOAN` | `:LOAN` | Loan facility |
-| `CC_YELLOW` | `:88` | Credit card yellow |
-| `CC_PURPLE` | `:89` | Credit card purple |
-| `REWARD` | `:REWARD` | Separate reward/points line |
+`POST /wallets` opens **1 wallet + N accounts**. Optional `accountSet` is **free-form** — product catalogs live in each **client / SDK** (core is multi-tenant; not tied to any one integrator).
 
 Each `accountSet` entry:
 
 ```json
-{ "role": "LOAN", "productCode": null, "allowNegative": false }
+{ "refCode": "LOAN", "name": "Loan line", "primary": false, "allowNegative": true }
 ```
 
-- **`role`** (required) — which account kind to open  
-- **`productCode`** (optional) — override default suffix (e.g. custom card id)  
-- **`allowNegative`** (optional, default `false`) — overdraft / credit-style balances  
+| Field | Notes |
+|---|---|
+| `refCode` | Opaque suffix under the wallet base ref (SDK-defined). Blank → primary |
+| `name` | Optional display name for the account |
+| `primary` | Primary account (`wallet.accountId`); blank `refCode` also means primary |
+| `allowNegative` | Default `false` |
 
-Omitted / empty `accountSet` → **MAIN only** (backward compatible).  
-MAIN is always ensured first; duplicate roles are ignored (first wins).
+Omitted / empty `accountSet` → **primary only**. Primary is always ensured first; duplicate `refCode` ignored.
 
-Account refs: `wallet:{userId}:{currency}` for MAIN; others `wallet:{userId}:{currency}:{refCode}`.
+Account refs: primary = `wallet:{extIdentifier}:{currency}`; others = `wallet:{extIdentifier}:{currency}:{refCode}`.
+
+**Customer unique field:** `extIdentifier` only (CRM cust id). Stored as wallet `ownerId` + `extIdentifier`.  
+Optional `extType` (default `CRM`).
 
 ```bash
 # MAIN only (default)
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
-    "userId": "CUST-1001",
+    "extIdentifier": "CUST-1001",
     "currency": "USD",
     "name": "Primary wallet",
-    "externalId": "crm-1001",
-    "externalType": "CRM"
+    "extType": "CRM"
   }'
 ```
 
 ```bash
-# Loan + purple card (MAIN auto-added)
+# multi-line wallet — refCode values are client-defined (SDK / integrator)
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
-    "userId": "01A47158227",
+    "extIdentifier": "CUST-1001",
     "currency": "HKD",
-    "name": "Wilfill Kick",
-    "externalId": "01A47158227",
-    "externalType": "CRM",
+    "name": "Customer 1001",
+    "extType": "CRM",
     "accountSet": [
-      { "role": "MAIN" },
-      { "role": "LOAN", "allowNegative": true },
-      { "role": "CC_PURPLE", "allowNegative": true }
+      { "primary": true },
+      { "refCode": "LOAN", "allowNegative": true },
+      { "refCode": "CARD-A", "name": "Card line A", "allowNegative": true }
     ]
   }'
 ```
 
 ```bash
-# batch (soft-idempotent, max 1000) — per-row accountSet for PROD bulk convert
+# batch (soft-idempotent, max 1000) — each client/SDK fills its own product codes
 curl -sS -X POST 'http://localhost:8080/wallets/batch' \
   -H 'Content-Type: application/json' \
   -d '{
     "wallets": [
       {
-        "userId": "01A47158227",
+        "extIdentifier": "CUST-1001",
         "currency": "HKD",
-        "name": "Wilfill Kick",
+        "name": "Customer 1001",
         "accountSet": [
-          { "role": "MAIN" },
-          { "role": "LOAN", "allowNegative": true },
-          { "role": "CC_PURPLE", "allowNegative": true }
+          { "primary": true },
+          { "refCode": "LOAN", "allowNegative": true }
         ]
       },
       {
-        "userId": "01A26182952",
+        "extIdentifier": "CUST-1002",
         "currency": "HKD",
-        "name": "Wayne Yu",
+        "name": "Customer 1002",
         "accountSet": [
-          { "role": "MAIN" },
-          { "role": "CC_YELLOW", "allowNegative": true }
-        ]
-      },
-      {
-        "userId": "01A76786421",
-        "currency": "HKD",
-        "name": "Eric Chow",
-        "accountSet": [
-          { "role": "MAIN" },
-          { "role": "CC_YELLOW", "allowNegative": true },
-          { "role": "CC_PURPLE", "allowNegative": true }
+          { "primary": true },
+          { "refCode": "CARD-A", "allowNegative": true }
         ]
       }
     ]
@@ -226,12 +210,13 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
 ```
 
 ```bash
-curl -sS 'http://localhost:8080/wallets/01A47158227/HKD'
-curl -sS 'http://localhost:8080/wallets?ownerId=01A47158227'
+# query by same customer id (path ownerId == extIdentifier)
+curl -sS 'http://localhost:8080/wallets/CUST-1001/HKD'
+curl -sS 'http://localhost:8080/wallets?ownerId=CUST-1001'
 ```
 
-Required: `userId`, `currency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
-Response: wallet + primary `account` / `balance` + full `accounts[]` (each with `role`).  
+Required: `extIdentifier`, `currency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
+Response: `ownerId` / `extIdentifier` (same CRM id) + primary `account` / `balance` + full `accounts[]`.  
 Envelope: `Result` with `response` / `data` / `requestId`.
 
 **PROD bulk convert:** stream CRM product mix into `POST /wallets/batch` (≤1000/chunk, soft-idempotent). No 700K SQL cutover / downtime.

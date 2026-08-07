@@ -95,7 +95,7 @@ class TransactionIngestionIntegrationTest {
         var result = mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"userId":"%s","currency":"LP","name":"Test wallet"}
+                    {"extIdentifier":"%s","currency":"LP","name":"Test wallet"}
                     """.formatted(userId)))
             .andReturn();
         assertThat(result.getResponse().getStatus()).isIn(200, 409);

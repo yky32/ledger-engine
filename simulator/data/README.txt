@@ -1,4 +1,5 @@
-# Place UAfinance CRM export here (userId column or one id per line)
+# Place CRM customer export here (extIdentifier column or one id per line)
 # Example:
-# UAF-100001
-# UAF-100002
+# CUST-100001
+# CUST-100002
+# Mount: ./simulator/data → /data in the simulator container

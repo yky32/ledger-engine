@@ -1,7 +1,6 @@
 package com.altech.ledger.entity.dto.request;
 
 import com.altech.core.constant.enu.Currency;
-import com.altech.ledger.entity.enu.WalletAccountRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,48 +9,58 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 /**
- * Product onboarding: create one wallet for a user + currency.
+ * Product onboarding: create one wallet for a customer + currency.
  * <p>
- * Optional {@link #accountSet} indicates which account kinds to open under the wallet.
- * If omitted or empty, only {@link WalletAccountRole#MAIN} is created (backward compatible).
- * For prod bulk convert, pass product mix without SQL, e.g.
- * {@code ["MAIN","LOAN","CC_PURPLE"]} for loan + purple card.
+ * {@link #extIdentifier} is the sole customer unique key (CRM).
+ * Stored as wallet {@code ownerId} and {@code extIdentifier}.
+ * <p>
+ * Optional {@link #accountSet} is free-form (caller / SDK product codes).
+ * If omitted or empty, only the primary account is opened.
  */
 public record CreateWalletOnboardRequestDto(
-    @NotBlank @Size(max = 100) String userId,
+    /** Customer unique id (CRM). Sole identity field for create. */
+    @NotBlank @Size(max = 100) String extIdentifier,
+
     @NotNull Currency currency,
+
     @Size(max = 200) String name,
-    @Size(max = 100) String externalId,
-    @Size(max = 50) String externalType,
+
+    /** Source system of extIdentifier; default CRM when blank. */
+    @Size(max = 50) String extType,
+
     /**
-     * Flexible account-set indication. Order is preserved; MAIN is always ensured first.
-     * Shorthand: list of roles only — use {@link AccountOpenSpecDto#of(WalletAccountRole)}.
+     * Accounts to open under this wallet. Free-form ref codes — product catalog
+     * is client/SDK concern. Primary always ensured; omit for primary only.
      */
     @Size(max = 32) List<@Valid AccountOpenSpecDto> accountSet
 ) {
     public CreateWalletOnboardRequestDto {
-        if (userId != null) {
-            userId = userId.trim();
+        if (extIdentifier != null) {
+            extIdentifier = extIdentifier.trim();
         }
         if (name != null) {
             name = name.trim();
         }
-        if (externalId != null) {
-            externalId = externalId.trim();
-        }
-        if (externalType != null) {
-            externalType = externalType.trim();
+        if (extType != null) {
+            extType = extType.trim();
+            if (extType.isEmpty()) {
+                extType = null;
+            }
         }
     }
 
-    /** Convenience: no accountSet (MAIN only). */
+    /** Convenience: primary account only, default CRM type. */
+    public CreateWalletOnboardRequestDto(String extIdentifier, Currency currency, String name) {
+        this(extIdentifier, currency, name, null, null);
+    }
+
+    /** Convenience: no accountSet. */
     public CreateWalletOnboardRequestDto(
-        String userId,
+        String extIdentifier,
         Currency currency,
         String name,
-        String externalId,
-        String externalType
+        String extType
     ) {
-        this(userId, currency, name, externalId, externalType, null);
+        this(extIdentifier, currency, name, extType, null);
     }
 }

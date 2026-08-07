@@ -31,7 +31,7 @@ public final class DtoWrapper {
 
     public static GetWalletOnboardResponseDto getWalletOnboardResponseDto(Wallet wallet, Account account) {
         return getWalletOnboardResponseDto(wallet, account,
-            List.of(getWalletAccountResponseDto(account, com.altech.ledger.entity.enu.WalletAccountRole.MAIN)));
+            List.of(getWalletAccountResponseDto(account, null, true)));
     }
 
     public static GetWalletOnboardResponseDto getWalletOnboardResponseDto(
@@ -45,9 +45,9 @@ public final class DtoWrapper {
             .ownerId(wallet.getOwnerId())
             .currency(wallet.getCurrency())
             .status(wallet.getStatus())
-            .externalId(wallet.getExtIdentifier())
-            .externalType(wallet.getExtType())
-            .account(getWalletAccountResponseDto(primary, com.altech.ledger.entity.enu.WalletAccountRole.MAIN))
+            .extIdentifier(wallet.getExtIdentifier())
+            .extType(wallet.getExtType())
+            .account(getWalletAccountResponseDto(primary, null, true))
             .balance(getWalletBalanceResponseDto(primary))
             .accounts(accounts)
             .createDt(wallet.getCreateDt())
@@ -59,12 +59,17 @@ public final class DtoWrapper {
     }
 
     public static GetWalletAccountResponseDto getWalletAccountResponseDto(Account a) {
-        return getWalletAccountResponseDto(a, null);
+        return getWalletAccountResponseDto(a, null, null);
     }
 
+    /**
+     * @param refCode free-form product line suffix; null for primary
+     * @param primary true when this is wallet.accountId
+     */
     public static GetWalletAccountResponseDto getWalletAccountResponseDto(
         Account a,
-        com.altech.ledger.entity.enu.WalletAccountRole role
+        String refCode,
+        Boolean primary
     ) {
         CoaType coa;
         try {
@@ -76,7 +81,8 @@ public final class DtoWrapper {
             .id(a.getId())
             .externalReference(a.getFullNumber())
             .name(a.getSubAccount())
-            .role(role)
+            .refCode(refCode)
+            .primary(primary)
             .type(coa)
             .currency(a.getCurrency())
             .status(a.getStatus())

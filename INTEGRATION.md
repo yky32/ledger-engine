@@ -66,11 +66,15 @@ POST /wallets
 Content-Type: application/json
 
 {
-  "userId": "CUST-10001",
+  "extIdentifier": "CUST-10001",
   "currency": "LP",
-  "name": "Alice wallet"
+  "name": "Alice wallet",
+  "extType": "CRM"
 }
 ```
+
+`extIdentifier` is the sole customer unique key (CRM). Stored as wallet `ownerId` + `extIdentifier`.  
+Optional `accountSet` is free-form (`refCode` strings); product catalogs live in the client / SDK.
 
 ### Bulk import from legacy CRM (go-live)
 
@@ -80,15 +84,15 @@ Content-Type: application/json
 
 {
   "wallets": [
-    { "userId": "CRM-0001", "currency": "LP", "name": "Alice" },
-    { "userId": "CRM-0002", "currency": "LP", "name": "Bob" }
+    { "extIdentifier": "CRM-0001", "currency": "LP", "name": "Alice" },
+    { "extIdentifier": "CRM-0002", "currency": "LP", "name": "Bob" }
   ]
 }
 ```
 
-Idempotent — safe to re-run; existing wallets reported in `alreadyExistingUserIds`.
+Idempotent — safe to re-run; existing wallets reported in `alreadyExistingExtIdentifiers`.
 
-Creates `ledger_account` with `external_reference = wallet:{userId}:LP`.
+Creates `account.full_number` = `wallet:{extIdentifier}:LP` (MAIN).
 
 Program pool accounts are **not** auto-seeded on startup. Create them via the account API if earn/burn needs dedicated pools.
 

@@ -1,6 +1,7 @@
 # Simulator — Phase 1 backfill & Phase 2 events
 
-Simulates **UAfinance (or any CRM)** integrating with Ledger Engine.
+Generic **CRM / integrator** simulator for Ledger Engine.  
+Client-specific product catalogs (account lines, card codes, …) are **not** modeled here — fill those via SDK / real integrations.
 
 ## Go-live model
 
@@ -9,41 +10,39 @@ Phase 1  CRM export → 1 customer = 1 wallet   (must finish first)
 Phase 2  POS / campaign → PURCHASE / REDEEM events
 ```
 
-For **UAfinance ~70K members**, Phase 1 creates **70K liability wallets** (`wallet:{userId}:LP`).
+Phase 1 creates one liability wallet per customer id (`wallet:{extIdentifier}:{currency}`).
 
 API used:
 
-- `POST /wallets/batch` — up to **1000** wallets per request (idempotent)
+- `POST /wallets/batch` — up to **1000** wallets per request (soft-idempotent)
 
 ---
 
-## Phase 1: simulate 70K customer backfill
+## Phase 1: bulk customer backfill
 
 ### Docker (recommended)
 
 ```bash
 # from ledger-engine root
 cp .env.example .env
-
-# edit .env — see values below
 docker compose --profile simulator up --build
 ```
 
-`.env` for 70K backfill only:
+`.env` for a large synthetic backfill:
 
 ```env
 SIM_MODE=backfill
 SIM_CURRENCY=LP
-SIM_USER_ID_PREFIX=UAF-
-SIM_USER_COUNT=70000
+SIM_USER_ID_PREFIX=CUST-
+SIM_USER_COUNT=10000
 SIM_BATCH_SIZE=500
 SIM_BATCH_PAUSE_SECONDS=0.05
-SIM_EXTERNAL_TYPE=uafinance
+SIM_EXTERNAL_TYPE=CRM
 SIM_ONBOARD_WALLETS=true
 SIM_TRANSACTION_COUNT=0
 ```
 
-Generated ids: `UAF-00001` … `UAF-70000` (1:1 synthetic customers).
+Generated ids: `CUST-00001` … `CUST-10000` (1:1 synthetic customers).
 
 ### Local Python (ledger already on :8080)
 
@@ -53,8 +52,8 @@ pip install -r requirements.txt
 
 SIM_MODE=backfill \
 SIM_LEDGER_BASE_URL=http://localhost:8080 \
-SIM_USER_COUNT=70000 \
-SIM_USER_ID_PREFIX=UAF- \
+SIM_USER_COUNT=1000 \
+SIM_USER_ID_PREFIX=CUST- \
 SIM_CURRENCY=LP \
 SIM_BATCH_SIZE=500 \
 python simulator.py
@@ -62,13 +61,13 @@ python simulator.py
 
 ### Real CRM export file
 
-Export UAfinance customer ids (one per line or CSV with `userId` / `customerId` / `id`):
+Export customer ids (one per line or CSV with `extIdentifier` / `userId` / `customerId` / `id`):
 
 ```bash
 # customers.csv
-# userId
-# UAF-100001
-# UAF-100002
+# extIdentifier
+# CUST-100001
+# CUST-100002
 
 SIM_MODE=backfill \
 SIM_CUSTOMER_FILE=./customers.csv \
@@ -77,39 +76,36 @@ SIM_BATCH_SIZE=500 \
 python simulator.py
 ```
 
-JSON array also supported: `["id1","id2"]` or `[{"userId":"..."}]`.
+JSON array also supported: `["id1","id2"]` or `[{"extIdentifier":"..."}]`.
 
 ---
 
 ## What “1:1” means in the engine
 
-| UAfinance | Ledger Engine |
+| CRM / client | Ledger Engine |
 |---|---|
 | Customer id | `Wallet.ownerId` + `Wallet.extIdentifier` |
-| Loyalty unit | `currency` (e.g. `LP`) |
-| Wallet | `POST /wallets` creates LIABILITY `Account` with `fullNumber=wallet:{userId}:LP` |
+| Unit of account | `currency` (e.g. `LP`, `HKD`) |
+| Wallet | `POST /wallets` creates LIABILITY `Account` with `fullNumber=wallet:{extIdentifier}:{currency}` |
 | Uniqueness | `(ownerId, currency)` and account `fullNumber` |
 
 Re-run is safe: batch returns `alreadyExists` for ids already onboarded.
 
 ---
 
-## Throughput tips (70K)
+## Throughput tips (large backfill)
 
 | Setting | Suggestion |
 |---|---|
 | `SIM_BATCH_SIZE` | `500` (API max `1000`) |
-| DB | Prefer **Postgres** (`docker compose` / `postgres` profile), Postgres required for 70K |
+| DB | Prefer **Postgres** (`docker compose`) for large volumes |
 | Heap | Give JVM more RAM if needed: `JAVA_OPTS=-Xmx1g` on app |
 | Pause | `SIM_BATCH_PAUSE_SECONDS=0.05` reduces spikes |
-
-Rough order of magnitude: hundreds of wallets/sec depending on machine/DB → **a few minutes** for 70K, not hours.
 
 After backfill, verify:
 
 ```bash
-# sample lookup
-curl -s "http://localhost:8080/wallets/UAF-00001/LP" | jq .
+curl -s "http://localhost:8080/wallets/CUST-00001/LP" | jq .
 curl -s "http://localhost:8080/dashboards" | jq .
 ```
 
@@ -121,7 +117,7 @@ Small smoke after backfill:
 
 ```env
 SIM_MODE=backfill
-SIM_USER_COUNT=70000
+SIM_USER_COUNT=1000
 SIM_SMOKE_EVENTS_AFTER_BACKFILL=20
 SIM_SMOKE_MODE=webhook
 ```
@@ -131,8 +127,8 @@ Or full event sim on already-onboarded users:
 ```env
 SIM_MODE=webhook
 SIM_ONBOARD_WALLETS=false
-SIM_USER_COUNT=70000
-SIM_USER_ID_PREFIX=UAF-
+SIM_USER_COUNT=1000
+SIM_USER_ID_PREFIX=CUST-
 SIM_TRANSACTION_COUNT=100
 SIM_INTERVAL_SECONDS=0.2
 ```
@@ -147,12 +143,12 @@ Missing wallets → ingestion `SKIPPED` (`Wallet not onboarded`).
 |---|---|---|
 | `SIM_MODE` | `webhook` | `backfill` \| `webhook` \| `kafka` \| `both` |
 | `SIM_USER_COUNT` | `5` | Synthetic customers to generate |
-| `SIM_USER_ID_PREFIX` | `UAF-` | Prefix for synthetic ids |
+| `SIM_USER_ID_PREFIX` | `CUST-` | Prefix for synthetic ids |
 | `SIM_CUSTOMER_FILE` | _(empty)_ | CSV/JSON/lines of real CRM ids |
 | `SIM_CURRENCY` | `LP` | Wallet currency |
 | `SIM_BATCH_SIZE` | `500` | Batch size (max 1000) |
 | `SIM_BATCH_PAUSE_SECONDS` | `0.05` | Pause between batches |
-| `SIM_EXTERNAL_TYPE` | `uafinance` | Stored on wallet |
+| `SIM_EXTERNAL_TYPE` | `CRM` | Stored on wallet as `extType` |
 | `SIM_ONBOARD_WALLETS` | `true` | Pre-onboard for event modes |
 | `SIM_SMOKE_EVENTS_AFTER_BACKFILL` | `0` | Events after backfill |
 | `SIM_WAIT_FOR_HEALTH` | `true` | Wait for `/actuator/health` |
@@ -161,7 +157,8 @@ Missing wallets → ingestion `SKIPPED` (`Wallet not onboarded`).
 
 ## Production backfill (not the simulator)
 
-1. Export UAfinance customer master → CSV (`userId`, optional name).  
+1. Export customer master → CSV (`extIdentifier`, optional name).  
 2. Run same batch loop (this script or your ETL) against **staging**, then production.  
 3. Confirm counts: CRM rows ≈ `wallet` rows for currency.  
-4. Only then enable Phase 2 event traffic.
+4. Only then enable Phase 2 event traffic.  
+5. Multi-line account-sets (`accountSet.refCode`) are filled by the **client SDK**, not this simulator.

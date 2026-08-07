@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Ledger Engine external-system simulator.
+Ledger Engine external-system simulator (generic CRM / integrator).
 
 Modes:
-  backfill  — Phase 1: bulk-create wallets (e.g. 70K UAfinance customers 1:1)
+  backfill  — Phase 1: bulk-create wallets (1 customer id → 1 wallet)
   webhook   — Phase 2: shoot PURCHASE/etc events via HTTP
   kafka     — Phase 2: shoot events via Kafka
   both      — Phase 2 webhook + Kafka
 
-Phase 1 example (simulate UAfinance 70K backfill):
-  SIM_MODE=backfill SIM_USER_COUNT=70000 SIM_USER_ID_PREFIX=UAF- SIM_CURRENCY=LP \\
+Phase 1 example (synthetic bulk backfill):
+  SIM_MODE=backfill SIM_USER_COUNT=1000 SIM_USER_ID_PREFIX=CUST- SIM_CURRENCY=LP \\
     python simulator.py
 
-Or from CSV (one customer id per line, or header userId/customerId/id):
-  SIM_MODE=backfill SIM_CUSTOMER_FILE=/data/uafinance_customers.csv python simulator.py
+Or from CSV (one customer id per line, or header extIdentifier/userId/customerId/id):
+  SIM_MODE=backfill SIM_CUSTOMER_FILE=/data/customers.csv python simulator.py
 """
 
 from __future__ import annotations
@@ -93,7 +93,7 @@ def load_customer_ids() -> list[str]:
     if path:
         return load_customer_file(path)
 
-    user_prefix = env("SIM_USER_ID_PREFIX", "UAF-")
+    user_prefix = env("SIM_USER_ID_PREFIX", "CUST-")
     user_count = env_int("SIM_USER_COUNT", 5)
     width = max(5, len(str(user_count)))
     return [f"{user_prefix}{i:0{width}d}" for i in range(1, user_count + 1)]
@@ -116,7 +116,13 @@ def load_customer_file(path: str) -> list[str]:
             if isinstance(row, str):
                 ids.append(row.strip())
             elif isinstance(row, dict):
-                uid = row.get("userId") or row.get("customerId") or row.get("id") or row.get("memberId")
+                uid = (
+                    row.get("extIdentifier")
+                    or row.get("userId")
+                    or row.get("customerId")
+                    or row.get("id")
+                    or row.get("memberId")
+                )
                 if uid:
                     ids.append(str(uid).strip())
         return [x for x in ids if x]
@@ -129,7 +135,16 @@ def load_customer_file(path: str) -> list[str]:
             reader = csv.DictReader(fh)
             fields = [f.lower() for f in (reader.fieldnames or [])]
             key = None
-            for candidate in ("userid", "customerid", "id", "memberid", "customer_id", "user_id"):
+            for candidate in (
+                "extidentifier",
+                "ext_identifier",
+                "userid",
+                "customerid",
+                "id",
+                "memberid",
+                "customer_id",
+                "user_id",
+            ):
                 if candidate in fields:
                     key = reader.fieldnames[fields.index(candidate)]
                     break
@@ -178,11 +193,10 @@ def backfill_wallets(users: list[str], currency: str) -> dict:
         payload = {
             "wallets": [
                 {
-                    "userId": uid,
+                    "extIdentifier": uid,
                     "currency": currency,
                     "name": f"Wallet {uid}",
-                    "externalId": uid,
-                    "externalType": env("SIM_EXTERNAL_TYPE", "uafinance"),
+                    "extType": env("SIM_EXTERNAL_TYPE", "CRM"),
                 }
                 for uid in batch
             ]
@@ -238,7 +252,7 @@ def onboard_wallets_one_by_one(users: list[str], currency: str) -> None:
     base = ledger_base_url()
     for user_id in users:
         url = f"{base}/wallets"
-        payload = {"userId": user_id, "currency": currency, "name": f"Sim wallet {user_id}"}
+        payload = {"extIdentifier": user_id, "currency": currency, "name": f"Sim wallet {user_id}"}
         response = requests.post(url, json=payload, timeout=30)
         if response.status_code in (201, 409):
             print(f"[onboard] {user_id} -> {response.status_code}")
