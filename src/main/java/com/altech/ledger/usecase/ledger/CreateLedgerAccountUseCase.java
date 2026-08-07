@@ -7,34 +7,46 @@ import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
+import com.altech.ledger.service.CommonService;
 import com.altech.ledger.usecase.CommonUseCase;
+import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Product ledger account create (external reference COA).
+ * Product ledger account create — numeric COA fullNumber only.
  */
 @Component
 @RequiredArgsConstructor
 public class CreateLedgerAccountUseCase {
     private final AccountRepository accountRepository;
+    private final CommonService commonService;
     private final CommonUseCase commonUseCase;
 
     @Transactional
     public AccountResponse execute(CreateAccountRequest request) {
         commonUseCase.requireCurrency(request.currency());
-        if (accountRepository.existsByFullNumber(request.externalReference())) {
-            throw new BizException(AccountErrorResponse.ACC0409, "External reference already exists");
+        String mainAccount = commonService.getNextMainAccount();
+        String subAccount = CoaCodes.PRIMARY_SUB;
+        String fullNumber = CoaCodes.fullNumber(mainAccount, subAccount, request.type(), request.currency());
+
+        if (accountRepository.existsByFullNumber(fullNumber)) {
+            throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
         }
+        if (accountRepository.findByMainAccountAndSubAccount(mainAccount, subAccount).isPresent()) {
+            throw new BizException(AccountErrorResponse.ACC0409,
+                "Main/sub account already exists: " + mainAccount + "/" + subAccount);
+        }
+
         Account account = new Account(
-            request.externalReference(),
-            "10",
-            request.type().name(),
-            "00",
-            request.externalReference(),
-            request.name(),
-            "NA",
+            fullNumber,
+            CoaCodes.ENTITY,
+            CoaCodes.typeCode(request.type()),
+            CoaCodes.SUB_TYPE,
+            mainAccount,
+            subAccount,
+            CoaCodes.BUFFER,
             request.currency(),
             request.allowNegative()
         );
@@ -44,7 +56,15 @@ public class CreateLedgerAccountUseCase {
     private AccountResponse _toResponse(Account a) {
         CoaType coa;
         try {
-            coa = CoaType.valueOf(a.getType());
+            // type stored as numeric code; reverse map common ones
+            coa = switch (a.getType() == null ? "" : a.getType()) {
+                case "10" -> CoaType.ASSET;
+                case "20" -> CoaType.LIABILITY;
+                case "30" -> CoaType.EQUITY;
+                case "40" -> CoaType.REVENUE;
+                case "50" -> CoaType.EXPENSE;
+                default -> CoaType.valueOf(a.getType());
+            };
         } catch (Exception ex) {
             coa = CoaType.LIABILITY;
         }

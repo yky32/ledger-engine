@@ -39,7 +39,7 @@ class WalletOnboardingIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("ACTIVE"))
             .andExpect(jsonPath("$.data.walletId").isNumber())
             .andExpect(jsonPath("$.data.balance.ledgerBalance").value(0))
-            .andExpect(jsonPath("$.data.account.externalReference").value("wallet:" + extIdentifier + ":LP"))
+            .andExpect(jsonPath("$.data.account.externalReference").value(org.hamcrest.Matchers.matchesPattern("\\d+")))
             .andExpect(jsonPath("$.data.createDt").exists());
 
         mockMvc.perform(get("/wallets/" + extIdentifier + "/LP"))

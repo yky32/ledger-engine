@@ -14,7 +14,7 @@ import java.util.List;
  * {@link #extIdentifier} is the sole customer unique key (CRM).
  * Stored as wallet {@code ownerId} and {@code extIdentifier}.
  * <p>
- * Optional {@link #accountSet} is free-form (caller / SDK product codes).
+ * Optional {@link #accounts} is free-form (caller / SDK product codes).
  * If omitted or empty, only the primary account is opened.
  */
 public record CreateWalletOnboardRequestDto(
@@ -32,7 +32,7 @@ public record CreateWalletOnboardRequestDto(
      * Accounts to open under this wallet. Free-form ref codes — product catalog
      * is client/SDK concern. Primary always ensured; omit for primary only.
      */
-    @Size(max = 32) List<@Valid AccountOpenSpecDto> accountSet
+    @Size(max = 32) List<@Valid AccountOpenSpecDto> accounts
 ) {
     public CreateWalletOnboardRequestDto {
         if (extIdentifier != null) {
@@ -54,7 +54,7 @@ public record CreateWalletOnboardRequestDto(
         this(extIdentifier, currency, name, null, null);
     }
 
-    /** Convenience: no accountSet. */
+    /** Convenience: no accounts. */
     public CreateWalletOnboardRequestDto(
         String extIdentifier,
         Currency currency,

@@ -1,6 +1,5 @@
 package com.altech.ledger.usecase.wallet;
 
-import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
 import com.altech.ledger.entity.po.ledger.Account;
@@ -9,6 +8,7 @@ import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
+import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,14 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Wallet read API (product onboarding surface) including account-set.
+ * Wallet read API (product onboarding surface) including numeric account-set.
  */
 @Component
 @RequiredArgsConstructor
 public class QueryWalletUseCase {
     private final WalletRepository walletRepository;
     private final AccountRepository accountRepository;
-    private final IntegrationProperties integrationProperties;
     private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
@@ -42,33 +41,30 @@ public class QueryWalletUseCase {
 
     private GetWalletOnboardResponseDto _toDto(Wallet wallet) {
         Account primary = commonUseCase.requireAccount(wallet.getAccountId());
-        String id = wallet.getExtIdentifier() != null ? wallet.getExtIdentifier()
-            : (wallet.getOwnerId() == null ? "" : wallet.getOwnerId());
-        String baseRef = integrationProperties.getWalletRefTemplate()
-            .replace("{extIdentifier}", id)
-            .replace("{currency}", wallet.getCurrency().getIsoCode());
-        List<Account> set = accountRepository.findAccountSetByWalletRef(baseRef);
+        List<Account> set = primary.getMainAccount() == null
+            ? List.of(primary)
+            : accountRepository.findAllByMainAccount(primary.getMainAccount());
         if (set.isEmpty()) {
             set = List.of(primary);
         }
         List<GetWalletAccountResponseDto> accounts = new ArrayList<>();
         for (Account a : set) {
-            boolean isPrimary = a.getFullNumber() != null && a.getFullNumber().equals(baseRef)
-                || (primary.getId() != null && primary.getId().equals(a.getId()));
-            String refCode = _refCode(baseRef, a.getFullNumber());
-            accounts.add(DtoWrapper.getWalletAccountResponseDto(a, refCode, isPrimary));
+            boolean isPrimary = primary.getId() != null && primary.getId().equals(a.getId())
+                || CoaCodes.isPrimarySub(a.getSubAccount());
+            String refCode = isPrimary ? null : _stripLeadingZeros(a.getSubAccount());
+            String name = isPrimary && wallet.getNickname() != null
+                ? wallet.getNickname()
+                : a.getSubAccount();
+            accounts.add(DtoWrapper.getWalletAccountResponseDto(a, refCode, isPrimary, name));
         }
         return DtoWrapper.getWalletOnboardResponseDto(wallet, primary, accounts);
     }
 
-    /** Suffix after base ref, or null for primary. Opaque — no product enum. */
-    private String _refCode(String baseRef, String fullNumber) {
-        if (fullNumber == null || fullNumber.equals(baseRef)) {
+    private static String _stripLeadingZeros(String sub) {
+        if (sub == null || sub.isBlank()) {
             return null;
         }
-        if (!fullNumber.startsWith(baseRef + ":")) {
-            return null;
-        }
-        return fullNumber.substring(baseRef.length() + 1);
+        String s = sub.replaceFirst("^0+(?!$)", "");
+        return s;
     }
 }

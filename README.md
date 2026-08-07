@@ -130,9 +130,9 @@ Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) an
 
 ### Flexible account-set
 
-`POST /wallets` opens **1 wallet + N accounts**. Optional `accountSet` is **free-form** — product catalogs live in each **client / SDK** (core is multi-tenant; not tied to any one integrator).
+`POST /wallets` opens **1 wallet + N accounts**. Optional `accounts` is **free-form** — product catalogs live in each **client / SDK** (core is multi-tenant; not tied to any one integrator).
 
-Each `accountSet` entry:
+Each `accounts` entry:
 
 ```json
 { "refCode": "LOAN", "name": "Loan line", "primary": false, "allowNegative": true }
@@ -145,9 +145,17 @@ Each `accountSet` entry:
 | `primary` | Primary account (`wallet.accountId`); blank `refCode` also means primary |
 | `allowNegative` | Default `false` |
 
-Omitted / empty `accountSet` → **primary only**. Primary is always ensured first; duplicate `refCode` ignored.
+Omitted / empty `accounts` → **primary only**. Primary is always ensured first; duplicate `refCode` ignored.
 
-Account refs: primary = `wallet:{extIdentifier}:{currency}`; others = `wallet:{extIdentifier}:{currency}:{refCode}`.
+Account COA is **numeric only** (no English keys):
+
+```text
+fullNumber = entity(2) + type(2) + subType(2) + mainAccount + subAccount(4) + buffer(2) + currency(3)
+example    = 10 + 20 + 00 + 10001 + 0000 + 00 + 344   →  10200010001000000344  (HKD primary)
+```
+
+- One wallet = one `mainAccount`; product lines = leaf `subAccount` (`0000` primary; numeric `refCode` → e.g. `89` → `0089`).
+- Customer identity stays on wallet (`extIdentifier`), not in COA.
 
 **Customer unique field:** `extIdentifier` only (CRM cust id). Stored as wallet `ownerId` + `extIdentifier`.  
 Optional `extType` (default `CRM`).
@@ -173,7 +181,7 @@ curl -sS -X POST 'http://localhost:8080/wallets' \
     "currency": "HKD",
     "name": "Customer 1001",
     "extType": "CRM",
-    "accountSet": [
+    "accounts": [
       { "primary": true },
       { "refCode": "LOAN", "allowNegative": true },
       { "refCode": "CARD-A", "name": "Card line A", "allowNegative": true }
@@ -191,7 +199,7 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
         "extIdentifier": "CUST-1001",
         "currency": "HKD",
         "name": "Customer 1001",
-        "accountSet": [
+        "accounts": [
           { "primary": true },
           { "refCode": "LOAN", "allowNegative": true }
         ]
@@ -200,7 +208,7 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
         "extIdentifier": "CUST-1002",
         "currency": "HKD",
         "name": "Customer 1002",
-        "accountSet": [
+        "accounts": [
           { "primary": true },
           { "refCode": "CARD-A", "allowNegative": true }
         ]

@@ -1,7 +1,6 @@
 package com.altech.ledger;
 
 import com.altech.core.constant.enu.Currency;
-import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.AccountResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.BalanceResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
@@ -14,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
@@ -25,8 +23,9 @@ class LedgerUseCaseIntegrationTest {
     @Test
     void createAccountAndReadBalance() {
         AccountResponse cash = createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "cash-usd-1", "Cash USD", CoaType.ASSET, Currency.USD, false));
+            "ignored-label", "Cash USD", CoaType.ASSET, Currency.USD, false));
         assertThat(cash.id()).isNotNull();
+        assertThat(cash.externalReference()).matches("\\d+");
         assertThat(cash.ledgerBalance()).isEqualByComparingTo("0");
 
         BalanceResponse bal = queryLedgerAccountUseCase.balance(cash.id());
@@ -36,11 +35,13 @@ class LedgerUseCaseIntegrationTest {
     }
 
     @Test
-    void duplicateExternalReferenceIsRejected() {
-        createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "dup-ref", "One", CoaType.ASSET, Currency.USD, false));
-        assertThatThrownBy(() -> createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "dup-ref", "Two", CoaType.ASSET, Currency.USD, false)))
-            .isInstanceOf(BizException.class);
+    void eachCreateGetsUniqueNumericFullNumber() {
+        AccountResponse a = createLedgerAccountUseCase.execute(new CreateAccountRequest(
+            "a", "One", CoaType.ASSET, Currency.USD, false));
+        AccountResponse b = createLedgerAccountUseCase.execute(new CreateAccountRequest(
+            "b", "Two", CoaType.ASSET, Currency.USD, false));
+        assertThat(a.externalReference()).matches("\\d+");
+        assertThat(b.externalReference()).matches("\\d+");
+        assertThat(a.externalReference()).isNotEqualTo(b.externalReference());
     }
 }

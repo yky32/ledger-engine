@@ -59,28 +59,34 @@ public final class DtoWrapper {
     }
 
     public static GetWalletAccountResponseDto getWalletAccountResponseDto(Account a) {
-        return getWalletAccountResponseDto(a, null, null);
+        return getWalletAccountResponseDto(a, null, null, null);
     }
 
-    /**
-     * @param refCode free-form product line suffix; null for primary
-     * @param primary true when this is wallet.accountId
-     */
     public static GetWalletAccountResponseDto getWalletAccountResponseDto(
         Account a,
         String refCode,
         Boolean primary
     ) {
-        CoaType coa;
-        try {
-            coa = CoaType.valueOf(a.getType());
-        } catch (Exception ex) {
-            coa = CoaType.LIABILITY;
-        }
+        return getWalletAccountResponseDto(a, refCode, primary, null);
+    }
+
+    /**
+     * @param refCode free-form product line code; null for primary
+     * @param primary true when this is wallet.accountId
+     * @param displayName optional label (COA leaf stays numeric in DB)
+     */
+    public static GetWalletAccountResponseDto getWalletAccountResponseDto(
+        Account a,
+        String refCode,
+        Boolean primary,
+        String displayName
+    ) {
+        CoaType coa = _coaType(a.getType());
+        String name = displayName != null && !displayName.isBlank() ? displayName : a.getSubAccount();
         return GetWalletAccountResponseDto.builder()
             .id(a.getId())
             .externalReference(a.getFullNumber())
-            .name(a.getSubAccount())
+            .name(name)
             .refCode(refCode)
             .primary(primary)
             .type(coa)
@@ -96,6 +102,26 @@ public final class DtoWrapper {
             .updateBy(a.getUpdatedBy())
             .isActive(a.getIsActive())
             .build();
+    }
+
+    private static CoaType _coaType(String type) {
+        if (type == null) {
+            return CoaType.LIABILITY;
+        }
+        return switch (type) {
+            case "10" -> CoaType.ASSET;
+            case "20" -> CoaType.LIABILITY;
+            case "30" -> CoaType.EQUITY;
+            case "40" -> CoaType.REVENUE;
+            case "50" -> CoaType.EXPENSE;
+            default -> {
+                try {
+                    yield CoaType.valueOf(type);
+                } catch (Exception ex) {
+                    yield CoaType.LIABILITY;
+                }
+            }
+        };
     }
 
     public static GetWalletBalanceResponseDto getWalletBalanceResponseDto(Account a) {

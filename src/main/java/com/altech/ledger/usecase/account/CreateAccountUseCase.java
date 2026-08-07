@@ -10,6 +10,7 @@ import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.service.CommonService;
 import com.altech.ledger.service.DtoMapper;
 import com.altech.ledger.usecase.CommonUseCase;
+import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,13 +28,26 @@ public class CreateAccountUseCase {
     @Transactional
     public GetLedgerAccountResponseDto execute(CreateLedgerAccountRequestDto dto) {
         Currency currency = commonUseCase.requireCurrency(dto.currency());
-        String entity = _blank(dto.entity(), "10");
-        String type = _blank(dto.type(), "99");
-        String subType = _blank(dto.subType(), "00");
-        String buffer = _blank(dto.buffer(), "NA");
+        String entity = _blank(dto.entity(), CoaCodes.ENTITY);
+        String type = _blank(dto.type(), "20");
+        String subType = _blank(dto.subType(), CoaCodes.SUB_TYPE);
+        String buffer = _blank(dto.buffer(), CoaCodes.BUFFER);
+        // force numeric buffer if legacy "NA"
+        if (!buffer.matches("\\d+")) {
+            buffer = CoaCodes.BUFFER;
+        }
         String mainAccount = _blank(dto.mainAccount(), commonService.getNextMainAccount());
-        String subAccount = _blank(dto.subAccount(), "0000");
-        String fullNumber = entity + type + subType + mainAccount + subAccount + buffer + currency.getIsoCode();
+        if (!mainAccount.matches("\\d+")) {
+            mainAccount = commonService.getNextMainAccount();
+        }
+        String subAccount = _blank(dto.subAccount(), CoaCodes.PRIMARY_SUB);
+        if (!subAccount.matches("\\d+")) {
+            subAccount = CoaCodes.PRIMARY_SUB;
+        }
+        if (subAccount.length() < 4 && subAccount.matches("\\d+")) {
+            subAccount = String.format("%04d", Integer.parseInt(subAccount));
+        }
+        String fullNumber = CoaCodes.fullNumber(entity, type, subType, mainAccount, subAccount, buffer, currency);
 
         if (accountRepository.existsByFullNumber(fullNumber)) {
             throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
@@ -55,7 +69,8 @@ public class CreateAccountUseCase {
         for (String currencyCode : currencies) {
             Currency currency = commonUseCase.requireCurrency(currencyCode);
             CreateLedgerAccountRequestDto req = new CreateLedgerAccountRequestDto(
-                "10", "99", "00", "NA", mainAccount, commonService.getNextSubAccount(mainAccount),
+                CoaCodes.ENTITY, "20", CoaCodes.SUB_TYPE, CoaCodes.BUFFER, mainAccount,
+                commonService.getNextSubAccount(mainAccount),
                 currency, false);
             created.add(execute(req));
         }

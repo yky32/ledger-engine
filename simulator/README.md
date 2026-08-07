@@ -161,4 +161,4 @@ Missing wallets → ingestion `SKIPPED` (`Wallet not onboarded`).
 2. Run same batch loop (this script or your ETL) against **staging**, then production.  
 3. Confirm counts: CRM rows ≈ `wallet` rows for currency.  
 4. Only then enable Phase 2 event traffic.  
-5. Multi-line account-sets (`accountSet.refCode`) are filled by the **client SDK**, not this simulator.
+5. Multi-line account-sets (`accounts.refCode`) are filled by the **client SDK**, not this simulator.

@@ -74,7 +74,7 @@ Content-Type: application/json
 ```
 
 `extIdentifier` is the sole customer unique key (CRM). Stored as wallet `ownerId` + `extIdentifier`.  
-Optional `accountSet` is free-form (`refCode` strings); product catalogs live in the client / SDK.
+Optional `accounts` is free-form (`refCode` strings); product catalogs live in the client / SDK.
 
 ### Bulk import from legacy CRM (go-live)
 
@@ -92,7 +92,7 @@ Content-Type: application/json
 
 Idempotent — safe to re-run; existing wallets reported in `alreadyExistingExtIdentifiers`.
 
-Creates `account.full_number` = `wallet:{extIdentifier}:LP` (MAIN).
+Creates numeric COA `account.full_number` (digit string; primary leaf `0000` under a shared main account).
 
 Program pool accounts are **not** auto-seeded on startup. Create them via the account API if earn/burn needs dedicated pools.
 
