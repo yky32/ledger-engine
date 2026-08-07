@@ -3,7 +3,7 @@ package com.altech.ledger.entity.po.accounting;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.altech.ledger.entity.base.AuditEntityWithIsActive;
+import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.OrderType;
 import jakarta.persistence.*;
 

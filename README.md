@@ -31,7 +31,7 @@ src/main/java/com/altech/ledger/
 ├── repository/          Spring Data JPA repositories
 ├── listener/            Kafka consumers (optional)
 ├── exception/           LedgerException, GlobalExceptionHandler
-└── resources/db/changelog/ Liquibase changelogs
+└── resources/          application.yml (JPA ddl-auto)
 ```
 
 | Layer | Convention | Example |
@@ -46,7 +46,7 @@ src/main/java/com/altech/ledger/
 | **Java field / getter** | camelCase | `externalReference`, `idempotencyKey`, `sequence` |
 | **JSON API** | camelCase | `externalReference`, `idempotencyKey`, `accountId` |
 
-PO classes map 1:1 to Liquibase-managed tables. `@Column(name = "...")` is used wherever the Java name differs from the
+PO classes map 1:1 to JPA entity tables. `@Column(name = "...")` is used wherever the Java name differs from the
 column (for example `sequence` ↔ `sequence_number`).
 
 ## Data model (PO ↔ table ↔ columns)

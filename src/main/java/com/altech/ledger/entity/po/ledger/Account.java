@@ -3,7 +3,7 @@ package com.altech.ledger.entity.po.ledger;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.altech.ledger.entity.base.AuditEntityWithIsActive;
+import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.AccountStatus;
 import jakarta.persistence.*;
 

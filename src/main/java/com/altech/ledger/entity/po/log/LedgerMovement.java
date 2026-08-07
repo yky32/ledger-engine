@@ -3,7 +3,7 @@ package com.altech.ledger.entity.po.log;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.altech.ledger.entity.base.AuditEntityWithIsActive;
+import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.LedgerMovementType;

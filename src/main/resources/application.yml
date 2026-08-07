@@ -10,15 +10,16 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      # Schema owned by Liquibase
-      ddl-auto: validate
+      # Schema from entities for now; switch to validate when Liquibase changesets land
+      ddl-auto: update
     properties:
       hibernate:
         jdbc:
           time_zone: UTC
         dialect: org.hibernate.dialect.PostgreSQLDialect
   liquibase:
-    enabled: true
+    # Placeholder only (empty master changelog). Enable + add SQL under db/changelog/changes/ later.
+    enabled: false
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 ledger:
