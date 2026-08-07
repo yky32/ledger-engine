@@ -5,6 +5,7 @@ import com.altech.core.constant.enu.Currency;
 import com.altech.core.entity.dto.BaseResponseDto;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.enu.AccountStatus;
+import com.altech.ledger.entity.enu.WalletAccountRole;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,6 +28,8 @@ public class GetWalletAccountResponseDto extends BaseResponseDto {
     private Long id;
     private String externalReference;
     private String name;
+    /** Product line role when known (MAIN, LOAN, CC_YELLOW, …). */
+    private WalletAccountRole role;
     private CoaType type;
     private Currency currency;
     private AccountStatus status;

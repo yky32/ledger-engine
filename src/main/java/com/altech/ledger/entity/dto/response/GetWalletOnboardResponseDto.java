@@ -11,8 +11,10 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.List;
+
 /**
- * Product wallet onboarding response: wallet identity + linked account and balances.
+ * Product wallet onboarding response: wallet identity + primary account and full account-set.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -28,6 +30,10 @@ public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private WalletStatus status;
     private String externalId;
     private String externalType;
+    /** Primary account (same as wallet.accountId). */
     private GetWalletAccountResponseDto account;
+    /** Primary balance (convenience). */
     private GetWalletBalanceResponseDto balance;
+    /** Full account-set opened under this wallet (MAIN + product lines). */
+    private List<GetWalletAccountResponseDto> accounts;
 }

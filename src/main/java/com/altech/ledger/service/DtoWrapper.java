@@ -30,6 +30,15 @@ public final class DtoWrapper {
     // ---------- product: wallet onboarding ----------
 
     public static GetWalletOnboardResponseDto getWalletOnboardResponseDto(Wallet wallet, Account account) {
+        return getWalletOnboardResponseDto(wallet, account,
+            List.of(getWalletAccountResponseDto(account, com.altech.ledger.entity.enu.WalletAccountRole.MAIN)));
+    }
+
+    public static GetWalletOnboardResponseDto getWalletOnboardResponseDto(
+        Wallet wallet,
+        Account primary,
+        List<GetWalletAccountResponseDto> accounts
+    ) {
         return GetWalletOnboardResponseDto.builder()
             .walletId(wallet.getId())
             .alias(wallet.getAlias())
@@ -38,8 +47,9 @@ public final class DtoWrapper {
             .status(wallet.getStatus())
             .externalId(wallet.getExtIdentifier())
             .externalType(wallet.getExtType())
-            .account(getWalletAccountResponseDto(account))
-            .balance(getWalletBalanceResponseDto(account))
+            .account(getWalletAccountResponseDto(primary, com.altech.ledger.entity.enu.WalletAccountRole.MAIN))
+            .balance(getWalletBalanceResponseDto(primary))
+            .accounts(accounts)
             .createDt(wallet.getCreateDt())
             .updateDt(wallet.getUpdateDt())
             .createBy(wallet.getCreatedBy())
@@ -49,6 +59,13 @@ public final class DtoWrapper {
     }
 
     public static GetWalletAccountResponseDto getWalletAccountResponseDto(Account a) {
+        return getWalletAccountResponseDto(a, null);
+    }
+
+    public static GetWalletAccountResponseDto getWalletAccountResponseDto(
+        Account a,
+        com.altech.ledger.entity.enu.WalletAccountRole role
+    ) {
         CoaType coa;
         try {
             coa = CoaType.valueOf(a.getType());
@@ -59,6 +76,7 @@ public final class DtoWrapper {
             .id(a.getId())
             .externalReference(a.getFullNumber())
             .name(a.getSubAccount())
+            .role(role)
             .type(coa)
             .currency(a.getCurrency())
             .status(a.getStatus())

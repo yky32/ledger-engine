@@ -5,10 +5,13 @@ import com.altech.core.exception.BizException;
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
+import com.altech.ledger.entity.dto.request.AccountOpenSpecDto;
 import com.altech.ledger.entity.dto.request.BatchCreateWalletOnboardRequestDto;
 import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
 import com.altech.ledger.entity.dto.response.BatchCreateWalletOnboardResponseDto;
+import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
+import com.altech.ledger.entity.enu.WalletAccountRole;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
@@ -26,10 +29,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Phase-1 wallet create use case.
+ * Wallet create use case: one wallet + flexible account-set.
+ * <p>
+ * Callers indicate which accounts to open via {@code accountSet}; if omitted, only MAIN.
+ * Prod bulk convert can pass product mix without SQL / downtime.
  */
 @Component
 @RequiredArgsConstructor
@@ -102,6 +110,18 @@ public class CreateWalletOnboardingUseCase {
         return walletRef(userId, commonUseCase.requireCurrency(currency));
     }
 
+    /**
+     * Account fullNumber for a role under the wallet base ref.
+     * MAIN → base; others → base:refCode (e.g. …:LOAN, …:88, …:89).
+     */
+    public String accountRef(String userId, Currency currency, AccountOpenSpecDto spec) {
+        String base = walletRef(userId, currency);
+        if (spec.role().isPrimary()) {
+            return base;
+        }
+        return base + ":" + spec.resolvedRefCode();
+    }
+
     private boolean _exists(String userId, Currency currency) {
         if (walletRepository.existsByOwnerIdAndCurrency(userId, currency)) {
             return true;
@@ -112,10 +132,11 @@ public class CreateWalletOnboardingUseCase {
     private GetWalletOnboardResponseDto _createWallet(CreateWalletOnboardRequestDto request) {
         String userId = request.userId();
         Currency currency = commonUseCase.requireCurrency(request.currency());
-        String externalReference = walletRef(userId, currency);
+        String baseRef = walletRef(userId, currency);
+        List<AccountOpenSpecDto> specs = _normalizeAccountSet(request.accountSet());
 
         if (walletRepository.existsByOwnerIdAndCurrency(userId, currency)
-            || accountRepository.existsByFullNumber(externalReference)) {
+            || accountRepository.existsByFullNumber(baseRef)) {
             throw new BizException(WalletErrorResponse.WAL0409, "Wallet already onboarded: " + userId + " / " + currency);
         }
 
@@ -123,11 +144,29 @@ public class CreateWalletOnboardingUseCase {
             ? "Wallet " + userId
             : request.name();
 
-        createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            externalReference, name, CoaType.LIABILITY, currency, false));
+        Map<WalletAccountRole, Account> opened = new LinkedHashMap<>();
+        Account primary = null;
 
-        Account account = accountRepository.findByFullNumber(externalReference)
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account missing after create: " + externalReference));
+        for (AccountOpenSpecDto spec : specs) {
+            String ref = accountRef(userId, currency, spec);
+            if (accountRepository.existsByFullNumber(ref)) {
+                throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + ref);
+            }
+            String accountName = name + " / " + spec.role().name();
+            boolean allowNegative = Boolean.TRUE.equals(spec.allowNegative());
+            createLedgerAccountUseCase.execute(new CreateAccountRequest(
+                ref, accountName, CoaType.LIABILITY, currency, allowNegative));
+            Account account = accountRepository.findByFullNumber(ref)
+                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account missing after create: " + ref));
+            opened.put(spec.role(), account);
+            if (spec.role().isPrimary()) {
+                primary = account;
+            }
+        }
+
+        if (primary == null) {
+            throw new BizException(AccountErrorResponse.ACC0400, "MAIN account is required in accountSet");
+        }
 
         String alias = _uniqueAlias(userId, currency);
         String extId = request.externalId() == null || request.externalId().isBlank()
@@ -136,7 +175,7 @@ public class CreateWalletOnboardingUseCase {
             ? "CRM" : request.externalType();
 
         Wallet wallet = walletRepository.save(new Wallet(
-            account.getId(),
+            primary.getId(),
             alias,
             name,
             extId,
@@ -147,7 +186,28 @@ public class CreateWalletOnboardingUseCase {
             userId,
             currency));
 
-        return DtoWrapper.getWalletOnboardResponseDto(wallet, account);
+        List<GetWalletAccountResponseDto> accountDtos = new ArrayList<>();
+        for (Map.Entry<WalletAccountRole, Account> e : opened.entrySet()) {
+            accountDtos.add(DtoWrapper.getWalletAccountResponseDto(e.getValue(), e.getKey()));
+        }
+        return DtoWrapper.getWalletOnboardResponseDto(wallet, primary, accountDtos);
+    }
+
+    /**
+     * Ensure MAIN first; dedupe by role (first wins). Empty → MAIN only.
+     */
+    private List<AccountOpenSpecDto> _normalizeAccountSet(List<AccountOpenSpecDto> raw) {
+        LinkedHashMap<WalletAccountRole, AccountOpenSpecDto> byRole = new LinkedHashMap<>();
+        byRole.put(WalletAccountRole.MAIN, AccountOpenSpecDto.of(WalletAccountRole.MAIN));
+        if (raw != null) {
+            for (AccountOpenSpecDto spec : raw) {
+                if (spec == null || spec.role() == null) {
+                    continue;
+                }
+                byRole.putIfAbsent(spec.role(), spec);
+            }
+        }
+        return new ArrayList<>(byRole.values());
     }
 
     private String _uniqueAlias(String userId, Currency currency) {

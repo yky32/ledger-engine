@@ -16,6 +16,13 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByFullNumber(String fullNumber);
 
+    /**
+     * Accounts whose fullNumber equals prefix or starts with prefix + ":".
+     * Used to load a wallet account-set (MAIN + product lines).
+     */
+    @Query("select a from Account a where a.fullNumber = :prefix or a.fullNumber like concat(:prefix, ':%') order by a.id")
+    List<Account> findAccountSetByWalletRef(@Param("prefix") String prefix);
+
     Optional<Account> findByMainAccountAndSubAccount(String mainAccount, String subAccount);
 
     List<Account> findAllByMainAccount(String mainAccount);

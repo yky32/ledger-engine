@@ -128,7 +128,35 @@ Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) an
 
 ## Wallet create (curl)
 
+### Flexible account-set
+
+`POST /wallets` opens **1 wallet + N accounts**. Callers indicate product lines via optional `accountSet`.
+
+| Role | Ref suffix | Typical use |
+|---|---|---|
+| `MAIN` | *(base ref)* | Primary balance (always opened; omit is fine) |
+| `LOAN` | `:LOAN` | Loan facility |
+| `CC_YELLOW` | `:88` | Credit card yellow |
+| `CC_PURPLE` | `:89` | Credit card purple |
+| `REWARD` | `:REWARD` | Separate reward/points line |
+
+Each `accountSet` entry:
+
+```json
+{ "role": "LOAN", "productCode": null, "allowNegative": false }
+```
+
+- **`role`** (required) — which account kind to open  
+- **`productCode`** (optional) — override default suffix (e.g. custom card id)  
+- **`allowNegative`** (optional, default `false`) — overdraft / credit-style balances  
+
+Omitted / empty `accountSet` → **MAIN only** (backward compatible).  
+MAIN is always ensured first; duplicate roles are ignored (first wins).
+
+Account refs: `wallet:{userId}:{currency}` for MAIN; others `wallet:{userId}:{currency}:{refCode}`.
+
 ```bash
+# MAIN only (default)
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -141,26 +169,72 @@ curl -sS -X POST 'http://localhost:8080/wallets' \
 ```
 
 ```bash
-# batch (soft-idempotent, max 1000)
-curl -sS -X POST 'http://localhost:8080/wallets/batch' \
+# Loan + purple card (MAIN auto-added)
+curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
-    "wallets": [
-      { "userId": "CUST-1001", "currency": "USD" },
-      { "userId": "CUST-1002", "currency": "LP" }
+    "userId": "01A47158227",
+    "currency": "HKD",
+    "name": "Wilfill Kick",
+    "externalId": "01A47158227",
+    "externalType": "CRM",
+    "accountSet": [
+      { "role": "MAIN" },
+      { "role": "LOAN", "allowNegative": true },
+      { "role": "CC_PURPLE", "allowNegative": true }
     ]
   }'
 ```
 
 ```bash
-curl -sS 'http://localhost:8080/wallets/CUST-1001/USD'
-curl -sS 'http://localhost:8080/wallets?ownerId=CUST-1001'
+# batch (soft-idempotent, max 1000) — per-row accountSet for PROD bulk convert
+curl -sS -X POST 'http://localhost:8080/wallets/batch' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "wallets": [
+      {
+        "userId": "01A47158227",
+        "currency": "HKD",
+        "name": "Wilfill Kick",
+        "accountSet": [
+          { "role": "MAIN" },
+          { "role": "LOAN", "allowNegative": true },
+          { "role": "CC_PURPLE", "allowNegative": true }
+        ]
+      },
+      {
+        "userId": "01A26182952",
+        "currency": "HKD",
+        "name": "Wayne Yu",
+        "accountSet": [
+          { "role": "MAIN" },
+          { "role": "CC_YELLOW", "allowNegative": true }
+        ]
+      },
+      {
+        "userId": "01A76786421",
+        "currency": "HKD",
+        "name": "Eric Chow",
+        "accountSet": [
+          { "role": "MAIN" },
+          { "role": "CC_YELLOW", "allowNegative": true },
+          { "role": "CC_PURPLE", "allowNegative": true }
+        ]
+      }
+    ]
+  }'
+```
+
+```bash
+curl -sS 'http://localhost:8080/wallets/01A47158227/HKD'
+curl -sS 'http://localhost:8080/wallets?ownerId=01A47158227'
 ```
 
 Required: `userId`, `currency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
-Response envelope: `Result` with `response` / `data` / `requestId`.
+Response: wallet + primary `account` / `balance` + full `accounts[]` (each with `role`).  
+Envelope: `Result` with `response` / `data` / `requestId`.
 
-**Note:** product onboard creates **1 wallet + 1 primary account** today. Enterprise target is **wallet → account-set** (multiple COA lines under one wallet); expand via hierarchical account APIs or a future product template.
+**PROD bulk convert:** stream CRM product mix into `POST /wallets/batch` (≤1000/chunk, soft-idempotent). No 700K SQL cutover / downtime.
 
 ## Currency
 
