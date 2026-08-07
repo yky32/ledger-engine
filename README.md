@@ -1,261 +1,194 @@
 # Ledger Engine
 
-**Version `1.0.0`** — production baseline. Pairs with [ledger-engine-sdk](https://github.com/yky32/ledger-engine-sdk) **1.0.x / 1.1.x** (Java client; [manual JAR delivery](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md)).
+**Version `1.0.0`** — standalone wallet + ledger core.  
+Optional client: [ledger-engine-sdk](https://github.com/yky32/ledger-engine-sdk) (manual JAR delivery; see [DELIVERY](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md)).
 
-A standalone Java 17/Spring Boot double-entry ledger core for customer wallets and balances. It owns ledger
-accounts, immutable journal entries, posting, derived balances, idempotency, and reversals.
+Java 17 / Spring Boot service for **customer wallets**, **chart-of-accounts balances**, and **movements** (deposit, withdrawal, transfer, earn/burn). It is **ledger core**, not payment rails, identity/CRM, compliance UI, or settlement orchestration.
 
-This is **ledger core**, not payment rails, identity, compliance UI, notification, tenant, or external
-settlement orchestration. The project layout follows an **endpoint / usecase / entity / repository** pattern.
+Product depth and integration flows: **[PRODUCT.md](PRODUCT.md)**, **[INTEGRATION.md](INTEGRATION.md)**.
+
+## Model (strong play)
+
+```text
+Customer (CRM id only)     →  ownerId on wallet
+        │
+     Wallet                →  1 customer ledger root (per currency today)
+        │
+     Account set           →  1..N COA balance rows (primary + product lines)
+        │
+     LedgerMovement        →  business ops (idempotent movementKey)
+        └── LedgerEntry    →  applied credit/debit legs
+```
+
+- **Balances** live on `account` (`ledger_balance`, `available_balance`); movements update them under lock.
+- **Currency** is an enum (`fiat` / `LOYALTY_POINT` / `crypto`): `USD`, `HKD`, `LP`, `BTC`, `USDT`, …
+- **No classic journal_transaction layer** in the product path; ops are movement + account balances.
+- **No startup program-pool seed** — create accounts via API when needed.
+
+## Stack
+
+| | |
+|---|---|
+| Java / Boot | 17 / 3.5.x |
+| DB | PostgreSQL (default host `localhost:5433`, DB `ledger-engine`) |
+| Schema | JPA `ddl-auto` (default `create`); Liquibase off (placeholder only) |
+| API envelope | `R.success` / `Result` (`com.altech.core`) |
+| Errors | `BizException` + domain `*ErrorResponse` |
+| Config | `${ENV_VAR:default}` in `application.yml` |
 
 ## Build and run
 
 ```bash
-mvn clean package
-java -jar target/ledger-engine-1.0.0.jar
-mvn spring-boot:run
-```
-
-## Project layout (standard)
-
-```text
-src/main/java/com/altech/ledger/
-├── App.java
-├── config/ IntegrationProperties, IntegrationConfig
-├── endpoint/ REST controllers (Ledger, Wallet, Movement, Integration webhooks)
-├── usecase/ Verb use cases ($ActionVerb$UseCase.execute + CommonUseCase)
-├── entity/
-│ ├── po/ JPA entities (LedgerAccount, Wallet, JournalTransaction, …)
-│ └── dto/ Request/response records (ledger, wallet, movement, integration)
-├── repository/ Spring Data JPA repositories
-├── listener/ Kafka consumers (optional)
-├── exception/ LedgerException, GlobalExceptionHandler
-└── resources/ application.yml (JPA ddl-auto)
-```
-
-| Layer | Convention | Example |
-|---|---|---|
-| **PO (JPA entity)** | PascalCase in `entity/po/` | `LedgerAccount`, `JournalTransaction` |
-| **Endpoint** | `*Endpoint` in `endpoint/{domain}/` | `LedgerEndpoint`, `WalletEndpoint` |
-| **Use case** | `$ActionVerb$UseCase` in `usecase/{domain}/` | `CreateWalletOnboardingUseCase`, `CreateDepositUseCase` |
-| **DTO** | Records in `entity/dto/{domain}/` | `OnboardWalletRequest`, `MovementDto` |
-| **Repository** | `*Repository` in `repository/` | `LedgerAccountRepository` |
-| **Database table** | snake_case | `ledger_account`, `journal_transaction`, `journal_entry` |
-| **Database column** | snake_case | `external_reference`, `idempotency_key`, `sequence_number` |
-| **Java field / getter** | camelCase | `externalReference`, `idempotencyKey`, `sequence` |
-| **JSON API** | camelCase | `externalReference`, `idempotencyKey`, `accountId` |
-
-PO classes map 1:1 to JPA entity tables. `@Column(name = "...")` is used wherever the Java name differs from the
-column (for example `sequence` ↔ `sequence_number`).
-
-## Data model (PO ↔ table ↔ columns)
-
-### `LedgerAccount` → `ledger_account`
-
-Chart-of-accounts bucket. Customer wallet balances are modeled as `LIABILITY` (or `ASSET`) accounts.
-
-| Column | Java field | Type / values |
-|---|---|---|
-| `id` | `id` | UUID PK |
-| `external_reference` | `externalReference` | unique business key (wallet / tenant ref) |
-| `name` | `name` | display name |
-| `type` | `type` | `ASSET`, `LIABILITY`, `EQUITY`, `REVENUE`, `EXPENSE` |
-| `currency` | `currency` | ISO 4217, 3-letter uppercase |
-| `status` | `status` | `ACTIVE`, `FROZEN`, `CLOSED` |
-| `allow_negative` | `allowNegative` | posting policy flag |
-| `version` | `version` | optimistic lock |
-| `created_at` | `createdAt` | timestamp |
-| `updated_at` | `updatedAt` | timestamp |
-
-Balance is **not stored** on this row. It is derived from `journal_entry` (`debitTotal`, `creditTotal`, signed
-`balance` in the API).
-
-### `JournalTransaction` → `journal_transaction`
-
-One balanced posting (Earn, Burn, Process, transfer, etc.) identified by idempotency.
-
-| Column | Java field | Type / values |
-|---|---|---|
-| `id` | `id` | UUID PK |
-| `idempotency_key` | `idempotencyKey` | unique; required for idempotent posting |
-| `request_hash` | `requestHash` | SHA-256 of canonical payload |
-| `reference` | `reference` | optional business reference (order id, campaign id, …) |
-| `description` | `description` | optional narrative |
-| `status` | `status` | `POSTED`, `REVERSED` |
-| `effective_at` | `effectiveAt` | business effective time |
-| `created_at` | `createdAt` | insert time |
-| `reversal_of_id` | `reversalOf` | FK → original transaction when this row is a reversal |
-
-### `JournalEntry` → `journal_entry`
-
-Immutable debit/credit line. Append-only; never updated in place.
-
-| Column | Java field | Type / values |
-|---|---|---|
-| `id` | `id` | UUID PK |
-| `transaction_id` | `transaction` | FK → `journal_transaction` |
-| `account_id` | `account` | FK → `ledger_account` |
-| `side` | `side` | `DEBIT`, `CREDIT` |
-| `amount` | `amount` | positive `NUMERIC(38,18)` |
-| `currency` | `currency` | must match account currency |
-| `sequence_number` | `sequence` | unique per transaction |
-| `created_at` | `createdAt` | insert time |
-
-Unique: `(transaction_id, sequence_number)`.
-
-## Three core operations
-
-Product-facing mutations map to balanced `journal_transaction` + `journal_entry` rows:
-
-| Operation | Meaning | Ledger mapping (typical) |
-|---|---|---|
-| **Earn** | Award points/credits | `CREDIT` customer `ledger_account`; offsetting `DEBIT` on pool/revenue account |
-| **Burn** | Redeem / consume | `DEBIT` customer account; offsetting `CREDIT` on pool/expense account |
-| **Process** | Hold, release, expire, adjust, transfer, settle | multi-leg `journal_entry` set under one `idempotency_key` |
-
-**Process** sub-types (roadmap — not separate tables yet):
-
-- **Hold** / **Release** — separate liability accounts or future `held` balance projection
-- **Expire**, **Adjust**, **Transfer**, **Settle** — expressed as additional balanced postings
-
-## Operation pipeline
-
-Target flow for Earn / Burn / Process (steps 3–4 partially implemented today):
-
-```text
-Earn / Burn / Process
- ↓
-1. Validate rules + balance → LedgerService (locks ledger_account, checks allow_negative)
-2. Create immutable journal_entry → append-only rows on journal_entry
-3. Update balance projection → derived from entries (available/held split: roadmap)
-4. Publish domain event → roadmap (no outbox in MVP)
-```
-
-## Shared operation guarantees
-
-All three operations must:
-
-- Be **idempotent** via `journal_transaction.idempotency_key` (API: `idempotencyKey`); optional
- `journal_transaction.reference` (API: `reference`) for business correlation only
-- Create **append-only** `journal_entry` rows
-- **Never mutate history** — corrections use a new transaction or `POST /transactions/{id}/reversal`
-
-## Domain guarantees
-
-- Every transaction has at least two positive entries and balances debits and credits independently per currency.
-- `journal_entry` rows are append-only. Historical rows are never updated in place.
-- Asset and expense balances increase with debits; liability, equity, and revenue balances increase with credits.
-- Posting locks all affected `ledger_account` rows in sorted UUID order and applies `allow_negative` policy.
-- Entry `currency` must equal `ledger_account.currency`; only `status = ACTIVE` accounts may be posted.
-- Same `idempotency_key` + same payload → existing transaction (`200`); same key + different payload → `409`.
-- Reversal appends opposite `journal_entry` rows, sets `reversal_of_id`, marks original `REVERSED`.
-- DB constraints enforce unique keys, positive amounts, sequence uniqueness, and single reversal per txn.
-
-## Run locally
-
-Requirements: Java 17+, Maven 3.9+, and PostgreSQL (Docker `test-db` on host port **5433** by default).
-
-```bash
-# ensure DB exists, e.g.
+# DB (example Docker test-db on 5433)
 # docker exec test-db psql -U postgres -c 'CREATE DATABASE "ledger-engine";'
+# docker exec test-db psql -U postgres -c 'CREATE DATABASE "ledger-engine-test";'
+
+mvn clean package
 mvn spring-boot:run
+# or: java -jar target/ledger-engine-1.0.0.jar
 ```
 
-Default datasource: `jdbc:postgresql://localhost:5433/ledger-engine` (user/password `postgres`).
-Swagger UI is at <http://localhost:8080/swagger-ui.html>; health is at
-<http://localhost:8080/actuator/health>.
-
-Run tests (uses DB `ledger-engine-test` on the same Postgres):
+Default: `http://localhost:8080` · health ` /actuator/health` · OpenAPI if springdoc is on path.
 
 ```bash
-# docker exec test-db psql -U postgres -c 'CREATE DATABASE "ledger-engine-test";'
 mvn test
 ```
 
-Run with Docker Compose:
+Docker:
 
 ```bash
 docker compose up --build
-```
-
-Run with the **event simulator** (see [INTEGRATION.md](INTEGRATION.md)):
-
-```bash
+# optional simulator profile — see INTEGRATION.md
 cp .env.example .env
 docker compose --profile simulator up --build
 ```
 
-For a custom PostgreSQL instance:
+Override DB:
 
 ```bash
-SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/ledger-engine \
-SPRING_DATASOURCE_USERNAME=postgres \
-SPRING_DATASOURCE_PASSWORD=postgres \
+DB_URL=jdbc:postgresql://host:5432/ledger-engine \
+DB_USERNAME=postgres DB_PASSWORD=postgres \
 mvn spring-boot:run
 ```
 
-## API example
+## Project layout
 
-Create source, destination, and equity accounts:
-
-```bash
-curl -sS -X POST localhost:8080/accounts \
- -H 'Content-Type: application/json' \
- -d '{"externalReference":"cash-001","name":"Cash","type":"ASSET","currency":"USD","allowNegative":false}'
-
-curl -sS -X POST localhost:8080/accounts \
- -H 'Content-Type: application/json' \
- -d '{"externalReference":"cash-002","name":"Settlement","type":"ASSET","currency":"USD","allowNegative":false}'
-
-curl -sS -X POST localhost:8080/accounts \
- -H 'Content-Type: application/json' \
- -d '{"externalReference":"equity-001","name":"Opening Equity","type":"EQUITY","currency":"USD","allowNegative":false}'
+```text
+src/main/java/
+├── com.altech.core/          # foundation: R/Result, BizException, AuditEntity,
+│                             # Currency/CurrencyType, BaseEvent, utils
+└── com.altech.ledger/
+    ├── App.java              # Spring Boot entry (no pool seed)
+    ├── config/               # Integration, JPA auditing, Kafka props
+    ├── endpoint/             # REST (*Endpoint)
+    ├── usecase/              # VerbUseCase.execute + CommonUseCase + private _helpers
+    ├── entity/
+    │   ├── po/               # Account, Wallet, LedgerMovement, LedgerEntry, …
+    │   ├── dto/request|response/  # Create*RequestDto, Get*ResponseDto
+    │   └── enu/
+    ├── repository/
+    ├── service/              # MovementBus, DtoMapper, DtoWrapper
+    └── listener/             # optional Kafka
 ```
 
-Use returned IDs to post opening funds (debit cash, credit equity), then transfer:
+| Layer | Convention | Example |
+|---|---|---|
+| **Endpoint** | `*Endpoint` | `WalletEndpoint` |
+| **Use case** | `$ActionVerb$UseCase` + `execute` | `CreateWalletOnboardingUseCase` |
+| **DTO** | `Create*RequestDto` / `Get*ResponseDto` | `CreateWalletOnboardRequestDto` |
+| **PO** | `entity/po/**` | `Wallet`, `Account`, `LedgerMovement` |
+| **Repository** | `*Repository` | `WalletRepository` |
+| **Field names** | type camelCase | `ledgerMovementRepository` |
+| **JSON** | camelCase | `userId`, `currency` |
+
+## Core tables (simplified)
+
+### `wallet`
+
+Customer-facing root: `owner_id`, `currency`, `account_id` (primary account), status, external CRM ids.  
+Unique: `(owner_id, currency)`.
+
+### `account`
+
+COA + live balances: segments (`entity`, `type`, `sub_type`, `main_account`, `sub_account`, `buffer`), `full_number`, `currency`, `ledger_balance`, `available_balance`.
+
+### `ledger_movement` / `ledger_entry`
+
+Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) and settled legs (credit/debit).
+
+## Main product APIs
+
+| Area | Examples |
+|---|---|
+| **Wallets** | `POST /wallets`, `POST /wallets/batch`, `GET /wallets?ownerId=`, `GET /wallets/{ownerId}/{currency}` |
+| **Movements** | `POST /movements/deposits`, `/withdrawals`, `/transfers/in-wallet`, settle/get/list |
+| **Ledger accounts** | `POST /accounts`, get balance (product COA path) |
+| **Parity** | `/ledger-wallets`, `/ledger-accounts`, `/ledger/deposits`, rules, FX, configs |
+| **Integration** | `POST /integrations/webhooks/transactions` (earn/burn rules) |
+
+## Wallet create (curl)
 
 ```bash
-curl -i -X POST localhost:8080/transactions \
- -H 'Content-Type: application/json' \
- -d '{
- "idempotencyKey":"opening-2026-001",
- "reference":"opening-balance",
- "entries":[
- {"accountId":"<cash-id>","side":"DEBIT","amount":100,"currency":"USD"},
- {"accountId":"<equity-id>","side":"CREDIT","amount":100,"currency":"USD"}
- ]
- }'
-
-curl -i -X POST localhost:8080/transactions \
- -H 'Content-Type: application/json' \
- -d '{
- "idempotencyKey":"transfer-2026-001",
- "reference":"order-123",
- "entries":[
- {"accountId":"<cash-id>","side":"CREDIT","amount":25,"currency":"USD"},
- {"accountId":"<settlement-id>","side":"DEBIT","amount":25,"currency":"USD"}
- ]
- }'
+curl -sS -X POST 'http://localhost:8080/wallets' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "userId": "CUST-1001",
+    "currency": "USD",
+    "name": "Primary wallet",
+    "externalId": "crm-1001",
+    "externalType": "CRM"
+  }'
 ```
-
-Retrying an identical request returns `200`; its initial posting returns `201`. Query and reverse it:
 
 ```bash
-curl -sS localhost:8080/accounts/<cash-id>/balance
-curl -sS 'localhost:8080/accounts/<cash-id>/entries?page=0&size=20'
-curl -sS localhost:8080/transactions/<transaction-id>
-
-curl -i -X POST localhost:8080/transactions/<transaction-id>/reversal \
- -H 'Content-Type: application/json' \
- -d '{"idempotencyKey":"reversal-2026-001","description":"Customer correction"}'
+# batch (soft-idempotent, max 1000)
+curl -sS -X POST 'http://localhost:8080/wallets/batch' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "wallets": [
+      { "userId": "CUST-1001", "currency": "USD" },
+      { "userId": "CUST-1002", "currency": "LP" }
+    ]
+  }'
 ```
+
+```bash
+curl -sS 'http://localhost:8080/wallets/CUST-1001/USD'
+curl -sS 'http://localhost:8080/wallets?ownerId=CUST-1001'
+```
+
+Required: `userId`, `currency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
+Response envelope: `Result` with `response` / `data` / `requestId`.
+
+**Note:** product onboard creates **1 wallet + 1 primary account** today. Enterprise target is **wallet → account-set** (multiple COA lines under one wallet); expand via hierarchical account APIs or a future product template.
+
+## Currency
+
+`com.altech.core.constant.enu.Currency` + `CurrencyType`:
+
+| Type | Examples |
+|---|---|
+| **FIAT** | `USD`, `HKD`, `EUR`, `JPY`, … |
+| **LOYALTY_POINT** | `LP` |
+| **CRYPTO** | `BTC`, `ETH`, `SOL`, `USDT`, `USDC`, … |
+
+JSON uses the code string, e.g. `"currency": "USD"`. Stored as `@Enumerated(STRING)`.
 
 ## Boundaries
 
-- **PO layer lives in `entity/po/` as JPA domain entities.
-- **DTOs** are Java records under `entity/dto/`; JSON field names match Java camelCase.
-- **Balances** are computed from `journal_entry`, not columns on `ledger_account`.
-- **MVP excludes** domain events/outbox, `available_balance` / `held_balance` columns, and dedicated Earn/Burn/Process endpoints — those are product mappings on top of `POST /transactions`.
+| In scope | Out of scope |
+|---|---|
+| Wallets, accounts, balances, movements | Payment gateway / card rails |
+| Idempotent movement keys | Full CRM customer master |
+| Optional Kafka movement/integration events | Compliance UI, notifications |
+| Fiat / LP / crypto units | Multi-party settlement orchestration |
 
-The service is the source of truth for `journal_transaction` and `journal_entry`. Payment execution and
-orchestration stay outside this boundary.
+Customer identity and names live in CRM; ledger only stores **`ownerId`** (and optional external ids on the wallet).
+
+## Docs
+
+| File | Purpose |
+|---|---|
+| [PRODUCT.md](PRODUCT.md) | Product model, operations, account roles |
+| [INTEGRATION.md](INTEGRATION.md) | Onboarding + transactional event ingest |
+| `application.yml` | Env-driven config (`DB_*`, `SERVER_PORT`, …) |
