@@ -1,11 +1,16 @@
 package com.altech.ledger.usecase.ledger;
 
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
+import com.altech.ledger.entity.dto.request.CreateLedgerInWalletTransferRequestDto;
+import com.altech.ledger.entity.dto.request.CreateLedgerWithdrawalRequestDto;
+import com.altech.ledger.entity.dto.request.UpdateLedgerMovementDocumentsRequestDto;
+import com.altech.ledger.entity.dto.request.UpdateLedgerMovementStatusRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
 /**
  * Facade for movement pipeline callers; delegates to Verb / query use cases.
@@ -19,52 +24,52 @@ public class LedgerMovementPipelineUseCase {
     private final LedgerDepositUseCase ledgerDepositUseCase;
 
     @Transactional
-    public LedgerMovementDtos.Response deposit(LedgerMovementDtos.CreateDepositRequest req) {
+    public GetLedgerMovementResponseDto deposit(CreateLedgerDepositRequestDto req) {
         return ledgerDepositUseCase.execute(req);
     }
 
     @Transactional
-    public LedgerMovementDtos.Response withdraw(LedgerMovementDtos.CreateWithdrawalRequest req) {
+    public GetLedgerMovementResponseDto withdraw(CreateLedgerWithdrawalRequestDto req) {
         return ledgerMovementShooter.doWithdrawal(req);
     }
 
     @Transactional
-    public LedgerMovementDtos.Response inWalletTransfer(LedgerMovementDtos.CreateInWalletTransferRequest req) {
+    public GetLedgerMovementResponseDto inWalletTransfer(CreateLedgerInWalletTransferRequestDto req) {
         return ledgerMovementShooter.doInWalletTransfer(req);
     }
 
     @Transactional
-    public LedgerMovementDtos.Response settle(Long id) {
+    public GetLedgerMovementResponseDto settle(Long id) {
         return ledgerMovementOperationUseCase.settle(id);
     }
 
     @Transactional
-    public LedgerMovementDtos.Response updateStatus(Long id, LedgerMovementDtos.UpdateStatusRequest req) {
+    public GetLedgerMovementResponseDto updateStatus(Long id, UpdateLedgerMovementStatusRequestDto req) {
         return ledgerMovementOperationUseCase.update(id, req);
     }
 
     @Transactional
-    public LedgerMovementDtos.Response updateDocuments(Long id, LedgerMovementDtos.UpdateDocumentsRequest req) {
+    public GetLedgerMovementResponseDto updateDocuments(Long id, UpdateLedgerMovementDocumentsRequestDto req) {
         return ledgerMovementOperationUseCase.updateDocuments(id, req);
     }
 
     @Transactional(readOnly = true)
-    public LedgerMovementDtos.Response getOne(Long id) {
+    public GetLedgerMovementResponseDto getOne(Long id) {
         return ledgerMovementQueryUseCase.one(id);
     }
 
     @Transactional(readOnly = true)
-    public Page<LedgerMovementDtos.Response> getAll(Pageable pageable) {
+    public Page<GetLedgerMovementResponseDto> getAll(Pageable pageable) {
         return ledgerMovementQueryUseCase.list(pageable, null, null, null);
     }
 
     @Transactional(readOnly = true)
-    public Page<LedgerMovementDtos.Response> myMovements(String ownerId, Pageable pageable) {
+    public Page<GetLedgerMovementResponseDto> myMovements(String ownerId, Pageable pageable) {
         return ledgerMovementQueryUseCase.myMovements(ownerId, pageable, null, null, null);
     }
 
     @Transactional(readOnly = true)
-    public Page<LedgerMovementDtos.Response> byWallet(Long walletId, Pageable pageable) {
+    public Page<GetLedgerMovementResponseDto> byWallet(Long walletId, Pageable pageable) {
         return ledgerMovementQueryUseCase.byWallet(walletId, pageable);
     }
 }

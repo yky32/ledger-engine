@@ -5,7 +5,6 @@ import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.exception.response.WalletErrorResponse;
 
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.*;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
@@ -18,6 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
+import com.altech.ledger.entity.dto.request.CreateLedgerInWalletTransferRequestDto;
+import com.altech.ledger.entity.dto.request.CreateLedgerWithdrawalRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
 /**
  * LedgerMovementShooter extends BaseLedgerMovementShooter.
@@ -33,7 +36,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     }
 
     @Transactional
-    public LedgerMovementDtos.Response doDeposit(LedgerMovementDtos.CreateDepositRequest req) {
+    public GetLedgerMovementResponseDto doDeposit(CreateLedgerDepositRequestDto req) {
         String target = req.resolvedTargetWalletId();
         if (target == null || target.isBlank()) {
             throw new BizException(MovementErrorResponse.MOV0400, "targetWalletId or targetId required");
@@ -51,7 +54,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     }
 
     @Transactional
-    public LedgerMovementDtos.Response doWithdrawal(LedgerMovementDtos.CreateWithdrawalRequest req) {
+    public GetLedgerMovementResponseDto doWithdrawal(CreateLedgerWithdrawalRequestDto req) {
         String origin = req.resolvedOriginatorWalletId();
         if (origin == null || origin.isBlank()) {
             throw new BizException(MovementErrorResponse.MOV0400, "originatorWalletId or originatorId required");
@@ -69,7 +72,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     }
 
     @Transactional
-    public LedgerMovementDtos.Response doInWalletTransfer(LedgerMovementDtos.CreateInWalletTransferRequest req) {
+    public GetLedgerMovementResponseDto doInWalletTransfer(CreateLedgerInWalletTransferRequestDto req) {
         Wallet from = walletService.resolve(req.fromWalletId());
         Wallet to = walletService.resolve(req.toWalletId());
         requireActive(from);
@@ -86,7 +89,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
 
 
     @Transactional
-    public LedgerMovementDtos.Response doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
+    public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
                                        String currency, String movementKey, String description) {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);

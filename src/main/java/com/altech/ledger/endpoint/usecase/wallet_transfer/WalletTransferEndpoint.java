@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.request.CreateLedgerInWalletTransferRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,7 +18,7 @@ public class WalletTransferEndpoint {
     private final LedgerMovementPipelineUseCase ledgerMovementPipelineUseCase;
 
     @PostMapping("/ledger/wallet-transfers/in-wallet")
-    public Result<LedgerMovementDtos.Response> inWallet(@Valid @RequestBody LedgerMovementDtos.CreateInWalletTransferRequest dto) {
+    public Result<GetLedgerMovementResponseDto> inWallet(@Valid @RequestBody CreateLedgerInWalletTransferRequestDto dto) {
         return R.success(ledgerMovementPipelineUseCase.inWalletTransfer(dto));
     }
 }

@@ -1,12 +1,6 @@
 package com.altech.ledger.service;
 
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
-import com.altech.ledger.entity.dto.parity.FxRateDtos;
-import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
-import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
-import com.altech.ledger.entity.dto.parity.RuleDtos;
-import com.altech.ledger.entity.dto.parity.SystemDtos;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletBalanceResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
@@ -19,6 +13,13 @@ import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 
 import java.util.List;
+import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
+import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
+import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
+import com.altech.ledger.entity.dto.response.GetRuleExecutionResponseDto;
+import com.altech.ledger.entity.dto.response.GetRuleResponseDto;
+import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 
 /**
  * Static PO ↔ DTO mappers only. No business rules.
@@ -84,31 +85,31 @@ public final class DtoWrapper {
 
     // ---------- parity API surface ----------
 
-    public static LedgerAccountDtos.Response getLedgerAccountResponseDto(Account a) {
+    public static GetLedgerAccountResponseDto getLedgerAccountResponseDto(Account a) {
         return DtoMapper.toAccount(a);
     }
 
-    public static LedgerWalletDtos.WithBalancesResponse getAccountBalanceResponseDto(Wallet w, List<Account> accounts) {
+    public static GetLedgerWalletResponseDto getAccountBalanceResponseDto(Wallet w, List<Account> accounts) {
         return DtoMapper.toWallet(w, accounts);
     }
 
-    public static LedgerMovementDtos.Response getLedgerMovementResponseDto(LedgerMovement m) {
+    public static GetLedgerMovementResponseDto getLedgerMovementResponseDto(LedgerMovement m) {
         return DtoMapper.toMovement(m);
     }
 
-    public static RuleDtos.Response getRuleResponseDto(Rule r) {
+    public static GetRuleResponseDto getRuleResponseDto(Rule r) {
         return DtoMapper.toRule(r);
     }
 
-    public static RuleDtos.ExecutionResponse getRuleExecutionResponseDto(RuleExecution r) {
+    public static GetRuleExecutionResponseDto getRuleExecutionResponseDto(RuleExecution r) {
         return DtoMapper.toRuleExecution(r);
     }
 
-    public static FxRateDtos.Response getFxRateResponseDto(FxRate r) {
+    public static GetFxRateResponseDto getFxRateResponseDto(FxRate r) {
         return DtoMapper.toFx(r);
     }
 
-    public static SystemDtos.ConfigurationResponse getConfigurationResponseDto(SystemConfiguration c) {
+    public static GetSystemConfigurationResponseDto getConfigurationResponseDto(SystemConfiguration c) {
         return DtoMapper.toConfig(c);
     }
 }

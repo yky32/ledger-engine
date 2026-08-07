@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
+import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
 
 /**
  * WalletAccountSetupListener — WALLET_CREATED → create accounts + wallet.
@@ -44,7 +44,7 @@ public class WalletAccountSetupListener {
             if (node.has("accountCurrencies") && node.get("accountCurrencies").isArray()) {
                 node.get("accountCurrencies").forEach(c -> extras.add(c.asText()));
             }
-            LedgerWalletDtos.WithBalancesResponse created = createWalletUseCase.executeFull(
+            GetLedgerWalletResponseDto created = createWalletUseCase.executeFull(
                 ownerId, currency, extras, extId, extType);
             log.info("WALLET_CREATED processed walletId={}", created.id());
         } catch (Exception ex) {

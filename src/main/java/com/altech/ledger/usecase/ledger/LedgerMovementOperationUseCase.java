@@ -1,6 +1,5 @@
 package com.altech.ledger.usecase.ledger;
 
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.LedgerMovementRepository;
@@ -10,6 +9,9 @@ import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import com.altech.ledger.entity.dto.request.UpdateLedgerMovementDocumentsRequestDto;
+import com.altech.ledger.entity.dto.request.UpdateLedgerMovementStatusRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
 /**
  * Movement status / settle operations.
@@ -23,7 +25,7 @@ public class LedgerMovementOperationUseCase {
     private final CommonUseCase commonUseCase;
 
     @Transactional
-    public LedgerMovementDtos.Response update(Long id, LedgerMovementDtos.UpdateStatusRequest req) {
+    public GetLedgerMovementResponseDto update(Long id, UpdateLedgerMovementStatusRequestDto req) {
         LedgerMovement m = commonUseCase.requireMovement(id);
         if (req.status() == LedgerMovementStatus.SETTLED
             && m.getStatus() != LedgerMovementStatus.SETTLED) {
@@ -41,7 +43,7 @@ public class LedgerMovementOperationUseCase {
 
 
     @Transactional
-    public LedgerMovementDtos.Response settle(Long id) {
+    public GetLedgerMovementResponseDto settle(Long id) {
         LedgerMovement m = commonUseCase.requireMovement(id);
         if (m.getStatus() == LedgerMovementStatus.SETTLED) {
             return DtoMapper.toMovement(m);
@@ -54,7 +56,7 @@ public class LedgerMovementOperationUseCase {
     }
 
     @Transactional
-    public LedgerMovementDtos.Response updateDocuments(Long id, LedgerMovementDtos.UpdateDocumentsRequest req) {
+    public GetLedgerMovementResponseDto updateDocuments(Long id, UpdateLedgerMovementDocumentsRequestDto req) {
         LedgerMovement m = commonUseCase.requireMovement(id);
         if (req.files() != null) m.setFiles(req.files());
         if (req.remarks() != null) m.setRemarks(req.remarks());

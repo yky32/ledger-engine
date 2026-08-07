@@ -1,8 +1,6 @@
 package com.altech.ledger.usecase.wallet;
 
 import com.altech.core.exception.BizException;
-import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
-import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
@@ -22,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.altech.ledger.entity.dto.request.CreateLedgerAccountRequestDto;
+import com.altech.ledger.entity.dto.request.CreateLedgerWalletRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
+import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
 
 @Component
 @RequiredArgsConstructor
@@ -33,7 +35,7 @@ public class CreateWalletUseCase {
     private final CommonUseCase commonUseCase;
 
     @Transactional
-    public LedgerWalletDtos.WithBalancesResponse execute(LedgerWalletDtos.CreateRequest dto) {
+    public GetLedgerWalletResponseDto execute(CreateLedgerWalletRequestDto dto) {
         Account account = commonUseCase.requireAccount(dto.accountId());
 
         String alias = _nextAlias();
@@ -62,16 +64,16 @@ public class CreateWalletUseCase {
      * Main account (+ optional multi-ccy) then wallet row.
      */
     @Transactional
-    public LedgerWalletDtos.WithBalancesResponse executeFull(String ownerId, String mainCurrency,
+    public GetLedgerWalletResponseDto executeFull(String ownerId, String mainCurrency,
                                                              List<String> extraCurrencies,
                                                              String extIdentifier, String extType) {
         String mainAccountNo = commonService.getNextMainAccount();
-        LedgerAccountDtos.Response main = createAccountUseCase.execute(new LedgerAccountDtos.CreateRequest(
+        GetLedgerAccountResponseDto main = createAccountUseCase.execute(new CreateLedgerAccountRequestDto(
             "10", "99", "00", "NA", mainAccountNo, "0000", mainCurrency.toUpperCase(), false));
         if (extraCurrencies != null && !extraCurrencies.isEmpty()) {
             createAccountUseCase.executeByAssociatedCurrencies(mainAccountNo, extraCurrencies);
         }
-        return execute(new LedgerWalletDtos.CreateRequest(
+        return execute(new CreateLedgerWalletRequestDto(
             main.id(), extIdentifier, extType, WalletAssociationType.CUSTODIAN,
             ownerId, mainCurrency.toUpperCase(), ownerId == null ? "NA" : ownerId));
     }

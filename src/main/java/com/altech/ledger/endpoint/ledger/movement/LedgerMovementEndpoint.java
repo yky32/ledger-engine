@@ -8,7 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
+import com.altech.ledger.entity.dto.request.UpdateLedgerMovementStatusRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
 @RestController
 @RequestMapping("/ledger-accounts/movements")
@@ -17,15 +18,15 @@ public class LedgerMovementEndpoint {
     private final LedgerMovementOperationUseCase ledgerMovementOperationUseCase;
 
     @PutMapping("/{id}/statuses")
-    public Result<LedgerMovementDtos.Response> updateStatus(
+    public Result<GetLedgerMovementResponseDto> updateStatus(
         @PathVariable Long id,
-        @Valid @RequestBody LedgerMovementDtos.UpdateStatusRequest dto
+        @Valid @RequestBody UpdateLedgerMovementStatusRequestDto dto
     ) {
         return R.success(ledgerMovementOperationUseCase.update(id, dto));
     }
 
     @PutMapping("/{id}/settle")
-    public Result<LedgerMovementDtos.Response> settle(@PathVariable Long id) {
+    public Result<GetLedgerMovementResponseDto> settle(@PathVariable Long id) {
         return R.success(ledgerMovementOperationUseCase.settle(id));
     }
 }

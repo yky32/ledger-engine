@@ -1,6 +1,5 @@
 package com.altech.ledger.usecase.wallet;
 
-import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.usecase.CommonUseCase;
@@ -8,6 +7,8 @@ import com.altech.ledger.usecase.account.QueryWalletBalanceUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import com.altech.ledger.entity.dto.request.UpdateLedgerWalletRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
 
 @Component
 @RequiredArgsConstructor
@@ -17,7 +18,7 @@ public class UpdateWalletUseCase {
     private final QueryWalletBalanceUseCase queryWalletBalanceUseCase;
 
     @Transactional
-    public LedgerWalletDtos.WithBalancesResponse execute(Long id, LedgerWalletDtos.UpdateRequest dto) {
+    public GetLedgerWalletResponseDto execute(Long id, UpdateLedgerWalletRequestDto dto) {
         Wallet wallet = commonUseCase.requireWallet(id);
         if (dto.status() != null) {
             wallet.setStatus(dto.status());

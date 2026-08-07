@@ -2,13 +2,13 @@ package com.altech.ledger.endpoint;
 
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
-import com.altech.ledger.entity.dto.parity.SystemDtos;
 import com.altech.ledger.usecase.config.QuerySystemConfigurationUseCase;
 import com.altech.ledger.usecase.config.UpsertSystemConfigurationUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 
 @RestController
 @RequestMapping("/configurations")
@@ -18,7 +18,7 @@ public class SystemConfigurationEndpoint {
     private final UpsertSystemConfigurationUseCase upsertSystemConfigurationUseCase;
 
     @GetMapping
-    public Result<SystemDtos.ConfigurationResponse> get(
+    public Result<GetSystemConfigurationResponseDto> get(
         @RequestParam String target,
         @RequestParam(required = false, defaultValue = "global") String scope
     ) {
@@ -26,7 +26,7 @@ public class SystemConfigurationEndpoint {
     }
 
     @PutMapping
-    public Result<SystemDtos.ConfigurationResponse> upsert(@RequestBody Map<String, String> body) {
+    public Result<GetSystemConfigurationResponseDto> upsert(@RequestBody Map<String, String> body) {
         return R.success(upsertSystemConfigurationUseCase.execute(
             body.getOrDefault("name", body.get("target")),
             body.get("target"),

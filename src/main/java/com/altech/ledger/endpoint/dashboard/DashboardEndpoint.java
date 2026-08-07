@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import com.altech.ledger.entity.dto.parity.SystemDtos;
+import com.altech.ledger.entity.dto.response.GetDashboardResponseDto;
 
 @RestController
 @RequestMapping("/dashboards")
@@ -23,13 +23,13 @@ public class DashboardEndpoint {
     private final LedgerMovementRepository ledgerMovementRepository;
 
     @GetMapping
-    public Result<SystemDtos.DashboardResponse> summary() {
+    public Result<GetDashboardResponseDto> summary() {
         long open = ledgerMovementRepository.findAll().stream()
             .filter(m -> m.getStatus() != LedgerMovementStatus.SETTLED
                 && m.getStatus() != LedgerMovementStatus.REJECTED
                 && m.getStatus() != LedgerMovementStatus.ERROR)
             .count();
-        return R.success(new SystemDtos.DashboardResponse(
+        return R.success(new GetDashboardResponseDto(
             walletRepository.count(), accountRepository.count(), ledgerMovementRepository.count(), open));
     }
 }

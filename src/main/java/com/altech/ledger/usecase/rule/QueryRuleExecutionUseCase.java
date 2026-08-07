@@ -1,7 +1,6 @@
 package com.altech.ledger.usecase.rule;
 
 import com.altech.core.exception.BizException;
-import com.altech.ledger.entity.dto.parity.RuleDtos;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.RuleExecutionRepository;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import com.altech.ledger.entity.dto.response.GetRuleExecutionResponseDto;
 
 @Component
 @RequiredArgsConstructor
@@ -20,25 +20,25 @@ public class QueryRuleExecutionUseCase {
     private final RuleExecutionRepository ruleExecutionRepository;
 
     @Transactional(readOnly = true)
-    public RuleDtos.ExecutionResponse one(Long id) {
+    public GetRuleExecutionResponseDto one(Long id) {
         return DtoMapper.toRuleExecution(ruleExecutionRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "RuleExecution not found: " + id)));
     }
 
     @Transactional(readOnly = true)
-    public Page<RuleDtos.ExecutionResponse> list(Pageable pageable) {
+    public Page<GetRuleExecutionResponseDto> list(Pageable pageable) {
         return ruleExecutionRepository.findAll(pageable).map(DtoMapper::toRuleExecution);
     }
 
     @Transactional(readOnly = true)
-    public RuleDtos.ExecutionResponse byOrderType(OrderType orderType) {
+    public GetRuleExecutionResponseDto byOrderType(OrderType orderType) {
         return findByOrderType(orderType)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "No rule execution for " + orderType));
     }
 
     /** Soft lookup — does not throw (for execution path). */
     @Transactional(readOnly = true)
-    public Optional<RuleDtos.ExecutionResponse> findByOrderType(OrderType orderType) {
+    public Optional<GetRuleExecutionResponseDto> findByOrderType(OrderType orderType) {
         return ruleExecutionRepository.findAll().stream()
             .filter(r -> r.getOrderType() == orderType)
             .findFirst()

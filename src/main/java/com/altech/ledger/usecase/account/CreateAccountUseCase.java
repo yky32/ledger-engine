@@ -1,7 +1,6 @@
 package com.altech.ledger.usecase.account;
 
 import com.altech.core.exception.BizException;
-import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
@@ -14,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.altech.ledger.entity.dto.request.CreateLedgerAccountRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
 
 @Component
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class CreateAccountUseCase {
     private final CommonUseCase commonUseCase;
 
     @Transactional
-    public LedgerAccountDtos.Response execute(LedgerAccountDtos.CreateRequest dto) {
+    public GetLedgerAccountResponseDto execute(CreateLedgerAccountRequestDto dto) {
         String currency = commonUseCase.requireCurrency(dto.currency());
         String entity = _blank(dto.entity(), "10");
         String type = _blank(dto.type(), "99");
@@ -48,10 +49,10 @@ public class CreateAccountUseCase {
     }
 
     @Transactional
-    public List<LedgerAccountDtos.Response> executeByAssociatedCurrencies(String mainAccount, List<String> currencies) {
-        List<LedgerAccountDtos.Response> created = new ArrayList<>();
+    public List<GetLedgerAccountResponseDto> executeByAssociatedCurrencies(String mainAccount, List<String> currencies) {
+        List<GetLedgerAccountResponseDto> created = new ArrayList<>();
         for (String currency : currencies) {
-            LedgerAccountDtos.CreateRequest req = new LedgerAccountDtos.CreateRequest(
+            CreateLedgerAccountRequestDto req = new CreateLedgerAccountRequestDto(
                 "10", "99", "00", "NA", mainAccount, commonService.getNextSubAccount(mainAccount),
                 currency.toUpperCase(), false);
             created.add(execute(req));

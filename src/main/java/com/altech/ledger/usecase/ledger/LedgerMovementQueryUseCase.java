@@ -1,6 +1,5 @@
 package com.altech.ledger.usecase.ledger;
 
-import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
@@ -20,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
 /**
  * Ledger movement query surface (parity).
@@ -32,18 +32,18 @@ public class LedgerMovementQueryUseCase {
     private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
-    public LedgerMovementDtos.Response one(Long id) {
+    public GetLedgerMovementResponseDto one(Long id) {
         return DtoMapper.toMovement(commonUseCase.requireMovement(id));
     }
 
     @Transactional(readOnly = true)
-    public Page<LedgerMovementDtos.Response> list(Pageable pageable, Instant startDt, Instant endDt,
+    public Page<GetLedgerMovementResponseDto> list(Pageable pageable, Instant startDt, Instant endDt,
                                                   List<String> statuses) {
         return _filter(ledgerMovementRepository.findAll(pageable), startDt, endDt, statuses);
     }
 
     @Transactional(readOnly = true)
-    public Page<LedgerMovementDtos.Response> myMovements(String ownerId, Pageable pageable,
+    public Page<GetLedgerMovementResponseDto> myMovements(String ownerId, Pageable pageable,
                                                          Instant startDt, Instant endDt, List<String> statuses) {
         List<Long> ids = walletRepository.findByOwnerId(ownerId).stream().map(Wallet::getId).toList();
         if (ids.isEmpty()) {
@@ -53,14 +53,14 @@ public class LedgerMovementQueryUseCase {
     }
 
     @Transactional(readOnly = true)
-    public Page<LedgerMovementDtos.Response> byWallet(Long walletId, Pageable pageable) {
+    public Page<GetLedgerMovementResponseDto> byWallet(Long walletId, Pageable pageable) {
         return ledgerMovementRepository.findByWalletId(walletId, pageable).map(DtoMapper::toMovement);
     }
 
-    private Page<LedgerMovementDtos.Response> _filter(Page<LedgerMovement> page, Instant startDt, Instant endDt,
+    private Page<GetLedgerMovementResponseDto> _filter(Page<LedgerMovement> page, Instant startDt, Instant endDt,
                                                       List<String> statuses) {
         Set<LedgerMovementStatus> statusSet = _parseStatuses(statuses);
-        List<LedgerMovementDtos.Response> filtered = page.getContent().stream()
+        List<GetLedgerMovementResponseDto> filtered = page.getContent().stream()
             .filter(m -> startDt == null || m.getCreateDt() == null || !m.getCreateDt().isBefore(startDt))
             .filter(m -> endDt == null || m.getCreateDt() == null || !m.getCreateDt().isAfter(endDt))
             .filter(m -> statusSet == null || statusSet.contains(m.getStatus()))
