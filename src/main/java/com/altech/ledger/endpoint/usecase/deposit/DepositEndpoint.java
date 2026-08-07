@@ -19,11 +19,11 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 public class DepositEndpoint {
-    private final LedgerDepositUseCase depositUseCase;
+    private final LedgerDepositUseCase ledgerDepositUseCase;
 
     @PostMapping("/ledger/deposits")
     public Result<LedgerMovementDtos.Response> deposit(@Valid @RequestBody LedgerMovementDtos.CreateDepositRequest dto) {
-        return R.success(depositUseCase.execute(dto));
+        return R.success(ledgerDepositUseCase.execute(dto));
     }
 
     @PostMapping(value = "/ledger/deposits", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -36,7 +36,7 @@ public class DepositEndpoint {
         @RequestParam(required = false) List<MultipartFile> files
     ) {
         String fileMeta = MultipartFileMetadata.summarize(files);
-        return R.success(depositUseCase.execute(new LedgerMovementDtos.CreateDepositRequest(
+        return R.success(ledgerDepositUseCase.execute(new LedgerMovementDtos.CreateDepositRequest(
             targetWalletId, currency, amount, LedgerMovementMode.MANUAL, null, movementKey,
             description, fileMeta == null ? null : Map.of("files", fileMeta))));
     }
@@ -47,6 +47,6 @@ public class DepositEndpoint {
         @RequestParam String currency,
         @RequestParam BigDecimal amount
     ) {
-        return R.success(depositUseCase.executeCardSession(walletId, currency, amount, Map.of()));
+        return R.success(ledgerDepositUseCase.executeCardSession(walletId, currency, amount, Map.of()));
     }
 }

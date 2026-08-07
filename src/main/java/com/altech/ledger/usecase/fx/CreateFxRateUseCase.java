@@ -14,16 +14,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class CreateFxRateUseCase {
-    private final FxRateRepository fxRates;
+    private final FxRateRepository fxRateRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional
     public FxRateDtos.Response execute(FxRateDtos.CreateRequest dto) {
         String base = commonUseCase.normalizeCurrency(dto.base());
         String target = commonUseCase.normalizeCurrency(dto.target());
-        if (fxRates.findByBaseAndTarget(base, target).isPresent()) {
+        if (fxRateRepository.findByBaseAndTarget(base, target).isPresent()) {
             throw new BizException(FxErrorResponse.FX0409, "Rate exists for " + base + "/" + target);
         }
-        return DtoMapper.toFx(fxRates.save(new FxRate(base, target, dto.rate())));
+        return DtoMapper.toFx(fxRateRepository.save(new FxRate(base, target, dto.rate())));
     }
 }

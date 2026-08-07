@@ -10,6 +10,7 @@
  * utils/        JSONUtil, EndpointHandler, CallableUtil, ExceptionUtil
  * aop/log/      LogScope
  * constant/enu/ LogType
+ * kafka/        BaseEvent, BaseListener
  * </pre>
  *
  * Ledger-specific mapped superclasses: {@code entity.TenancyAware}, {@code entity.WalletIdAware}.

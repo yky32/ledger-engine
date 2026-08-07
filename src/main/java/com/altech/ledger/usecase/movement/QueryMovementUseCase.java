@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class QueryMovementUseCase {
-    private final LedgerMovementRepository movements;
+    private final LedgerMovementRepository ledgerMovementRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
@@ -25,7 +25,7 @@ public class QueryMovementUseCase {
     @Transactional(readOnly = true)
     public PageResponse<MovementResponse> listByWallet(Long walletId, Pageable pageable) {
         commonUseCase.requireWallet(walletId);
-        Page<LedgerMovement> page = movements.findByWalletId(walletId, pageable);
+        Page<LedgerMovement> page = ledgerMovementRepository.findByWalletId(walletId, pageable);
         return new PageResponse<>(page.map(this::_response).getContent(), page.getNumber(), page.getSize(),
             page.getTotalElements(), page.getTotalPages());
     }

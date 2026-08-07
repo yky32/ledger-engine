@@ -22,12 +22,12 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class QueryFxRateUseCase {
-    private final FxRateRepository fxRates;
+    private final FxRateRepository fxRateRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
     public FxRateDtos.Response one(Long id) {
-        return DtoMapper.toFx(fxRates.findById(id)
+        return DtoMapper.toFx(fxRateRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "FxRate not found: " + id)));
     }
 
@@ -36,11 +36,11 @@ public class QueryFxRateUseCase {
         if (base != null && target != null) {
             String b = commonUseCase.normalizeCurrency(base);
             String t = commonUseCase.normalizeCurrency(target);
-            return fxRates.findByBaseAndTarget(b, t)
+            return fxRateRepository.findByBaseAndTarget(b, t)
                 .<Page<FxRateDtos.Response>>map(r -> new PageImpl<>(List.of(DtoMapper.toFx(r)), pageable, 1))
                 .orElseGet(() -> Page.empty(pageable));
         }
-        return fxRates.findAll(pageable).map(DtoMapper::toFx);
+        return fxRateRepository.findAll(pageable).map(DtoMapper::toFx);
     }
 
     @Transactional(readOnly = true)
@@ -51,12 +51,12 @@ public class QueryFxRateUseCase {
         if (from == null || to == null || from.equalsIgnoreCase(to)) {
             return amount;
         }
-        Optional<FxRate> direct = fxRates.findByBaseAndTarget(
+        Optional<FxRate> direct = fxRateRepository.findByBaseAndTarget(
             commonUseCase.normalizeCurrency(from), commonUseCase.normalizeCurrency(to));
         if (direct.isPresent()) {
             return amount.multiply(direct.get().getRate()).setScale(8, RoundingMode.HALF_UP);
         }
-        Optional<FxRate> inverse = fxRates.findByBaseAndTarget(
+        Optional<FxRate> inverse = fxRateRepository.findByBaseAndTarget(
             commonUseCase.normalizeCurrency(to), commonUseCase.normalizeCurrency(from));
         if (inverse.isPresent() && inverse.get().getRate().signum() != 0) {
             return amount.divide(inverse.get().getRate(), 8, RoundingMode.HALF_UP);

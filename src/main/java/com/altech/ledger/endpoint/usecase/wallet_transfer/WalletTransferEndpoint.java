@@ -14,10 +14,10 @@ import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 @RestController
 @RequiredArgsConstructor
 public class WalletTransferEndpoint {
-    private final LedgerMovementPipelineUseCase pipeline;
+    private final LedgerMovementPipelineUseCase ledgerMovementPipelineUseCase;
 
     @PostMapping("/ledger/wallet-transfers/in-wallet")
     public Result<LedgerMovementDtos.Response> inWallet(@Valid @RequestBody LedgerMovementDtos.CreateInWalletTransferRequest dto) {
-        return R.success(pipeline.inWalletTransfer(dto));
+        return R.success(ledgerMovementPipelineUseCase.inWalletTransfer(dto));
     }
 }

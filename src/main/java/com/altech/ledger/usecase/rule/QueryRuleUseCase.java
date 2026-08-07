@@ -14,16 +14,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class QueryRuleUseCase {
-    private final RuleRepository rules;
+    private final RuleRepository ruleRepository;
 
     @Transactional(readOnly = true)
     public RuleDtos.Response one(Long id) {
-        return DtoMapper.toRule(rules.findById(id)
+        return DtoMapper.toRule(ruleRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Rule not found: " + id)));
     }
 
     @Transactional(readOnly = true)
     public Page<RuleDtos.Response> list(Pageable pageable) {
-        return rules.findAll(pageable).map(DtoMapper::toRule);
+        return ruleRepository.findAll(pageable).map(DtoMapper::toRule);
     }
 }

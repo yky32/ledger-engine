@@ -13,58 +13,58 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class LedgerMovementPipelineUseCase {
-    private final LedgerMovementShooter shooter;
-    private final LedgerMovementQueryUseCase queryUseCase;
-    private final LedgerMovementOperationUseCase operationUseCase;
-    private final LedgerDepositUseCase depositUseCase;
+    private final LedgerMovementShooter ledgerMovementShooter;
+    private final LedgerMovementQueryUseCase ledgerMovementQueryUseCase;
+    private final LedgerMovementOperationUseCase ledgerMovementOperationUseCase;
+    private final LedgerDepositUseCase ledgerDepositUseCase;
 
     @Transactional
     public LedgerMovementDtos.Response deposit(LedgerMovementDtos.CreateDepositRequest req) {
-        return depositUseCase.execute(req);
+        return ledgerDepositUseCase.execute(req);
     }
 
     @Transactional
     public LedgerMovementDtos.Response withdraw(LedgerMovementDtos.CreateWithdrawalRequest req) {
-        return shooter.doWithdrawal(req);
+        return ledgerMovementShooter.doWithdrawal(req);
     }
 
     @Transactional
     public LedgerMovementDtos.Response inWalletTransfer(LedgerMovementDtos.CreateInWalletTransferRequest req) {
-        return shooter.doInWalletTransfer(req);
+        return ledgerMovementShooter.doInWalletTransfer(req);
     }
 
     @Transactional
     public LedgerMovementDtos.Response settle(Long id) {
-        return operationUseCase.settle(id);
+        return ledgerMovementOperationUseCase.settle(id);
     }
 
     @Transactional
     public LedgerMovementDtos.Response updateStatus(Long id, LedgerMovementDtos.UpdateStatusRequest req) {
-        return operationUseCase.update(id, req);
+        return ledgerMovementOperationUseCase.update(id, req);
     }
 
     @Transactional
     public LedgerMovementDtos.Response updateDocuments(Long id, LedgerMovementDtos.UpdateDocumentsRequest req) {
-        return operationUseCase.updateDocuments(id, req);
+        return ledgerMovementOperationUseCase.updateDocuments(id, req);
     }
 
     @Transactional(readOnly = true)
     public LedgerMovementDtos.Response getOne(Long id) {
-        return queryUseCase.one(id);
+        return ledgerMovementQueryUseCase.one(id);
     }
 
     @Transactional(readOnly = true)
     public Page<LedgerMovementDtos.Response> getAll(Pageable pageable) {
-        return queryUseCase.list(pageable, null, null, null);
+        return ledgerMovementQueryUseCase.list(pageable, null, null, null);
     }
 
     @Transactional(readOnly = true)
     public Page<LedgerMovementDtos.Response> myMovements(String ownerId, Pageable pageable) {
-        return queryUseCase.myMovements(ownerId, pageable, null, null, null);
+        return ledgerMovementQueryUseCase.myMovements(ownerId, pageable, null, null, null);
     }
 
     @Transactional(readOnly = true)
     public Page<LedgerMovementDtos.Response> byWallet(Long walletId, Pageable pageable) {
-        return queryUseCase.byWallet(walletId, pageable);
+        return ledgerMovementQueryUseCase.byWallet(walletId, pageable);
     }
 }

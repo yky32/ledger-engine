@@ -33,10 +33,10 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class CreateWalletOnboardingUseCase {
-    private final IntegrationProperties properties;
+    private final IntegrationProperties integrationProperties;
     private final CreateLedgerAccountUseCase createLedgerAccountUseCase;
-    private final AccountRepository accounts;
-    private final WalletRepository wallets;
+    private final AccountRepository accountRepository;
+    private final WalletRepository walletRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional
@@ -90,17 +90,17 @@ public class CreateWalletOnboardingUseCase {
 
     public String walletRef(String userId, String currency) {
         String ccy = commonUseCase.normalizeCurrency(currency);
-        return properties.getWalletRefTemplate()
+        return integrationProperties.getWalletRefTemplate()
             .replace("{userId}", userId == null ? "" : userId)
             .replace("{currency}", ccy == null ? "" : ccy);
     }
 
     private boolean _exists(String userId, String currency) {
         String ccy = commonUseCase.normalizeCurrency(currency);
-        if (wallets.existsByOwnerIdAndCurrency(userId, ccy)) {
+        if (walletRepository.existsByOwnerIdAndCurrency(userId, ccy)) {
             return true;
         }
-        return accounts.existsByFullNumber(walletRef(userId, ccy));
+        return accountRepository.existsByFullNumber(walletRef(userId, ccy));
     }
 
     private GetWalletOnboardResponseDto _createWallet(CreateWalletOnboardRequestDto request) {
@@ -108,8 +108,8 @@ public class CreateWalletOnboardingUseCase {
         String currency = commonUseCase.normalizeCurrency(request.currency());
         String externalReference = walletRef(userId, currency);
 
-        if (wallets.existsByOwnerIdAndCurrency(userId, currency)
-            || accounts.existsByFullNumber(externalReference)) {
+        if (walletRepository.existsByOwnerIdAndCurrency(userId, currency)
+            || accountRepository.existsByFullNumber(externalReference)) {
             throw new BizException(WalletErrorResponse.WAL0409, "Wallet already onboarded: " + userId + " / " + currency);
         }
 
@@ -120,7 +120,7 @@ public class CreateWalletOnboardingUseCase {
         createLedgerAccountUseCase.execute(new CreateAccountRequest(
             externalReference, name, CoaType.LIABILITY, currency, false));
 
-        Account account = accounts.findByFullNumber(externalReference)
+        Account account = accountRepository.findByFullNumber(externalReference)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account missing after create: " + externalReference));
 
         String alias = _uniqueAlias(userId, currency);
@@ -129,7 +129,7 @@ public class CreateWalletOnboardingUseCase {
         String extType = request.externalType() == null || request.externalType().isBlank()
             ? "CRM" : request.externalType();
 
-        Wallet wallet = wallets.save(new Wallet(
+        Wallet wallet = walletRepository.save(new Wallet(
             account.getId(),
             alias,
             name,
@@ -146,7 +146,7 @@ public class CreateWalletOnboardingUseCase {
 
     private String _uniqueAlias(String userId, String currency) {
         String base = userId + "-" + currency;
-        if (!wallets.existsByAlias(base)) {
+        if (!walletRepository.existsByAlias(base)) {
             return base;
         }
         return base + "-" + System.currentTimeMillis() % 100_000;

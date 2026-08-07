@@ -17,8 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class LedgerMovementOperationUseCase {
-    private final LedgerMovementRepository movements;
-    private final LedgerMovementExecutionUseCase execution;
+    private final LedgerMovementRepository ledgerMovementRepository;
+    private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
     private final MovementBus movementBus;
     private final CommonUseCase commonUseCase;
 
@@ -29,14 +29,14 @@ public class LedgerMovementOperationUseCase {
             && m.getStatus() != LedgerMovementStatus.SETTLED) {
             m.setStatus(LedgerMovementStatus.PROCESSING);
             if (req.remarks() != null) m.setRemarks(req.remarks());
-            movements.save(m);
-            LedgerMovement done = execution.execute(m);
+            ledgerMovementRepository.save(m);
+            LedgerMovement done = ledgerMovementExecutionUseCase.execute(m);
             movementBus.publishDone(done);
             return DtoMapper.toMovement(done);
         }
         m.setStatus(req.status());
         if (req.remarks() != null) m.setRemarks(req.remarks());
-        return DtoMapper.toMovement(movements.save(m));
+        return DtoMapper.toMovement(ledgerMovementRepository.save(m));
     }
 
 
@@ -47,8 +47,8 @@ public class LedgerMovementOperationUseCase {
             return DtoMapper.toMovement(m);
         }
         m.setStatus(LedgerMovementStatus.PROCESSING);
-        movements.save(m);
-        LedgerMovement done = execution.execute(m);
+        ledgerMovementRepository.save(m);
+        LedgerMovement done = ledgerMovementExecutionUseCase.execute(m);
         movementBus.publishDone(done);
         return DtoMapper.toMovement(done);
     }
@@ -58,6 +58,6 @@ public class LedgerMovementOperationUseCase {
         LedgerMovement m = commonUseCase.requireMovement(id);
         if (req.files() != null) m.setFiles(req.files());
         if (req.remarks() != null) m.setRemarks(req.remarks());
-        return DtoMapper.toMovement(movements.save(m));
+        return DtoMapper.toMovement(ledgerMovementRepository.save(m));
     }
 }

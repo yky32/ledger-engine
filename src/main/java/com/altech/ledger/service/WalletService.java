@@ -13,23 +13,23 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class WalletService {
-    private final WalletRepository wallets;
+    private final WalletRepository walletRepository;
 
     @Transactional(readOnly = true)
     public Wallet get(Long id) {
-        return wallets.findById(id)
+        return walletRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + id));
     }
 
     @Transactional(readOnly = true)
     public Wallet getByAlias(String alias) {
-        return wallets.findByAlias(alias)
+        return walletRepository.findByAlias(alias)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found alias: " + alias));
     }
 
     @Transactional(readOnly = true)
     public Wallet getFromAccountId(Long accountId) {
-        return wallets.findByAccountId(accountId)
+        return walletRepository.findByAccountId(accountId)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found for account: " + accountId));
     }
 
@@ -37,7 +37,7 @@ public class WalletService {
     public Wallet resolve(String idOrAlias) {
         try {
             Long id = Long.valueOf(idOrAlias);
-            return wallets.findById(id).or(() -> wallets.findByAlias(idOrAlias))
+            return walletRepository.findById(id).or(() -> walletRepository.findByAlias(idOrAlias))
                 .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + idOrAlias));
         } catch (NumberFormatException ex) {
             return getByAlias(idOrAlias);

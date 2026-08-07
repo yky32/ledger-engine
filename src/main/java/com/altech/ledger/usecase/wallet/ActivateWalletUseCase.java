@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class ActivateWalletUseCase {
-    private final WalletRepository wallets;
+    private final WalletRepository walletRepository;
     private final CommonUseCase commonUseCase;
     private final QueryWalletBalanceUseCase queryWalletBalanceUseCase;
 
@@ -21,7 +21,7 @@ public class ActivateWalletUseCase {
     public LedgerWalletDtos.WithBalancesResponse execute(Long id) {
         Wallet wallet = commonUseCase.requireWallet(id);
         wallet.setStatus(WalletStatus.ACTIVE);
-        wallets.save(wallet);
+        walletRepository.save(wallet);
         return queryWalletBalanceUseCase.one(wallet.getId(), null);
     }
 

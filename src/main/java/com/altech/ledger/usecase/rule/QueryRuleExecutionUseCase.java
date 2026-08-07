@@ -17,17 +17,17 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class QueryRuleExecutionUseCase {
-    private final RuleExecutionRepository executions;
+    private final RuleExecutionRepository ruleExecutionRepository;
 
     @Transactional(readOnly = true)
     public RuleDtos.ExecutionResponse one(Long id) {
-        return DtoMapper.toRuleExecution(executions.findById(id)
+        return DtoMapper.toRuleExecution(ruleExecutionRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "RuleExecution not found: " + id)));
     }
 
     @Transactional(readOnly = true)
     public Page<RuleDtos.ExecutionResponse> list(Pageable pageable) {
-        return executions.findAll(pageable).map(DtoMapper::toRuleExecution);
+        return ruleExecutionRepository.findAll(pageable).map(DtoMapper::toRuleExecution);
     }
 
     @Transactional(readOnly = true)
@@ -39,7 +39,7 @@ public class QueryRuleExecutionUseCase {
     /** Soft lookup — does not throw (for execution path). */
     @Transactional(readOnly = true)
     public Optional<RuleDtos.ExecutionResponse> findByOrderType(OrderType orderType) {
-        return executions.findAll().stream()
+        return ruleExecutionRepository.findAll().stream()
             .filter(r -> r.getOrderType() == orderType)
             .findFirst()
             .map(DtoMapper::toRuleExecution);

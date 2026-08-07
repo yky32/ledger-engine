@@ -11,14 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class UpsertSystemConfigurationUseCase {
-    private final SystemConfigurationRepository configs;
+    private final SystemConfigurationRepository systemConfigurationRepository;
 
     @Transactional
     public SystemDtos.ConfigurationResponse execute(String name, String target, String scope, String value) {
-        SystemConfiguration cfg = configs.findByTargetAndScope(target, scope)
+        SystemConfiguration cfg = systemConfigurationRepository.findByTargetAndScope(target, scope)
             .orElse(new SystemConfiguration(name, target, scope, value));
         cfg.setName(name);
         cfg.setValue(value);
-        return DtoMapper.toConfig(configs.save(cfg));
+        return DtoMapper.toConfig(systemConfigurationRepository.save(cfg));
     }
 }

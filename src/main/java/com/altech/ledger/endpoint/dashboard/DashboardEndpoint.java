@@ -18,18 +18,18 @@ import com.altech.ledger.entity.dto.parity.SystemDtos;
 @RequestMapping("/dashboards")
 @RequiredArgsConstructor
 public class DashboardEndpoint {
-    private final WalletRepository wallets;
-    private final AccountRepository accounts;
-    private final LedgerMovementRepository movements;
+    private final WalletRepository walletRepository;
+    private final AccountRepository accountRepository;
+    private final LedgerMovementRepository ledgerMovementRepository;
 
     @GetMapping
     public Result<SystemDtos.DashboardResponse> summary() {
-        long open = movements.findAll().stream()
+        long open = ledgerMovementRepository.findAll().stream()
             .filter(m -> m.getStatus() != LedgerMovementStatus.SETTLED
                 && m.getStatus() != LedgerMovementStatus.REJECTED
                 && m.getStatus() != LedgerMovementStatus.ERROR)
             .count();
         return R.success(new SystemDtos.DashboardResponse(
-            wallets.count(), accounts.count(), movements.count(), open));
+            walletRepository.count(), accountRepository.count(), ledgerMovementRepository.count(), open));
     }
 }

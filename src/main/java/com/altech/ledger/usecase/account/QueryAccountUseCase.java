@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class QueryAccountUseCase {
-    private final AccountRepository accounts;
+    private final AccountRepository accountRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
@@ -23,6 +23,6 @@ public class QueryAccountUseCase {
 
     @Transactional(readOnly = true)
     public Page<LedgerAccountDtos.Response> list(Pageable pageable) {
-        return accounts.findAll(pageable).map(DtoMapper::toAccount);
+        return accountRepository.findAll(pageable).map(DtoMapper::toAccount);
     }
 }

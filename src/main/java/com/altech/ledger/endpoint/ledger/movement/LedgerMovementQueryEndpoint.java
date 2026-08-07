@@ -22,11 +22,11 @@ import java.util.List;
 @RequestMapping("/ledger-accounts/movements")
 @RequiredArgsConstructor
 public class LedgerMovementQueryEndpoint {
-    private final LedgerMovementQueryUseCase queryUseCase;
+    private final LedgerMovementQueryUseCase ledgerMovementQueryUseCase;
 
     @GetMapping("/{id}")
     public Result<LedgerMovementDtos.Response> getOne(@PathVariable Long id) {
-        return R.success(queryUseCase.one(id));
+        return R.success(ledgerMovementQueryUseCase.one(id));
     }
 
     @GetMapping
@@ -36,7 +36,7 @@ public class LedgerMovementQueryEndpoint {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDt,
         @RequestParam(required = false) List<String> statuses
     ) {
-        var page = queryUseCase.list(pageable, startDt, endDt, statuses);
+        var page = ledgerMovementQueryUseCase.list(pageable, startDt, endDt, statuses);
         return R.success(page.getContent(), Pagination.create(page));
     }
 
@@ -48,7 +48,7 @@ public class LedgerMovementQueryEndpoint {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDt,
         @RequestParam(required = false) List<String> statuses
     ) {
-        var page = queryUseCase.myMovements(ownerId, pageable, startDt, endDt, statuses);
+        var page = ledgerMovementQueryUseCase.myMovements(ownerId, pageable, startDt, endDt, statuses);
         return R.success(page.getContent(), Pagination.create(page));
     }
 }

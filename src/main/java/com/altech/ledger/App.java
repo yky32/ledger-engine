@@ -24,7 +24,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class App implements ApplicationRunner {
     private final IntegrationProperties integrationProperties;
     private final CreateLedgerAccountUseCase createLedgerAccountUseCase;
-    private final AccountRepository accounts;
+    private final AccountRepository accountRepository;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -56,7 +56,7 @@ public class App implements ApplicationRunner {
 
     private void ensurePool(String template, String name, String currency, CoaType type) {
         String ref = template.replace("{currency}", currency);
-        if (accounts.existsByFullNumber(ref)) {
+        if (accountRepository.existsByFullNumber(ref)) {
             return;
         }
         createLedgerAccountUseCase.execute(new CreateAccountRequest(ref, name, type, currency, true));

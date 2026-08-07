@@ -14,18 +14,18 @@ import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 @RequestMapping("/ledger-accounts/movements")
 @RequiredArgsConstructor
 public class LedgerMovementEndpoint {
-    private final LedgerMovementOperationUseCase operationUseCase;
+    private final LedgerMovementOperationUseCase ledgerMovementOperationUseCase;
 
     @PutMapping("/{id}/statuses")
     public Result<LedgerMovementDtos.Response> updateStatus(
         @PathVariable Long id,
         @Valid @RequestBody LedgerMovementDtos.UpdateStatusRequest dto
     ) {
-        return R.success(operationUseCase.update(id, dto));
+        return R.success(ledgerMovementOperationUseCase.update(id, dto));
     }
 
     @PutMapping("/{id}/settle")
     public Result<LedgerMovementDtos.Response> settle(@PathVariable Long id) {
-        return R.success(operationUseCase.settle(id));
+        return R.success(ledgerMovementOperationUseCase.settle(id));
     }
 }

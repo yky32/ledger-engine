@@ -19,8 +19,8 @@ public abstract class BaseLedgerMovementShooter {
     private static final Logger log = LoggerFactory.getLogger(BaseLedgerMovementShooter.class);
 
     private final MovementBus movementBus;
-    private final LedgerMovementRepository movements;
-    private final LedgerMovementMode defaultMode;
+    private final LedgerMovementRepository ledgerMovementRepository;
+    private final LedgerMovementMode ledgerMovementMode;
 
     protected LedgerMovement execute(LedgerMovement movement) {
         beforeExecute(movement);
@@ -30,10 +30,10 @@ public abstract class BaseLedgerMovementShooter {
         log.info("BaseLedgerMovementShooter.execute id={} mode={} orderType={}",
             movement.getId(), movement.getMode(), movement.getOrderType());
 
-        switch (movement.getMode() == null ? defaultMode : movement.getMode()) {
+        switch (movement.getMode() == null ? ledgerMovementMode : movement.getMode()) {
             case AUTO -> {
                 movement.setStatus(LedgerMovementStatus.PROCESSING);
-                movements.save(movement);
+                ledgerMovementRepository.save(movement);
                 return movementBus.dispatch(movement);
             }
             case MANUAL -> {
@@ -43,13 +43,13 @@ public abstract class BaseLedgerMovementShooter {
                 } else {
                     movement.setStatus(LedgerMovementStatus.PROCESSING);
                 }
-                movements.save(movement);
+                ledgerMovementRepository.save(movement);
                 // MANUAL does not settle until settle/status API
                 return movement;
             }
             default -> {
                 movement.setStatus(LedgerMovementStatus.PROCESSING);
-                movements.save(movement);
+                ledgerMovementRepository.save(movement);
                 return movementBus.dispatch(movement);
             }
         }
@@ -67,7 +67,7 @@ public abstract class BaseLedgerMovementShooter {
         return movementBus;
     }
 
-    protected LedgerMovementRepository movements() {
-        return movements;
+    protected LedgerMovementRepository ledgerMovementRepository() {
+        return ledgerMovementRepository;
     }
 }

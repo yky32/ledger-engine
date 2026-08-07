@@ -20,13 +20,13 @@ public class TransactionEventKafkaListener {
     private static final Logger log = LoggerFactory.getLogger(TransactionEventKafkaListener.class);
 
     private final ObjectMapper objectMapper;
-    private final IngestTransactionUseCase ingestionUseCase;
+    private final IngestTransactionUseCase ingestTransactionUseCase;
 
     @KafkaListener(topics = "${ledger.integration.kafka.topic}", groupId = "${ledger.integration.kafka.group-id}")
     public void onMessage(ConsumerRecord<String, String> record) {
         try {
             TransactionalEvent event = objectMapper.readValue(record.value(), TransactionalEvent.class);
-            IngestionResult result = ingestionUseCase.execute(event);
+            IngestionResult result = ingestTransactionUseCase.execute(event);
             log.info("Kafka event {} -> {}", event.eventId(), result.status());
         } catch (Exception ex) {
             log.error("Failed to process Kafka record offset={}: {}", record.offset(), ex.getMessage(), ex);

@@ -22,9 +22,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CommonUseCase {
 
-    private final WalletRepository wallets;
-    private final AccountRepository accounts;
-    private final LedgerMovementRepository movements;
+    private final WalletRepository walletRepository;
+    private final AccountRepository accountRepository;
+    private final LedgerMovementRepository ledgerMovementRepository;
 
     public Wallet requireWallet(Long id) {
         return _requireWallet(id);
@@ -32,7 +32,7 @@ public class CommonUseCase {
 
     public Wallet requireWalletByOwnerAndCurrency(String ownerId, String currency) {
         String ccy = normalizeCurrency(currency);
-        return wallets.findByOwnerIdAndCurrency(ownerId, ccy)
+        return walletRepository.findByOwnerIdAndCurrency(ownerId, ccy)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
                 "Wallet not found for " + ownerId + " / " + ccy));
     }
@@ -74,17 +74,17 @@ public class CommonUseCase {
     }
 
     private Wallet _requireWallet(Long id) {
-        return wallets.findById(id)
+        return walletRepository.findById(id)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404, "Wallet not found: " + id));
     }
 
     private Account _requireAccount(Long id) {
-        return accounts.findById(id)
+        return accountRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
     }
 
     private LedgerMovement _requireMovement(Long id) {
-        return movements.findById(id)
+        return ledgerMovementRepository.findById(id)
             .orElseThrow(() -> new BizException(MovementErrorResponse.MOV0404, "Movement not found: " + id));
     }
 

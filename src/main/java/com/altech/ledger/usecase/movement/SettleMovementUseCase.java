@@ -11,11 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class SettleMovementUseCase {
-    private final LedgerMovementPipelineUseCase pipeline;
+    private final LedgerMovementPipelineUseCase ledgerMovementPipelineUseCase;
 
     @Transactional
     public MovementResponse execute(Long movementId, SettleMovementRequest request) {
-        return _toDto(pipeline.settle(movementId));
+        return _toDto(ledgerMovementPipelineUseCase.settle(movementId));
     }
 
     private MovementResponse _toDto(LedgerMovementDtos.Response r) {

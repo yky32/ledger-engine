@@ -26,9 +26,9 @@ import java.util.UUID;
 public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     private final WalletService walletService;
 
-    public LedgerMovementShooter(WalletService walletService, LedgerMovementRepository movements,
+    public LedgerMovementShooter(WalletService walletService, LedgerMovementRepository ledgerMovementRepository,
                                  MovementBus movementBus) {
-        super(movementBus, movements, LedgerMovementMode.AUTO);
+        super(movementBus, ledgerMovementRepository, LedgerMovementMode.AUTO);
         this.walletService = walletService;
     }
 
@@ -41,11 +41,11 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         Wallet wallet = walletService.resolve(target);
         requireActive(wallet);
         String key = key(req.movementKey(), "dep");
-        return movements().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
             LedgerMovement m = newMovement(key, wallet.getId(), OrderType.DEPOSIT, req.mode(),
                 req.originatorId(), String.valueOf(wallet.getId()), req.amount(),
                 req.currency().toUpperCase(), req.description());
-            movements().save(m);
+            ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
     }
@@ -59,11 +59,11 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         Wallet wallet = walletService.resolve(origin);
         requireActive(wallet);
         String key = key(req.movementKey(), "wd");
-        return movements().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
             LedgerMovement m = newMovement(key, wallet.getId(), OrderType.WITHDRAWAL, req.mode(),
                 String.valueOf(wallet.getId()), req.targetId(), req.amount(),
                 req.currency().toUpperCase(), req.description());
-            movements().save(m);
+            ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
     }
@@ -75,11 +75,11 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         requireActive(from);
         requireActive(to);
         String key = key(req.movementKey(), "xfer");
-        return movements().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
             LedgerMovement m = newMovement(key, from.getId(), OrderType.IN_WALLET_TRANSFER, req.mode(),
                 String.valueOf(from.getId()), String.valueOf(to.getId()), req.amount(),
                 req.currency().toUpperCase(), req.description());
-            movements().save(m);
+            ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
     }
@@ -91,13 +91,13 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);
         String key = key(movementKey, orderType.name().toLowerCase());
-        return movements().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
             String origin = orderType == OrderType.BURN ? String.valueOf(walletId) : null;
             String target = (orderType == OrderType.EARN || orderType == OrderType.ADJUSTMENT)
                 ? String.valueOf(walletId) : null;
             LedgerMovement m = newMovement(key, walletId, orderType, LedgerMovementMode.AUTO,
                 origin, target, amount, currency.toUpperCase(), description);
-            movements().save(m);
+            ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
     }

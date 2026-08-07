@@ -14,16 +14,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class UpdateFxRateUseCase {
-    private final FxRateRepository fxRates;
+    private final FxRateRepository fxRateRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional
     public FxRateDtos.Response execute(Long id, FxRateDtos.CreateRequest dto) {
-        FxRate rate = fxRates.findById(id)
+        FxRate rate = fxRateRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "FxRate not found: " + id));
         rate.setBase(commonUseCase.normalizeCurrency(dto.base()));
         rate.setTarget(commonUseCase.normalizeCurrency(dto.target()));
         rate.setRate(dto.rate());
-        return DtoMapper.toFx(fxRates.save(rate));
+        return DtoMapper.toFx(fxRateRepository.save(rate));
     }
 }

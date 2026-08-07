@@ -26,8 +26,8 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class CreateWalletUseCase {
-    private final AccountRepository accounts;
-    private final WalletRepository wallets;
+    private final AccountRepository accountRepository;
+    private final WalletRepository walletRepository;
     private final CreateAccountUseCase createAccountUseCase;
     private final CommonService commonService;
     private final CommonUseCase commonUseCase;
@@ -45,7 +45,7 @@ public class CreateWalletUseCase {
         String nickname = dto.nickname() == null || dto.nickname().isBlank() ? "NA" : dto.nickname();
         WalletAssociationType type = dto.type() == null ? WalletAssociationType.CUSTODIAN : dto.type();
 
-        if (wallets.existsByOwnerIdAndCurrency(ownerId, currency)) {
+        if (walletRepository.existsByOwnerIdAndCurrency(ownerId, currency)) {
             throw new BizException(WalletErrorResponse.WAL0409,
                 "Wallet already exists for owner/currency: " + ownerId + "/" + currency);
         }
@@ -53,8 +53,8 @@ public class CreateWalletUseCase {
         Wallet wallet = new Wallet(
             account.getId(), alias, nickname, dto.extIdentifier(), dto.extType(),
             type, WalletType.CORPORATE, WalletStatus.PENDING, ownerId, currency);
-        wallet = wallets.save(wallet);
-        List<Account> myAccounts = new ArrayList<>(accounts.findAllByMainAccount(account.getMainAccount()));
+        wallet = walletRepository.save(wallet);
+        List<Account> myAccounts = new ArrayList<>(accountRepository.findAllByMainAccount(account.getMainAccount()));
         return DtoMapper.toWallet(wallet, myAccounts);
     }
 

@@ -12,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class QuerySystemConfigurationUseCase {
-    private final SystemConfigurationRepository configs;
+    private final SystemConfigurationRepository systemConfigurationRepository;
 
     @Transactional(readOnly = true)
     public SystemDtos.ConfigurationResponse execute(String target, String scope) {
-        return configs.findByTargetAndScope(target, scope)
+        return systemConfigurationRepository.findByTargetAndScope(target, scope)
             .map(DtoMapper::toConfig)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Config not found: " + target + "/" + scope));

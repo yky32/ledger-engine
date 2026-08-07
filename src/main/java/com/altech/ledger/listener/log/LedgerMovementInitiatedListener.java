@@ -23,7 +23,7 @@ public class LedgerMovementInitiatedListener {
     private static final Logger log = LoggerFactory.getLogger(LedgerMovementInitiatedListener.class);
 
     private final ObjectMapper objectMapper;
-    private final LedgerMovementExecutionUseCase execution;
+    private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
 
     @KafkaListener(
         topics = "${ledger.movement.kafka.initiated-topic:ledger.movement.initiated}",
@@ -33,7 +33,7 @@ public class LedgerMovementInitiatedListener {
         try {
             LedgerMovementEvent event = objectMapper.readValue(record.value(), LedgerMovementEvent.class);
             log.info("MOVEMENT_INITIATED movementId={}", event.getMovementId());
-            execution.execute(event);
+            ledgerMovementExecutionUseCase.execute(event);
         } catch (Exception ex) {
             log.error("Failed processing MOVEMENT_INITIATED: {}", ex.getMessage(), ex);
             throw new IllegalStateException(ex);

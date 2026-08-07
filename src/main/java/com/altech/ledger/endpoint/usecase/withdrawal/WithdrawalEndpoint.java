@@ -13,10 +13,10 @@ import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 @RestController
 @RequiredArgsConstructor
 public class WithdrawalEndpoint {
-    private final LedgerMovementPipelineUseCase pipeline;
+    private final LedgerMovementPipelineUseCase ledgerMovementPipelineUseCase;
 
     @PostMapping("/ledger/withdrawals")
     public Result<LedgerMovementDtos.Response> withdraw(@Valid @RequestBody LedgerMovementDtos.CreateWithdrawalRequest dto) {
-        return R.success(pipeline.withdraw(dto));
+        return R.success(ledgerMovementPipelineUseCase.withdraw(dto));
     }
 }

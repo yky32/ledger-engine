@@ -15,13 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CreateInWalletTransferUseCase {
     private final CommonUseCase commonUseCase;
-    private final LedgerMovementPipelineUseCase pipeline;
+    private final LedgerMovementPipelineUseCase ledgerMovementPipelineUseCase;
 
     @Transactional
     public MovementResponse execute(InWalletTransferRequest request) {
         Wallet from = commonUseCase.requireActiveWallet(request.fromOwnerId(), request.currency());
         Wallet to = commonUseCase.requireActiveWallet(request.toOwnerId(), request.currency());
-        LedgerMovementDtos.Response r = pipeline.inWalletTransfer(new LedgerMovementDtos.CreateInWalletTransferRequest(
+        LedgerMovementDtos.Response r = ledgerMovementPipelineUseCase.inWalletTransfer(new LedgerMovementDtos.CreateInWalletTransferRequest(
             String.valueOf(from.getId()),
             String.valueOf(to.getId()),
             request.currency(),

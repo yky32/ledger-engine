@@ -18,7 +18,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class QueryWalletUseCase {
-    private final WalletRepository wallets;
+    private final WalletRepository walletRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
@@ -29,7 +29,7 @@ public class QueryWalletUseCase {
 
     @Transactional(readOnly = true)
     public List<GetWalletOnboardResponseDto> list(String ownerId) {
-        return wallets.findByOwnerId(ownerId).stream()
+        return walletRepository.findByOwnerId(ownerId).stream()
             .map(this::_toDto)
             .toList();
     }

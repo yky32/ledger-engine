@@ -18,13 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class CreateLedgerAccountUseCase {
-    private final AccountRepository accounts;
+    private final AccountRepository accountRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional
     public AccountResponse execute(CreateAccountRequest request) {
         commonUseCase.requireCurrency(request.currency());
-        if (accounts.existsByFullNumber(request.externalReference())) {
+        if (accountRepository.existsByFullNumber(request.externalReference())) {
             throw new BizException(AccountErrorResponse.ACC0409, "External reference already exists");
         }
         Account account = new Account(
@@ -38,7 +38,7 @@ public class CreateLedgerAccountUseCase {
             request.currency(),
             request.allowNegative()
         );
-        return _toResponse(accounts.save(account));
+        return _toResponse(accountRepository.save(account));
     }
 
     private AccountResponse _toResponse(Account a) {

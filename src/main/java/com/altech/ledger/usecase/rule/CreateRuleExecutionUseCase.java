@@ -13,14 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class CreateRuleExecutionUseCase {
-    private final RuleExecutionRepository executions;
+    private final RuleExecutionRepository ruleExecutionRepository;
 
     @Transactional
     public RuleDtos.ExecutionResponse execute(RuleDtos.CreateExecutionRequest dto) {
-        if (executions.findByName(dto.name()).isPresent()) {
+        if (ruleExecutionRepository.findByName(dto.name()).isPresent()) {
             throw new BizException(RuleErrorResponse.RUL0409, "Name exists: " + dto.name());
         }
         RuleExecution re = new RuleExecution(dto.name(), dto.description(), dto.orderType(), dto.metadata());
-        return DtoMapper.toRuleExecution(executions.save(re));
+        return DtoMapper.toRuleExecution(ruleExecutionRepository.save(re));
     }
 }

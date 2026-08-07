@@ -15,12 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CreateWithdrawalUseCase {
     private final CommonUseCase commonUseCase;
-    private final LedgerMovementPipelineUseCase pipeline;
+    private final LedgerMovementPipelineUseCase ledgerMovementPipelineUseCase;
 
     @Transactional
     public MovementResponse execute(WithdrawalRequest request) {
         Wallet wallet = commonUseCase.requireActiveWallet(request.ownerId(), request.currency());
-        LedgerMovementDtos.Response r = pipeline.withdraw(new LedgerMovementDtos.CreateWithdrawalRequest(
+        LedgerMovementDtos.Response r = ledgerMovementPipelineUseCase.withdraw(new LedgerMovementDtos.CreateWithdrawalRequest(
             String.valueOf(wallet.getId()),
             request.currency(),
             request.amount(),

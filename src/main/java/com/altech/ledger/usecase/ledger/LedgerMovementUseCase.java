@@ -30,13 +30,13 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LedgerMovementUseCase {
-    private final LedgerMovementRepository movements;
-    private final LedgerEntryRepository entries;
+    private final LedgerMovementRepository ledgerMovementRepository;
+    private final LedgerEntryRepository ledgerEntryRepository;
 
     @Transactional
     public LedgerMovement log(LedgerMovementEvent event) {
         if (event.getMovementKey() != null) {
-            var existing = movements.findByMovementKey(event.getMovementKey());
+            var existing = ledgerMovementRepository.findByMovementKey(event.getMovementKey());
             if (existing.isPresent()) {
                 return existing.get();
             }
@@ -63,13 +63,13 @@ public class LedgerMovementUseCase {
         m.setStatus(event.getStatus() == null ? LedgerMovementStatus.PROCESSING : event.getStatus());
         if (event.getFiles() != null) m.setFiles(event.getFiles());
         if (event.getMetadata() != null) m.setMetadata(event.getMetadata());
-        return movements.save(m);
+        return ledgerMovementRepository.save(m);
     }
 
     @Transactional
     public void createLedgerEntries(LedgerMovement movement, List<EntryLeg> legs) {
         for (EntryLeg leg : legs) {
-            entries.save(new LedgerEntry(
+            ledgerEntryRepository.save(new LedgerEntry(
                 movement.getId(),
                 leg.targetId(),
                 leg.amount(),
@@ -80,7 +80,7 @@ public class LedgerMovementUseCase {
 
     @Transactional(readOnly = true)
     public LedgerMovement get(Long id) {
-        return movements.findById(id)
+        return ledgerMovementRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found: " + id));
     }
 

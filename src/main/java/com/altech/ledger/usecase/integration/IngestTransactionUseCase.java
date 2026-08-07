@@ -26,28 +26,28 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class IngestTransactionUseCase {
-    private final IntegrationProperties properties;
-    private final TransactionRuleEngine ruleEngine;
-    private final AccountRepository accounts;
-    private final WalletRepository wallets;
-    private final LedgerMovementRepository movements;
+    private final IntegrationProperties integrationProperties;
+    private final TransactionRuleEngine transactionRuleEngine;
+    private final AccountRepository accountRepository;
+    private final WalletRepository walletRepository;
+    private final LedgerMovementRepository ledgerMovementRepository;
     private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
-    private final LedgerMovementShooter shooter;
+    private final LedgerMovementShooter ledgerMovementShooter;
 
     @Transactional
     public IngestionResult execute(TransactionalEvent event) {
-        if (!properties.isEnabled()) {
+        if (!integrationProperties.isEnabled()) {
             return IngestionResult.skipped(event.eventId(), "Integration disabled");
         }
 
-        Optional<TransactionRuleEngine.RuleDecision> decision = ruleEngine.evaluate(event);
+        Optional<TransactionRuleEngine.RuleDecision> decision = transactionRuleEngine.evaluate(event);
         if (decision.isEmpty()) {
             return IngestionResult.skipped(event.eventId(), "No matching rule");
         }
 
         TransactionRuleEngine.RuleDecision rule = decision.get();
         String walletRef = createWalletOnboardingUseCase.walletRef(event.userId(), rule.pointCurrency());
-        Optional<Account> walletAccount = accounts.findByFullNumber(walletRef);
+        Optional<Account> walletAccount = accountRepository.findByFullNumber(walletRef);
         if (walletAccount.isEmpty()) {
             return IngestionResult.skipped(event.eventId(), "Wallet not onboarded: " + walletRef);
         }
@@ -59,8 +59,8 @@ public class IngestTransactionUseCase {
             }
         }
 
-        Optional<Wallet> wallet = wallets.findByAccountId(walletAccount.get().getId())
-            .or(() -> wallets.findByOwnerIdAndCurrency(event.userId(), rule.pointCurrency()));
+        Optional<Wallet> wallet = walletRepository.findByAccountId(walletAccount.get().getId())
+            .or(() -> walletRepository.findByOwnerIdAndCurrency(event.userId(), rule.pointCurrency()));
         if (wallet.isEmpty()) {
             return IngestionResult.skipped(event.eventId(), "Wallet row missing for " + walletRef);
         }
@@ -71,14 +71,14 @@ public class IngestTransactionUseCase {
         };
         String movementKey = "loyalty-" + rule.operation().name().toLowerCase() + "-" + event.eventId();
 
-        Optional<LedgerMovement> existing = movements.findByMovementKey(movementKey);
+        Optional<LedgerMovement> existing = ledgerMovementRepository.findByMovementKey(movementKey);
         if (existing.isPresent()) {
             UUID id = existing.get().getId() == null ? null
                 : UUID.nameUUIDFromBytes(("movement:" + existing.get().getId()).getBytes());
             return IngestionResult.duplicate(event.eventId(), rule.operation(), id, rule.points(), walletRef);
         }
 
-        LedgerMovementDtos.Response applied = shooter.doEarnBurn(
+        LedgerMovementDtos.Response applied = ledgerMovementShooter.doEarnBurn(
             wallet.get().getId(),
             orderType,
             rule.points(),

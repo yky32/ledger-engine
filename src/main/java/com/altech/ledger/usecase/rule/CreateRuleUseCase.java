@@ -11,12 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class CreateRuleUseCase {
-    private final RuleRepository rules;
+    private final RuleRepository ruleRepository;
 
     @Transactional
     public RuleDtos.Response execute(RuleDtos.CreateRequest dto) {
         Rule rule = new Rule(dto.name(), dto.description(), dto.direction(),
             dto.multiplier(), dto.targetAccount(), dto.content());
-        return DtoMapper.toRule(rules.save(rule));
+        return DtoMapper.toRule(ruleRepository.save(rule));
     }
 }

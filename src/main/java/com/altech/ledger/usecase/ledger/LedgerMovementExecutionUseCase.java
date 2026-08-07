@@ -34,17 +34,17 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * LedgerMovementExecutionUseCase.
- * Structure: fetch rules → rulesExecution (command) → updateBalances → ledger entries.
+ * Structure: fetch rules → rulesExecution (command) → updateBalances → ledger ledgerEntryRepository.
  */
 @Service
 @RequiredArgsConstructor
 public class LedgerMovementExecutionUseCase implements LedgerHandler {
     private static final Logger log = LoggerFactory.getLogger(LedgerMovementExecutionUseCase.class);
 
-    private final AccountRepository accounts;
-    private final WalletRepository wallets;
-    private final LedgerMovementRepository movements;
-    private final LedgerEntryRepository entries;
+    private final AccountRepository accountRepository;
+    private final WalletRepository walletRepository;
+    private final LedgerMovementRepository ledgerMovementRepository;
+    private final LedgerEntryRepository ledgerEntryRepository;
     /** @Lazy breaks cycle MovementBus ↔ this use case */
     @Lazy
     private final MovementBus movementBus;
@@ -56,7 +56,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         if (event.getMovementId() == null) {
             throw new BizException(MovementErrorResponse.MOV0400, "movementId required on event");
         }
-        LedgerMovement movement = movements.findById(event.getMovementId())
+        LedgerMovement movement = ledgerMovementRepository.findById(event.getMovementId())
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found: " + event.getMovementId()));
         execute(movement);
     }
@@ -65,7 +65,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     public List<Account> fetchAccounts(String identifier) {
         try {
             Long id = Long.valueOf(identifier);
-            return accounts.findById(id).map(List::of).orElse(List.of());
+            return accountRepository.findById(id).map(List::of).orElse(List.of());
         } catch (NumberFormatException ex) {
             return List.of();
         }
@@ -97,14 +97,14 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             BalanceExecutionResultCommand command = rulesExecution(movement);
             applyCommand(command, movement);
             movement.setStatus(LedgerMovementStatus.SETTLED);
-            movements.save(movement);
+            ledgerMovementRepository.save(movement);
             createLedgerEntries(movement, command);
             movementBus.publishDone(movement);
             notification(MovementBus.toEvent(movement));
         } catch (RuntimeException ex) {
             log.error("movement execution failed id={}", movement.getId(), ex);
             movement.setStatus(LedgerMovementStatus.ERROR);
-            movements.save(movement);
+            ledgerMovementRepository.save(movement);
             throw ex;
         }
         return movement;
@@ -160,7 +160,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     }
 
     private void apply(BalanceExecutionResultCommand.CommandDetail cmd, LedgerMovement movement) {
-        Account locked = accounts.lockById(cmd.getAccount().getId())
+        Account locked = accountRepository.lockById(cmd.getAccount().getId())
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + cmd.getAccount().getId()));
         BigDecimal ledger = locked.getLedgerBalance();
         BigDecimal available = locked.getAvailableBalance();
@@ -176,14 +176,14 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         }
         locked.setLedgerBalance(ledger);
         locked.setAvailableBalance(available);
-        accounts.save(locked);
+        accountRepository.save(locked);
     }
 
     private void createLedgerEntries(LedgerMovement movement, BalanceExecutionResultCommand command) {
         for (BalanceExecutionResultCommand.CommandDetail cmd : command.getDetails()) {
             MovementDirection direction = cmd.getOperation() == BalanceOperation.ADD
                 ? MovementDirection.CREDIT : MovementDirection.DEBIT;
-            entries.save(new LedgerEntry(
+            ledgerEntryRepository.save(new LedgerEntry(
                 movement.getId(),
                 String.valueOf(cmd.getAccount().getId()),
                 cmd.getAmount(),
@@ -202,10 +202,10 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             if (fromWallet != null) {
                 return fromWallet.account();
             }
-            return accounts.findById(id)
+            return accountRepository.findById(id)
                 .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
         } catch (NumberFormatException ex) {
-            Wallet wallet = wallets.findByOwnerIdAndCurrency(idOrWalletRef, currency)
+            Wallet wallet = walletRepository.findByOwnerIdAndCurrency(idOrWalletRef, currency)
                 .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, 
                     "Wallet not found for " + idOrWalletRef + "/" + currency));
             return accountForWalletCurrency(wallet, currency);
@@ -213,19 +213,19 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     }
 
     private OptionalWalletAccount tryWallet(Long walletId, String currency) {
-        return wallets.findById(walletId).map(w -> {
+        return walletRepository.findById(walletId).map(w -> {
             Account a = accountForWalletCurrency(w, currency);
             return new OptionalWalletAccount(a);
         }).orElse(null);
     }
 
     private Account accountForWalletCurrency(Wallet wallet, String currency) {
-        Account primary = accounts.findById(wallet.getAccountId())
+        Account primary = accountRepository.findById(wallet.getAccountId())
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + wallet.getAccountId()));
         if (primary.getCurrency().equalsIgnoreCase(currency)) {
             return primary;
         }
-        return accounts.findByMainAccountAndCurrency(primary.getMainAccount(), currency.toUpperCase())
+        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency.toUpperCase())
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, 
                 "Account currency not found for wallet " + wallet.getId() + " / " + currency));
     }

@@ -9,16 +9,16 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CommonService {
-    private final AccountRepository accounts;
+    private final AccountRepository accountRepository;
 
     @Transactional(readOnly = true)
     public String getNextMainAccount() {
         long max = 10000L;
-        for (String value : accounts.allMainAccountNumbers()) {
+        for (String value : accountRepository.allMainAccountNumbers()) {
             try {
                 max = Math.max(max, Long.parseLong(value.trim()));
             } catch (NumberFormatException ignored) {
-                // skip non-numeric main accounts
+                // skip non-numeric main account
             }
         }
         return String.valueOf(max + 1);
@@ -27,7 +27,7 @@ public class CommonService {
     @Transactional(readOnly = true)
     public String getNextSubAccount(String mainAccount) {
         long max = 0L;
-        for (String value : accounts.allSubAccountNumbers(mainAccount)) {
+        for (String value : accountRepository.allSubAccountNumbers(mainAccount)) {
             try {
                 max = Math.max(max, Long.parseLong(value.trim()));
             } catch (NumberFormatException ignored) {

@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class WebhookCallbackEndpoint {
     private final ActivateWalletUseCase activateWalletUseCase;
-    private final LedgerDepositUseCase depositUseCase;
+    private final LedgerDepositUseCase ledgerDepositUseCase;
 
     @PostMapping("/ledger-wallets/{walletId}/activations")
     public Result<LedgerWalletDtos.WithBalancesResponse> walletActivation(
@@ -28,6 +28,6 @@ public class WebhookCallbackEndpoint {
 
     @PostMapping("/ledger-wallets/movements/deposits")
     public Result<LedgerMovementDtos.Response> depositCallback(@RequestBody Map<String, Object> payload) {
-        return R.success(depositUseCase.executeWebhook(payload));
+        return R.success(ledgerDepositUseCase.executeWebhook(payload));
     }
 }

@@ -15,10 +15,10 @@ import lombok.RequiredArgsConstructor;
 public class TransactionRuleEngine {
     public enum Operation { EARN, BURN, PROCESS }
 
-    private final IntegrationProperties properties;
+    private final IntegrationProperties integrationProperties;
 
     public Optional<RuleDecision> evaluate(TransactionalEvent event) {
-        for (IntegrationProperties.TransactionRule rule : properties.getRules()) {
+        for (IntegrationProperties.TransactionRule rule : integrationProperties.getRules()) {
             if (!rule.getEventType().equalsIgnoreCase(event.eventType())) {
                 continue;
             }

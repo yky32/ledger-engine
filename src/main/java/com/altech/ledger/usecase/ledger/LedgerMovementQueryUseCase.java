@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class LedgerMovementQueryUseCase {
-    private final LedgerMovementRepository movements;
-    private final WalletRepository wallets;
+    private final LedgerMovementRepository ledgerMovementRepository;
+    private final WalletRepository walletRepository;
     private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
@@ -39,22 +39,22 @@ public class LedgerMovementQueryUseCase {
     @Transactional(readOnly = true)
     public Page<LedgerMovementDtos.Response> list(Pageable pageable, Instant startDt, Instant endDt,
                                                   List<String> statuses) {
-        return _filter(movements.findAll(pageable), startDt, endDt, statuses);
+        return _filter(ledgerMovementRepository.findAll(pageable), startDt, endDt, statuses);
     }
 
     @Transactional(readOnly = true)
     public Page<LedgerMovementDtos.Response> myMovements(String ownerId, Pageable pageable,
                                                          Instant startDt, Instant endDt, List<String> statuses) {
-        List<Long> ids = wallets.findByOwnerId(ownerId).stream().map(Wallet::getId).toList();
+        List<Long> ids = walletRepository.findByOwnerId(ownerId).stream().map(Wallet::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        return _filter(movements.findByWalletIdIn(ids, pageable), startDt, endDt, statuses);
+        return _filter(ledgerMovementRepository.findByWalletIdIn(ids, pageable), startDt, endDt, statuses);
     }
 
     @Transactional(readOnly = true)
     public Page<LedgerMovementDtos.Response> byWallet(Long walletId, Pageable pageable) {
-        return movements.findByWalletId(walletId, pageable).map(DtoMapper::toMovement);
+        return ledgerMovementRepository.findByWalletId(walletId, pageable).map(DtoMapper::toMovement);
     }
 
     private Page<LedgerMovementDtos.Response> _filter(Page<LedgerMovement> page, Instant startDt, Instant endDt,

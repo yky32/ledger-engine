@@ -13,22 +13,22 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LedgerMovementService {
-    private final LedgerMovementRepository movements;
+    private final LedgerMovementRepository ledgerMovementRepository;
 
     @Transactional(readOnly = true)
     public LedgerMovement get(Long id) {
-        return movements.findById(id)
+        return ledgerMovementRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found: " + id));
     }
 
     @Transactional(readOnly = true)
     public LedgerMovement getByKey(String movementKey) {
-        return movements.findByMovementKey(movementKey)
+        return ledgerMovementRepository.findByMovementKey(movementKey)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found key: " + movementKey));
     }
 
     @Transactional
     public LedgerMovement save(LedgerMovement movement) {
-        return movements.save(movement);
+        return ledgerMovementRepository.save(movement);
     }
 }

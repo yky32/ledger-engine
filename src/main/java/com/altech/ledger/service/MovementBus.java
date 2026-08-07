@@ -23,8 +23,8 @@ import lombok.RequiredArgsConstructor;
 public class MovementBus {
     private static final Logger log = LoggerFactory.getLogger(MovementBus.class);
 
-    private final MovementKafkaProperties kafkaProperties;
-    private final LedgerMovementExecutionUseCase execution;
+    private final MovementKafkaProperties movementKafkaProperties;
+    private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
     private final ObjectMapper objectMapper;
     private final ObjectProvider<KafkaTemplate<String, String>> kafkaTemplate;
 
@@ -32,29 +32,29 @@ public class MovementBus {
         if (movement.getMode() != LedgerMovementMode.AUTO) {
             return movement;
         }
-        if (kafkaProperties.isEnabled() && kafkaTemplate.getIfAvailable() != null) {
+        if (movementKafkaProperties.isEnabled() && kafkaTemplate.getIfAvailable() != null) {
             try {
-                LedgerMovementEvent event = toEvent(movement);
+                LedgerMovementEvent event = toEvent(movement, "LEDGER_MOVEMENT_INITIATED");
                 String json = objectMapper.writeValueAsString(event);
-                kafkaTemplate.getObject().send(kafkaProperties.getInitiatedTopic(),
+                kafkaTemplate.getObject().send(movementKafkaProperties.getInitiatedTopic(),
                     String.valueOf(movement.getId()), json);
-                log.info("Published MOVEMENT_INITIATED id={}", movement.getId());
+                log.info("Published MOVEMENT_INITIATED id={} requestId={}", movement.getId(), event.getRequestId());
                 return movement;
             } catch (Exception ex) {
                 log.warn("Kafka publish failed; falling back to sync execute: {}", ex.getMessage());
             }
         }
-        return execution.execute(movement);
+        return ledgerMovementExecutionUseCase.execute(movement);
     }
 
     public void publishDone(LedgerMovement movement) {
-        if (!kafkaProperties.isEnabled() || kafkaTemplate.getIfAvailable() == null) {
+        if (!movementKafkaProperties.isEnabled() || kafkaTemplate.getIfAvailable() == null) {
             return;
         }
         try {
-            LedgerMovementEvent event = toEvent(movement);
+            LedgerMovementEvent event = toEvent(movement, "LEDGER_MOVEMENT_DONE");
             event.setStatus(LedgerMovementStatus.SETTLED);
-            kafkaTemplate.getObject().send(kafkaProperties.getDoneTopic(),
+            kafkaTemplate.getObject().send(movementKafkaProperties.getDoneTopic(),
                 String.valueOf(movement.getId()), objectMapper.writeValueAsString(event));
         } catch (Exception ex) {
             log.warn("Kafka DONE publish failed: {}", ex.getMessage());
@@ -62,7 +62,12 @@ public class MovementBus {
     }
 
     public static LedgerMovementEvent toEvent(LedgerMovement m) {
+        return toEvent(m, "LEDGER_MOVEMENT");
+    }
+
+    public static LedgerMovementEvent toEvent(LedgerMovement m, String eventName) {
         LedgerMovementEvent e = new LedgerMovementEvent();
+        e.setEventName(eventName);
         e.setMovementId(m.getId());
         e.setMovementKey(m.getMovementKey());
         e.setBelongToWalletId(m.getWalletId());
@@ -79,3 +84,4 @@ public class MovementBus {
         return e;
     }
 }
+

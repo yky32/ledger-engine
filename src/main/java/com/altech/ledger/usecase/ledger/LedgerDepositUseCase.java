@@ -16,11 +16,11 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class LedgerDepositUseCase {
-    private final LedgerMovementShooter shooter;
+    private final LedgerMovementShooter ledgerMovementShooter;
 
     @Transactional
     public LedgerMovementDtos.Response execute(LedgerMovementDtos.CreateDepositRequest dto) {
-        return shooter.doDeposit(dto);
+        return ledgerMovementShooter.doDeposit(dto);
     }
 
     /**
@@ -50,7 +50,7 @@ public class LedgerDepositUseCase {
         String amountStr = _first(payload, "amount", "txnAmount", "value");
         BigDecimal amount = new BigDecimal(amountStr == null ? "0" : amountStr);
         String movementKey = _first(payload, "movementKey", "eventId", "txnId", "id");
-        return shooter.doDeposit(new LedgerMovementDtos.CreateDepositRequest(
+        return ledgerMovementShooter.doDeposit(new LedgerMovementDtos.CreateDepositRequest(
             walletId, currency, amount, LedgerMovementMode.AUTO, null, movementKey,
             "webhook deposit", payload));
     }

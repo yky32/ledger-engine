@@ -18,7 +18,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class CreateAccountUseCase {
-    private final AccountRepository accounts;
+    private final AccountRepository accountRepository;
     private final CommonService commonService;
     private final CommonUseCase commonUseCase;
 
@@ -33,10 +33,10 @@ public class CreateAccountUseCase {
         String subAccount = _blank(dto.subAccount(), "0000");
         String fullNumber = entity + type + subType + mainAccount + subAccount + buffer + currency;
 
-        if (accounts.existsByFullNumber(fullNumber)) {
+        if (accountRepository.existsByFullNumber(fullNumber)) {
             throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
         }
-        if (accounts.findByMainAccountAndSubAccount(mainAccount, subAccount).isPresent()) {
+        if (accountRepository.findByMainAccountAndSubAccount(mainAccount, subAccount).isPresent()) {
             throw new BizException(AccountErrorResponse.ACC0409,
                 "Main/sub account already exists: " + mainAccount + "/" + subAccount);
         }
@@ -44,7 +44,7 @@ public class CreateAccountUseCase {
         boolean allowNegative = dto.allowNegative() != null && dto.allowNegative();
         Account account = new Account(fullNumber, entity, type, subType, mainAccount, subAccount,
             buffer, currency, allowNegative);
-        return DtoMapper.toAccount(accounts.save(account));
+        return DtoMapper.toAccount(accountRepository.save(account));
     }
 
     @Transactional

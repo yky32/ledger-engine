@@ -1,20 +1,30 @@
 package com.altech.ledger.entity.dto.event;
 
+import com.altech.core.kafka.BaseEvent;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.enu.SubOrderType;
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
 /**
  * Kafka / pipeline movement event payload.
+ * Extends {@link BaseEvent} for request correlation and event naming.
  */
-@Getter
-@Setter
-public class LedgerMovementEvent {
+@Data
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@SuperBuilder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class LedgerMovementEvent extends BaseEvent {
     private Long movementId;
     private String movementKey;
     private Long belongToWalletId;

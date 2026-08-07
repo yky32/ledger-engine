@@ -23,7 +23,7 @@ public class LedgerMovementEventListener {
     private static final Logger log = LoggerFactory.getLogger(LedgerMovementEventListener.class);
 
     private final ObjectMapper objectMapper;
-    private final LedgerMovementExecutionUseCase execution;
+    private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
 
     @KafkaListener(
         topics = {
@@ -36,7 +36,7 @@ public class LedgerMovementEventListener {
         try {
             LedgerMovementEvent event = objectMapper.readValue(record.value(), LedgerMovementEvent.class);
             log.info("BALANCE_UPDATE movementId={} topic={}", event.getMovementId(), record.topic());
-            execution.execute(event);
+            ledgerMovementExecutionUseCase.execute(event);
         } catch (Exception ex) {
             log.error("Failed BALANCE_UPDATE: {}", ex.getMessage(), ex);
             throw new IllegalStateException(ex);
