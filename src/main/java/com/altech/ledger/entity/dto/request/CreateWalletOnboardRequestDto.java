@@ -1,7 +1,10 @@
 package com.altech.ledger.entity.dto.request;
 
+import com.altech.core.constant.enu.Currency;
+
+import jakarta.validation.constraints.NotNull;
+
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -9,7 +12,7 @@ import jakarta.validation.constraints.Size;
  */
 public record CreateWalletOnboardRequestDto(
     @NotBlank @Size(max = 100) String userId,
-    @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+    @NotNull Currency currency,
     @Size(max = 200) String name,
     @Size(max = 100) String externalId,
     @Size(max = 50) String externalType
@@ -17,9 +20,6 @@ public record CreateWalletOnboardRequestDto(
     public CreateWalletOnboardRequestDto {
         if (userId != null) {
             userId = userId.trim();
-        }
-        if (currency != null) {
-            currency = currency.trim().toUpperCase();
         }
         if (name != null) {
             name = name.trim();

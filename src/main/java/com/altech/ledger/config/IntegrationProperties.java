@@ -13,13 +13,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "ledger.integration")
 public class IntegrationProperties {
     private boolean enabled = true;
-    private boolean programSetupEnabled = true;
-    private List<String> programCurrencies = List.of("LP");
     private String walletRefTemplate = "wallet:{userId}:{currency}";
-    private String expensePoolRefTemplate = "pool:loyalty-expense:{currency}";
-    private String liabilityPoolRefTemplate = "pool:loyalty-liability:{currency}";
-    private String depositClearingRefTemplate = "pool:clearing-deposit:{currency}";
-    private String withdrawalClearingRefTemplate = "pool:clearing-withdrawal:{currency}";
     private List<TransactionRule> rules = new ArrayList<>();
 
     @Getter

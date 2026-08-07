@@ -1,5 +1,6 @@
 package com.altech.ledger.entity.po.log;
 
+import com.altech.core.constant.enu.Currency;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -38,13 +39,14 @@ public class LedgerEntry extends AuditEntityWithIsActive {
     @Column(nullable = false, length = 10)
     private MovementDirection direction;
 
-    @Column(nullable = false, length = 4)
-    private String currency;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Currency currency;
 
     protected LedgerEntry() {}
 
     public LedgerEntry(Long txnId, String targetId, BigDecimal amount,
-                       MovementDirection direction, String currency) {
+                       MovementDirection direction, Currency currency) {
         this.txnId = txnId;
         this.targetId = targetId;
         this.amount = amount;

@@ -1,5 +1,6 @@
 package com.altech.ledger;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.AccountResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.BalanceResponse;
@@ -24,22 +25,22 @@ class LedgerUseCaseIntegrationTest {
     @Test
     void createAccountAndReadBalance() {
         AccountResponse cash = createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "cash-usd-1", "Cash USD", CoaType.ASSET, "USD", false));
+            "cash-usd-1", "Cash USD", CoaType.ASSET, Currency.USD, false));
         assertThat(cash.id()).isNotNull();
         assertThat(cash.ledgerBalance()).isEqualByComparingTo("0");
 
         BalanceResponse bal = queryLedgerAccountUseCase.balance(cash.id());
         assertThat(bal.accountId()).isEqualTo(cash.id());
-        assertThat(bal.currency()).isEqualTo("USD");
+        assertThat(bal.currency()).isEqualTo(Currency.USD);
         assertThat(bal.ledgerBalance()).isEqualByComparingTo("0");
     }
 
     @Test
     void duplicateExternalReferenceIsRejected() {
         createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "dup-ref", "One", CoaType.ASSET, "USD", false));
+            "dup-ref", "One", CoaType.ASSET, Currency.USD, false));
         assertThatThrownBy(() -> createLedgerAccountUseCase.execute(new CreateAccountRequest(
-            "dup-ref", "Two", CoaType.ASSET, "USD", false)))
+            "dup-ref", "Two", CoaType.ASSET, Currency.USD, false)))
             .isInstanceOf(BizException.class);
     }
 }

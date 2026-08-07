@@ -1,19 +1,16 @@
 package com.altech.ledger.entity.po;
 
-import lombok.Getter;
-import lombok.Setter;
-
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.entity.AuditEntityWithIsActive;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
 /**
- * FX quote from one currency code to another (base → target).
- * <p>
- * Used for display conversion on wallet balances and amount convert helpers.
- * Codes are plain strings (USD, LP, …) so non-fiat units work without an enum.
- * Unique pair (base, target).
+ * FX quote from one currency to another (base → target).
+ * Supports fiat, LP, and crypto pairs via {@link Currency}.
  */
 @Entity
 @Table(
@@ -28,18 +25,20 @@ public class FxRate extends AuditEntityWithIsActive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 4)
-    private String base;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Currency base;
 
-    @Column(nullable = false, length = 4)
-    private String target;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Currency target;
 
     @Column(nullable = false, precision = 32, scale = 10)
     private BigDecimal rate;
 
     protected FxRate() {}
 
-    public FxRate(String base, String target, BigDecimal rate) {
+    public FxRate(Currency base, Currency target, BigDecimal rate) {
         this.base = base;
         this.target = target;
         this.rate = rate;

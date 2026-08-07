@@ -1,5 +1,6 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.exception.response.WalletErrorResponse;
@@ -47,7 +48,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
             LedgerMovement m = newMovement(key, wallet.getId(), OrderType.DEPOSIT, req.mode(),
                 req.originatorId(), String.valueOf(wallet.getId()), req.amount(),
-                req.currency().toUpperCase(), req.description());
+                req.currency(), req.description());
             ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
@@ -65,7 +66,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
             LedgerMovement m = newMovement(key, wallet.getId(), OrderType.WITHDRAWAL, req.mode(),
                 String.valueOf(wallet.getId()), req.targetId(), req.amount(),
-                req.currency().toUpperCase(), req.description());
+                req.currency(), req.description());
             ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
@@ -81,7 +82,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
             LedgerMovement m = newMovement(key, from.getId(), OrderType.IN_WALLET_TRANSFER, req.mode(),
                 String.valueOf(from.getId()), String.valueOf(to.getId()), req.amount(),
-                req.currency().toUpperCase(), req.description());
+                req.currency(), req.description());
             ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
@@ -90,7 +91,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
 
     @Transactional
     public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
-                                       String currency, String movementKey, String description) {
+                                       Currency currency, String movementKey, String description) {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);
         String key = key(movementKey, orderType.name().toLowerCase());
@@ -99,7 +100,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
             String target = (orderType == OrderType.EARN || orderType == OrderType.ADJUSTMENT)
                 ? String.valueOf(walletId) : null;
             LedgerMovement m = newMovement(key, walletId, orderType, LedgerMovementMode.AUTO,
-                origin, target, amount, currency.toUpperCase(), description);
+                origin, target, amount, currency, description);
             ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
@@ -111,7 +112,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
 
     private LedgerMovement newMovement(String key, Long walletId, OrderType orderType,
                                        LedgerMovementMode mode, String originatorId, String targetId,
-                                       java.math.BigDecimal amount, String currency, String description) {
+                                       java.math.BigDecimal amount, Currency currency, String description) {
         LedgerMovementMode effective = mode == null ? LedgerMovementMode.AUTO : mode;
         LedgerMovement m = new LedgerMovement(key, walletId, orderType, effective,
             originatorId, targetId, amount, currency, description);

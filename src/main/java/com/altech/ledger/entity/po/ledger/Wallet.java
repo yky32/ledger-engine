@@ -1,5 +1,6 @@
 package com.altech.ledger.entity.po.ledger;
 
+import com.altech.core.constant.enu.Currency;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -71,14 +72,15 @@ public class Wallet extends AuditEntityWithIsActive {
     @Column(nullable = false, length = 100)
     private String ownerId;
 
-    @Column(nullable = false, length = 4)
-    private String currency;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Currency currency;
 
     protected Wallet() {}
 
     public Wallet(Long accountId, String alias, String nickname, String extIdentifier, String extType,
                   WalletAssociationType type, WalletType walletType, WalletStatus status,
-                  String ownerId, String currency) {
+                  String ownerId, Currency currency) {
         this.accountId = accountId;
         this.alias = alias;
         this.nickname = nickname;

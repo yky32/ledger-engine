@@ -1,12 +1,12 @@
 package com.altech.ledger.entity.dto.request;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 public record CreateLedgerWithdrawalRequestDto(
     @JsonAlias({"originatorId"})
     String originatorWalletId,
-    @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+    @NotNull Currency currency,
     @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
     LedgerMovementMode mode,
     String targetId,
@@ -28,9 +28,6 @@ public record CreateLedgerWithdrawalRequestDto(
     public CreateLedgerWithdrawalRequestDto {
         if (mode == null) {
             mode = LedgerMovementMode.AUTO;
-        }
-        if (currency != null) {
-            currency = currency.trim().toUpperCase();
         }
         if (originatorWalletId != null) {
             originatorWalletId = originatorWalletId.trim();

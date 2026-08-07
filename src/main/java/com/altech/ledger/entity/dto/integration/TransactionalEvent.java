@@ -1,8 +1,9 @@
 package com.altech.ledger.entity.dto.integration;
 
+import com.altech.core.constant.enu.Currency;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
@@ -19,7 +20,7 @@ public record TransactionalEvent(
     @NotBlank String userId,
     @NotBlank String eventType,
     @NotNull @PositiveOrZero BigDecimal amount,
-    @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+    @NotNull Currency currency,
     Instant occurredAt,
     Map<String, String> metadata
 ) {}

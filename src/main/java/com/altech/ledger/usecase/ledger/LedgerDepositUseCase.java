@@ -1,5 +1,8 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.constant.enu.Currency;
+import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -8,8 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
-import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
-import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
 /**
  * Deposit execution: bank / AUTO movement + optional webhook callback.
@@ -44,10 +45,8 @@ public class LedgerDepositUseCase {
     @Transactional
     public GetLedgerMovementResponseDto executeWebhook(Map<String, Object> payload) {
         String walletId = _first(payload, "targetWalletId", "walletId", "targetId");
-        String currency = _first(payload, "currency", "ccy");
-        if (currency == null) {
-            currency = "USD";
-        }
+        String currencyCode = _first(payload, "currency", "ccy");
+        Currency currency = Currency.get(currencyCode == null ? "USD" : currencyCode);
         String amountStr = _first(payload, "amount", "txnAmount", "value");
         BigDecimal amount = new BigDecimal(amountStr == null ? "0" : amountStr);
         String movementKey = _first(payload, "movementKey", "eventId", "txnId", "id");

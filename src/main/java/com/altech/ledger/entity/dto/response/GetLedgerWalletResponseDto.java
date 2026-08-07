@@ -1,5 +1,7 @@
 package com.altech.ledger.entity.dto.response;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
@@ -21,7 +23,7 @@ public record GetLedgerWalletResponseDto(
     WalletType walletType,
     WalletStatus status,
     String ownerId,
-    String currency,
+    Currency currency,
     List<GetLedgerAccountResponseDto> accounts,
     Instant createDt,
     Instant updateDt

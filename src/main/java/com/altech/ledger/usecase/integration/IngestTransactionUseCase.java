@@ -1,5 +1,6 @@
 package com.altech.ledger.usecase.integration;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.integration.IngestionResult;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
@@ -59,8 +60,9 @@ public class IngestTransactionUseCase {
             }
         }
 
+        Currency pointCurrency = Currency.get(rule.pointCurrency());
         Optional<Wallet> wallet = walletRepository.findByAccountId(walletAccount.get().getId())
-            .or(() -> walletRepository.findByOwnerIdAndCurrency(event.userId(), rule.pointCurrency()));
+            .or(() -> walletRepository.findByOwnerIdAndCurrency(event.userId(), pointCurrency));
         if (wallet.isEmpty()) {
             return IngestionResult.skipped(event.eventId(), "Wallet row missing for " + walletRef);
         }
@@ -82,7 +84,7 @@ public class IngestTransactionUseCase {
             wallet.get().getId(),
             orderType,
             rule.points(),
-            rule.pointCurrency(),
+            pointCurrency,
             movementKey,
             rule.operation() + " from " + event.eventType() + " (" + rule.formula() + ")"
         );

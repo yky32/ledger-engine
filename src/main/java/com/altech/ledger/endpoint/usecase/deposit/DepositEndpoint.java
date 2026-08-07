@@ -1,5 +1,6 @@
 package com.altech.ledger.endpoint.usecase.deposit;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
@@ -38,7 +39,7 @@ public class DepositEndpoint {
     ) {
         String fileMeta = MultipartFileMetadata.summarize(files);
         return R.success(ledgerDepositUseCase.execute(new CreateLedgerDepositRequestDto(
-            targetWalletId, currency, amount, LedgerMovementMode.MANUAL, null, movementKey,
+            targetWalletId, Currency.get(currency), amount, LedgerMovementMode.MANUAL, null, movementKey,
             description, fileMeta == null ? null : Map.of("files", fileMeta))));
     }
 

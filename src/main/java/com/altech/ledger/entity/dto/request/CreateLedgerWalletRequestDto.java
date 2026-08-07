@@ -1,5 +1,7 @@
 package com.altech.ledger.entity.dto.request;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.altech.ledger.entity.enu.WalletAssociationType;
 
 /**
@@ -11,12 +13,9 @@ public record CreateLedgerWalletRequestDto(
     String extType,
     WalletAssociationType type,
     String ownerId,
-    String currency,
+    Currency currency,
     String nickname
 ) {
     public CreateLedgerWalletRequestDto {
-        if (currency != null) {
-            currency = currency.trim().toUpperCase();
-        }
     }
 }

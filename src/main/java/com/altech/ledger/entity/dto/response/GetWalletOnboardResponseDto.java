@@ -1,5 +1,7 @@
 package com.altech.ledger.entity.dto.response;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.altech.core.entity.dto.BaseResponseDto;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,7 +24,7 @@ public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private Long walletId;
     private String alias;
     private String ownerId;
-    private String currency;
+    private Currency currency;
     private WalletStatus status;
     private String externalId;
     private String externalType;

@@ -1,5 +1,7 @@
 package com.altech.ledger.entity.dto.response;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +20,7 @@ import java.math.BigDecimal;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetWalletBalanceResponseDto {
     private Long accountId;
-    private String currency;
+    private Currency currency;
     private BigDecimal ledgerBalance;
     private BigDecimal availableBalance;
 }

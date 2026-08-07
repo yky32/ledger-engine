@@ -1,6 +1,11 @@
 package com.altech.ledger.usecase.wallet;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
+import com.altech.ledger.entity.dto.request.CreateLedgerAccountRequestDto;
+import com.altech.ledger.entity.dto.request.CreateLedgerWalletRequestDto;
+import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
+import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
@@ -20,10 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.altech.ledger.entity.dto.request.CreateLedgerAccountRequestDto;
-import com.altech.ledger.entity.dto.request.CreateLedgerWalletRequestDto;
-import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
-import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
 
 @Component
 @RequiredArgsConstructor
@@ -39,8 +40,8 @@ public class CreateWalletUseCase {
         Account account = commonUseCase.requireAccount(dto.accountId());
 
         String alias = _nextAlias();
-        String currency = dto.currency() != null
-            ? commonUseCase.normalizeCurrency(dto.currency())
+        Currency currency = dto.currency() != null
+            ? commonUseCase.requireCurrency(dto.currency())
             : account.getCurrency();
         String ownerId = dto.ownerId() != null ? dto.ownerId()
             : (dto.extIdentifier() != null ? dto.extIdentifier() : alias);
@@ -65,17 +66,18 @@ public class CreateWalletUseCase {
      */
     @Transactional
     public GetLedgerWalletResponseDto executeFull(String ownerId, String mainCurrency,
-                                                             List<String> extraCurrencies,
-                                                             String extIdentifier, String extType) {
+                                                  List<String> extraCurrencies,
+                                                  String extIdentifier, String extType) {
+        Currency currency = commonUseCase.requireCurrency(mainCurrency);
         String mainAccountNo = commonService.getNextMainAccount();
         GetLedgerAccountResponseDto main = createAccountUseCase.execute(new CreateLedgerAccountRequestDto(
-            "10", "99", "00", "NA", mainAccountNo, "0000", mainCurrency.toUpperCase(), false));
+            "10", "99", "00", "NA", mainAccountNo, "0000", currency, false));
         if (extraCurrencies != null && !extraCurrencies.isEmpty()) {
             createAccountUseCase.executeByAssociatedCurrencies(mainAccountNo, extraCurrencies);
         }
         return execute(new CreateLedgerWalletRequestDto(
             main.id(), extIdentifier, extType, WalletAssociationType.CUSTODIAN,
-            ownerId, mainCurrency.toUpperCase(), ownerId == null ? "NA" : ownerId));
+            ownerId, currency, ownerId == null ? "NA" : ownerId));
     }
 
     private String _nextAlias() {

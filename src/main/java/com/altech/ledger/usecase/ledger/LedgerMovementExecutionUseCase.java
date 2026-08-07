@@ -1,5 +1,6 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.exception.response.AccountErrorResponse;
@@ -116,7 +117,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     public BalanceExecutionResultCommand rulesExecution(LedgerMovement movement) {
         BalanceExecutionResultCommand command = new BalanceExecutionResultCommand();
         BigDecimal amount = movement.getAmount();
-        String currency = movement.getCurrency();
+        Currency currency = movement.getCurrency();
 
         switch (movement.getOrderType()) {
             case DEPOSIT, PAYMENT_LINK -> {
@@ -192,7 +193,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         }
     }
 
-    private Account resolveAccount(String idOrWalletRef, String currency) {
+    private Account resolveAccount(String idOrWalletRef, Currency currency) {
         if (idOrWalletRef == null || idOrWalletRef.isBlank()) {
             throw new BizException(AccountErrorResponse.ACC0400, "Account/wallet reference required");
         }
@@ -206,27 +207,27 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
                 .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
         } catch (NumberFormatException ex) {
             Wallet wallet = walletRepository.findByOwnerIdAndCurrency(idOrWalletRef, currency)
-                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, 
+                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                     "Wallet not found for " + idOrWalletRef + "/" + currency));
             return accountForWalletCurrency(wallet, currency);
         }
     }
 
-    private OptionalWalletAccount tryWallet(Long walletId, String currency) {
+    private OptionalWalletAccount tryWallet(Long walletId, Currency currency) {
         return walletRepository.findById(walletId).map(w -> {
             Account a = accountForWalletCurrency(w, currency);
             return new OptionalWalletAccount(a);
         }).orElse(null);
     }
 
-    private Account accountForWalletCurrency(Wallet wallet, String currency) {
+    private Account accountForWalletCurrency(Wallet wallet, Currency currency) {
         Account primary = accountRepository.findById(wallet.getAccountId())
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + wallet.getAccountId()));
-        if (primary.getCurrency().equalsIgnoreCase(currency)) {
+        if (primary.getCurrency() == currency) {
             return primary;
         }
-        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency.toUpperCase())
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, 
+        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency)
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Account currency not found for wallet " + wallet.getId() + " / " + currency));
     }
 

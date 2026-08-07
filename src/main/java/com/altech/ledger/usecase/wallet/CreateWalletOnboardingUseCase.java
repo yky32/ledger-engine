@@ -1,5 +1,6 @@
 package com.altech.ledger.usecase.wallet;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
@@ -41,9 +42,10 @@ public class CreateWalletOnboardingUseCase {
 
     @Transactional
     public GetWalletOnboardResponseDto execute(CreateWalletOnboardRequestDto request) {
-        if (_exists(request.userId(), request.currency())) {
+        Currency currency = commonUseCase.requireCurrency(request.currency());
+        if (_exists(request.userId(), currency)) {
             throw new BizException(WalletErrorResponse.WAL0409,
-                "Wallet already onboarded: " + request.userId() + " / " + request.currency());
+                "Wallet already onboarded: " + request.userId() + " / " + currency);
         }
         return _createWallet(request);
     }
@@ -59,7 +61,8 @@ public class CreateWalletOnboardingUseCase {
         List<String> existingUserIds = new ArrayList<>();
 
         for (CreateWalletOnboardRequestDto item : request.wallets()) {
-            if (_exists(item.userId(), item.currency())) {
+            Currency currency = commonUseCase.requireCurrency(item.currency());
+            if (_exists(item.userId(), currency)) {
                 alreadyExists++;
                 existingUserIds.add(item.userId());
                 continue;
@@ -88,24 +91,27 @@ public class CreateWalletOnboardingUseCase {
             .build();
     }
 
-    public String walletRef(String userId, String currency) {
-        String ccy = commonUseCase.normalizeCurrency(currency);
+    public String walletRef(String userId, Currency currency) {
+        Currency ccy = commonUseCase.requireCurrency(currency);
         return integrationProperties.getWalletRefTemplate()
             .replace("{userId}", userId == null ? "" : userId)
-            .replace("{currency}", ccy == null ? "" : ccy);
+            .replace("{currency}", ccy.getIsoCode());
     }
 
-    private boolean _exists(String userId, String currency) {
-        String ccy = commonUseCase.normalizeCurrency(currency);
-        if (walletRepository.existsByOwnerIdAndCurrency(userId, ccy)) {
+    public String walletRef(String userId, String currency) {
+        return walletRef(userId, commonUseCase.requireCurrency(currency));
+    }
+
+    private boolean _exists(String userId, Currency currency) {
+        if (walletRepository.existsByOwnerIdAndCurrency(userId, currency)) {
             return true;
         }
-        return accountRepository.existsByFullNumber(walletRef(userId, ccy));
+        return accountRepository.existsByFullNumber(walletRef(userId, currency));
     }
 
     private GetWalletOnboardResponseDto _createWallet(CreateWalletOnboardRequestDto request) {
         String userId = request.userId();
-        String currency = commonUseCase.normalizeCurrency(request.currency());
+        Currency currency = commonUseCase.requireCurrency(request.currency());
         String externalReference = walletRef(userId, currency);
 
         if (walletRepository.existsByOwnerIdAndCurrency(userId, currency)
@@ -144,8 +150,8 @@ public class CreateWalletOnboardingUseCase {
         return DtoWrapper.getWalletOnboardResponseDto(wallet, account);
     }
 
-    private String _uniqueAlias(String userId, String currency) {
-        String base = userId + "-" + currency;
+    private String _uniqueAlias(String userId, Currency currency) {
+        String base = userId + "-" + currency.getIsoCode();
         if (!walletRepository.existsByAlias(base)) {
             return base;
         }

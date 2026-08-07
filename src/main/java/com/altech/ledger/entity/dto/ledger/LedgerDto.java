@@ -1,9 +1,10 @@
 package com.altech.ledger.entity.dto.ledger;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.altech.ledger.entity.enu.AccountStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -27,7 +28,7 @@ public final class LedgerDto {
         @NotBlank @Size(max = 100) String externalReference,
         @NotBlank @Size(max = 200) String name,
         @NotNull CoaType type,
-        @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+        @NotNull Currency currency,
         boolean allowNegative
     ) {}
 
@@ -39,7 +40,7 @@ public final class LedgerDto {
         String externalReference,
         String name,
         CoaType type,
-        String currency,
+        Currency currency,
         AccountStatus status,
         boolean allowNegative,
         BigDecimal ledgerBalance,
@@ -54,7 +55,7 @@ public final class LedgerDto {
      */
     public record BalanceResponse(
         Long accountId,
-        String currency,
+        Currency currency,
         BigDecimal ledgerBalance,
         BigDecimal availableBalance
     ) {}

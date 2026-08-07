@@ -1,5 +1,6 @@
 package com.altech.ledger.entity.dto.event;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.kafka.BaseEvent;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
@@ -34,7 +35,7 @@ public class LedgerMovementEvent extends BaseEvent {
     private String originatorId;
     private String targetId;
     private BigDecimal amount;
-    private String currency;
+    private Currency currency;
     private OrderType orderType;
     private SubOrderType subOrderType;
     private LedgerMovementMode mode = LedgerMovementMode.AUTO;

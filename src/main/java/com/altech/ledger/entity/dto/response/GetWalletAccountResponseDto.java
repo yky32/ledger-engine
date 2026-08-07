@@ -1,5 +1,7 @@
 package com.altech.ledger.entity.dto.response;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.altech.core.entity.dto.BaseResponseDto;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.enu.AccountStatus;
@@ -26,7 +28,7 @@ public class GetWalletAccountResponseDto extends BaseResponseDto {
     private String externalReference;
     private String name;
     private CoaType type;
-    private String currency;
+    private Currency currency;
     private AccountStatus status;
     private boolean allowNegative;
     private BigDecimal ledgerBalance;

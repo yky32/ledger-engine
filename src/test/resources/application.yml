@@ -55,14 +55,7 @@ ledger:
       group-id: ${LEDGER_MOVEMENT_KAFKA_GROUP:ledger-engine-movement-test}
   integration:
     enabled: ${LEDGER_INTEGRATION_ENABLED:true}
-    program-setup-enabled: ${LEDGER_PROGRAM_SETUP_ENABLED:true}
-    program-currencies:
-      - ${LEDGER_PROGRAM_CURRENCY:LP}
     wallet-ref-template: ${LEDGER_WALLET_REF_TEMPLATE:wallet:{userId}:{currency}}
-    expense-pool-ref-template: ${LEDGER_EXPENSE_POOL_REF:pool:loyalty-expense:{currency}}
-    liability-pool-ref-template: ${LEDGER_LIABILITY_POOL_REF:pool:loyalty-liability:{currency}}
-    deposit-clearing-ref-template: ${LEDGER_DEPOSIT_CLEARING_REF:pool:clearing-deposit:{currency}}
-    withdrawal-clearing-ref-template: ${LEDGER_WITHDRAWAL_CLEARING_REF:pool:clearing-withdrawal:{currency}}
     kafka:
       enabled: ${LEDGER_KAFKA_ENABLED:false}
       topic: ${LEDGER_KAFKA_TOPIC:ledger.transaction.events}

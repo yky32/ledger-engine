@@ -1,5 +1,6 @@
 package com.altech.ledger.usecase.account;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.entity.po.ledger.Account;
@@ -69,13 +70,14 @@ public class QueryWalletBalanceUseCase {
     }
 
     @Transactional(readOnly = true)
-    public GetLedgerAccountResponseDto find(Long walletId, String currency) {
+    public GetLedgerAccountResponseDto find(Long walletId, String currencyCode) {
+        Currency currency = commonUseCase.requireCurrency(currencyCode);
         Wallet wallet = commonUseCase.requireWallet(walletId);
         Account primary = commonUseCase.requireAccount(wallet.getAccountId());
-        if (primary.getCurrency().equalsIgnoreCase(currency)) {
+        if (primary.getCurrency() == currency) {
             return DtoMapper.toAccount(primary);
         }
-        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency.toUpperCase())
+        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency)
             .map(DtoMapper::toAccount)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Account not found for wallet " + walletId + " currency " + currency));
@@ -109,7 +111,7 @@ public class QueryWalletBalanceUseCase {
         if (fxTarget == null || fxTarget.isBlank()) {
             return base;
         }
-        String target = fxTarget.toUpperCase();
+        Currency target = commonUseCase.requireCurrency(fxTarget);
         List<GetLedgerAccountResponseDto> converted = base.accounts().stream().map(a -> {
             _convert(a.ledgerBalance(), a.currency(), target);
             return new GetLedgerAccountResponseDto(a.id(), a.fullNumber(), a.entity(), a.type(), a.subType(),
@@ -122,18 +124,19 @@ public class QueryWalletBalanceUseCase {
             base.currency(), converted, base.createDt(), base.updateDt());
     }
 
-    private BigDecimal _convert(BigDecimal amount, String from, String to) {
-        if (from.equalsIgnoreCase(to)) {
+    private BigDecimal _convert(BigDecimal amount, Currency from, Currency to) {
+        if (from == to) {
             return amount;
         }
-        Optional<FxRate> direct = fxRateRepository.findByBaseAndTarget(from.toUpperCase(), to.toUpperCase());
+        Optional<FxRate> direct = fxRateRepository.findByBaseAndTarget(from, to);
         if (direct.isPresent()) {
             return amount.multiply(direct.get().getRate()).setScale(8, RoundingMode.HALF_UP);
         }
-        Optional<FxRate> inverse = fxRateRepository.findByBaseAndTarget(to.toUpperCase(), from.toUpperCase());
+        Optional<FxRate> inverse = fxRateRepository.findByBaseAndTarget(to, from);
         if (inverse.isPresent() && inverse.get().getRate().signum() != 0) {
             return amount.divide(inverse.get().getRate(), 8, RoundingMode.HALF_UP);
         }
         return amount;
     }
 }
+

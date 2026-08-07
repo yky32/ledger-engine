@@ -9,7 +9,7 @@
  * api/          ApiClient
  * utils/        JSONUtil, EndpointHandler, CallableUtil, ExceptionUtil
  * aop/log/      LogScope
- * constant/enu/ LogType
+ * constant/enu/ LogType, Currency, CurrencyType
  * kafka/        BaseEvent, BaseListener
  * </pre>
  *

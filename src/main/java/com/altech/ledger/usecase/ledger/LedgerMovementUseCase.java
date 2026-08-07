@@ -1,5 +1,7 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.altech.core.exception.BizException;
 import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.exception.response.AccountErrorResponse;
@@ -58,7 +60,7 @@ public class LedgerMovementUseCase {
             event.getOriginatorId(),
             event.getTargetId(),
             event.getAmount(),
-            event.getCurrency() == null ? "USD" : event.getCurrency().toUpperCase(),
+            event.getCurrency() == null ? Currency.USD : event.getCurrency(),
             event.getDescription());
         m.setStatus(event.getStatus() == null ? LedgerMovementStatus.PROCESSING : event.getStatus());
         if (event.getFiles() != null) m.setFiles(event.getFiles());

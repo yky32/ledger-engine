@@ -20,8 +20,8 @@ SDK is **not** published to Maven Central. Delivery is **manual** (versioned thi
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  PRODUCT SETUP (Ledger Engine owns)                             │
-│  • App (startup ApplicationRunner) → COA pool accounts (expense / liability) │
-│  • POST /wallets → onboard one user wallet               │
+│  • POST /wallets → onboard one user wallet                      │
+│  • Optional pool accounts via account API if product needs them │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
@@ -39,10 +39,9 @@ SDK is **not** published to Maven Central. Delivery is **manual** (versioned thi
 
 ```text
 Step 0  Client purchases / deploys Ledger Engine
-Step 1  Program pools created on startup (automatic)
-Step 2  Client reads CRM → POST /wallets/batch (Phase 1)
-Step 3  Client verifies all customers have wallets
-Step 4  Client enables POS / campaign → webhook or Kafka (Phase 2)
+Step 1  Client reads CRM → POST /wallets/batch (Phase 1)
+Step 2  Client verifies all customers have wallets
+Step 3  Client enables POS / campaign → webhook or Kafka (Phase 2)
 ```
 
 ---
@@ -91,10 +90,7 @@ Idempotent — safe to re-run; existing wallets reported in `alreadyExistingUser
 
 Creates `ledger_account` with `external_reference = wallet:{userId}:LP`.
 
-On application startup, `App (startup ApplicationRunner)` ensures program pool accounts exist:
-
-- `pool:loyalty-expense:LP` (EXPENSE) — used for **Earn**
-- `pool:loyalty-liability:LP` (LIABILITY) — used for **Burn**
+Program pool accounts are **not** auto-seeded on startup. Create them via the account API if earn/burn needs dedicated pools.
 
 ---
 

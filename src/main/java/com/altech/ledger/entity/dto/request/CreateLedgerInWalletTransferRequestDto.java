@@ -1,10 +1,11 @@
 package com.altech.ledger.entity.dto.request;
 
+import com.altech.core.constant.enu.Currency;
+
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ import java.math.BigDecimal;
 public record CreateLedgerInWalletTransferRequestDto(
     @NotBlank String fromWalletId,
     @NotBlank String toWalletId,
-    @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+    @NotNull Currency currency,
     @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
     LedgerMovementMode mode,
     @Size(max = 150) String movementKey,
@@ -24,9 +25,6 @@ public record CreateLedgerInWalletTransferRequestDto(
     public CreateLedgerInWalletTransferRequestDto {
         if (mode == null) {
             mode = LedgerMovementMode.AUTO;
-        }
-        if (currency != null) {
-            currency = currency.trim().toUpperCase();
         }
     }
 }

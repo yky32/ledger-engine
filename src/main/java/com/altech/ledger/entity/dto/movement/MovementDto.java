@@ -1,5 +1,9 @@
 package com.altech.ledger.entity.dto.movement;
 
+import com.altech.core.constant.enu.Currency;
+
+import jakarta.validation.constraints.NotNull;
+
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.OrderType;
@@ -21,7 +25,7 @@ public final class MovementDto {
     public record DepositRequest(
         @NotBlank @Size(max = 150) String movementKey,
         @NotBlank @Size(max = 100) String ownerId,
-        @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+        @NotNull Currency currency,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
         LedgerMovementMode mode,
         @Size(max = 500) String description
@@ -37,7 +41,7 @@ public final class MovementDto {
     public record WithdrawalRequest(
         @NotBlank @Size(max = 150) String movementKey,
         @NotBlank @Size(max = 100) String ownerId,
-        @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+        @NotNull Currency currency,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
         LedgerMovementMode mode,
         @Size(max = 100) String targetId,
@@ -55,7 +59,7 @@ public final class MovementDto {
         @NotBlank @Size(max = 150) String movementKey,
         @NotBlank @Size(max = 100) String fromOwnerId,
         @NotBlank @Size(max = 100) String toOwnerId,
-        @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+        @NotNull Currency currency,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
         LedgerMovementMode mode,
         @Size(max = 500) String description
@@ -85,7 +89,7 @@ public final class MovementDto {
         String originatorId,
         String targetId,
         BigDecimal amount,
-        String currency,
+        Currency currency,
         Instant createdAt,
         Instant updatedAt
     ) {}

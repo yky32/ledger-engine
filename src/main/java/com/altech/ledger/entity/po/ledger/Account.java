@@ -1,5 +1,6 @@
 package com.altech.ledger.entity.po.ledger;
 
+import com.altech.core.constant.enu.Currency;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -59,9 +60,10 @@ public class Account extends AuditEntityWithIsActive {
     @Column(length = 50)
     private String buffer;
 
-    /** ISO / loyalty unit (USD, LP, …) — string to support non-fiat without platform Currency enum. */
-    @Column(nullable = false, length = 4)
-    private String currency;
+    /** Unit of balance: fiat, loyalty point (LP), or crypto — see {@link Currency}. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Currency currency;
     // === Chart of Account - COA
 
     @Column(nullable = false, precision = 38, scale = 18)
@@ -82,7 +84,7 @@ public class Account extends AuditEntityWithIsActive {
     protected Account() {}
 
     public Account(String fullNumber, String entity, String type, String subType,
-                   String mainAccount, String subAccount, String buffer, String currency,
+                   String mainAccount, String subAccount, String buffer, Currency currency,
                    boolean allowNegative) {
         this.fullNumber = fullNumber;
         this.entity = entity;

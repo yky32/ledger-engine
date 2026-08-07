@@ -1,5 +1,6 @@
 package com.altech.ledger.repository;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,7 +10,7 @@ import java.util.Optional;
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
     Optional<Wallet> findByAlias(String alias);
 
-    Optional<Wallet> findByOwnerIdAndCurrency(String ownerId, String currency);
+    Optional<Wallet> findByOwnerIdAndCurrency(String ownerId, Currency currency);
 
     List<Wallet> findByOwnerId(String ownerId);
 
@@ -21,5 +22,5 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
     boolean existsByAlias(String alias);
 
-    boolean existsByOwnerIdAndCurrency(String ownerId, String currency);
+    boolean existsByOwnerIdAndCurrency(String ownerId, Currency currency);
 }

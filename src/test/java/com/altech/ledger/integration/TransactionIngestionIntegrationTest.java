@@ -1,5 +1,6 @@
 package com.altech.ledger.integration;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +37,7 @@ class TransactionIngestionIntegrationTest {
     void webhookEarnsPointsWhenWalletOnboardedAndRuleMatches() throws Exception {
         String eventId = "evt-" + UUID.randomUUID();
         TransactionalEvent event = new TransactionalEvent(
-            eventId, "CUST-9001", "PURCHASE", new BigDecimal("125.50"), "LP", null, Map.of());
+            eventId, "CUST-9001", "PURCHASE", new BigDecimal("125.50"), Currency.LP, null, Map.of());
 
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -50,7 +51,7 @@ class TransactionIngestionIntegrationTest {
     @Test
     void webhookSkipsWhenWalletNotOnboarded() throws Exception {
         TransactionalEvent event = new TransactionalEvent(
-            "evt-no-wallet-" + UUID.randomUUID(), "CUST-9999", "PURCHASE", new BigDecimal("50"), "LP", null, Map.of());
+            "evt-no-wallet-" + UUID.randomUUID(), "CUST-9999", "PURCHASE", new BigDecimal("50"), Currency.LP, null, Map.of());
 
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -64,7 +65,7 @@ class TransactionIngestionIntegrationTest {
     void webhookSkipsWhenBelowMinimum() throws Exception {
         ensureOnboarded("CUST-9002");
         TransactionalEvent event = new TransactionalEvent(
-            "evt-low-" + UUID.randomUUID(), "CUST-9002", "PURCHASE", new BigDecimal("5"), "LP", null, Map.of());
+            "evt-low-" + UUID.randomUUID(), "CUST-9002", "PURCHASE", new BigDecimal("5"), Currency.LP, null, Map.of());
 
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -77,7 +78,7 @@ class TransactionIngestionIntegrationTest {
     void webhookIsIdempotentForSameEventId() throws Exception {
         String eventId = "evt-dup-" + UUID.randomUUID();
         TransactionalEvent event = new TransactionalEvent(
-            eventId, "CUST-9003", "SIGNUP", BigDecimal.ZERO, "LP", null, Map.of());
+            eventId, "CUST-9003", "SIGNUP", BigDecimal.ZERO, Currency.LP, null, Map.of());
         String body = objectMapper.writeValueAsString(event);
 
         mockMvc.perform(post("/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))

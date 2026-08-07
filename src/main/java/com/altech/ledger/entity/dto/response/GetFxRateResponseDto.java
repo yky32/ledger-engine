@@ -1,5 +1,7 @@
 package com.altech.ledger.entity.dto.response;
 
+import com.altech.core.constant.enu.Currency;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 
@@ -8,8 +10,8 @@ import java.time.Instant;
  */
 public record GetFxRateResponseDto(
     Long id,
-    String base,
-    String target,
+    Currency base,
+    Currency target,
     BigDecimal rate,
     Instant createDt,
     Instant updateDt

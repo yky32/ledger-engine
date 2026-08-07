@@ -1,5 +1,6 @@
 package com.altech.ledger.repository;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.entity.po.ledger.Account;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,7 +20,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     List<Account> findAllByMainAccount(String mainAccount);
 
-    Optional<Account> findByMainAccountAndCurrency(String mainAccount, String currency);
+    Optional<Account> findByMainAccountAndCurrency(String mainAccount, Currency currency);
 
     @Query("select a.mainAccount from Account a where a.mainAccount is not null")
     List<String> allMainAccountNumbers();

@@ -1,7 +1,9 @@
 package com.altech.ledger.entity.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import com.altech.core.constant.enu.Currency;
+
+import jakarta.validation.constraints.NotNull;
+
 
 /**
  * Create hierarchical COA account; blank segments get product defaults.
@@ -13,13 +15,10 @@ public record CreateLedgerAccountRequestDto(
     String buffer,
     String mainAccount,
     String subAccount,
-    @NotBlank @Pattern(regexp = "[A-Z]{2,4}") String currency,
+    @NotNull Currency currency,
     Boolean allowNegative
 ) {
     public CreateLedgerAccountRequestDto {
-        if (currency != null) {
-            currency = currency.trim().toUpperCase();
-        }
         if (allowNegative == null) {
             allowNegative = Boolean.FALSE;
         }

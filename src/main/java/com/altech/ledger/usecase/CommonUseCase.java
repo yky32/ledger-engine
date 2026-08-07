@@ -1,5 +1,6 @@
 package com.altech.ledger.usecase;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.po.ledger.Account;
@@ -30,17 +31,25 @@ public class CommonUseCase {
         return _requireWallet(id);
     }
 
-    public Wallet requireWalletByOwnerAndCurrency(String ownerId, String currency) {
-        String ccy = normalizeCurrency(currency);
+    public Wallet requireWalletByOwnerAndCurrency(String ownerId, Currency currency) {
+        Currency ccy = requireCurrency(currency);
         return walletRepository.findByOwnerIdAndCurrency(ownerId, ccy)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
                 "Wallet not found for " + ownerId + " / " + ccy));
     }
 
-    public Wallet requireActiveWallet(String ownerId, String currency) {
+    public Wallet requireWalletByOwnerAndCurrency(String ownerId, String currency) {
+        return requireWalletByOwnerAndCurrency(ownerId, requireCurrency(currency));
+    }
+
+    public Wallet requireActiveWallet(String ownerId, Currency currency) {
         Wallet wallet = requireWalletByOwnerAndCurrency(ownerId, currency);
         _requireActive(wallet);
         return wallet;
+    }
+
+    public Wallet requireActiveWallet(String ownerId, String currency) {
+        return requireActiveWallet(ownerId, requireCurrency(currency));
     }
 
     public Wallet requireActiveWallet(Long id) {
@@ -57,16 +66,18 @@ public class CommonUseCase {
         return _requireMovement(id);
     }
 
-    public String normalizeCurrency(String currency) {
-        return currency == null ? null : currency.trim().toUpperCase();
+    /**
+     * Parse API/path string into a known {@link Currency} (fiat, LP, or crypto).
+     */
+    public Currency requireCurrency(String currency) {
+        return Currency.get(currency);
     }
 
-    public String requireCurrency(String currency) {
-        String ccy = normalizeCurrency(currency);
-        if (ccy == null || !ccy.matches("[A-Z]{2,4}")) {
-            throw new BizException(AccountErrorResponse.ACC0400, "Currency must be 2-4 uppercase letters");
+    public Currency requireCurrency(Currency currency) {
+        if (currency == null || currency == Currency.ALL) {
+            throw new BizException(AccountErrorResponse.ACC0400, "Currency is required");
         }
-        return ccy;
+        return currency;
     }
 
     public void requireActive(Wallet wallet) {

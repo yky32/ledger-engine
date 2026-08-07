@@ -1,6 +1,8 @@
 package com.altech.ledger.usecase.fx;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
+import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.FxRateRepository;
@@ -17,7 +19,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
-import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
 
 @Component
 @RequiredArgsConstructor
@@ -34,8 +35,8 @@ public class QueryFxRateUseCase {
     @Transactional(readOnly = true)
     public Page<GetFxRateResponseDto> list(Pageable pageable, String base, String target) {
         if (base != null && target != null) {
-            String b = commonUseCase.normalizeCurrency(base);
-            String t = commonUseCase.normalizeCurrency(target);
+            Currency b = commonUseCase.requireCurrency(base);
+            Currency t = commonUseCase.requireCurrency(target);
             return fxRateRepository.findByBaseAndTarget(b, t)
                 .<Page<GetFxRateResponseDto>>map(r -> new PageImpl<>(List.of(DtoMapper.toFx(r)), pageable, 1))
                 .orElseGet(() -> Page.empty(pageable));
@@ -51,13 +52,13 @@ public class QueryFxRateUseCase {
         if (from == null || to == null || from.equalsIgnoreCase(to)) {
             return amount;
         }
-        Optional<FxRate> direct = fxRateRepository.findByBaseAndTarget(
-            commonUseCase.normalizeCurrency(from), commonUseCase.normalizeCurrency(to));
+        Currency fromCcy = commonUseCase.requireCurrency(from);
+        Currency toCcy = commonUseCase.requireCurrency(to);
+        Optional<FxRate> direct = fxRateRepository.findByBaseAndTarget(fromCcy, toCcy);
         if (direct.isPresent()) {
             return amount.multiply(direct.get().getRate()).setScale(8, RoundingMode.HALF_UP);
         }
-        Optional<FxRate> inverse = fxRateRepository.findByBaseAndTarget(
-            commonUseCase.normalizeCurrency(to), commonUseCase.normalizeCurrency(from));
+        Optional<FxRate> inverse = fxRateRepository.findByBaseAndTarget(toCcy, fromCcy);
         if (inverse.isPresent() && inverse.get().getRate().signum() != 0) {
             return amount.divide(inverse.get().getRate(), 8, RoundingMode.HALF_UP);
         }

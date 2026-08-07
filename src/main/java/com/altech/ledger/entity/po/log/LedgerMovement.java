@@ -1,5 +1,6 @@
 package com.altech.ledger.entity.po.log;
 
+import com.altech.core.constant.enu.Currency;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -57,8 +58,9 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal amount;
 
-    @Column(nullable = false, length = 4)
-    private String currency;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Currency currency;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -106,7 +108,7 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     protected LedgerMovement() {}
 
     public LedgerMovement(String movementKey, Long walletId, OrderType orderType, LedgerMovementMode mode,
-                          String originatorId, String targetId, BigDecimal amount, String currency,
+                          String originatorId, String targetId, BigDecimal amount, Currency currency,
                           String metadata) {
         this.movementKey = movementKey;
         this.walletId = walletId;

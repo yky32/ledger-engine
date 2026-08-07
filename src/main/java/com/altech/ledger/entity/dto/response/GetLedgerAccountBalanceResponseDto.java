@@ -1,5 +1,7 @@
 package com.altech.ledger.entity.dto.response;
 
+import com.altech.core.constant.enu.Currency;
+
 import java.math.BigDecimal;
 
 /**
@@ -7,7 +9,7 @@ import java.math.BigDecimal;
  */
 public record GetLedgerAccountBalanceResponseDto(
     Long accountId,
-    String currency,
+    Currency currency,
     BigDecimal ledgerBalance,
     BigDecimal availableBalance,
     BigDecimal fxConvertedBalance

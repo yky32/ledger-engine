@@ -22,8 +22,8 @@ public class UpdateFxRateUseCase {
     public GetFxRateResponseDto execute(Long id, CreateFxRateRequestDto dto) {
         FxRate rate = fxRateRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "FxRate not found: " + id));
-        rate.setBase(commonUseCase.normalizeCurrency(dto.base()));
-        rate.setTarget(commonUseCase.normalizeCurrency(dto.target()));
+        rate.setBase(commonUseCase.requireCurrency(dto.base()));
+        rate.setTarget(commonUseCase.requireCurrency(dto.target()));
         rate.setRate(dto.rate());
         return DtoMapper.toFx(fxRateRepository.save(rate));
     }
