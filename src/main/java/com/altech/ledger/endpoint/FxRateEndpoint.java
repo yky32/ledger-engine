@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ public class FxRateEndpoint {
     private final FxRateQueryUseCase queryUseCase;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<FxRateDtos.Response> create(@Valid @RequestBody FxRateDtos.CreateRequest dto) {
         return R.success(setupUseCase.create(dto));
     }

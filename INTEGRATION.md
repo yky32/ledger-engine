@@ -20,7 +20,7 @@ SDK is **not** published to Maven Central. Delivery is **manual** (versioned thi
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  PRODUCT SETUP (Ledger Engine owns)                             │
-│  • ProgramSetupRunner → COA pool accounts (expense / liability) │
+│  • App (startup ApplicationRunner) → COA pool accounts (expense / liability) │
 │  • POST /wallets → onboard one user wallet               │
 └─────────────────────────────────────────────────────────────────┘
 
@@ -91,7 +91,7 @@ Idempotent — safe to re-run; existing wallets reported in `alreadyExistingUser
 
 Creates `ledger_account` with `external_reference = wallet:{userId}:LP`.
 
-On application startup, `ProgramSetupRunner` ensures program pool accounts exist:
+On application startup, `App (startup ApplicationRunner)` ensures program pool accounts exist:
 
 - `pool:loyalty-expense:LP` (EXPENSE) — used for **Earn**
 - `pool:loyalty-liability:LP` (LIABILITY) — used for **Burn**

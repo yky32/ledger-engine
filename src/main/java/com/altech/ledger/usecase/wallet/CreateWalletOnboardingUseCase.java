@@ -1,5 +1,9 @@
 package com.altech.ledger.usecase.wallet;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+import com.altech.ledger.exception.response.WalletErrorResponse;
+
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
@@ -12,8 +16,6 @@ import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
-import com.altech.ledger.exception.LedgerErrorResponse;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.DtoWrapper;
@@ -39,8 +41,7 @@ public class CreateWalletOnboardingUseCase {
     @Transactional
     public GetWalletOnboardResponseDto execute(CreateWalletOnboardRequestDto request) {
         if (exists(request.userId(), request.currency())) {
-            throw LedgerException.of(LedgerErrorResponse.WAL0409,
-                "Wallet already onboarded: " + request.userId() + " / " + request.currency());
+            throw new BizException(WalletErrorResponse.WAL0409, "Wallet already onboarded: " + request.userId() + " / " + request.currency());
         }
         return createWallet(request);
     }
@@ -64,10 +65,10 @@ public class CreateWalletOnboardingUseCase {
             try {
                 createdWallets.add(createWallet(item));
                 created++;
-            } catch (LedgerException ex) {
-                if (LedgerErrorResponse.WAL0409.getCode().equals(ex.getCode())
-                    || "EXTERNAL_REFERENCE_EXISTS".equals(ex.getCode())
-                    || "WALLET_EXISTS".equals(ex.getCode())) {
+            } catch (BizException ex) {
+                String code = ex.getResponse() != null ? ex.getResponse().getCode() : null;
+                if (WalletErrorResponse.WAL0409.getCode().equals(code)
+                    || AccountErrorResponse.ACC0409.getCode().equals(code)) {
                     alreadyExists++;
                     existingUserIds.add(item.userId());
                 } else {
@@ -107,8 +108,7 @@ public class CreateWalletOnboardingUseCase {
 
         if (wallets.existsByOwnerIdAndCurrency(userId, currency)
             || accounts.existsByFullNumber(externalReference)) {
-            throw LedgerException.of(LedgerErrorResponse.WAL0409,
-                "Wallet already onboarded: " + userId + " / " + currency);
+            throw new BizException(WalletErrorResponse.WAL0409, "Wallet already onboarded: " + userId + " / " + currency);
         }
 
         String name = request.name() == null || request.name().isBlank()
@@ -119,8 +119,7 @@ public class CreateWalletOnboardingUseCase {
             externalReference, name, CoaType.LIABILITY, currency, false));
 
         Account account = accounts.findByFullNumber(externalReference)
-            .orElseThrow(() -> LedgerException.of(LedgerErrorResponse.ACC0404,
-                "Account missing after create: " + externalReference));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account missing after create: " + externalReference));
 
         String alias = uniqueAlias(userId, currency);
         String extId = request.externalId() == null || request.externalId().isBlank()

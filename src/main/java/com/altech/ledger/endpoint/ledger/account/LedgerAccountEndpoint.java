@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ public class LedgerAccountEndpoint {
     private final AccountOperationUseCase accountOperationUseCase;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<LedgerAccountDtos.Response> create(@Valid @RequestBody LedgerAccountDtos.CreateRequest dto) {
         return R.success(accountSetupUseCase.create(dto));
     }

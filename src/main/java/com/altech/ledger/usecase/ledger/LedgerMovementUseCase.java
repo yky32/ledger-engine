@@ -1,5 +1,10 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.MovementErrorResponse;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+import com.altech.ledger.exception.response.WalletErrorResponse;
+
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
@@ -7,7 +12,6 @@ import com.altech.ledger.entity.enu.MovementDirection;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.service.MovementBus;
@@ -38,10 +42,10 @@ public class LedgerMovementUseCase {
             }
         }
         if (event.getBelongToWalletId() == null) {
-            throw LedgerException.badRequest("MISSING_WALLET", "belongToWalletId required");
+            throw new BizException(WalletErrorResponse.WAL0400, "belongToWalletId required");
         }
         if (event.getOrderType() == null) {
-            throw LedgerException.badRequest("MISSING_ORDER_TYPE", "orderType required");
+            throw new BizException(MovementErrorResponse.MOV0400, "orderType required");
         }
         String key = event.getMovementKey() == null
             ? "mv-" + UUID.randomUUID() : event.getMovementKey();
@@ -77,7 +81,7 @@ public class LedgerMovementUseCase {
     @Transactional(readOnly = true)
     public LedgerMovement get(Long id) {
         return movements.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("Movement not found: " + id));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found: " + id));
     }
 
     public record EntryLeg(String targetId, BigDecimal amount, MovementDirection direction) {}

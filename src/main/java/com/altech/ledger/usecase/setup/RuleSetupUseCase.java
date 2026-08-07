@@ -1,8 +1,10 @@
 package com.altech.ledger.usecase.setup;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.dto.parity.RuleDtos;
 import com.altech.ledger.entity.po.accounting.Rule;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.RuleRepository;
 import com.altech.ledger.service.DtoMapper;
 import org.springframework.data.domain.Page;
@@ -27,7 +29,7 @@ public class RuleSetupUseCase {
     @Transactional(readOnly = true)
     public RuleDtos.Response getOne(Long id) {
         return DtoMapper.toRule(rules.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("Rule not found: " + id)));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Rule not found: " + id)));
     }
 
     @Transactional(readOnly = true)

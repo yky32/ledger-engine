@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,14 +26,12 @@ public class LedgerWalletEndpoint {
     private final MyWalletUseCase myWalletUseCase;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<LedgerWalletDtos.WithBalancesResponse> create(@Valid @RequestBody LedgerWalletDtos.CreateRequest dto) {
         return R.success(walletSetupUseCase.create(dto));
     }
 
     /** Convenience: create main account + wallet (legacy associatedWithAccountsCreation). */
     @PostMapping("/full")
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<LedgerWalletDtos.WithBalancesResponse> createFull(
         @RequestParam String ownerId,
         @RequestParam String currency,

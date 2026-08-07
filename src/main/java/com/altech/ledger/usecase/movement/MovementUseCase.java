@@ -1,5 +1,9 @@
 package com.altech.ledger.usecase.movement;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.MovementErrorResponse;
+import com.altech.ledger.exception.response.WalletErrorResponse;
+
 import com.altech.ledger.entity.dto.ledger.LedgerDto.PageResponse;
 import com.altech.ledger.entity.dto.movement.MovementDto.*;
 import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
@@ -8,7 +12,6 @@ import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.usecase.ledger.LedgerMovementPipelineUseCase;
@@ -110,21 +113,20 @@ public class MovementUseCase {
 
     private Wallet requireActiveWallet(String ownerId, String currency) {
         Wallet wallet = wallets.findByOwnerIdAndCurrency(ownerId, currency)
-            .orElseThrow(() -> LedgerException.notFound("WALLET_NOT_FOUND",
-                "Wallet not onboarded for owner " + ownerId + " / " + currency));
+            .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404, "Wallet not onboarded for owner " + ownerId + " / " + currency));
         if (wallet.getStatus() != WalletStatus.ACTIVE) {
-            throw LedgerException.conflict("WALLET_NOT_ACTIVE", "Wallet is not active: " + wallet.getStatus());
+            throw new BizException(WalletErrorResponse.WAL0403, "Wallet is not active: " + wallet.getStatus());
         }
         return wallet;
     }
 
     private LedgerMovement movement(Long id) {
         return movements.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("MOVEMENT_NOT_FOUND", "Movement not found: " + id));
+            .orElseThrow(() -> new BizException(MovementErrorResponse.MOV0404, "Movement not found: " + id));
     }
 
     private Wallet wallet(Long id) {
         return wallets.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("WALLET_NOT_FOUND", "Wallet not found: " + id));
+            .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404, "Wallet not found: " + id));
     }
 }

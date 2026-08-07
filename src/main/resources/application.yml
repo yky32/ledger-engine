@@ -1,50 +1,76 @@
+# TGT-style config: every environment-sensitive value uses ${ENV_VAR:default}.
+# Override via env / docker-compose / K8s without editing this file.
+
+server:
+  port: ${SERVER_PORT:8080}
+  max-http-header-size: 10MB
+  servlet:
+    context-path: ${CONTEXT_PATH:/}
+
+config:
+  system-invoker: ${SYSTEM_INVOKER:LEDGER}
+  microservice:
+    timezone: ${MICROSERVICE_TIME_ZONE:UTC}
+
 spring:
   application:
-    name: ledger-engine
+    name: ${SPRING_APPLICATION_NAME:LEDGER-ENGINE}
   datasource:
-    # Docker test-db (postgres) published on host 5433
-    url: jdbc:postgresql://localhost:5433/ledger-engine
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+    # Local Docker test-db default (host 5433 → container 5432)
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/ledger-engine}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
   jpa:
     open-in-view: false
-    hibernate:
-      # Schema from entities for now; switch to validate when Liquibase changesets land
-      ddl-auto: update
     properties:
       hibernate:
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        format_sql: ${HIBERNATE_FORMAT_SQL:true}
         jdbc:
-          time_zone: UTC
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+          time_zone: ${MICROSERVICE_TIME_ZONE:UTC}
+    hibernate:
+      # create | update | validate | none — be careful with create in shared envs
+      ddl-auto: ${JPA_DDL_AUTO:create}
+    show-sql: ${JPA_SHOW_SQL:true}
   liquibase:
-    # Placeholder only (empty master changelog). Enable + add SQL under db/changelog/changes/ later.
-    enabled: false
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    # Placeholder master changelog (includeAll). Keep false while using JPA ddl-auto.
+    enabled: ${LIQUIBASE_ENABLED:false}
+    change-log: ${LIQUIBASE_CHANGELOG:classpath:db/changelog/db.changelog-master.yaml}
+  kafka:
+    bootstrap-servers: ${KAFKA_URL:localhost:9092}
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_USERNAME:}" password="${KAFKA_PASSWORD:}";
+    consumer:
+      properties:
+        allow.auto.create.topics: true
 
+# Product domain (bound to @ConfigurationProperties)
 ledger:
   movement:
     kafka:
-      enabled: false
-      initiated-topic: ledger.movement.initiated
-      done-topic: ledger.movement.done
-      balance-update-topic: ledger.movement.balance-update
-      wallet-created-topic: ledger.wallet.created
-      group-id: ledger-engine-movement
+      enabled: ${LEDGER_MOVEMENT_KAFKA_ENABLED:false}
+      initiated-topic: ${LEDGER_MOVEMENT_INITIATED_TOPIC:ledger.movement.initiated}
+      done-topic: ${LEDGER_MOVEMENT_DONE_TOPIC:ledger.movement.done}
+      balance-update-topic: ${LEDGER_MOVEMENT_BALANCE_TOPIC:ledger.movement.balance-update}
+      wallet-created-topic: ${LEDGER_WALLET_CREATED_TOPIC:ledger.wallet.created}
+      group-id: ${LEDGER_MOVEMENT_KAFKA_GROUP:ledger-engine-movement}
   integration:
-    enabled: true
-    program-setup-enabled: true
+    enabled: ${LEDGER_INTEGRATION_ENABLED:true}
+    program-setup-enabled: ${LEDGER_PROGRAM_SETUP_ENABLED:true}
     program-currencies:
-      - LP
-    wallet-ref-template: "wallet:{userId}:{currency}"
-    expense-pool-ref-template: "pool:loyalty-expense:{currency}"
-    liability-pool-ref-template: "pool:loyalty-liability:{currency}"
-    deposit-clearing-ref-template: "pool:clearing-deposit:{currency}"
-    withdrawal-clearing-ref-template: "pool:clearing-withdrawal:{currency}"
+      - ${LEDGER_PROGRAM_CURRENCY:LP}
+    wallet-ref-template: ${LEDGER_WALLET_REF_TEMPLATE:wallet:{userId}:{currency}}
+    expense-pool-ref-template: ${LEDGER_EXPENSE_POOL_REF:pool:loyalty-expense:{currency}}
+    liability-pool-ref-template: ${LEDGER_LIABILITY_POOL_REF:pool:loyalty-liability:{currency}}
+    deposit-clearing-ref-template: ${LEDGER_DEPOSIT_CLEARING_REF:pool:clearing-deposit:{currency}}
+    withdrawal-clearing-ref-template: ${LEDGER_WITHDRAWAL_CLEARING_REF:pool:clearing-withdrawal:{currency}}
     kafka:
-      enabled: false
-      topic: ledger.transaction.events
-      group-id: ledger-engine
+      enabled: ${LEDGER_KAFKA_ENABLED:false}
+      topic: ${LEDGER_KAFKA_TOPIC:ledger.transaction.events}
+      group-id: ${LEDGER_KAFKA_GROUP:ledger-engine}
     rules:
       - event-type: PURCHASE
         operation: EARN

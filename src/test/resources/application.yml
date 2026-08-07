@@ -1,21 +1,36 @@
+# Test defaults (same ${ENV:default} practice as main; override with env if needed)
+server:
+  port: ${SERVER_PORT:0}
+  servlet:
+    context-path: ${CONTEXT_PATH:/}
+
+config:
+  system-invoker: ${SYSTEM_INVOKER:LEDGER}
+  microservice:
+    timezone: ${MICROSERVICE_TIME_ZONE:UTC}
+
 spring:
+  application:
+    name: LEDGER-ENGINE-TEST
   datasource:
-    url: jdbc:postgresql://localhost:5433/ledger-engine-test
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/ledger-engine-test}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
   jpa:
     open-in-view: false
-    hibernate:
-      ddl-auto: update
     properties:
       hibernate:
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
         jdbc:
-          time_zone: UTC
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+          time_zone: ${MICROSERVICE_TIME_ZONE:UTC}
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
   liquibase:
-    enabled: false
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: ${LIQUIBASE_ENABLED:false}
+    change-log: ${LIQUIBASE_CHANGELOG:classpath:db/changelog/db.changelog-master.yaml}
+  kafka:
+    bootstrap-servers: ${KAFKA_URL:localhost:9092}
 
 ledger:
   integration:

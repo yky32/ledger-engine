@@ -1,9 +1,12 @@
 package com.altech.ledger.usecase.account;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.RuleErrorResponse;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.dto.parity.RuleDtos;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.accounting.RuleExecution;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.RuleExecutionRepository;
 import com.altech.ledger.service.DtoMapper;
 import org.springframework.data.domain.Page;
@@ -21,7 +24,7 @@ public class RuleExecutionUseCase {
     @Transactional
     public RuleDtos.ExecutionResponse create(RuleDtos.CreateExecutionRequest dto) {
         if (executions.findByName(dto.name()).isPresent()) {
-            throw LedgerException.conflict("RULE_EXECUTION_EXISTS", "Name exists: " + dto.name());
+            throw new BizException(RuleErrorResponse.RUL0409, "Name exists: " + dto.name());
         }
         RuleExecution re = new RuleExecution(dto.name(), dto.description(), dto.orderType(), dto.metadata());
         return DtoMapper.toRuleExecution(executions.save(re));
@@ -30,7 +33,7 @@ public class RuleExecutionUseCase {
     @Transactional(readOnly = true)
     public RuleDtos.ExecutionResponse getOne(Long id) {
         return DtoMapper.toRuleExecution(executions.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("RuleExecution not found: " + id)));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "RuleExecution not found: " + id)));
     }
 
     @Transactional(readOnly = true)
@@ -41,7 +44,7 @@ public class RuleExecutionUseCase {
     @Transactional(readOnly = true)
     public RuleDtos.ExecutionResponse fetchByOrderType(OrderType orderType) {
         return findByOrderType(orderType)
-            .orElseThrow(() -> LedgerException.notFound("No rule execution for " + orderType));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "No rule execution for " + orderType));
     }
 
     /** Soft lookup — does not throw (for execution path). */

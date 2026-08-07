@@ -97,6 +97,6 @@ class TransactionIngestionIntegrationTest {
                     {"userId":"%s","currency":"LP","name":"Test wallet"}
                     """.formatted(userId)))
             .andReturn();
-        assertThat(result.getResponse().getStatus()).isIn(201, 409);
+        assertThat(result.getResponse().getStatus()).isIn(200, 409);
     }
 }

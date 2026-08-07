@@ -1,7 +1,9 @@
 package com.altech.ledger.usecase.setup;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.po.ledger.Account;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.service.CommonService;
 import com.altech.ledger.service.DtoMapper;
@@ -26,7 +28,7 @@ public class AccountSetupUseCase {
     public LedgerAccountDtos.Response create(LedgerAccountDtos.CreateRequest dto) {
         String currency = dto.currency() == null ? null : dto.currency().toUpperCase();
         if (currency == null || !currency.matches("[A-Z]{2,4}")) {
-            throw LedgerException.badRequest("INVALID_CURRENCY", "Currency must be 2-4 uppercase letters");
+            throw new BizException(AccountErrorResponse.ACC0400, "Currency must be 2-4 uppercase letters");
         }
         String entity = blank(dto.entity(), "10");
         String type = blank(dto.type(), "99");
@@ -37,11 +39,10 @@ public class AccountSetupUseCase {
         String fullNumber = entity + type + subType + mainAccount + subAccount + buffer + currency;
 
         if (accounts.existsByFullNumber(fullNumber)) {
-            throw LedgerException.conflict("ACCOUNT_EXISTS", "Account already exists: " + fullNumber);
+            throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
         }
         if (accounts.findByMainAccountAndSubAccount(mainAccount, subAccount).isPresent()) {
-            throw LedgerException.conflict("ACCOUNT_EXISTS",
-                "Main/sub account already exists: " + mainAccount + "/" + subAccount);
+            throw new BizException(AccountErrorResponse.ACC0409, "Main/sub account already exists: " + mainAccount + "/" + subAccount);
         }
 
         boolean allowNegative = dto.allowNegative() != null && dto.allowNegative();
@@ -65,7 +66,7 @@ public class AccountSetupUseCase {
     @Transactional(readOnly = true)
     public LedgerAccountDtos.Response getOne(Long id) {
         return DtoMapper.toAccount(accounts.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("Account not found: " + id)));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id)));
     }
 
     @Transactional(readOnly = true)

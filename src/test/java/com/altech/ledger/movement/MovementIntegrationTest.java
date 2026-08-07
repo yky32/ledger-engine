@@ -31,7 +31,7 @@ class MovementIntegrationTest {
                 .content("""
                     {"movementKey":"%s","ownerId":"%s","currency":"LP","amount":250.00,"description":"Top up"}
                     """.formatted(key, owner)))
-            .andExpect(status().isCreated())
+            .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("SETTLED"))
             .andExpect(jsonPath("$.data.orderType").value("DEPOSIT"));
 
@@ -53,7 +53,7 @@ class MovementIntegrationTest {
                 .content("""
                     {"movementKey":"%s","ownerId":"%s","currency":"LP","amount":100.00}
                     """.formatted(depKey, ownerA)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isOk());
 
         String xferKey = "xfer-" + UUID.randomUUID();
         mockMvc.perform(post("/movements/transfers/in-wallet")
@@ -61,7 +61,7 @@ class MovementIntegrationTest {
                 .content("""
                     {"movementKey":"%s","fromOwnerId":"%s","toOwnerId":"%s","currency":"LP","amount":40.00}
                     """.formatted(xferKey, ownerA, ownerB)))
-            .andExpect(status().isCreated())
+            .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/wallets/" + ownerA + "/LP"))
@@ -81,9 +81,9 @@ class MovementIntegrationTest {
             """.formatted(key, owner);
 
         mockMvc.perform(post("/movements/deposits").contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isCreated());
+            .andExpect(status().isOk());
         mockMvc.perform(post("/movements/deposits").contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isCreated())
+            .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.movementKey").value(key));
     }
 
@@ -94,6 +94,6 @@ class MovementIntegrationTest {
                     {"userId":"%s","currency":"LP","name":"%s"}
                     """.formatted(userId, name)))
             .andReturn();
-        assertThat(result.getResponse().getStatus()).isIn(201, 409);
+        assertThat(result.getResponse().getStatus()).isIn(200, 409);
     }
 }

@@ -155,10 +155,10 @@ All accounts share the `ledger_account` table. Role is determined by `type` + `e
 | Role | `type` | `external_reference` pattern | Created by |
 |---|---|---|---|
 | **Customer wallet** | `LIABILITY` | `wallet:{userId}:{currency}` | Phase 1 — `POST /wallets` |
-| **Issuance / expense pool** | `EXPENSE` | `pool:loyalty-expense:{currency}` | Startup — `ProgramSetupRunner` |
-| **Outstanding liability pool** | `LIABILITY` | `pool:loyalty-liability:{currency}` | Startup — `ProgramSetupRunner` |
-| **Deposit clearing** | `ASSET` | `pool:clearing-deposit:{currency}` | Startup — `ProgramSetupRunner` |
-| **Withdrawal clearing** | `ASSET` | `pool:clearing-withdrawal:{currency}` | Startup — `ProgramSetupRunner` |
+| **Issuance / expense pool** | `EXPENSE` | `pool:loyalty-expense:{currency}` | Startup — `App (startup ApplicationRunner)` |
+| **Outstanding liability pool** | `LIABILITY` | `pool:loyalty-liability:{currency}` | Startup — `App (startup ApplicationRunner)` |
+| **Deposit clearing** | `ASSET` | `pool:clearing-deposit:{currency}` | Startup — `App (startup ApplicationRunner)` |
+| **Withdrawal clearing** | `ASSET` | `pool:clearing-withdrawal:{currency}` | Startup — `App (startup ApplicationRunner)` |
 | **Held balance** (planned) | `ASSET` | `hold:{userId}:{currency}` | Process HOLD operation |
 
 ```text
@@ -358,7 +358,7 @@ On startup, the product ensures **program COA pools** exist (expense + liability
 |---|---|
 | Customer master data (CRM) | Client legacy system |
 | **Open wallet per customer** | Client → Ledger Engine Phase 1 |
-| Program pool accounts | Product setup (`ProgramSetupRunner`) |
+| Program pool accounts | Product setup (`App (startup ApplicationRunner)`) |
 | Store balance truth | Ledger Engine |
 
 Transaction processing (Phase 2) **never creates wallets**. Missing wallet → event skipped.

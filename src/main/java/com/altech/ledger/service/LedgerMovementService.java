@@ -1,7 +1,9 @@
 package com.altech.ledger.service;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.po.log.LedgerMovement;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,13 +18,13 @@ public class LedgerMovementService {
     @Transactional(readOnly = true)
     public LedgerMovement get(Long id) {
         return movements.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("Movement not found: " + id));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found: " + id));
     }
 
     @Transactional(readOnly = true)
     public LedgerMovement getByKey(String movementKey) {
         return movements.findByMovementKey(movementKey)
-            .orElseThrow(() -> LedgerException.notFound("Movement not found key: " + movementKey));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found key: " + movementKey));
     }
 
     @Transactional

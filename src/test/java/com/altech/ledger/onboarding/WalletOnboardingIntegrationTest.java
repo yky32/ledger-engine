@@ -31,7 +31,7 @@ class WalletOnboardingIntegrationTest {
                 .content("""
                     {"userId":"%s","currency":"LP","name":"Alice"}
                     """.formatted(userId)))
-            .andExpect(status().isCreated())
+            .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SYS0000"))
             .andExpect(jsonPath("$.data.ownerId").value(userId))
             .andExpect(jsonPath("$.data.currency").value("LP"))

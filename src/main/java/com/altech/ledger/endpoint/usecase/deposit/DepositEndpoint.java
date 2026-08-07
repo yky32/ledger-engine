@@ -7,7 +7,6 @@ import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.usecase.ledger.LedgerDepositUseCase;
 import com.altech.ledger.util.MultipartFileMetadata;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,13 +24,11 @@ public class DepositEndpoint {
     private final LedgerDepositUseCase depositUseCase;
 
     @PostMapping("/ledger/deposits")
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<LedgerMovementDtos.Response> deposit(@Valid @RequestBody LedgerMovementDtos.CreateDepositRequest dto) {
         return R.success(depositUseCase.execute(dto));
     }
 
     @PostMapping(value = "/ledger/deposits", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<LedgerMovementDtos.Response> depositMultipart(
         @RequestParam String targetWalletId,
         @RequestParam String currency,

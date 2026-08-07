@@ -1,7 +1,10 @@
 package com.altech.ledger.usecase;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.FxErrorResponse;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.po.FxRate;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.FxRateRepository;
 import com.altech.ledger.service.DtoMapper;
 import org.springframework.data.domain.Page;
@@ -22,7 +25,7 @@ public class FxRateSetupUseCase {
         String base = dto.base().toUpperCase();
         String target = dto.target().toUpperCase();
         if (fxRates.findByBaseAndTarget(base, target).isPresent()) {
-            throw LedgerException.conflict("FX_EXISTS", "Rate exists for " + base + "/" + target);
+            throw new BizException(FxErrorResponse.FX0409, "Rate exists for " + base + "/" + target);
         }
         return DtoMapper.toFx(fxRates.save(new FxRate(base, target, dto.rate())));
     }
@@ -30,7 +33,7 @@ public class FxRateSetupUseCase {
     @Transactional
     public FxRateDtos.Response update(Long id, FxRateDtos.CreateRequest dto) {
         FxRate rate = fxRates.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("FxRate not found: " + id));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "FxRate not found: " + id));
         rate.setBase(dto.base().toUpperCase());
         rate.setTarget(dto.target().toUpperCase());
         rate.setRate(dto.rate());
@@ -40,7 +43,7 @@ public class FxRateSetupUseCase {
     @Transactional(readOnly = true)
     public FxRateDtos.Response getOne(Long id) {
         return DtoMapper.toFx(fxRates.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("FxRate not found: " + id)));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "FxRate not found: " + id)));
     }
 
     @Transactional(readOnly = true)

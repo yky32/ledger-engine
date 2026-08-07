@@ -1,11 +1,14 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.MovementErrorResponse;
+import com.altech.ledger.exception.response.WalletErrorResponse;
+
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
 import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.*;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.service.DtoMapper;
 import com.altech.ledger.service.MovementBus;
@@ -33,7 +36,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     public LedgerMovementDtos.Response doDeposit(LedgerMovementDtos.CreateDepositRequest req) {
         String target = req.resolvedTargetWalletId();
         if (target == null || target.isBlank()) {
-            throw LedgerException.badRequest("MISSING_TARGET", "targetWalletId or targetId required");
+            throw new BizException(MovementErrorResponse.MOV0400, "targetWalletId or targetId required");
         }
         Wallet wallet = walletService.resolve(target);
         requireActive(wallet);
@@ -51,7 +54,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     public LedgerMovementDtos.Response doWithdrawal(LedgerMovementDtos.CreateWithdrawalRequest req) {
         String origin = req.resolvedOriginatorWalletId();
         if (origin == null || origin.isBlank()) {
-            throw LedgerException.badRequest("MISSING_ORIGINATOR", "originatorWalletId or originatorId required");
+            throw new BizException(MovementErrorResponse.MOV0400, "originatorWalletId or originatorId required");
         }
         Wallet wallet = walletService.resolve(origin);
         requireActive(wallet);
@@ -116,8 +119,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
 
     private void requireActive(Wallet wallet) {
         if (wallet.getStatus() != WalletStatus.ACTIVE) {
-            throw LedgerException.conflict("WALLET_NOT_ACTIVE",
-                "Wallet is not active: " + wallet.getStatus());
+            throw new BizException(WalletErrorResponse.WAL0403, "Wallet is not active: " + wallet.getStatus());
         }
     }
 

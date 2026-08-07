@@ -1,11 +1,13 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.dto.ledger.LedgerDto.AccountResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.BalanceResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
 import com.altech.ledger.entity.po.ledger.Account;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,7 @@ public class LedgerUseCase {
     public AccountResponse createAccount(CreateAccountRequest request) {
         requireLedgerCurrency(request.currency());
         if (accounts.existsByFullNumber(request.externalReference())) {
-            throw LedgerException.conflict("EXTERNAL_REFERENCE_EXISTS", "External reference already exists");
+            throw new BizException(AccountErrorResponse.ACC0409, "External reference already exists");
         }
         Account account = new Account(
             request.externalReference(),
@@ -53,12 +55,12 @@ public class LedgerUseCase {
     }
 
     private Account account(Long id) {
-        return accounts.findById(id).orElseThrow(() -> LedgerException.notFound("Account not found: " + id));
+        return accounts.findById(id).orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
     }
 
     private void requireLedgerCurrency(String currency) {
         if (currency == null || !currency.matches("[A-Z]{2,4}")) {
-            throw LedgerException.badRequest("INVALID_CURRENCY", "Currency must be 2-4 uppercase letters");
+            throw new BizException(AccountErrorResponse.ACC0400, "Currency must be 2-4 uppercase letters");
         }
     }
 

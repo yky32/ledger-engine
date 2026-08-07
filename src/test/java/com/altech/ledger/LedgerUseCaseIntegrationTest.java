@@ -1,10 +1,11 @@
 package com.altech.ledger;
 
+import com.altech.core.exception.BizException;
+
 import com.altech.ledger.entity.dto.ledger.LedgerDto.AccountResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.BalanceResponse;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CreateAccountRequest;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.usecase.ledger.LedgerUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,6 @@ class LedgerUseCaseIntegrationTest {
             "dup-ref", "One", CoaType.ASSET, "USD", false));
         assertThatThrownBy(() -> useCase.createAccount(new CreateAccountRequest(
             "dup-ref", "Two", CoaType.ASSET, "USD", false)))
-            .isInstanceOf(LedgerException.class);
+            .isInstanceOf(BizException.class);
     }
 }

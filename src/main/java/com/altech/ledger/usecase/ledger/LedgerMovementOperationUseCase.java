@@ -1,9 +1,11 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.log.LedgerMovement;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.service.DtoMapper;
 import com.altech.ledger.service.MovementBus;
@@ -63,6 +65,6 @@ public class LedgerMovementOperationUseCase {
 
     private LedgerMovement movement(Long id) {
         return movements.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("Movement not found: " + id));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found: " + id));
     }
 }

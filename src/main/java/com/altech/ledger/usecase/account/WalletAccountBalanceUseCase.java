@@ -1,11 +1,13 @@
 package com.altech.ledger.usecase.account;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
 import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.FxRateRepository;
 import com.altech.ledger.repository.WalletRepository;
@@ -33,21 +35,21 @@ public class WalletAccountBalanceUseCase {
     @Transactional(readOnly = true)
     public LedgerWalletDtos.WithBalancesResponse getOne(Long id, String fxTarget) {
         Wallet wallet = wallets.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("Wallet not found: " + id));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + id));
         return withFx(wallet, fxTarget);
     }
 
     @Transactional(readOnly = true)
     public LedgerWalletDtos.WithBalancesResponse getByAlias(String alias, String fxTarget) {
         Wallet wallet = wallets.findByAlias(alias)
-            .orElseThrow(() -> LedgerException.notFound("Wallet not found alias: " + alias));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found alias: " + alias));
         return withFx(wallet, fxTarget);
     }
 
     @Transactional(readOnly = true)
     public LedgerWalletDtos.WithBalancesResponse getByExtIdentifier(String id, String type) {
         Wallet wallet = wallets.findByExtIdentifierAndExtType(id, type)
-            .orElseThrow(() -> LedgerException.notFound("Wallet not found ext: " + type + "/" + id));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found ext: " + type + "/" + id));
         return withFx(wallet, null);
     }
 
@@ -64,21 +66,21 @@ public class WalletAccountBalanceUseCase {
     @Transactional(readOnly = true)
     public LedgerAccountDtos.Response findMyAccount(String ownerId, String currency) {
         Wallet wallet = wallets.findByOwnerIdAndCurrency(ownerId, currency)
-            .orElseThrow(() -> LedgerException.notFound("Wallet not found for " + ownerId + "/" + currency));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found for " + ownerId + "/" + currency));
         return DtoMapper.toAccount(account(wallet.getAccountId()));
     }
 
     @Transactional(readOnly = true)
     public LedgerAccountDtos.Response find(Long walletId, String currency) {
         Wallet wallet = wallets.findById(walletId)
-            .orElseThrow(() -> LedgerException.notFound("Wallet not found: " + walletId));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + walletId));
         Account primary = account(wallet.getAccountId());
         if (primary.getCurrency().equalsIgnoreCase(currency)) {
             return DtoMapper.toAccount(primary);
         }
         return accounts.findByMainAccountAndCurrency(primary.getMainAccount(), currency.toUpperCase())
             .map(DtoMapper::toAccount)
-            .orElseThrow(() -> LedgerException.notFound(
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, 
                 "Account not found for wallet " + walletId + " currency " + currency));
     }
 
@@ -140,6 +142,6 @@ public class WalletAccountBalanceUseCase {
 
     private Account account(Long id) {
         return accounts.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("Account not found: " + id));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
     }
 }

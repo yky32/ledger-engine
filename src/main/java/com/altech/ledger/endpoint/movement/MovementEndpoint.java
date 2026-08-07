@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,19 +18,16 @@ public class MovementEndpoint {
     private final MovementUseCase movementUseCase;
 
     @PostMapping("/deposits")
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<MovementResponse> deposit(@Valid @RequestBody DepositRequest request) {
         return R.success(movementUseCase.deposit(request));
     }
 
     @PostMapping("/withdrawals")
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<MovementResponse> withdraw(@Valid @RequestBody WithdrawalRequest request) {
         return R.success(movementUseCase.withdraw(request));
     }
 
     @PostMapping("/transfers/in-wallet")
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<MovementResponse> transfer(@Valid @RequestBody InWalletTransferRequest request) {
         return R.success(movementUseCase.transfer(request));
     }

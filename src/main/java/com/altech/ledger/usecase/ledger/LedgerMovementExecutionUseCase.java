@@ -1,5 +1,9 @@
 package com.altech.ledger.usecase.ledger;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.MovementErrorResponse;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+
 import com.altech.ledger.entity.dto.BalanceExecutionResultCommand;
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
 import com.altech.ledger.entity.enu.BalanceOperation;
@@ -10,7 +14,6 @@ import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.listener.intf.LedgerHandler;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.LedgerEntryRepository;
@@ -51,10 +54,10 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     @Transactional
     public void execute(LedgerMovementEvent event) {
         if (event.getMovementId() == null) {
-            throw LedgerException.badRequest("MISSING_MOVEMENT_ID", "movementId required on event");
+            throw new BizException(MovementErrorResponse.MOV0400, "movementId required on event");
         }
         LedgerMovement movement = movements.findById(event.getMovementId())
-            .orElseThrow(() -> LedgerException.notFound("Movement not found: " + event.getMovementId()));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Movement not found: " + event.getMovementId()));
         execute(movement);
     }
 
@@ -144,8 +147,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
                     ? movement.getOriginatorId() : String.valueOf(movement.getWalletId()), currency);
                 command.add(origin, amount, BalanceOperation.SUBTRACT);
             }
-            default -> throw LedgerException.badRequest("UNSUPPORTED_ORDER_TYPE",
-                "Unsupported order type: " + movement.getOrderType());
+            default -> throw new BizException(MovementErrorResponse.MOV0400, "Unsupported order type: " + movement.getOrderType());
         }
         return command;
     }
@@ -159,7 +161,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
 
     private void apply(BalanceExecutionResultCommand.CommandDetail cmd, LedgerMovement movement) {
         Account locked = accounts.lockById(cmd.getAccount().getId())
-            .orElseThrow(() -> LedgerException.notFound("Account not found: " + cmd.getAccount().getId()));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + cmd.getAccount().getId()));
         BigDecimal ledger = locked.getLedgerBalance();
         BigDecimal available = locked.getAvailableBalance();
         if (cmd.getOperation() == BalanceOperation.ADD) {
@@ -167,8 +169,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             available = available.add(cmd.getAmount());
         } else {
             if (!locked.isAllowNegative() && available.compareTo(cmd.getAmount()) < 0) {
-                throw LedgerException.conflict("INSUFFICIENT_BALANCE",
-                    "Insufficient available balance on account " + locked.getId());
+                throw new BizException(MovementErrorResponse.MOV0403, "Insufficient available balance on account " + locked.getId());
             }
             ledger = ledger.subtract(cmd.getAmount());
             available = available.subtract(cmd.getAmount());
@@ -193,7 +194,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
 
     private Account resolveAccount(String idOrWalletRef, String currency) {
         if (idOrWalletRef == null || idOrWalletRef.isBlank()) {
-            throw LedgerException.badRequest("MISSING_ACCOUNT", "Account/wallet reference required");
+            throw new BizException(AccountErrorResponse.ACC0400, "Account/wallet reference required");
         }
         try {
             Long id = Long.valueOf(idOrWalletRef);
@@ -202,10 +203,10 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
                 return fromWallet.account();
             }
             return accounts.findById(id)
-                .orElseThrow(() -> LedgerException.notFound("Account not found: " + id));
+                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
         } catch (NumberFormatException ex) {
             Wallet wallet = wallets.findByOwnerIdAndCurrency(idOrWalletRef, currency)
-                .orElseThrow(() -> LedgerException.notFound(
+                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, 
                     "Wallet not found for " + idOrWalletRef + "/" + currency));
             return accountForWalletCurrency(wallet, currency);
         }
@@ -220,12 +221,12 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
 
     private Account accountForWalletCurrency(Wallet wallet, String currency) {
         Account primary = accounts.findById(wallet.getAccountId())
-            .orElseThrow(() -> LedgerException.notFound("Account not found: " + wallet.getAccountId()));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + wallet.getAccountId()));
         if (primary.getCurrency().equalsIgnoreCase(currency)) {
             return primary;
         }
         return accounts.findByMainAccountAndCurrency(primary.getMainAccount(), currency.toUpperCase())
-            .orElseThrow(() -> LedgerException.notFound(
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, 
                 "Account currency not found for wallet " + wallet.getId() + " / " + currency));
     }
 

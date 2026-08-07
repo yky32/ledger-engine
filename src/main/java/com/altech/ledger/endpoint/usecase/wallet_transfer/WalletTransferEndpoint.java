@@ -6,10 +6,8 @@ import com.altech.core.response.Result;
 import com.altech.ledger.usecase.ledger.LedgerMovementPipelineUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import com.altech.ledger.entity.dto.parity.LedgerMovementDtos;
 
@@ -19,7 +17,6 @@ public class WalletTransferEndpoint {
     private final LedgerMovementPipelineUseCase pipeline;
 
     @PostMapping("/ledger/wallet-transfers/in-wallet")
-    @ResponseStatus(HttpStatus.CREATED)
     public Result<LedgerMovementDtos.Response> inWallet(@Valid @RequestBody LedgerMovementDtos.CreateInWalletTransferRequest dto) {
         return R.success(pipeline.inWalletTransfer(dto));
     }

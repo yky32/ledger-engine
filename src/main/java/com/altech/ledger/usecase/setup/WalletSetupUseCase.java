@@ -1,5 +1,9 @@
 package com.altech.ledger.usecase.setup;
 
+import com.altech.core.exception.BizException;
+import com.altech.ledger.exception.response.AccountErrorResponse;
+import com.altech.ledger.exception.response.WalletErrorResponse;
+
 import com.altech.ledger.entity.dto.parity.LedgerAccountDtos;
 import com.altech.ledger.entity.dto.parity.LedgerWalletDtos;
 import com.altech.ledger.entity.enu.WalletAssociationType;
@@ -7,7 +11,6 @@ import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
-import com.altech.ledger.exception.LedgerException;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.CommonService;
@@ -53,7 +56,7 @@ public class WalletSetupUseCase {
     @Transactional
     public LedgerWalletDtos.WithBalancesResponse create(LedgerWalletDtos.CreateRequest dto) {
         Account account = accounts.findById(dto.accountId())
-            .orElseThrow(() -> LedgerException.notFound("Account not found: " + dto.accountId()));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + dto.accountId()));
 
         String alias = nextAlias();
         String currency = dto.currency() != null ? dto.currency().toUpperCase() : account.getCurrency();
@@ -63,8 +66,7 @@ public class WalletSetupUseCase {
         WalletAssociationType type = dto.type() == null ? WalletAssociationType.CUSTODIAN : dto.type();
 
         if (wallets.existsByOwnerIdAndCurrency(ownerId, currency)) {
-            throw LedgerException.conflict("WALLET_EXISTS",
-                "Wallet already exists for owner/currency: " + ownerId + "/" + currency);
+            throw new BizException(WalletErrorResponse.WAL0409, "Wallet already exists for owner/currency: " + ownerId + "/" + currency);
         }
 
         Wallet wallet = new Wallet(
@@ -103,7 +105,7 @@ public class WalletSetupUseCase {
 
     private Wallet wallet(Long id) {
         return wallets.findById(id)
-            .orElseThrow(() -> LedgerException.notFound("Wallet not found: " + id));
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + id));
     }
 
     private String nextAlias() {

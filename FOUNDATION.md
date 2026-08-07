@@ -56,7 +56,7 @@
 
 ## Standalone (not vendor lock-in)
 
-OAuth / GrandPay / IDV / S3 / Discord → params, `PaymentRailPort`, activate stub, file metadata, logs.
+OAuth / GrandPay / IDV / S3 / Discord → params, activate stub, file metadata, logs.
 
 ## Tests
 
