@@ -10,9 +10,11 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * LedgerEntry — (movement-side log leg).
+ * One balance leg produced when a {@link LedgerMovement} settles.
  * <p>
- * Per-movement balance leg log (not a full double-entry journal).
+ * Records which account was credited or debited and by how much. Not a classic
+ * double-entry journal document — a movement-side audit trail of applied legs
+ * (txnId points back to the parent movement).
  */
 @Entity
 @Table(name = "ledger_entry")

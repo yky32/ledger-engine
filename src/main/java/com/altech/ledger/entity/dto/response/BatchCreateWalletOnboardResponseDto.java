@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * Bulk onboarding result: counts plus created wallets and already-existing user ids.
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

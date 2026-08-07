@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+/**
+ * Nested balance slice for onboarding (ledger + available on the primary account).
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

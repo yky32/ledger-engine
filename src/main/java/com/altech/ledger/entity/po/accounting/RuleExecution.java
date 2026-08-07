@@ -8,7 +8,10 @@ import com.altech.ledger.entity.enu.OrderType;
 import jakarta.persistence.*;
 
 /**
- * RuleExecution — .
+ * Binds an {@link com.altech.ledger.entity.enu.OrderType} to a set of rules for execution.
+ * <p>
+ * Lookup by order type (DEPOSIT, WITHDRAWAL, …) when a movement runs. Metadata
+ * typically lists which {@link Rule} ids apply. Soft path if none configured.
  */
 @Entity
 @Table(name = "rule_execution")

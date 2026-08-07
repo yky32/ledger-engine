@@ -8,9 +8,16 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+/**
+ * Owner-centric product movement API ({@code /movements/*}).
+ * Nested records only — not a Spring bean.
+ */
 public final class MovementDto {
     private MovementDto() {}
 
+    /**
+     * Owner deposit into their onboarded wallet for a currency.
+     */
     public record DepositRequest(
         @NotBlank @Size(max = 150) String movementKey,
         @NotBlank @Size(max = 100) String ownerId,
@@ -24,6 +31,9 @@ public final class MovementDto {
         }
     }
 
+    /**
+     * Owner withdrawal from their onboarded wallet.
+     */
     public record WithdrawalRequest(
         @NotBlank @Size(max = 150) String movementKey,
         @NotBlank @Size(max = 100) String ownerId,
@@ -38,6 +48,9 @@ public final class MovementDto {
         }
     }
 
+    /**
+     * Transfer between two owners in the same currency (in-wallet).
+     */
     public record InWalletTransferRequest(
         @NotBlank @Size(max = 150) String movementKey,
         @NotBlank @Size(max = 100) String fromOwnerId,
@@ -52,10 +65,16 @@ public final class MovementDto {
         }
     }
 
+    /**
+     * Optional body when settling a MANUAL / pending movement.
+     */
     public record SettleMovementRequest(
         @Size(max = 500) String description
     ) {}
 
+    /**
+     * Movement summary returned to product clients after create/get/settle.
+     */
     public record MovementResponse(
         Long id,
         String movementKey,

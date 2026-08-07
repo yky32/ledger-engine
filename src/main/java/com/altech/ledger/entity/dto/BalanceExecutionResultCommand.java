@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Balance mutation plan produced by movement rule execution.
+ * In-memory plan of account balance mutations produced when a movement is executed.
+ * Each {@link CommandDetail} is one ADD/SUBTRACT leg applied under lock.
  */
 @Getter
 @Setter
@@ -28,6 +29,9 @@ public class BalanceExecutionResultCommand {
         details.add(new CommandDetail(account, amount, operation));
     }
 
+    /**
+     * One balance change: account + amount + ADD or SUBTRACT.
+     */
     @Getter
     @Setter
     @NoArgsConstructor

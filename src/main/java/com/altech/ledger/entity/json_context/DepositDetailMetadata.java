@@ -2,7 +2,9 @@ package com.altech.ledger.entity.json_context;
 
 import java.math.BigDecimal;
 
-/** DepositDetailMetadata. */
+/**
+ * Optional bank/fee breakdown attached to a deposit movement detail payload.
+ */
 public record DepositDetailMetadata(
     String bankName,
     String reference,

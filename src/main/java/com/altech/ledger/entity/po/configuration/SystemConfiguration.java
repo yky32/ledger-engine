@@ -7,7 +7,10 @@ import com.altech.core.entity.AuditEntityWithIsActive;
 import jakarta.persistence.*;
 
 /**
- * SystemConfiguration — .
+ * Key/value config scoped by target + scope (e.g. feature or tenant global).
+ * <p>
+ * Simple runtime settings store; unique on (target, scope). Value is free TEXT
+ * (often JSON or a plain string).
  */
 @Entity
 @Table(

@@ -8,7 +8,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
+/**
+ * Audit base that also tracks soft-active flag. New rows default {@code isActive = true}
+ * on persist; deactivate by setting false instead of hard-delete when product needs it.
+ */
 @MappedSuperclass
 @Getter
 @Setter

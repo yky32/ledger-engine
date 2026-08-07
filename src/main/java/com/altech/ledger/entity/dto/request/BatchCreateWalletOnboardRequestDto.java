@@ -6,7 +6,9 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
-/** CRM / legacy bulk wallet onboarding. */
+/**
+ * CRM / bulk wallet onboarding: list of single-wallet create requests (soft-idempotent).
+ */
 public record BatchCreateWalletOnboardRequestDto(
     @NotEmpty @Size(max = 1000) List<@Valid CreateWalletOnboardRequestDto> wallets
 ) {}

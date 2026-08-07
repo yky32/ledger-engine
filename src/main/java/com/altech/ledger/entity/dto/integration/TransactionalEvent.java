@@ -9,6 +9,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Inbound loyalty / commerce event for rule evaluation (webhook or Kafka ingest).
+ * <p>
+ * Matched by {@code eventType} against integration rules (earn/burn/process).
+ */
 public record TransactionalEvent(
     @NotBlank String eventId,
     @NotBlank String userId,

@@ -12,9 +12,11 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 /**
- * Wallet — (account association).
+ * Customer-facing wallet: links an owner to a primary {@link Account} for one currency.
  * <p>
- * New-on-top: {@link #ownerId}, {@link #currency} for CRM onboarding uniqueness.
+ * Holds product identity (ownerId, alias, external CRM ids, status). Money lives on the
+ * linked account(s); this row is the association + lifecycle (PENDING → ACTIVE, etc.).
+ * Unique on owner + currency for onboarding idempotency.
  */
 @Entity
 @Table(

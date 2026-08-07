@@ -10,7 +10,10 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * Rule — .
+ * Reusable accounting rule definition (name, direction, multiplier, target account).
+ * <p>
+ * Catalog entry that can be referenced by rule-execution configs. Content may hold
+ * free-form or JSON payload for product-specific rule logic.
  */
 @Entity
 @Table(name = "rule")

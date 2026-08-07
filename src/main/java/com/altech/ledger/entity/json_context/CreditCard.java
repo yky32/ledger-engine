@@ -1,6 +1,8 @@
 package com.altech.ledger.entity.json_context;
 
-/** CreditCard json context. */
+/**
+ * Tokenized card snapshot for payment-method style metadata (no full PAN).
+ */
 public record CreditCard(
     String brand,
     String last4,

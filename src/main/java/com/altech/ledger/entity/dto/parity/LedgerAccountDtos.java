@@ -14,6 +14,9 @@ import java.time.Instant;
 public final class LedgerAccountDtos {
     private LedgerAccountDtos() {}
 
+    /**
+     * Create account using full COA segments; blank segments get product defaults.
+     */
     public record CreateRequest(
         String entity,
         String type,
@@ -34,6 +37,9 @@ public final class LedgerAccountDtos {
         }
     }
 
+    /**
+     * Full account row for list/get (structure + balances + timestamps).
+     */
     public record Response(
         Long id,
         String fullNumber,
@@ -51,6 +57,9 @@ public final class LedgerAccountDtos {
         Instant updateDt
     ) {}
 
+    /**
+     * Balance-only line (optional FX-converted amount for display).
+     */
     public record BalanceResponse(
         Long accountId,
         String currency,

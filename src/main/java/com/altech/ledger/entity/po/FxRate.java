@@ -9,8 +9,11 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * FxRate — .
- * Currency codes are strings (supports non-fiat later).
+ * FX quote from one currency code to another (base → target).
+ * <p>
+ * Used for display conversion on wallet balances and amount convert helpers.
+ * Codes are plain strings (USD, LP, …) so non-fiat units work without an enum.
+ * Unique pair (base, target).
  */
 @Entity
 @Table(

@@ -7,10 +7,15 @@ import com.altech.ledger.entity.enu.WalletType;
 import java.time.Instant;
 import java.util.List;
 
-/** Wallet setup, activation, and balance-bearing wallet views. */
+/**
+ * Wallet setup, activation, and balance-bearing wallet views (parity {@code /ledger-wallets}).
+ */
 public final class LedgerWalletDtos {
     private LedgerWalletDtos() {}
 
+    /**
+     * Attach a wallet row to an existing account (owner, currency, external ids).
+     */
     public record CreateRequest(
         Long accountId,
         String extIdentifier,
@@ -27,6 +32,9 @@ public final class LedgerWalletDtos {
         }
     }
 
+    /**
+     * Partial update of wallet status / account / external identity / nickname.
+     */
     public record UpdateRequest(
         WalletStatus status,
         Long accountId,
@@ -35,11 +43,17 @@ public final class LedgerWalletDtos {
         String nickname
     ) {}
 
+    /**
+     * Activation payload (optional workflow / account refs for parity clients).
+     */
     public record ActivationRequest(
         String accountId,
         String workflowExecutionId
     ) {}
 
+    /**
+     * Wallet plus related multi-currency account balances under the main account.
+     */
     public record WithBalancesResponse(
         Long id,
         String alias,

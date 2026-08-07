@@ -4,6 +4,9 @@ import com.altech.ledger.usecase.integration.TransactionRuleEngine;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * Outcome of processing a {@link TransactionalEvent}: applied, skipped, or duplicate.
+ */
 public record IngestionResult(
     String eventId,
     Status status,

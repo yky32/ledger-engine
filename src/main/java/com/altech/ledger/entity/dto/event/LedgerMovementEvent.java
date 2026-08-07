@@ -15,8 +15,11 @@ import lombok.experimental.SuperBuilder;
 import java.math.BigDecimal;
 
 /**
- * Kafka / pipeline movement event payload.
- * Extends {@link BaseEvent} for request correlation and event naming.
+ * Kafka / internal pipeline payload for a ledger movement lifecycle message.
+ * <p>
+ * Extends {@link BaseEvent} ({@code requestId}, {@code eventName}). Carries the
+ * movement snapshot (ids, amount, order type, status) so consumers can execute
+ * balances or notify without reloading all fields from the DB.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

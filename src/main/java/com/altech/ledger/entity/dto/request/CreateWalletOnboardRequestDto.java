@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
- * Phase-1 single wallet onboarding request.
+ * Product onboarding: create one wallet for a user + currency (optional CRM external ids).
  */
 public record CreateWalletOnboardRequestDto(
     @NotBlank @Size(max = 100) String userId,

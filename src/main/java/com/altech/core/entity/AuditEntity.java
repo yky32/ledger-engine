@@ -14,7 +14,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.io.Serializable;
 import java.time.Instant;
 
-
+/**
+ * Mapped superclass for every persisted row: optimistic lock version plus create/update
+ * timestamps and actor fields filled by Spring Data JPA auditing.
+ */
 @MappedSuperclass
 @Getter
 @Setter

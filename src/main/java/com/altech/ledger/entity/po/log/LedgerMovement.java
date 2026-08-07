@@ -14,10 +14,12 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
- * LedgerMovement — (business operation log).
+ * Business operation log for a deposit, withdrawal, transfer, earn/burn, etc.
  * <p>
- * New-on-top: {@link #movementKey}, {@link #mode}, simplified metadata.
- * JSONB context fields from legacy are kept as TEXT for later product parity.
+ * One movement = one intent against a wallet (amount, currency, order type, from/to).
+ * {@link #movementKey} is the idempotency key; {@link #mode} is AUTO (settle now) or
+ * MANUAL (wait for settle/docs). Status moves PROCESSING → SETTLED / ERROR.
+ * Optional TEXT context fields store JSON for payer, files, compliance.
  */
 @Entity
 @Table(

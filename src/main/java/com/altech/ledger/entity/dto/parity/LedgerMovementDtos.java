@@ -19,12 +19,15 @@ import java.util.Map;
 /**
  * Wallet-id–centric movement API used by {@code /ledger/deposits|withdrawals|transfers}.
  * <p>
- * Distinct from owner-centric {@link MovementDto} (product onboarding surface).
+ * Distinct from owner-centric {@link com.altech.ledger.entity.dto.movement.MovementDto}.
  * Legacy JSON keys ({@code targetId}, {@code originatorId}) bind via {@link JsonAlias}.
  */
 public final class LedgerMovementDtos {
     private LedgerMovementDtos() {}
 
+    /**
+     * Deposit into a target wallet (id or alias); optional originator and free-form detail map.
+     */
     public record CreateDepositRequest(
         /** Canonical target wallet id (numeric string or alias). */
         @JsonAlias({"targetId"})
@@ -55,6 +58,9 @@ public final class LedgerMovementDtos {
         }
     }
 
+    /**
+     * Withdrawal from an originator wallet; optional external target id.
+     */
     public record CreateWithdrawalRequest(
         @JsonAlias({"originatorId"})
         String originatorWalletId,
@@ -83,6 +89,9 @@ public final class LedgerMovementDtos {
         }
     }
 
+    /**
+     * Transfer between two wallet ids (same currency).
+     */
     public record CreateInWalletTransferRequest(
         @NotBlank String fromWalletId,
         @NotBlank String toWalletId,
@@ -102,16 +111,25 @@ public final class LedgerMovementDtos {
         }
     }
 
+    /**
+     * Patch movement status (e.g. force SETTLED / cancel-style transitions).
+     */
     public record UpdateStatusRequest(
         @NotNull LedgerMovementStatus status,
         @Size(max = 500) String remarks
     ) {}
 
+    /**
+     * Attach document metadata / remarks without changing balances.
+     */
     public record UpdateDocumentsRequest(
         String files,
         @Size(max = 500) String remarks
     ) {}
 
+    /**
+     * Full movement response for parity clients (status, mode, contexts).
+     */
     public record Response(
         Long id,
         String movementKey,

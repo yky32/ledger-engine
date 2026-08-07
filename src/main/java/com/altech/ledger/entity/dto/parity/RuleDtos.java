@@ -8,10 +8,15 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Accounting rule + rule-execution API. */
+/**
+ * Accounting rule + rule-execution API ({@code /rules}, {@code /rule-executions}).
+ */
 public final class RuleDtos {
     private RuleDtos() {}
 
+    /**
+     * Create a catalog rule (direction, multiplier, target account, content).
+     */
     public record CreateRequest(
         @NotBlank String name,
         String description,
@@ -21,6 +26,9 @@ public final class RuleDtos {
         String content
     ) {}
 
+    /**
+     * Rule catalog entry response.
+     */
     public record Response(
         Long id,
         String name,
@@ -32,6 +40,9 @@ public final class RuleDtos {
         Instant createDt
     ) {}
 
+    /**
+     * Bind an {@link OrderType} to execution metadata (often rule id list JSON).
+     */
     public record CreateExecutionRequest(
         @NotBlank String name,
         String description,
@@ -39,6 +50,9 @@ public final class RuleDtos {
         String metadata
     ) {}
 
+    /**
+     * Rule-execution config response (looked up by order type at settle time).
+     */
     public record ExecutionResponse(
         Long id,
         String name,

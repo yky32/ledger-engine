@@ -11,6 +11,13 @@ import lombok.experimental.SuperBuilder;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Shared envelope for Kafka (and similar) domain events.
+ * <p>
+ * Every event gets a correlation {@code requestId}, optional {@code eventName},
+ * webhook URL, and producer/consumer control windows. Domain events extend this
+ * and add business fields only.
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

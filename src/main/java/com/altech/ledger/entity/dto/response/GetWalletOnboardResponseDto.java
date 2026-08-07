@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
- * Phase-1 wallet onboarding response.
+ * Product wallet onboarding response: wallet identity + linked account and balances.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

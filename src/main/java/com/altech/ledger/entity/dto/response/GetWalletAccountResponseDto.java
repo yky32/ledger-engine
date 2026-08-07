@@ -12,6 +12,9 @@ import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
+/**
+ * Nested account slice inside onboarding responses (reference, type, balances).
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor

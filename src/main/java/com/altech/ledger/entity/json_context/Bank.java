@@ -1,6 +1,8 @@
 package com.altech.ledger.entity.json_context;
 
-/** Bank json context. */
+/**
+ * Bank account details stored as JSON context (e.g. deposit source / payout destination).
+ */
 public record Bank(
     String bankName,
     String bankCode,

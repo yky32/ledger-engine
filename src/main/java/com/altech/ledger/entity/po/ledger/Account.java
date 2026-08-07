@@ -10,9 +10,12 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * Account — (COA + mutable balances).
+ * Chart-of-accounts bucket that holds live balances.
  * <p>
- * New-on-top: {@link #allowNegative} for posting policy used by double-entry journal.
+ * One row = one currency balance (ledger + available). Product wallets and program
+ * pools both point here. Structure fields (entity/type/main/sub/…) form the COA key;
+ * {@link #fullNumber} is the unique external reference used for lookups.
+ * Balances change only through movement execution — not by free-form updates.
  */
 @Entity
 @Table(
