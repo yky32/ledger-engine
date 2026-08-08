@@ -1,5 +1,8 @@
 package com.altech.core.utils;
 
+import com.altech.core.exception.BizException;
+import com.altech.core.response.SystemResponse;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -30,7 +33,7 @@ public final class HashUtil {
             }
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Hash algorithm not found: " + algorithm, e);
+            throw new BizException(SystemResponse.SYS9998, "Hash algorithm not found: " + algorithm);
         }
     }
 
