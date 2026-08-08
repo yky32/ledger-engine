@@ -5,12 +5,11 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
+import com.altech.core.utils.RandomHashGenerator;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
 import jakarta.persistence.*;
-
-import java.util.UUID;
 
 /**
  * Customer-facing wallet: links an owner to a primary {@link Account} for one currency.
@@ -76,22 +75,11 @@ public class Wallet extends AuditEntityWithIsActive {
     @Column(nullable = false, length = 16)
     private Currency currency;
 
-    protected Wallet() {}
-
-    public Wallet(Long accountId, String alias, String nickname, String extIdentifier, String extType,
-                  WalletAssociationType type, WalletType walletType, WalletStatus status,
-                  String ownerId, Currency currency) {
-        this.accountId = accountId;
-        this.alias = alias;
-        this.nickname = nickname;
-        this.extIdentifier = extIdentifier;
-        this.extType = extType;
-        this.type = type;
-        this.walletType = walletType;
-        this.status = status;
-        this.ownerId = ownerId;
-        this.currency = currency;
-        this.hash = "wx" + UUID.randomUUID().toString().replace("-", "")
-            + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
+    /** PG-style public hash: random SHA-256 hex (32 chars) if not set. */
+    @PrePersist
+    private void generateHash() {
+        if (hash == null || hash.isBlank()) {
+            hash = RandomHashGenerator.generateRandomHash(32);
+        }
     }
 }

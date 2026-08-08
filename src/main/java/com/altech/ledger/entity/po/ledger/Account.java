@@ -1,13 +1,15 @@
 package com.altech.ledger.entity.po.ledger;
 
 import com.altech.core.constant.enu.Currency;
-import lombok.Getter;
-import lombok.Setter;
-
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import com.altech.ledger.entity.enu.AccountStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
@@ -17,7 +19,7 @@ import java.math.BigDecimal;
  * <p>
  * One row = one currency balance (ledger + available). Product wallets and program
  * pools both point here. Structure fields (entity/type/main/sub/…) form the COA key;
- * {@link #fullNumber} is the unique external reference used for lookups.
+ * {@link #fullNumber} is the unique COA key used for lookups.
  * Balances change only through movement execution — not by free-form updates.
  */
 @Entity
@@ -35,6 +37,9 @@ import java.math.BigDecimal;
 )
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Account extends AuditEntityWithIsActive {
 
     @Id
@@ -43,7 +48,7 @@ public class Account extends AuditEntityWithIsActive {
     private Long id;
 
     @Column(length = 200)
-    private String fullNumber; // entity + type + subType + mainAccount + subAccount + buffer
+    private String fullNumber;
 
     // === Chart of Account - COA
     @Column(length = 50)
@@ -69,37 +74,22 @@ public class Account extends AuditEntityWithIsActive {
     private Currency currency;
     // === Chart of Account - COA
 
+    @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
-    private BigDecimal ledgerBalance;
+    private BigDecimal ledgerBalance = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
-    private BigDecimal availableBalance;
+    private BigDecimal availableBalance = BigDecimal.ZERO;
     // === BALANCE
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private AccountStatus status;
+    private AccountStatus status = AccountStatus.ACTIVE;
 
-    /** Engine extension — posting may refuse negative signed balance when false. */
+    /** Posting may refuse negative signed balance when false. */
+    @Builder.Default
     @Column(nullable = false)
-    private boolean allowNegative;
-
-    protected Account() {}
-
-    public Account(String fullNumber, String entity, String type, String subType,
-                   String mainAccount, String subAccount, String buffer, Currency currency,
-                   boolean allowNegative) {
-        this.fullNumber = fullNumber;
-        this.entity = entity;
-        this.type = type;
-        this.subType = subType;
-        this.mainAccount = mainAccount;
-        this.subAccount = subAccount;
-        this.buffer = buffer;
-        this.currency = currency;
-        this.ledgerBalance = BigDecimal.ZERO;
-        this.availableBalance = BigDecimal.ZERO;
-        this.status = AccountStatus.ACTIVE;
-        this.allowNegative = allowNegative;
-    }
+    private boolean allowNegative = false;
 }

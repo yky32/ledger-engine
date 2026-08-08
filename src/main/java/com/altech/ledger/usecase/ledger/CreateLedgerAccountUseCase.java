@@ -39,17 +39,17 @@ public class CreateLedgerAccountUseCase {
                 "Main/sub account already exists: " + mainAccount + "/" + subAccount);
         }
 
-        Account account = new Account(
-            fullNumber,
-            CoaCodes.ENTITY,
-            CoaCodes.typeCode(request.type()),
-            CoaCodes.SUB_TYPE,
-            mainAccount,
-            subAccount,
-            CoaCodes.BUFFER,
-            request.currency(),
-            request.allowNegative()
-        );
+        Account account = Account.builder()
+            .fullNumber(fullNumber)
+            .entity(CoaCodes.ENTITY)
+            .type(CoaCodes.typeCode(request.type()))
+            .subType(CoaCodes.SUB_TYPE)
+            .mainAccount(mainAccount)
+            .subAccount(subAccount)
+            .buffer(CoaCodes.BUFFER)
+            .currency(request.currency())
+            .allowNegative(request.allowNegative())
+            .build();
         return _toResponse(accountRepository.save(account));
     }
 

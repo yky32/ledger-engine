@@ -58,8 +58,17 @@ public class CreateAccountUseCase {
         }
 
         boolean allowNegative = dto.allowNegative() != null && dto.allowNegative();
-        Account account = new Account(fullNumber, entity, type, subType, mainAccount, subAccount,
-            buffer, currency, allowNegative);
+        Account account = Account.builder()
+            .fullNumber(fullNumber)
+            .entity(entity)
+            .type(type)
+            .subType(subType)
+            .mainAccount(mainAccount)
+            .subAccount(subAccount)
+            .buffer(buffer)
+            .currency(currency)
+            .allowNegative(allowNegative)
+            .build();
         return DtoMapper.toAccount(accountRepository.save(account));
     }
 

@@ -142,17 +142,17 @@ public class CreateWalletOnboardingUseCase {
             }
 
             boolean allowNegative = Boolean.TRUE.equals(spec.allowNegative());
-            Account account = accountRepository.save(new Account(
-                fullNumber,
-                CoaCodes.ENTITY,
-                CoaCodes.typeCode(coaType),
-                CoaCodes.SUB_TYPE,
-                mainAccount,
-                sub,
-                CoaCodes.BUFFER,
-                currency,
-                allowNegative
-            ));
+            Account account = accountRepository.save(Account.builder()
+                .fullNumber(fullNumber)
+                .entity(CoaCodes.ENTITY)
+                .type(CoaCodes.typeCode(coaType))
+                .subType(CoaCodes.SUB_TYPE)
+                .mainAccount(mainAccount)
+                .subAccount(sub)
+                .buffer(CoaCodes.BUFFER)
+                .currency(currency)
+                .allowNegative(allowNegative)
+                .build());
             bySub.put(sub, spec);
             opened.put(sub, account);
             if (spec.isPrimaryLine()) {
@@ -168,17 +168,18 @@ public class CreateWalletOnboardingUseCase {
         String extType = request.extType() == null || request.extType().isBlank()
             ? "CRM" : request.extType();
 
-        Wallet wallet = walletRepository.save(new Wallet(
-            primary.getId(),
-            alias,
-            displayName,
-            extIdentifier,
-            extType,
-            WalletAssociationType.CUSTODIAN,
-            WalletType.INDIVIDUAL,
-            WalletStatus.ACTIVE,
-            extIdentifier,
-            currency));
+        Wallet wallet = new Wallet();
+        wallet.setAccountId(primary.getId());
+        wallet.setAlias(alias);
+        wallet.setNickname(displayName);
+        wallet.setExtIdentifier(extIdentifier);
+        wallet.setExtType(extType);
+        wallet.setType(WalletAssociationType.CUSTODIAN);
+        wallet.setWalletType(WalletType.INDIVIDUAL);
+        wallet.setStatus(WalletStatus.ACTIVE);
+        wallet.setOwnerId(extIdentifier);
+        wallet.setCurrency(currency);
+        wallet = walletRepository.save(wallet);
 
         List<GetWalletAccountResponseDto> accountDtos = new ArrayList<>();
         for (Map.Entry<String, Account> e : opened.entrySet()) {

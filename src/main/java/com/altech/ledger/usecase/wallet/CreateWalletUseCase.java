@@ -53,9 +53,17 @@ public class CreateWalletUseCase {
                 "Wallet already exists for owner/currency: " + ownerId + "/" + currency);
         }
 
-        Wallet wallet = new Wallet(
-            account.getId(), alias, nickname, dto.extIdentifier(), dto.extType(),
-            type, WalletType.CORPORATE, WalletStatus.PENDING, ownerId, currency);
+        Wallet wallet = new Wallet();
+        wallet.setAccountId(account.getId());
+        wallet.setAlias(alias);
+        wallet.setNickname(nickname);
+        wallet.setExtIdentifier(dto.extIdentifier());
+        wallet.setExtType(dto.extType());
+        wallet.setType(type);
+        wallet.setWalletType(WalletType.CORPORATE);
+        wallet.setStatus(WalletStatus.PENDING);
+        wallet.setOwnerId(ownerId);
+        wallet.setCurrency(currency);
         wallet = walletRepository.save(wallet);
         List<Account> myAccounts = new ArrayList<>(accountRepository.findAllByMainAccount(account.getMainAccount()));
         return DtoMapper.toWallet(wallet, myAccounts);
