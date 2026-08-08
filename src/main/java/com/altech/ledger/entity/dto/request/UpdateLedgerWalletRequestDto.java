@@ -9,7 +9,7 @@ import com.altech.ledger.entity.enu.WalletStatus;
 public record UpdateLedgerWalletRequestDto(
     WalletStatus status,
     Long accountId,
-    String extIdentifier,
+    String associatedIdentifier,
     WalletAssociationType type,
     String nickname
 ) {}

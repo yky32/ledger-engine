@@ -44,7 +44,7 @@ public class CreateWalletUseCase {
             ? commonUseCase.requireCurrency(dto.currency())
             : account.getCurrency();
         String ownerId = dto.ownerId() != null ? dto.ownerId()
-            : (dto.extIdentifier() != null ? dto.extIdentifier() : alias);
+            : (dto.associatedIdentifier() != null ? dto.associatedIdentifier() : alias);
         String nickname = dto.nickname() == null || dto.nickname().isBlank() ? "NA" : dto.nickname();
         WalletAssociationType type = dto.type() == null ? WalletAssociationType.CUSTODIAN : dto.type();
 
@@ -57,8 +57,8 @@ public class CreateWalletUseCase {
         wallet.setAccountId(account.getId());
         wallet.setAlias(alias);
         wallet.setNickname(nickname);
-        wallet.setExtIdentifier(dto.extIdentifier());
-        wallet.setExtType(dto.extType());
+        wallet.setAssociatedIdentifier(dto.associatedIdentifier());
+        wallet.setAssociatedFrom(dto.associatedFrom());
         wallet.setType(type);
         wallet.setWalletType(WalletType.CORPORATE);
         wallet.setStatus(WalletStatus.PENDING);
@@ -75,7 +75,7 @@ public class CreateWalletUseCase {
     @Transactional
     public GetLedgerWalletResponseDto executeFull(String ownerId, String mainCurrency,
                                                   List<String> extraCurrencies,
-                                                  String extIdentifier, String extType) {
+                                                  String associatedIdentifier, String associatedFrom) {
         Currency currency = commonUseCase.requireCurrency(mainCurrency);
         String mainAccountNo = commonService.getNextMainAccount();
         GetLedgerAccountResponseDto main = createAccountUseCase.execute(new CreateLedgerAccountRequestDto(
@@ -84,7 +84,7 @@ public class CreateWalletUseCase {
             createAccountUseCase.executeByAssociatedCurrencies(mainAccountNo, extraCurrencies);
         }
         return execute(new CreateLedgerWalletRequestDto(
-            main.id(), extIdentifier, extType, WalletAssociationType.CUSTODIAN,
+            main.id(), associatedIdentifier, associatedFrom, WalletAssociationType.CUSTODIAN,
             ownerId, currency, ownerId == null ? "NA" : ownerId));
     }
 

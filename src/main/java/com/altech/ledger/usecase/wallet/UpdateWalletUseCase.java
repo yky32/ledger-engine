@@ -26,8 +26,8 @@ public class UpdateWalletUseCase {
         if (dto.accountId() != null) {
             wallet.setAccountId(dto.accountId());
         }
-        if (dto.extIdentifier() != null) {
-            wallet.setExtIdentifier(dto.extIdentifier());
+        if (dto.associatedIdentifier() != null) {
+            wallet.setAssociatedIdentifier(dto.associatedIdentifier());
         }
         if (dto.type() != null) {
             wallet.setType(dto.type());

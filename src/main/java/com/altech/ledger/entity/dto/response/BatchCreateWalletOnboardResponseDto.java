@@ -21,6 +21,6 @@ public class BatchCreateWalletOnboardResponseDto {
     private int created;
     private int alreadyExists;
     private List<GetWalletOnboardResponseDto> createdWallets;
-    /** Customer extIdentifiers that already had a wallet for the requested currency. */
-    private List<String> alreadyExistingExtIdentifiers;
+    /** Customer associatedIdentifiers that already had a wallet for the requested currency. */
+    private List<String> alreadyExistingAssociatedIdentifiers;
 }

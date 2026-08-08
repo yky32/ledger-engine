@@ -9,8 +9,8 @@ import com.altech.ledger.entity.enu.WalletAssociationType;
  */
 public record CreateLedgerWalletRequestDto(
     Long accountId,
-    String extIdentifier,
-    String extType,
+    String associatedIdentifier,
+    String associatedFrom,
     WalletAssociationType type,
     String ownerId,
     Currency currency,

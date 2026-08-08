@@ -14,9 +14,9 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
     List<Wallet> findByOwnerId(String ownerId);
 
-    Optional<Wallet> findByExtIdentifierAndExtType(String extIdentifier, String extType);
+    Optional<Wallet> findByAssociatedIdentifierAndAssociatedFrom(String associatedIdentifier, String associatedFrom);
 
-    List<Wallet> findByExtIdentifier(String extIdentifier);
+    List<Wallet> findByAssociatedIdentifier(String associatedIdentifier);
 
     Optional<Wallet> findByAccountId(Long accountId);
 

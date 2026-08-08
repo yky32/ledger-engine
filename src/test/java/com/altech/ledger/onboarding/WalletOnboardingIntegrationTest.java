@@ -24,17 +24,17 @@ class WalletOnboardingIntegrationTest {
 
     @Test
     void singleOnboardCreatesActiveWalletAndIsQueryable() throws Exception {
-        String extIdentifier = "ONB-" + UUID.randomUUID();
+        String associatedIdentifier = "ONB-" + UUID.randomUUID();
 
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"extIdentifier":"%s","currency":"LP","name":"Alice"}
-                    """.formatted(extIdentifier)))
+                    {"associatedIdentifier":"%s","currency":"LP","name":"Alice"}
+                    """.formatted(associatedIdentifier)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SYS0000"))
-            .andExpect(jsonPath("$.data.ownerId").value(extIdentifier))
-            .andExpect(jsonPath("$.data.extIdentifier").value(extIdentifier))
+            .andExpect(jsonPath("$.data.ownerId").value(associatedIdentifier))
+            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
             .andExpect(jsonPath("$.data.currency").value("LP"))
             .andExpect(jsonPath("$.data.status").value("ACTIVE"))
             .andExpect(jsonPath("$.data.walletId").isNumber())
@@ -42,13 +42,13 @@ class WalletOnboardingIntegrationTest {
             .andExpect(jsonPath("$.data.account.fullNumber").value(org.hamcrest.Matchers.matchesPattern("\\d+")))
             .andExpect(jsonPath("$.data.createDt").exists());
 
-        mockMvc.perform(get("/wallets/" + extIdentifier + "/LP"))
+        mockMvc.perform(get("/wallets/" + associatedIdentifier + "/LP"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("ACTIVE"))
-            .andExpect(jsonPath("$.data.ownerId").value(extIdentifier))
-            .andExpect(jsonPath("$.data.extIdentifier").value(extIdentifier));
+            .andExpect(jsonPath("$.data.ownerId").value(associatedIdentifier))
+            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier));
 
-        mockMvc.perform(get("/wallets").param("ownerId", extIdentifier))
+        mockMvc.perform(get("/wallets").param("ownerId", associatedIdentifier))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data").isArray())
             .andExpect(jsonPath("$.data.length()").value(1));
@@ -56,8 +56,8 @@ class WalletOnboardingIntegrationTest {
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"extIdentifier":"%s","currency":"LP","name":"Alice again"}
-                    """.formatted(extIdentifier)))
+                    {"associatedIdentifier":"%s","currency":"LP","name":"Alice again"}
+                    """.formatted(associatedIdentifier)))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("WAL0409"));
     }
@@ -69,8 +69,8 @@ class WalletOnboardingIntegrationTest {
         String body = """
             {
               "wallets": [
-                {"extIdentifier":"%s","currency":"LP","name":"Alice"},
-                {"extIdentifier":"%s","currency":"LP","name":"Bob"}
+                {"associatedIdentifier":"%s","currency":"LP","name":"Alice"},
+                {"associatedIdentifier":"%s","currency":"LP","name":"Bob"}
               ]
             }
             """.formatted(a, b);
@@ -84,7 +84,7 @@ class WalletOnboardingIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.created").value(0))
             .andExpect(jsonPath("$.data.alreadyExists").value(2))
-            .andExpect(jsonPath("$.data.alreadyExistingExtIdentifiers").isArray())
-            .andExpect(jsonPath("$.data.alreadyExistingExtIdentifiers.length()").value(2));
+            .andExpect(jsonPath("$.data.alreadyExistingAssociatedIdentifiers").isArray())
+            .andExpect(jsonPath("$.data.alreadyExistingAssociatedIdentifiers.length()").value(2));
     }
 }

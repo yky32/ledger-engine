@@ -25,13 +25,14 @@ import java.util.List;
 public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private Long walletId;
     private String alias;
-    /** Same as extIdentifier (lookup key for GET /wallets/{ownerId}/…). */
+    /** Same as associatedIdentifier (lookup key for GET /wallets/{ownerId}/…). */
     private String ownerId;
     private Currency currency;
     private WalletStatus status;
-    /** Customer unique id (CRM). */
-    private String extIdentifier;
-    private String extType;
+    /** Associated party id (CRM cust id, …). */
+    private String associatedIdentifier;
+    /** System that owns associatedIdentifier (e.g. CRM). */
+    private String associatedFrom;
     /** Primary account (same as wallet.accountId). */
     private GetWalletAccountResponseDto account;
     /** Primary balance (convenience). */

@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * Wallet create: one wallet + flexible account lines under one numeric main account.
  * <p>
- * COA keys are digit-only ({@link CoaCodes}). Customer identity remains {@code extIdentifier}.
+ * COA keys are digit-only ({@link CoaCodes}). Customer identity remains {@code associatedIdentifier}.
  * Product-line {@code refCode} is free-form (SDK); when numeric it becomes the leaf sub code.
  */
 @Component
@@ -49,11 +49,11 @@ public class CreateWalletOnboardingUseCase {
 
     @Transactional
     public GetWalletOnboardResponseDto execute(CreateWalletOnboardRequestDto request) {
-        String extIdentifier = request.extIdentifier();
+        String associatedIdentifier = request.associatedIdentifier();
         Currency currency = commonUseCase.requireCurrency(request.currency());
-        if (_exists(extIdentifier, currency)) {
+        if (_exists(associatedIdentifier, currency)) {
             throw new BizException(WalletErrorResponse.WAL0409,
-                "Wallet already onboarded: " + extIdentifier + " / " + currency);
+                "Wallet already onboarded: " + associatedIdentifier + " / " + currency);
         }
         return _createWallet(request);
     }
@@ -66,14 +66,14 @@ public class CreateWalletOnboardingUseCase {
         int created = 0;
         int alreadyExists = 0;
         List<GetWalletOnboardResponseDto> createdWallets = new ArrayList<>();
-        List<String> existingExtIdentifiers = new ArrayList<>();
+        List<String> existingAssociatedIdentifiers = new ArrayList<>();
 
         for (CreateWalletOnboardRequestDto item : request.wallets()) {
-            String extIdentifier = item.extIdentifier();
+            String associatedIdentifier = item.associatedIdentifier();
             Currency currency = commonUseCase.requireCurrency(item.currency());
-            if (_exists(extIdentifier, currency)) {
+            if (_exists(associatedIdentifier, currency)) {
                 alreadyExists++;
-                existingExtIdentifiers.add(extIdentifier);
+                existingAssociatedIdentifiers.add(associatedIdentifier);
                 continue;
             }
             try {
@@ -84,7 +84,7 @@ public class CreateWalletOnboardingUseCase {
                 if (WalletErrorResponse.WAL0409.getCode().equals(code)
                     || AccountErrorResponse.ACC0409.getCode().equals(code)) {
                     alreadyExists++;
-                    existingExtIdentifiers.add(extIdentifier);
+                    existingAssociatedIdentifiers.add(associatedIdentifier);
                 } else {
                     throw ex;
                 }
@@ -96,26 +96,26 @@ public class CreateWalletOnboardingUseCase {
             .created(created)
             .alreadyExists(alreadyExists)
             .createdWallets(createdWallets)
-            .alreadyExistingExtIdentifiers(existingExtIdentifiers)
+            .alreadyExistingAssociatedIdentifiers(existingAssociatedIdentifiers)
             .build();
     }
 
-    private boolean _exists(String extIdentifier, Currency currency) {
-        return walletRepository.existsByOwnerIdAndCurrency(extIdentifier, currency);
+    private boolean _exists(String associatedIdentifier, Currency currency) {
+        return walletRepository.existsByOwnerIdAndCurrency(associatedIdentifier, currency);
     }
 
     private GetWalletOnboardResponseDto _createWallet(CreateWalletOnboardRequestDto request) {
-        String extIdentifier = request.extIdentifier();
+        String associatedIdentifier = request.associatedIdentifier();
         Currency currency = commonUseCase.requireCurrency(request.currency());
         List<AccountOpenSpecDto> specs = _normalizeAccounts(request.accounts());
 
-        if (walletRepository.existsByOwnerIdAndCurrency(extIdentifier, currency)) {
+        if (walletRepository.existsByOwnerIdAndCurrency(associatedIdentifier, currency)) {
             throw new BizException(WalletErrorResponse.WAL0409,
-                "Wallet already onboarded: " + extIdentifier + " / " + currency);
+                "Wallet already onboarded: " + associatedIdentifier + " / " + currency);
         }
 
         String displayName = request.name() == null || request.name().isBlank()
-            ? "Wallet " + extIdentifier
+            ? "Wallet " + associatedIdentifier
             : request.name();
 
         // One main account number for the whole wallet account-set
@@ -164,20 +164,20 @@ public class CreateWalletOnboardingUseCase {
             throw new BizException(AccountErrorResponse.ACC0400, "Primary account is required in accounts");
         }
 
-        String alias = _uniqueAlias(extIdentifier, currency);
-        String extType = request.extType() == null || request.extType().isBlank()
-            ? "CRM" : request.extType();
+        String alias = _uniqueAlias(associatedIdentifier, currency);
+        String associatedFrom = request.associatedFrom() == null || request.associatedFrom().isBlank()
+            ? "CRM" : request.associatedFrom();
 
         Wallet wallet = new Wallet();
         wallet.setAccountId(primary.getId());
         wallet.setAlias(alias);
         wallet.setNickname(displayName);
-        wallet.setExtIdentifier(extIdentifier);
-        wallet.setExtType(extType);
+        wallet.setAssociatedIdentifier(associatedIdentifier);
+        wallet.setAssociatedFrom(associatedFrom);
         wallet.setType(WalletAssociationType.CUSTODIAN);
         wallet.setWalletType(WalletType.INDIVIDUAL);
         wallet.setStatus(WalletStatus.ACTIVE);
-        wallet.setOwnerId(extIdentifier);
+        wallet.setOwnerId(associatedIdentifier);
         wallet.setCurrency(currency);
         wallet = walletRepository.save(wallet);
 
@@ -234,8 +234,8 @@ public class CreateWalletOnboardingUseCase {
         return out;
     }
 
-    private String _uniqueAlias(String extIdentifier, Currency currency) {
-        String base = extIdentifier + "-" + currency.getIsoCode();
+    private String _uniqueAlias(String associatedIdentifier, Currency currency) {
+        String base = associatedIdentifier + "-" + currency.getIsoCode();
         if (!walletRepository.existsByAlias(base)) {
             return base;
         }

@@ -99,7 +99,7 @@ class DeepParityIntegrationTest {
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"extIdentifier":"%s","currency":"LP","name":"Earn User"}
+                    {"associatedIdentifier":"%s","currency":"LP","name":"Earn User"}
                     """.formatted(userId)))
             .andExpect(status().isOk());
 

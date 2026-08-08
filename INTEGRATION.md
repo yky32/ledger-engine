@@ -66,14 +66,14 @@ POST /wallets
 Content-Type: application/json
 
 {
-  "extIdentifier": "CUST-10001",
+  "associatedIdentifier": "CUST-10001",
   "currency": "LP",
   "name": "Alice wallet",
-  "extType": "CRM"
+  "associatedFrom": "CRM"
 }
 ```
 
-`extIdentifier` is the sole customer unique key (CRM). Stored as wallet `ownerId` + `extIdentifier`.  
+`associatedIdentifier` is the sole customer unique key (CRM). Stored as wallet `ownerId` + `associatedIdentifier`.  
 Optional `accounts` is free-form (`refCode` strings); product catalogs live in the client / SDK.
 
 ### Bulk import from legacy CRM (go-live)
@@ -84,13 +84,13 @@ Content-Type: application/json
 
 {
   "wallets": [
-    { "extIdentifier": "CRM-0001", "currency": "LP", "name": "Alice" },
-    { "extIdentifier": "CRM-0002", "currency": "LP", "name": "Bob" }
+    { "associatedIdentifier": "CRM-0001", "currency": "LP", "name": "Alice" },
+    { "associatedIdentifier": "CRM-0002", "currency": "LP", "name": "Bob" }
   ]
 }
 ```
 
-Idempotent — safe to re-run; existing wallets reported in `alreadyExistingExtIdentifiers`.
+Idempotent — safe to re-run; existing wallets reported in `alreadyExistingAssociatedIdentifiers`.
 
 Creates numeric COA `account.full_number` (digit string; primary leaf `0000` under a shared main account).
 

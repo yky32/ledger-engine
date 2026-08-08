@@ -13,7 +13,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "ledger.integration")
 public class IntegrationProperties {
     private boolean enabled = true;
-    private String walletRefTemplate = "wallet:{extIdentifier}:{currency}";
+    private String walletRefTemplate = "wallet:{associatedIdentifier}:{currency}";
     private List<TransactionRule> rules = new ArrayList<>();
 
     @Getter

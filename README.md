@@ -99,7 +99,7 @@ src/main/java/
 | **PO** | `entity/po/**` | `Wallet`, `Account`, `LedgerMovement` |
 | **Repository** | `*Repository` | `WalletRepository` |
 | **Field names** | type camelCase | `ledgerMovementRepository` |
-| **JSON** | camelCase | `extIdentifier`, `currency` |
+| **JSON** | camelCase | `associatedIdentifier`, `currency` |
 
 ## Core tables (simplified)
 
@@ -155,20 +155,20 @@ example    = 10 + 20 + 00 + 10001 + 0000 + 00 + 344   →  10200010001000000344 
 ```
 
 - One wallet = one `mainAccount`; product lines = leaf `subAccount` (`0000` primary; numeric `refCode` → e.g. `89` → `0089`).
-- Customer identity stays on wallet (`extIdentifier`), not in COA.
+- Customer identity stays on wallet (`associatedIdentifier`), not in COA.
 
-**Customer unique field:** `extIdentifier` only (CRM cust id). Stored as wallet `ownerId` + `extIdentifier`.  
-Optional `extType` (default `CRM`).
+**Customer unique field:** `associatedIdentifier` only (CRM cust id). Stored as wallet `ownerId` + `associatedIdentifier`.  
+Optional `associatedFrom` (default `CRM`).
 
 ```bash
 # MAIN only (default)
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
-    "extIdentifier": "CUST-1001",
+    "associatedIdentifier": "CUST-1001",
     "currency": "USD",
     "name": "Primary wallet",
-    "extType": "CRM"
+    "associatedFrom": "CRM"
   }'
 ```
 
@@ -177,10 +177,10 @@ curl -sS -X POST 'http://localhost:8080/wallets' \
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
-    "extIdentifier": "CUST-1001",
+    "associatedIdentifier": "CUST-1001",
     "currency": "HKD",
     "name": "Customer 1001",
-    "extType": "CRM",
+    "associatedFrom": "CRM",
     "accounts": [
       { "primary": true },
       { "refCode": "LOAN", "allowNegative": true },
@@ -196,7 +196,7 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
   -d '{
     "wallets": [
       {
-        "extIdentifier": "CUST-1001",
+        "associatedIdentifier": "CUST-1001",
         "currency": "HKD",
         "name": "Customer 1001",
         "accounts": [
@@ -205,7 +205,7 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
         ]
       },
       {
-        "extIdentifier": "CUST-1002",
+        "associatedIdentifier": "CUST-1002",
         "currency": "HKD",
         "name": "Customer 1002",
         "accounts": [
@@ -218,13 +218,13 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
 ```
 
 ```bash
-# query by same customer id (path ownerId == extIdentifier)
+# query by same customer id (path ownerId == associatedIdentifier)
 curl -sS 'http://localhost:8080/wallets/CUST-1001/HKD'
 curl -sS 'http://localhost:8080/wallets?ownerId=CUST-1001'
 ```
 
-Required: `extIdentifier`, `currency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
-Response: `ownerId` / `extIdentifier` (same CRM id) + primary `account` / `balance` + full `accounts[]`.  
+Required: `associatedIdentifier`, `currency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
+Response: `ownerId` / `associatedIdentifier` (same CRM id) + primary `account` / `balance` + full `accounts[]`.  
 Envelope: `Result` with `response` / `data` / `requestId`.
 
 **PROD bulk convert:** stream CRM product mix into `POST /wallets/batch` (≤1000/chunk, soft-idempotent). No 700K SQL cutover / downtime.

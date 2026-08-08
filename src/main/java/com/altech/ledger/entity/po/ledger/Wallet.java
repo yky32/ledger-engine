@@ -23,7 +23,7 @@ import jakarta.persistence.*;
     name = "wallet",
     uniqueConstraints = {
         @UniqueConstraint(name = "uniqueWalletKey", columnNames = {
-            "account_id", "ext_identifier", "type"
+            "account_id", "associated_identifier", "type"
         }),
         @UniqueConstraint(name = "uniqueAlias", columnNames = "alias"),
         @UniqueConstraint(name = "uk_wallet_owner_currency", columnNames = {"owner_id", "currency"})
@@ -47,10 +47,10 @@ public class Wallet extends AuditEntityWithIsActive {
     private String nickname;
 
     @Column(length = 100)
-    private String extIdentifier;
+    private String associatedIdentifier;
 
     @Column(length = 50)
-    private String extType;
+    private String associatedFrom;
 
     @Column(length = 66)
     private String hash;

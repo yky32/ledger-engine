@@ -10,7 +10,7 @@ Phase 1  CRM export → 1 customer = 1 wallet   (must finish first)
 Phase 2  POS / campaign → PURCHASE / REDEEM events
 ```
 
-Phase 1 creates one liability wallet per customer id (`wallet:{extIdentifier}:{currency}`).
+Phase 1 creates one liability wallet per customer id (`wallet:{associatedIdentifier}:{currency}`).
 
 API used:
 
@@ -37,7 +37,7 @@ SIM_USER_ID_PREFIX=CUST-
 SIM_USER_COUNT=10000
 SIM_BATCH_SIZE=500
 SIM_BATCH_PAUSE_SECONDS=0.05
-SIM_EXTERNAL_TYPE=CRM
+SIM_ASSOCIATED_FROM=CRM
 SIM_ONBOARD_WALLETS=true
 SIM_TRANSACTION_COUNT=0
 ```
@@ -61,11 +61,11 @@ python simulator.py
 
 ### Real CRM export file
 
-Export customer ids (one per line or CSV with `extIdentifier` / `userId` / `customerId` / `id`):
+Export customer ids (one per line or CSV with `associatedIdentifier` / `userId` / `customerId` / `id`):
 
 ```bash
 # customers.csv
-# extIdentifier
+# associatedIdentifier
 # CUST-100001
 # CUST-100002
 
@@ -76,7 +76,7 @@ SIM_BATCH_SIZE=500 \
 python simulator.py
 ```
 
-JSON array also supported: `["id1","id2"]` or `[{"extIdentifier":"..."}]`.
+JSON array also supported: `["id1","id2"]` or `[{"associatedIdentifier":"..."}]`.
 
 ---
 
@@ -84,9 +84,9 @@ JSON array also supported: `["id1","id2"]` or `[{"extIdentifier":"..."}]`.
 
 | CRM / client | Ledger Engine |
 |---|---|
-| Customer id | `Wallet.ownerId` + `Wallet.extIdentifier` |
+| Customer id | `Wallet.ownerId` + `Wallet.associatedIdentifier` |
 | Unit of account | `currency` (e.g. `LP`, `HKD`) |
-| Wallet | `POST /wallets` creates LIABILITY `Account` with `fullNumber=wallet:{extIdentifier}:{currency}` |
+| Wallet | `POST /wallets` creates LIABILITY `Account` with `fullNumber=wallet:{associatedIdentifier}:{currency}` |
 | Uniqueness | `(ownerId, currency)` and account `fullNumber` |
 
 Re-run is safe: batch returns `alreadyExists` for ids already onboarded.
@@ -148,7 +148,7 @@ Missing wallets → ingestion `SKIPPED` (`Wallet not onboarded`).
 | `SIM_CURRENCY` | `LP` | Wallet currency |
 | `SIM_BATCH_SIZE` | `500` | Batch size (max 1000) |
 | `SIM_BATCH_PAUSE_SECONDS` | `0.05` | Pause between batches |
-| `SIM_EXTERNAL_TYPE` | `CRM` | Stored on wallet as `extType` |
+| `SIM_ASSOCIATED_FROM` | `CRM` | Stored on wallet as `associatedFrom` |
 | `SIM_ONBOARD_WALLETS` | `true` | Pre-onboard for event modes |
 | `SIM_SMOKE_EVENTS_AFTER_BACKFILL` | `0` | Events after backfill |
 | `SIM_WAIT_FOR_HEALTH` | `true` | Wait for `/actuator/health` |
@@ -157,7 +157,7 @@ Missing wallets → ingestion `SKIPPED` (`Wallet not onboarded`).
 
 ## Production backfill (not the simulator)
 
-1. Export customer master → CSV (`extIdentifier`, optional name).  
+1. Export customer master → CSV (`associatedIdentifier`, optional name).  
 2. Run same batch loop (this script or your ETL) against **staging**, then production.  
 3. Confirm counts: CRM rows ≈ `wallet` rows for currency.  
 4. Only then enable Phase 2 event traffic.  

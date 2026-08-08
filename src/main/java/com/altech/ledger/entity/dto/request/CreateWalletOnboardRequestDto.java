@@ -11,22 +11,23 @@ import java.util.List;
 /**
  * Product onboarding: create one wallet for a customer + currency.
  * <p>
- * {@link #extIdentifier} is the sole customer unique key (CRM).
- * Stored as wallet {@code ownerId} and {@code extIdentifier}.
+ * {@link #associatedIdentifier} is the sole associated-party key (e.g. CRM cust id).
+ * Stored as wallet {@code ownerId} and {@code associatedIdentifier}.
+ * {@link #associatedFrom} names where that id comes from (e.g. CRM).
  * <p>
  * Optional {@link #accounts} is free-form (caller / SDK product codes).
  * If omitted or empty, only the primary account is opened.
  */
 public record CreateWalletOnboardRequestDto(
-    /** Customer unique id (CRM). Sole identity field for create. */
-    @NotBlank @Size(max = 100) String extIdentifier,
+    /** Associated party id (CRM cust id, member id, …). Sole identity for create. */
+    @NotBlank @Size(max = 100) String associatedIdentifier,
 
     @NotNull Currency currency,
 
     @Size(max = 200) String name,
 
-    /** Source system of extIdentifier; default CRM when blank. */
-    @Size(max = 50) String extType,
+    /** System that owns associatedIdentifier (e.g. CRM, CORE_BANKING). Default CRM. */
+    @Size(max = 50) String associatedFrom,
 
     /**
      * Accounts to open under this wallet. Free-form ref codes — product catalog
@@ -35,32 +36,32 @@ public record CreateWalletOnboardRequestDto(
     @Size(max = 32) List<@Valid AccountOpenSpecDto> accounts
 ) {
     public CreateWalletOnboardRequestDto {
-        if (extIdentifier != null) {
-            extIdentifier = extIdentifier.trim();
+        if (associatedIdentifier != null) {
+            associatedIdentifier = associatedIdentifier.trim();
         }
         if (name != null) {
             name = name.trim();
         }
-        if (extType != null) {
-            extType = extType.trim();
-            if (extType.isEmpty()) {
-                extType = null;
+        if (associatedFrom != null) {
+            associatedFrom = associatedFrom.trim();
+            if (associatedFrom.isEmpty()) {
+                associatedFrom = null;
             }
         }
     }
 
     /** Convenience: primary account only, default CRM type. */
-    public CreateWalletOnboardRequestDto(String extIdentifier, Currency currency, String name) {
-        this(extIdentifier, currency, name, null, null);
+    public CreateWalletOnboardRequestDto(String associatedIdentifier, Currency currency, String name) {
+        this(associatedIdentifier, currency, name, null, null);
     }
 
     /** Convenience: no accounts. */
     public CreateWalletOnboardRequestDto(
-        String extIdentifier,
+        String associatedIdentifier,
         Currency currency,
         String name,
-        String extType
+        String associatedFrom
     ) {
-        this(extIdentifier, currency, name, extType, null);
+        this(associatedIdentifier, currency, name, associatedFrom, null);
     }
 }

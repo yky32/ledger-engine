@@ -12,7 +12,7 @@ Phase 1 example (synthetic bulk backfill):
   SIM_MODE=backfill SIM_USER_COUNT=1000 SIM_USER_ID_PREFIX=CUST- SIM_CURRENCY=LP \\
     python simulator.py
 
-Or from CSV (one customer id per line, or header extIdentifier/userId/customerId/id):
+Or from CSV (one customer id per line, or header associatedIdentifier/userId/customerId/id):
   SIM_MODE=backfill SIM_CUSTOMER_FILE=/data/customers.csv python simulator.py
 """
 
@@ -117,7 +117,7 @@ def load_customer_file(path: str) -> list[str]:
                 ids.append(row.strip())
             elif isinstance(row, dict):
                 uid = (
-                    row.get("extIdentifier")
+                    row.get("associatedIdentifier")
                     or row.get("userId")
                     or row.get("customerId")
                     or row.get("id")
@@ -137,7 +137,7 @@ def load_customer_file(path: str) -> list[str]:
             key = None
             for candidate in (
                 "extidentifier",
-                "ext_identifier",
+                "associated_identifier",
                 "userid",
                 "customerid",
                 "id",
@@ -193,10 +193,10 @@ def backfill_wallets(users: list[str], currency: str) -> dict:
         payload = {
             "wallets": [
                 {
-                    "extIdentifier": uid,
+                    "associatedIdentifier": uid,
                     "currency": currency,
                     "name": f"Wallet {uid}",
-                    "extType": env("SIM_EXTERNAL_TYPE", "CRM"),
+                    "associatedFrom": env("SIM_ASSOCIATED_FROM", "CRM"),
                 }
                 for uid in batch
             ]
@@ -252,7 +252,7 @@ def onboard_wallets_one_by_one(users: list[str], currency: str) -> None:
     base = ledger_base_url()
     for user_id in users:
         url = f"{base}/wallets"
-        payload = {"extIdentifier": user_id, "currency": currency, "name": f"Sim wallet {user_id}"}
+        payload = {"associatedIdentifier": user_id, "currency": currency, "name": f"Sim wallet {user_id}"}
         response = requests.post(url, json=payload, timeout=30)
         if response.status_code in (201, 409):
             print(f"[onboard] {user_id} -> {response.status_code}")

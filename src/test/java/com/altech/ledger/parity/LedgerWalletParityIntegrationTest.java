@@ -30,8 +30,8 @@ class LedgerWalletParityIntegrationTest {
         MvcResult createA = mockMvc.perform(post("/ledger-wallets/full")
                 .param("ownerId", ownerA)
                 .param("currency", "USD")
-                .param("extIdentifier", "tenant-a")
-                .param("extType", "tenant"))
+                .param("associatedIdentifier", "tenant-a")
+                .param("associatedFrom", "tenant"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("PENDING"))
             .andReturn();

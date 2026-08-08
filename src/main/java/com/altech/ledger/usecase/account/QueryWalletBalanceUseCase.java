@@ -47,8 +47,8 @@ public class QueryWalletBalanceUseCase {
     }
 
     @Transactional(readOnly = true)
-    public GetLedgerWalletResponseDto byExtIdentifier(String id, String type) {
-        Wallet wallet = walletRepository.findByExtIdentifierAndExtType(id, type)
+    public GetLedgerWalletResponseDto byAssociatedIdentifier(String id, String type) {
+        Wallet wallet = walletRepository.findByAssociatedIdentifierAndAssociatedFrom(id, type)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found ext: " + type + "/" + id));
         return _withFx(wallet, null);
     }
@@ -119,8 +119,8 @@ public class QueryWalletBalanceUseCase {
                 a.ledgerBalance(), a.availableBalance(), a.status(), a.createDt(), a.updateDt());
         }).toList();
         return new GetLedgerWalletResponseDto(
-            base.id(), base.alias(), base.accountId(), base.nickname(), base.extIdentifier(),
-            base.extType(), base.type(), base.walletType(), base.status(), base.ownerId(),
+            base.id(), base.alias(), base.accountId(), base.nickname(), base.associatedIdentifier(),
+            base.associatedFrom(), base.type(), base.walletType(), base.status(), base.ownerId(),
             base.currency(), converted, base.createDt(), base.updateDt());
     }
 

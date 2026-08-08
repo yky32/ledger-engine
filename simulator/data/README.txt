@@ -1,4 +1,4 @@
-# Place CRM customer export here (extIdentifier column or one id per line)
+# Place CRM customer export here (associatedIdentifier column or one id per line)
 # Example:
 # CUST-100001
 # CUST-100002

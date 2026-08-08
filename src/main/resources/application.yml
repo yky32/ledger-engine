@@ -59,7 +59,7 @@ ledger:
       group-id: ${LEDGER_MOVEMENT_KAFKA_GROUP:ledger-engine-movement}
   integration:
     enabled: ${LEDGER_INTEGRATION_ENABLED:true}
-    wallet-ref-template: ${LEDGER_WALLET_REF_TEMPLATE:wallet:{extIdentifier}:{currency}}
+    wallet-ref-template: ${LEDGER_WALLET_REF_TEMPLATE:wallet:{associatedIdentifier}:{currency}}
     kafka:
       enabled: ${LEDGER_KAFKA_ENABLED:false}
       topic: ${LEDGER_KAFKA_TOPIC:ledger.transaction.events}

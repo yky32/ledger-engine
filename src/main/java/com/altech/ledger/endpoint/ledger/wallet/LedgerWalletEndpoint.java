@@ -39,11 +39,11 @@ public class LedgerWalletEndpoint {
     public Result<GetLedgerWalletResponseDto> createFull(
         @RequestParam String ownerId,
         @RequestParam String currency,
-        @RequestParam(required = false) String extIdentifier,
-        @RequestParam(required = false) String extType,
+        @RequestParam(required = false) String associatedIdentifier,
+        @RequestParam(required = false) String associatedFrom,
         @RequestParam(required = false) List<String> extraCurrencies
     ) {
-        return R.success(createWalletUseCase.executeFull(ownerId, currency, extraCurrencies, extIdentifier, extType));
+        return R.success(createWalletUseCase.executeFull(ownerId, currency, extraCurrencies, associatedIdentifier, associatedFrom));
     }
 
     @PostMapping("/{id}/activations")
@@ -92,10 +92,10 @@ public class LedgerWalletEndpoint {
     }
 
     @GetMapping("/ext/{type}/{id}")
-    public Result<GetLedgerWalletResponseDto> getByExtIdentifier(
+    public Result<GetLedgerWalletResponseDto> getByAssociatedIdentifier(
         @PathVariable String type,
         @PathVariable String id
     ) {
-        return R.success(queryWalletBalanceUseCase.byExtIdentifier(id, type));
+        return R.success(queryWalletBalanceUseCase.byAssociatedIdentifier(id, type));
     }
 }
