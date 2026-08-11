@@ -1,18 +1,17 @@
 package com.altech.ledger.entity.dto.request;
 
+import com.altech.core.constant.enu.Currency;
 import jakarta.validation.constraints.Size;
 
 /**
- * One account to open under the wallet (caller / SDK defined).
+ * One account line under a wallet.
  * <p>
- * Multi-tenant product: ledger core does <strong>not</strong> own any client’s product-line
- * catalog. Integrators pass free-form {@link #refCode} values via SDK.
- * Primary is the base wallet ref ({@code primary=true} or blank {@code refCode}).
+ * Primary line uses the wallet {@code settlementCurrency} (omit or {@code primary=true}).
+ * Extra lines should set {@link #currency} (e.g. {@code LP}) under the same wallet main COA.
  */
 public record AccountOpenSpecDto(
     /**
-     * Opaque account suffix under the wallet base ref (client-defined).
-     * Blank → primary (base ref only).
+     * Optional product / leaf code (client-defined). Blank → primary line.
      */
     @Size(max = 64) String refCode,
 
@@ -22,7 +21,13 @@ public record AccountOpenSpecDto(
     /** When true (or refCode blank), this is the primary account (wallet.accountId). */
     Boolean primary,
 
-    Boolean allowNegative
+    Boolean allowNegative,
+
+    /**
+     * Account currency. Primary defaults to wallet settlement currency.
+     * Extra lines should set this (e.g. {@code LP}).
+     */
+    Currency currency
 ) {
     public AccountOpenSpecDto {
         if (allowNegative == null) {
@@ -43,31 +48,38 @@ public record AccountOpenSpecDto(
                 name = null;
             }
         }
-        // blank refCode implies primary line
-        if (refCode == null) {
+        if (refCode == null && currency == null) {
             primary = Boolean.TRUE;
         }
     }
 
     public static AccountOpenSpecDto primaryLine() {
-        return new AccountOpenSpecDto(null, null, true, false);
+        return new AccountOpenSpecDto(null, null, true, false, null);
     }
 
-    public static AccountOpenSpecDto of(String refCode) {
-        return new AccountOpenSpecDto(refCode, null, false, false);
+    public static AccountOpenSpecDto ofCurrency(Currency currency) {
+        return new AccountOpenSpecDto(
+            currency == null ? null : currency.getIsoCode(),
+            currency == null ? null : currency.getIsoCode(),
+            false,
+            false,
+            currency
+        );
     }
 
     public boolean isPrimaryLine() {
-        return Boolean.TRUE.equals(primary) || refCode == null;
+        return Boolean.TRUE.equals(primary) || (refCode == null && currency == null);
     }
 
-    /** Label used in account name when caller did not pass name. */
     public String label() {
         if (name != null) {
             return name;
         }
         if (isPrimaryLine()) {
             return "PRIMARY";
+        }
+        if (currency != null) {
+            return currency.getIsoCode();
         }
         return refCode;
     }

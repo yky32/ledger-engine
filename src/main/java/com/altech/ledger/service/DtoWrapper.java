@@ -43,7 +43,7 @@ public final class DtoWrapper {
             .walletId(wallet.getId())
             .alias(wallet.getAlias())
             .ownerId(wallet.getOwnerId())
-            .currency(wallet.getCurrency())
+            .settlementCurrency(wallet.getSettlementCurrency())
             .status(wallet.getStatus())
             .associatedIdentifier(wallet.getAssociatedIdentifier())
             .associatedFrom(wallet.getAssociatedFrom())

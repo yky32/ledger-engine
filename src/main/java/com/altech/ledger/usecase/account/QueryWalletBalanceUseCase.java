@@ -60,7 +60,7 @@ public class QueryWalletBalanceUseCase {
 
     @Transactional(readOnly = true)
     public List<GetLedgerWalletResponseDto> myWallets(String ownerId, String fxTarget) {
-        return walletRepository.findByOwnerId(ownerId).stream().map(w -> _withFx(w, fxTarget)).toList();
+        return walletRepository.findAllByOwnerId(ownerId).stream().map(w -> _withFx(w, fxTarget)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +94,7 @@ public class QueryWalletBalanceUseCase {
     @Transactional(readOnly = true)
     public List<GetLedgerAccountBalanceResponseDto> myBalances(String ownerId) {
         List<GetLedgerAccountBalanceResponseDto> result = new ArrayList<>();
-        for (Wallet w : walletRepository.findByOwnerId(ownerId)) {
+        for (Wallet w : walletRepository.findAllByOwnerId(ownerId)) {
             Account primary = commonUseCase.requireAccount(w.getAccountId());
             for (Account a : accountRepository.findAllByMainAccount(primary.getMainAccount())) {
                 result.add(new GetLedgerAccountBalanceResponseDto(a.getId(), a.getCurrency(), a.getLedgerBalance(),
@@ -121,7 +121,7 @@ public class QueryWalletBalanceUseCase {
         return new GetLedgerWalletResponseDto(
             base.id(), base.alias(), base.accountId(), base.nickname(), base.associatedIdentifier(),
             base.associatedFrom(), base.type(), base.walletType(), base.status(), base.ownerId(),
-            base.currency(), converted, base.createDt(), base.updateDt());
+            base.settlementCurrency(), converted, base.createDt(), base.updateDt());
     }
 
     private BigDecimal _convert(BigDecimal amount, Currency from, Currency to) {

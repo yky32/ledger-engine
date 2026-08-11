@@ -12,11 +12,13 @@ import com.altech.ledger.entity.enu.WalletType;
 import jakarta.persistence.*;
 
 /**
- * Customer-facing wallet: links an owner to a primary {@link Account} for one currency.
+ * Customer-facing wallet: <b>1 customer ({@code ownerId} / associated id) → 1 wallet</b>.
  * <p>
  * Holds product identity (ownerId, alias, external CRM ids, status). Money lives on the
  * linked account(s); this row is the association + lifecycle (PENDING → ACTIVE, etc.).
- * Unique on owner + currency for onboarding idempotency.
+ * <p>
+ * {@link #settlementCurrency} is the wallet default settlement currency only — not part of
+ * wallet identity. Uniqueness is on {@code owner_id} (1 CUST : 1 Wallet).
  */
 @Entity
 @Table(
@@ -26,7 +28,7 @@ import jakarta.persistence.*;
             "account_id", "associated_identifier", "type"
         }),
         @UniqueConstraint(name = "uniqueAlias", columnNames = "alias"),
-        @UniqueConstraint(name = "uk_wallet_owner_currency", columnNames = {"owner_id", "currency"})
+        @UniqueConstraint(name = "uk_wallet_owner", columnNames = "owner_id")
     }
 )
 @Getter
@@ -68,12 +70,17 @@ public class Wallet extends AuditEntityWithIsActive {
     private WalletStatus status;
 
     // --- engine extensions ---
+    /** Customer / CRM id. Unique — one wallet per customer. */
     @Column(nullable = false, length = 100)
     private String ownerId;
 
+    /**
+     * Default settlement currency for this wallet.
+     * Primary account is opened in this currency at onboard; not a uniqueness key.
+     */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
-    private Currency currency;
+    @Column(name = "settlement_currency", nullable = false, length = 16)
+    private Currency settlementCurrency;
 
     /** PG-style public hash: random SHA-256 hex (32 chars) if not set. */
     @PrePersist

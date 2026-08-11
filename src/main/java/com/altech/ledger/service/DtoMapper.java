@@ -35,7 +35,7 @@ public final class DtoMapper {
         return new GetLedgerWalletResponseDto(
             w.getId(), w.getAlias(), w.getAccountId(), w.getNickname(),
             w.getAssociatedIdentifier(), w.getAssociatedFrom(), w.getType(), w.getWalletType(),
-            w.getStatus(), w.getOwnerId(), w.getCurrency(),
+            w.getStatus(), w.getOwnerId(), w.getSettlementCurrency(),
             accounts.stream().map(DtoMapper::toAccount).toList(),
             w.getCreateDt(), w.getUpdateDt());
     }

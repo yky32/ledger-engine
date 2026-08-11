@@ -206,9 +206,9 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             return accountRepository.findById(id)
                 .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
         } catch (NumberFormatException ex) {
-            Wallet wallet = walletRepository.findByOwnerIdAndCurrency(idOrWalletRef, currency)
+            Wallet wallet = walletRepository.findByOwnerId(idOrWalletRef)
                 .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
-                    "Wallet not found for " + idOrWalletRef + "/" + currency));
+                    "Wallet not found for " + idOrWalletRef));
             return accountForWalletCurrency(wallet, currency);
         }
     }

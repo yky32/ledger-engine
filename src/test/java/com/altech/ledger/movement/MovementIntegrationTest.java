@@ -91,7 +91,7 @@ class MovementIntegrationTest {
         var result = mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","currency":"LP","name":"%s"}
+                    {"associatedIdentifier":"%s","settlementCurrency":"LP","name":"%s"}
                     """.formatted(userId, name)))
             .andReturn();
         assertThat(result.getResponse().getStatus()).isIn(200, 409);

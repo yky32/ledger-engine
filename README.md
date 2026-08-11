@@ -10,18 +10,20 @@ Product depth and integration flows: **[PRODUCT.md](PRODUCT.md)**, **[INTEGRATIO
 ## Model (strong play)
 
 ```text
-Customer (CRM id only)     →  ownerId on wallet
+Customer (CRM id only)     →  ownerId / associatedIdentifier on wallet
         │
-     Wallet                →  1 customer ledger root (per currency today)
+     Wallet                →  1 customer : 1 wallet (`settlementCurrency` on row)
         │
-     Account set           →  1..N COA balance rows (primary + product lines)
+     Account               →  1 primary COA balance row (settlement currency) at onboard
         │
      LedgerMovement        →  business ops (idempotent movementKey)
         └── LedgerEntry    →  applied credit/debit legs
 ```
 
 - **Balances** live on `account` (`ledger_balance`, `available_balance`); movements update them under lock.
-- **Currency** is an enum (`fiat` / `LOYALTY_POINT` / `crypto`): `USD`, `HKD`, `LP`, `BTC`, `USDT`, …
+- **Wallet.settlementCurrency** = default settlement currency only (not a uniqueness key).
+- **Unique wallet:** `(owner_id)` — 1 CUST : 1 Wallet.
+- **Currency** enum (`fiat` / `LOYALTY_POINT` / `crypto`): `USD`, `HKD`, `LP`, `BTC`, `USDT`, …
 - **No classic journal_transaction layer** in the product path; ops are movement + account balances.
 - **No startup program-pool seed** — create accounts via API when needed.
 
@@ -99,14 +101,13 @@ src/main/java/
 | **PO** | `entity/po/**` | `Wallet`, `Account`, `LedgerMovement` |
 | **Repository** | `*Repository` | `WalletRepository` |
 | **Field names** | type camelCase | `ledgerMovementRepository` |
-| **JSON** | camelCase | `associatedIdentifier`, `currency` |
+| **JSON** | camelCase | `associatedIdentifier`, `settlementCurrency` |
 
 ## Core tables (simplified)
 
 ### `wallet`
 
-Customer-facing root: `owner_id`, `currency`, `account_id` (primary account), status, external CRM ids.  
-Unique: `(owner_id, currency)`.
+Customer-facing root: `owner_id` (unique — **1 CUST : 1 Wallet**), `settlement_currency` (default settlement), `account_id` (primary account), status, external CRM ids.  
 
 ### `account`
 
@@ -120,7 +121,7 @@ Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) an
 
 | Area | Examples |
 |---|---|
-| **Wallets** | `POST /wallets`, `POST /wallets/batch`, `GET /wallets?ownerId=`, `GET /wallets/{ownerId}/{currency}` |
+| **Wallets** | `POST /wallets`, `POST /wallets/batch`, `GET /wallets/{ownerId}`, `GET /wallets?ownerId=` |
 | **Movements** | `POST /movements/deposits`, `/withdrawals`, `/transfers/in-wallet`, settle/get/list |
 | **Ledger accounts** | `POST /accounts`, get balance (product COA path) |
 | **Parity** | `/ledger-wallets`, `/ledger-accounts`, `/ledger/deposits`, rules, FX, configs |
@@ -128,9 +129,9 @@ Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) an
 
 ## Wallet create (curl)
 
-### Flexible account-set
+### One customer → one wallet + one primary account
 
-`POST /wallets` opens **1 wallet + N accounts**. Optional `accounts` is **free-form** — product catalogs live in each **client / SDK** (core is multi-tenant; not tied to any one integrator).
+`POST /wallets` opens **1 wallet** and **1 primary account** in the request `settlementCurrency`. `accounts` in the body is ignored for now.
 
 Each `accounts` entry:
 
@@ -161,57 +162,32 @@ example    = 10 + 20 + 00 + 10001 + 0000 + 00 + 344   →  10200010001000000344 
 Optional `associatedFrom` (default `CRM`).
 
 ```bash
-# MAIN only (default)
+# 1 CUST → 1 wallet + 1 primary account
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
     "associatedIdentifier": "CUST-1001",
-    "currency": "USD",
+    "settlementCurrency": "USD",
     "name": "Primary wallet",
     "associatedFrom": "CRM"
   }'
 ```
 
 ```bash
-# multi-line wallet — refCode values are client-defined (SDK / integrator)
-curl -sS -X POST 'http://localhost:8080/wallets' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "associatedIdentifier": "CUST-1001",
-    "currency": "HKD",
-    "name": "Customer 1001",
-    "associatedFrom": "CRM",
-    "accounts": [
-      { "primary": true },
-      { "refCode": "LOAN", "allowNegative": true },
-      { "refCode": "CARD-A", "name": "Card line A", "allowNegative": true }
-    ]
-  }'
-```
-
-```bash
-# batch (soft-idempotent, max 1000) — each client/SDK fills its own product codes
+# batch (soft-idempotent, max 1000)
 curl -sS -X POST 'http://localhost:8080/wallets/batch' \
   -H 'Content-Type: application/json' \
   -d '{
     "wallets": [
       {
         "associatedIdentifier": "CUST-1001",
-        "currency": "HKD",
-        "name": "Customer 1001",
-        "accounts": [
-          { "primary": true },
-          { "refCode": "LOAN", "allowNegative": true }
-        ]
+        "settlementCurrency": "HKD",
+        "name": "Customer 1001"
       },
       {
         "associatedIdentifier": "CUST-1002",
-        "currency": "HKD",
-        "name": "Customer 1002",
-        "accounts": [
-          { "primary": true },
-          { "refCode": "CARD-A", "allowNegative": true }
-        ]
+        "settlementCurrency": "HKD",
+        "name": "Customer 1002"
       }
     ]
   }'
@@ -219,15 +195,15 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
 
 ```bash
 # query by same customer id (path ownerId == associatedIdentifier)
-curl -sS 'http://localhost:8080/wallets/CUST-1001/HKD'
+curl -sS 'http://localhost:8080/wallets/CUST-1001'
 curl -sS 'http://localhost:8080/wallets?ownerId=CUST-1001'
 ```
 
-Required: `associatedIdentifier`, `currency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
-Response: `ownerId` / `associatedIdentifier` (same CRM id) + primary `account` / `balance` + full `accounts[]`.  
+Required: `associatedIdentifier`, `settlementCurrency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
+Response: `ownerId` / `associatedIdentifier` (same CRM id) + `settlementCurrency` + primary `account` / `balance`.  
 Envelope: `Result` with `response` / `data` / `requestId`.
 
-**PROD bulk convert:** stream CRM product mix into `POST /wallets/batch` (≤1000/chunk, soft-idempotent). No 700K SQL cutover / downtime.
+**PROD bulk convert:** stream CRM ids into `POST /wallets/batch` (≤1000/chunk, soft-idempotent).
 
 ## Currency
 
@@ -239,7 +215,8 @@ Envelope: `Result` with `response` / `data` / `requestId`.
 | **LOYALTY_POINT** | `LP` |
 | **CRYPTO** | `BTC`, `ETH`, `SOL`, `USDT`, `USDC`, … |
 
-JSON uses the code string, e.g. `"currency": "USD"`. Stored as `@Enumerated(STRING)`.
+Wallet default settlement uses JSON `settlementCurrency` (e.g. `"settlementCurrency": "USD"`).  
+Account / movement amounts still use `"currency"`. Stored as `@Enumerated(STRING)`.
 
 ## Boundaries
 
@@ -254,8 +231,9 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 
 ## Docs
 
-| File | Purpose |
-|---|---|
+| Doc | Purpose |
+|-----|---------|
 | [PRODUCT.md](PRODUCT.md) | Product model, operations, account roles |
 | [INTEGRATION.md](INTEGRATION.md) | Onboarding + transactional event ingest |
+| [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | **Client adopt:** wallet create curls (HKD + LP) |
 | `application.yml` | Env-driven config (`DB_*`, `SERVER_PORT`, …) |

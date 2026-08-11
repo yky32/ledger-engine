@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 import java.util.List;
 
 /**
- * Product wallet onboarding response: wallet identity + primary account and full account-set.
+ * Product wallet onboarding response: wallet identity + primary account.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -25,9 +25,10 @@ import java.util.List;
 public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private Long walletId;
     private String alias;
-    /** Same as associatedIdentifier (lookup key for GET /wallets/{ownerId}/…). */
+    /** Same as associatedIdentifier (lookup key for GET /wallets/{ownerId}). */
     private String ownerId;
-    private Currency currency;
+    /** Wallet default settlement currency. */
+    private Currency settlementCurrency;
     private WalletStatus status;
     /** Associated party id (CRM cust id, …). */
     private String associatedIdentifier;
@@ -37,6 +38,6 @@ public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private GetWalletAccountResponseDto account;
     /** Primary balance (convenience). */
     private GetWalletBalanceResponseDto balance;
-    /** Full account-set opened under this wallet (MAIN + product lines). */
+    /** Account-set under this wallet (primary only at onboard today). */
     private List<GetWalletAccountResponseDto> accounts;
 }

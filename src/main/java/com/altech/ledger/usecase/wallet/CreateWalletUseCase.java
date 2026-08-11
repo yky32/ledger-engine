@@ -40,17 +40,17 @@ public class CreateWalletUseCase {
         Account account = commonUseCase.requireAccount(dto.accountId());
 
         String alias = _nextAlias();
-        Currency currency = dto.currency() != null
-            ? commonUseCase.requireCurrency(dto.currency())
+        Currency settlementCurrency = dto.settlementCurrency() != null
+            ? commonUseCase.requireCurrency(dto.settlementCurrency())
             : account.getCurrency();
         String ownerId = dto.ownerId() != null ? dto.ownerId()
             : (dto.associatedIdentifier() != null ? dto.associatedIdentifier() : alias);
         String nickname = dto.nickname() == null || dto.nickname().isBlank() ? "NA" : dto.nickname();
         WalletAssociationType type = dto.type() == null ? WalletAssociationType.CUSTODIAN : dto.type();
 
-        if (walletRepository.existsByOwnerIdAndCurrency(ownerId, currency)) {
+        if (walletRepository.existsByOwnerId(ownerId)) {
             throw new BizException(WalletErrorResponse.WAL0409,
-                "Wallet already exists for owner/currency: " + ownerId + "/" + currency);
+                "Wallet already exists for owner: " + ownerId);
         }
 
         Wallet wallet = new Wallet();
@@ -63,7 +63,7 @@ public class CreateWalletUseCase {
         wallet.setWalletType(WalletType.CORPORATE);
         wallet.setStatus(WalletStatus.PENDING);
         wallet.setOwnerId(ownerId);
-        wallet.setCurrency(currency);
+        wallet.setSettlementCurrency(settlementCurrency);
         wallet = walletRepository.save(wallet);
         List<Account> myAccounts = new ArrayList<>(accountRepository.findAllByMainAccount(account.getMainAccount()));
         return DtoMapper.toWallet(wallet, myAccounts);

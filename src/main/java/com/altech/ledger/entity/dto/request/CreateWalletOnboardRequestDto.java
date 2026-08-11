@@ -9,20 +9,19 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 /**
- * Product onboarding: create one wallet for a customer + currency.
+ * Product onboarding: <b>one wallet per customer</b> + account lines under that wallet.
  * <p>
- * {@link #associatedIdentifier} is the sole associated-party key (e.g. CRM cust id).
- * Stored as wallet {@code ownerId} and {@code associatedIdentifier}.
- * {@link #associatedFrom} names where that id comes from (e.g. CRM).
- * <p>
- * Optional {@link #accounts} is free-form (caller / SDK product codes).
- * If omitted or empty, only the primary account is opened.
+ * {@link #associatedIdentifier} — CRM / client customer id (unique wallet key).<br>
+ * {@link #settlementCurrency} — wallet default settlement currency; primary account currency.<br>
+ * {@link #accounts} — optional extra accounts (e.g. {@code LP}) under the same wallet.
+ * Primary is always opened in {@link #settlementCurrency}; omit {@code accounts} for primary only.
  */
 public record CreateWalletOnboardRequestDto(
     /** Associated party id (CRM cust id, member id, …). Sole identity for create. */
     @NotBlank @Size(max = 100) String associatedIdentifier,
 
-    @NotNull Currency currency,
+    /** Default settlement currency (+ primary account currency). */
+    @NotNull Currency settlementCurrency,
 
     @Size(max = 200) String name,
 
@@ -30,8 +29,8 @@ public record CreateWalletOnboardRequestDto(
     @Size(max = 50) String associatedFrom,
 
     /**
-     * Accounts to open under this wallet. Free-form ref codes — product catalog
-     * is client/SDK concern. Primary always ensured; omit for primary only.
+     * Extra account lines under this wallet. Primary (settlement currency) is always opened.
+     * Example: {@code [{"currency":"LP","name":"Loyalty points"}]} for HKD settlement + LP book.
      */
     @Size(max = 32) List<@Valid AccountOpenSpecDto> accounts
 ) {
@@ -50,18 +49,16 @@ public record CreateWalletOnboardRequestDto(
         }
     }
 
-    /** Convenience: primary account only, default CRM type. */
-    public CreateWalletOnboardRequestDto(String associatedIdentifier, Currency currency, String name) {
-        this(associatedIdentifier, currency, name, null, null);
+    public CreateWalletOnboardRequestDto(String associatedIdentifier, Currency settlementCurrency, String name) {
+        this(associatedIdentifier, settlementCurrency, name, null, null);
     }
 
-    /** Convenience: no accounts. */
     public CreateWalletOnboardRequestDto(
         String associatedIdentifier,
-        Currency currency,
+        Currency settlementCurrency,
         String name,
         String associatedFrom
     ) {
-        this(associatedIdentifier, currency, name, associatedFrom, null);
+        this(associatedIdentifier, settlementCurrency, name, associatedFrom, null);
     }
 }

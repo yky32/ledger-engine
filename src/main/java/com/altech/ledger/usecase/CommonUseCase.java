@@ -18,6 +18,9 @@ import org.springframework.stereotype.Component;
 /**
  * Cross-cutting entity loaders and validators shared by {@code *UseCase} classes.
  * Private helpers use the {@code _name} prefix; public methods are the stable API.
+ * <p>
+ * Wallet identity is <b>1 CUST ({@code ownerId}) : 1 Wallet</b>. Currency is default
+ * settlement metadata, not part of the wallet key.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,15 +34,33 @@ public class CommonUseCase {
         return _requireWallet(id);
     }
 
-    public Wallet requireWalletByOwnerAndCurrency(String ownerId, Currency currency) {
-        Currency ccy = requireCurrency(currency);
-        return walletRepository.findByOwnerIdAndCurrency(ownerId, ccy)
+    /** Primary wallet lookup — 1 customer : 1 wallet. */
+    public Wallet requireWalletByOwnerId(String ownerId) {
+        if (ownerId == null || ownerId.isBlank()) {
+            throw new BizException(WalletErrorResponse.WAL0400, "ownerId is required");
+        }
+        return walletRepository.findByOwnerId(ownerId.trim())
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
-                "Wallet not found for " + ownerId + " / " + ccy));
+                "Wallet not found for ownerId: " + ownerId));
+    }
+
+    /**
+     * Resolve wallet by customer id. {@code currency} is ignored for identity
+     * (kept for call-site compatibility — default settlement lives on the wallet row).
+     */
+    public Wallet requireWalletByOwnerAndCurrency(String ownerId, Currency currency) {
+        requireCurrency(currency); // still validate enum if provided
+        return requireWalletByOwnerId(ownerId);
     }
 
     public Wallet requireWalletByOwnerAndCurrency(String ownerId, String currency) {
         return requireWalletByOwnerAndCurrency(ownerId, requireCurrency(currency));
+    }
+
+    public Wallet requireActiveWalletByOwnerId(String ownerId) {
+        Wallet wallet = requireWalletByOwnerId(ownerId);
+        _requireActive(wallet);
+        return wallet;
     }
 
     public Wallet requireActiveWallet(String ownerId, Currency currency) {

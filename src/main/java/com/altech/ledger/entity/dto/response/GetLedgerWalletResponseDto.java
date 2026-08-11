@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Wallet plus related multi-currency account balances under the main account.
+ * Wallet plus related account balances under the main account.
  */
 public record GetLedgerWalletResponseDto(
     Long id,
@@ -23,7 +23,8 @@ public record GetLedgerWalletResponseDto(
     WalletType walletType,
     WalletStatus status,
     String ownerId,
-    Currency currency,
+    /** Wallet default settlement currency. */
+    Currency settlementCurrency,
     List<GetLedgerAccountResponseDto> accounts,
     Instant createDt,
     Instant updateDt

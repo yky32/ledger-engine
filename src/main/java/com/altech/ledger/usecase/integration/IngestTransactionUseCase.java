@@ -43,12 +43,13 @@ public class IngestTransactionUseCase {
 
         TransactionRuleEngine.RuleDecision rule = decision.get();
         Currency pointCurrency = Currency.get(rule.pointCurrency());
-        Optional<Wallet> wallet = walletRepository.findByOwnerIdAndCurrency(event.userId(), pointCurrency);
+        // 1 CUST : 1 Wallet — resolve by customer id only; point currency is movement/account
+        Optional<Wallet> wallet = walletRepository.findByOwnerId(event.userId());
         if (wallet.isEmpty()) {
             return IngestionResult.skipped(event.eventId(),
-                "Wallet not onboarded: " + event.userId() + " / " + pointCurrency);
+                "Wallet not onboarded: " + event.userId());
         }
-        String walletKey = event.userId() + "/" + pointCurrency.getIsoCode();
+        String walletKey = event.userId();
 
         if (rule.operation() == TransactionRuleEngine.Operation.PROCESS) {
             String processType = rule.processType() == null ? "UNSPECIFIED" : rule.processType().toUpperCase();
