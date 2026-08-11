@@ -19,8 +19,10 @@ public class IntegrationProperties {
     /**
      * When true: after eligibility gates, missing wallet is auto-created then earn/burn continues
      * in the same request/transaction.
+     * <p>
+     * YAML: {@code ledger.integration.auto-create-wallet} / env {@code LEDGER_AUTO_CREATE_WALLET}.
      */
-    private boolean autoCreateWallet = true;
+    private boolean isAutoCreateWallet = true;
 
     /** Defaults used when auto-creating a wallet from webhook. */
     private AutoWallet autoWallet = new AutoWallet();
