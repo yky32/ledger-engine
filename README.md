@@ -237,4 +237,5 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 | [INTEGRATION.md](INTEGRATION.md) | Onboarding + transactional event ingest |
 | [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | **Client adopt:** wallet create + query curls (HKD + LP) |
 | [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) | **Client adopt:** earn webhook gates → LP credit |
+| [scripts/e2e-smoke.sh](scripts/e2e-smoke.sh) | One-shot: onboard → earn → query LP → fail-table API |
 | `application.yml` | Env-driven config (`DB_*`, `SERVER_PORT`, …) |

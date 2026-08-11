@@ -148,6 +148,33 @@ curl -sS 'http://localhost:8080/wallets/01A12345678?currencies=LP'
 
 ---
 
+## 5) Query failed ingest (ops)
+
+```bash
+# list OPEN skips for a customer
+curl -sS 'http://localhost:8080/integrations/failed-transactions?associatedIdentifier=01A12345678&status=OPEN&limit=20'
+
+# by failure code
+curl -sS 'http://localhost:8080/integrations/failed-transactions?failureCode=CURRENCY&limit=50'
+
+# by event id
+curl -sS 'http://localhost:8080/integrations/failed-transactions/by-event/txn-xxx'
+```
+
+---
+
+## 6) E2E smoke script
+
+With app + Postgres running:
+
+```bash
+chmod +x scripts/e2e-smoke.sh
+./scripts/e2e-smoke.sh
+# BASE_URL=http://localhost:8080 ./scripts/e2e-smoke.sh
+```
+
+---
+
 ## Config override (env / YAML)
 
 ```yaml
