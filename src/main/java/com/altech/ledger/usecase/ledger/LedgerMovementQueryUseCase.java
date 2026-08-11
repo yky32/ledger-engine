@@ -45,7 +45,7 @@ public class LedgerMovementQueryUseCase {
     @Transactional(readOnly = true)
     public Page<GetLedgerMovementResponseDto> myMovements(String ownerId, Pageable pageable,
                                                          Instant startDt, Instant endDt, List<String> statuses) {
-        List<Long> ids = walletRepository.findByOwnerId(ownerId).stream().map(Wallet::getId).toList();
+        List<Long> ids = walletRepository.findAllByOwnerId(ownerId).stream().map(Wallet::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }

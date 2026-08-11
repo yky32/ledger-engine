@@ -10,9 +10,33 @@ import java.util.Optional;
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
     Optional<Wallet> findByAlias(String alias);
 
-    Optional<Wallet> findByOwnerIdAndCurrency(String ownerId, Currency currency);
+    /** 1 CUST : 1 Wallet — primary lookup. */
+    Optional<Wallet> findByOwnerId(String ownerId);
 
-    List<Wallet> findByOwnerId(String ownerId);
+    boolean existsByOwnerId(String ownerId);
+
+    /**
+     * @deprecated currency is default settlement only; use {@link #findByOwnerId(String)}.
+     * Kept for transitional call sites; ignores multi-wallet-per-currency model.
+     */
+    @Deprecated
+    default Optional<Wallet> findByOwnerIdAndCurrency(String ownerId, Currency currency) {
+        return findByOwnerId(ownerId);
+    }
+
+    /**
+     * @deprecated use {@link #existsByOwnerId(String)}.
+     */
+    @Deprecated
+    default boolean existsByOwnerIdAndCurrency(String ownerId, Currency currency) {
+        return existsByOwnerId(ownerId);
+    }
+
+    /** @deprecated 1:1 model returns 0..1; prefer {@link #findByOwnerId(String)}. */
+    @Deprecated
+    default List<Wallet> findAllByOwnerId(String ownerId) {
+        return findByOwnerId(ownerId).map(List::of).orElseGet(List::of);
+    }
 
     Optional<Wallet> findByAssociatedIdentifierAndAssociatedFrom(String associatedIdentifier, String associatedFrom);
 
@@ -21,6 +45,4 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
     Optional<Wallet> findByAccountId(Long accountId);
 
     boolean existsByAlias(String alias);
-
-    boolean existsByOwnerIdAndCurrency(String ownerId, Currency currency);
 }

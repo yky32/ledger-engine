@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Phase-1 wallet onboarding integration tests.
+ * Phase-1: 1 CUST : 1 Wallet + HKD primary + LP account; query by associatedIdentifier.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -24,39 +24,53 @@ class WalletOnboardingIntegrationTest {
 
     @Test
     void singleOnboardCreatesActiveWalletAndIsQueryable() throws Exception {
-        String associatedIdentifier = "ONB-" + UUID.randomUUID();
+        String associatedIdentifier = "01A" + String.format("%08d", Math.abs(UUID.randomUUID().hashCode() % 100_000_000));
 
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","currency":"LP","name":"Alice"}
+                    {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice",
+                     "accounts":[{"currency":"LP","name":"Loyalty points","refCode":"LP"}]}
                     """.formatted(associatedIdentifier)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SYS0000"))
-            .andExpect(jsonPath("$.data.ownerId").value(associatedIdentifier))
             .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
-            .andExpect(jsonPath("$.data.currency").value("LP"))
+            .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
             .andExpect(jsonPath("$.data.status").value("ACTIVE"))
-            .andExpect(jsonPath("$.data.walletId").isNumber())
-            .andExpect(jsonPath("$.data.balance.ledgerBalance").value(0))
-            .andExpect(jsonPath("$.data.account.fullNumber").value(org.hamcrest.Matchers.matchesPattern("\\d+")))
-            .andExpect(jsonPath("$.data.createDt").exists());
+            .andExpect(jsonPath("$.data.account.currency").value("HKD"))
+            .andExpect(jsonPath("$.data.accounts.length()").value(2));
 
-        mockMvc.perform(get("/wallets/" + associatedIdentifier + "/LP"))
+        // Query by same associatedIdentifier — full Wallet:Accounts
+        mockMvc.perform(get("/wallets/" + associatedIdentifier))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.status").value("ACTIVE"))
-            .andExpect(jsonPath("$.data.ownerId").value(associatedIdentifier))
-            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier));
+            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
+            .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
+            .andExpect(jsonPath("$.data.accounts.length()").value(2))
+            .andExpect(jsonPath("$.data.accounts[?(@.currency=='HKD' && @.primary==true)]").exists())
+            .andExpect(jsonPath("$.data.accounts[?(@.currency=='LP')]").exists());
 
-        mockMvc.perform(get("/wallets").param("ownerId", associatedIdentifier))
+        mockMvc.perform(get("/wallets").param("associatedIdentifier", associatedIdentifier))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data").isArray())
-            .andExpect(jsonPath("$.data.length()").value(1));
+            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
+            .andExpect(jsonPath("$.data.accounts.length()").value(2));
 
+        // currencies filter — LP only
+        mockMvc.perform(get("/wallets/" + associatedIdentifier).param("currencies", "LP"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.accounts.length()").value(1))
+            .andExpect(jsonPath("$.data.accounts[0].currency").value("LP"));
+
+        // currencies filter — HKD,LP (order preserved by wallet sort, both present)
+        mockMvc.perform(get("/wallets").param("associatedIdentifier", associatedIdentifier)
+                .param("currencies", "HKD, LP"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.accounts.length()").value(2));
+
+        // Duplicate CUST → conflict
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","currency":"LP","name":"Alice again"}
+                    {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice again"}
                     """.formatted(associatedIdentifier)))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("WAL0409"));
@@ -64,13 +78,15 @@ class WalletOnboardingIntegrationTest {
 
     @Test
     void batchOnboardsFromCrmAndIsIdempotent() throws Exception {
-        String a = "CRM-" + UUID.randomUUID();
-        String b = "CRM-" + UUID.randomUUID();
+        String a = "01A" + String.format("%08d", Math.abs(UUID.randomUUID().hashCode() % 100_000_000));
+        String b = "01A" + String.format("%08d", Math.abs(UUID.randomUUID().getMostSignificantBits() % 100_000_000));
         String body = """
             {
               "wallets": [
-                {"associatedIdentifier":"%s","currency":"LP","name":"Alice"},
-                {"associatedIdentifier":"%s","currency":"LP","name":"Bob"}
+                {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice",
+                 "accounts":[{"currency":"LP","refCode":"LP"}]},
+                {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Bob",
+                 "accounts":[{"currency":"LP","refCode":"LP"}]}
               ]
             }
             """.formatted(a, b);
@@ -83,8 +99,6 @@ class WalletOnboardingIntegrationTest {
         mockMvc.perform(post("/wallets/batch").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.created").value(0))
-            .andExpect(jsonPath("$.data.alreadyExists").value(2))
-            .andExpect(jsonPath("$.data.alreadyExistingAssociatedIdentifiers").isArray())
-            .andExpect(jsonPath("$.data.alreadyExistingAssociatedIdentifiers.length()").value(2));
+            .andExpect(jsonPath("$.data.alreadyExists").value(2));
     }
 }

@@ -85,9 +85,10 @@ JSON array also supported: `["id1","id2"]` or `[{"associatedIdentifier":"..."}]`
 | CRM / client | Ledger Engine |
 |---|---|
 | Customer id | `Wallet.ownerId` + `Wallet.associatedIdentifier` |
-| Unit of account | `currency` (e.g. `LP`, `HKD`) |
-| Wallet | `POST /wallets` creates LIABILITY `Account` with `fullNumber=wallet:{associatedIdentifier}:{currency}` |
-| Uniqueness | `(ownerId, currency)` and account `fullNumber` |
+| Default settlement currency | `Wallet.settlementCurrency` (+ primary account currency at onboard) |
+| Wallet | **1 customer → 1 wallet** (`uk_wallet_owner` on `owner_id`) |
+| Account | One primary COA account opened in default currency |
+| Uniqueness | `owner_id` (not per-currency wallets) |
 
 Re-run is safe: batch returns `alreadyExists` for ids already onboarded.
 
