@@ -56,6 +56,12 @@ ledger:
   integration:
     enabled: ${LEDGER_INTEGRATION_ENABLED:true}
     wallet-ref-template: ${LEDGER_WALLET_REF_TEMPLATE:wallet:{associatedIdentifier}:{currency}}
+    auto-create-wallet: ${LEDGER_AUTO_CREATE_WALLET:true}
+    auto-wallet:
+      settlement-currency: ${LEDGER_AUTO_WALLET_SETTLEMENT:HKD}
+      ensure-currency: ${LEDGER_AUTO_WALLET_ENSURE:LP}
+      associated-from: ${LEDGER_AUTO_WALLET_FROM:CRM}
+      name-prefix: ${LEDGER_AUTO_WALLET_NAME_PREFIX:Auto }
     kafka:
       enabled: ${LEDGER_KAFKA_ENABLED:false}
       topic: ${LEDGER_KAFKA_TOPIC:ledger.transaction.events}

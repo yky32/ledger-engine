@@ -11,7 +11,6 @@ import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
-import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +24,8 @@ import java.util.UUID;
 
 /**
  * Loyalty / transactional event ingest with eligibility gates.
+ * <p>
+ * Flow: gates → resolve/auto-create wallet (optional) → earn/process/burn in same TX.<br>
  * Failures / skips are persisted to {@code failed_transaction_ingest} first, then returned as SKIPPED.
  */
 @Slf4j
@@ -33,7 +34,7 @@ import java.util.UUID;
 public class IngestTransactionUseCase {
     private final IntegrationProperties integrationProperties;
     private final TransactionRuleEngine transactionRuleEngine;
-    private final WalletRepository walletRepository;
+    private final EnsureWalletForIngestUseCase ensureWalletForIngestUseCase;
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerMovementShooter ledgerMovementShooter;
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
@@ -45,6 +46,7 @@ public class IngestTransactionUseCase {
             return _fail(event, "DISABLED", "Integration disabled");
         }
 
+        // 1) eligibility gates first — do not auto-create wallet for bad events
         TransactionRuleEngine.EvaluationOutcome outcome = transactionRuleEngine.evaluate(event);
         if (!outcome.matched()) {
             return _fail(event,
@@ -54,20 +56,22 @@ public class IngestTransactionUseCase {
 
         TransactionRuleEngine.RuleDecision rule = outcome.decision().orElseThrow();
         Currency pointCurrency = Currency.get(rule.pointCurrency());
-
         String custId = event.associatedIdentifier();
-        Optional<Wallet> wallet = walletRepository.findByOwnerId(custId);
-        if (wallet.isEmpty()) {
-            // also try associatedIdentifier column
-            var byAssoc = walletRepository.findByAssociatedIdentifier(custId);
-            if (byAssoc.size() == 1) {
-                wallet = Optional.of(byAssoc.get(0));
-            } else if (byAssoc.isEmpty()) {
-                return _fail(event, "NO_WALLET", "Wallet not onboarded: " + custId);
-            } else {
-                wallet = byAssoc.stream().findFirst();
-            }
+
+        // 2) wallet exists? else upsert create (HKD+LP defaults) then continue
+        EnsureWalletForIngestUseCase.ResolveResult resolved;
+        try {
+            resolved = ensureWalletForIngestUseCase.resolveOrProvision(custId, pointCurrency);
+        } catch (RuntimeException ex) {
+            log.error("wallet resolve/provision failed custId={}", custId, ex);
+            return _fail(event, "WALLET_PROVISION",
+                ex.getMessage() == null ? "wallet provision failed" : ex.getMessage());
         }
+        if (resolved == null) {
+            return _fail(event, "NO_WALLET",
+                "Wallet not onboarded and auto-create disabled: " + custId);
+        }
+        Wallet wallet = resolved.wallet();
         String walletKey = custId;
 
         if (rule.operation() == TransactionRuleEngine.Operation.PROCESS) {
@@ -90,14 +94,16 @@ public class IngestTransactionUseCase {
             return IngestionResult.duplicate(event.eventId(), rule.operation(), id, rule.points(), walletKey);
         }
 
+        // 3) earn / burn / process
         try {
             GetLedgerMovementResponseDto applied = ledgerMovementShooter.doEarnBurn(
-                wallet.get().getId(),
+                wallet.getId(),
                 orderType,
                 rule.points(),
                 pointCurrency,
                 movementKey,
                 rule.operation() + " from " + event.eventType() + " (" + rule.formula() + ")"
+                    + (resolved.provisioned() ? " [wallet-auto]" : "")
             );
 
             UUID txnId = applied.id() == null ? null

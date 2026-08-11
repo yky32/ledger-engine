@@ -175,10 +175,36 @@ chmod +x scripts/e2e-smoke.sh
 
 ---
 
+## Auto wallet on webhook
+
+When `ledger.integration.auto-create-wallet=true` (default):
+
+```text
+gates pass → wallet missing?
+  → create settlement HKD + LP book
+  → earn/burn same request (same TX)
+```
+
+No separate onboard required for first eligible event.
+
+```bash
+# lazy provision smoke
+SKIP_ONBOARD=1 ./scripts/e2e-smoke.sh
+```
+
+Disable: `LEDGER_AUTO_CREATE_WALLET=false` → missing wallet becomes `NO_WALLET` fail row again.
+
+---
+
 ## Config override (env / YAML)
 
 ```yaml
-ledger.integration.rules:
+ledger.integration:
+  auto-create-wallet: true
+  auto-wallet:
+    settlement-currency: HKD
+    ensure-currency: LP
+  rules:
   - event-type: PURCHASE
     operation: EARN
     min-amount: 0.01
