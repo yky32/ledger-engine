@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# E2E smoke: onboard → earn webhook → query LP balance → optional fail-path check.
+# E2E smoke: (optional onboard) → earn webhook → query LP → fail-path check.
 # Requires: app on BASE_URL, jq, curl. Postgres already up for the app.
+#
+# SKIP_ONBOARD=1  → rely on auto-create-wallet (default true): first webhook provisions HKD+LP
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
-# 01A + 8 digits
 CUST_ID="${CUST_ID:-01A$(printf '%08d' $((RANDOM % 100000000)))}"
 AMOUNT="${AMOUNT:-200}"
 CURRENCY="${CURRENCY:-HKD}"
-RATE_EXPECT="${RATE_EXPECT:-2}"   # default formula RATE:0.01 → 200*0.01=2
+RATE_EXPECT="${RATE_EXPECT:-2}"
+SKIP_ONBOARD="${SKIP_ONBOARD:-0}"
 
 red() { printf '\033[31m%s\033[0m\n' "$*"; }
 green() { printf '\033[32m%s\033[0m\n' "$*"; }
@@ -18,7 +20,7 @@ need() { command -v "$1" >/dev/null 2>&1 || { red "missing dependency: $1"; exit
 need curl
 need jq
 
-info "BASE_URL=$BASE_URL CUST_ID=$CUST_ID"
+info "BASE_URL=$BASE_URL CUST_ID=$CUST_ID SKIP_ONBOARD=$SKIP_ONBOARD"
 
 info "0) health"
 curl -sf "$BASE_URL/actuator/health" | jq -e '.status=="UP"' >/dev/null \
@@ -26,23 +28,26 @@ curl -sf "$BASE_URL/actuator/health" | jq -e '.status=="UP"' >/dev/null \
   || { red "app not healthy at $BASE_URL"; exit 1; }
 green "app up"
 
-info "1) onboard wallet HKD + LP"
-ONBOARD=$(curl -sS -X POST "$BASE_URL/wallets" \
-  -H 'Content-Type: application/json' \
-  -d "{
-    \"associatedIdentifier\": \"$CUST_ID\",
-    \"settlementCurrency\": \"HKD\",
-    \"name\": \"Smoke $CUST_ID\",
-    \"associatedFrom\": \"CRM\",
-    \"accounts\": [{ \"currency\": \"LP\", \"name\": \"Loyalty\", \"refCode\": \"LP\" }]
-  }")
-echo "$ONBOARD" | jq -e '.code=="SYS0000"' >/dev/null || {
-  # allow already exists if re-run same CUST_ID
-  echo "$ONBOARD" | jq -e '.code=="WAL0409"' >/dev/null && info "wallet already exists" || {
-    red "onboard failed: $ONBOARD"; exit 1;
+if [[ "$SKIP_ONBOARD" != "1" ]]; then
+  info "1) onboard wallet HKD + LP"
+  ONBOARD=$(curl -sS -X POST "$BASE_URL/wallets" \
+    -H 'Content-Type: application/json' \
+    -d "{
+      \"associatedIdentifier\": \"$CUST_ID\",
+      \"settlementCurrency\": \"HKD\",
+      \"name\": \"Smoke $CUST_ID\",
+      \"associatedFrom\": \"CRM\",
+      \"accounts\": [{ \"currency\": \"LP\", \"name\": \"Loyalty\", \"refCode\": \"LP\" }]
+    }")
+  echo "$ONBOARD" | jq -e '.code=="SYS0000"' >/dev/null || {
+    echo "$ONBOARD" | jq -e '.code=="WAL0409"' >/dev/null && info "wallet already exists" || {
+      red "onboard failed: $ONBOARD"; exit 1;
+    }
   }
-}
-green "onboard ok"
+  green "onboard ok"
+else
+  info "1) skip onboard — auto-create-wallet on first eligible webhook"
+fi
 
 EVENT_ID="smoke-$(date +%s)-$RANDOM"
 OCCURRED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -68,7 +73,6 @@ echo "$WALLET" | jq '{associatedIdentifier: .data.associatedIdentifier, settleme
 echo "$WALLET" | jq -e '.data.associatedIdentifier=="'"$CUST_ID"'"' >/dev/null
 LP_BAL=$(echo "$WALLET" | jq -r '[.data.accounts[]? | select(.currency=="LP") | .ledgerBalance] | add // 0')
 info "LP ledgerBalance sum=$LP_BAL"
-# balance should be >= points from this run (may accumulate)
 python3 - <<PY
 from decimal import Decimal
 bal = Decimal(str("$LP_BAL"))
@@ -99,4 +103,4 @@ echo "$FAILS" | jq -e --arg e "$BAD_EVENT" '[.data[] | select(.eventId==$e)] | l
 green "failed-ingest query ok"
 
 echo
-green "E2E SMOKE PASSED cust=$CUST_ID event=$EVENT_ID points=$POINTS lp_bal=$LP_BAL"
+green "E2E SMOKE PASSED cust=$CUST_ID event=$EVENT_ID points=$POINTS lp_bal=$LP_BAL skip_onboard=$SKIP_ONBOARD"

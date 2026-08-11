@@ -16,6 +16,26 @@ public class IntegrationProperties {
     private String walletRefTemplate = "wallet:{associatedIdentifier}:{currency}";
     private List<TransactionRule> rules = new ArrayList<>();
 
+    /**
+     * When true: after eligibility gates, missing wallet is auto-created then earn/burn continues
+     * in the same request/transaction.
+     */
+    private boolean autoCreateWallet = true;
+
+    /** Defaults used when auto-creating a wallet from webhook. */
+    private AutoWallet autoWallet = new AutoWallet();
+
+    @Getter
+    @Setter
+    public static class AutoWallet {
+        /** Settlement + primary account currency. Default HKD. */
+        private String settlementCurrency = "HKD";
+        /** Always open this book under the wallet (earn points). Default LP. */
+        private String ensureCurrency = "LP";
+        private String associatedFrom = "CRM";
+        private String namePrefix = "Auto ";
+    }
+
     @Getter
     @Setter
     public static class TransactionRule {

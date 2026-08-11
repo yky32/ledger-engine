@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -77,22 +78,27 @@ class TransactionIngestionIntegrationTest {
     }
 
     @Test
-    void webhookSkipsWhenWalletNotOnboardedAndPersistsFailure() throws Exception {
-        String eventId = "evt-no-wallet-" + UUID.randomUUID();
+    void webhookAutoCreatesWalletThenEarnsWhenNotOnboarded() throws Exception {
+        String cust = "AUTO-" + UUID.randomUUID().toString().substring(0, 8);
+        String eventId = "evt-auto-" + UUID.randomUUID();
+        // HKD 100 * 0.01 = 1 LP — no prior onboard
         TransactionalEvent event = new TransactionalEvent(
-            eventId, "CUST-9999", "PURCHASE", new BigDecimal("50"), Currency.HKD,
+            eventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD,
             Instant.now(), Map.of());
 
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.status").value("SKIPPED"))
-            .andExpect(jsonPath("$.data.reason").value(org.hamcrest.Matchers.containsString("Wallet not onboarded")));
+            .andExpect(jsonPath("$.data.status").value("EARNED"))
+            .andExpect(jsonPath("$.data.points").value(1.0))
+            .andExpect(jsonPath("$.data.walletExternalReference").value(cust));
 
-        assertThat(failedTransactionIngestRepository.findByEventIdOrderByIdDesc(eventId)).isNotEmpty();
-        assertThat(failedTransactionIngestRepository.findByEventIdOrderByIdDesc(eventId).get(0).getFailureCode())
-            .isEqualTo("NO_WALLET");
+        mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.associatedIdentifier").value(cust))
+            .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
+            .andExpect(jsonPath("$.data.accounts[0].currency").value("LP"));
     }
 
     @Test
