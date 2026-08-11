@@ -35,6 +35,8 @@ public class GetWalletAccountResponseDto extends BaseResponseDto {
     private String refCode;
     /** True when this is wallet.accountId (primary). */
     private Boolean primary;
+    /** Phase A CoA role (AVAILABLE, HELD, …). */
+    private com.altech.ledger.entity.enu.AccountRole accountRole;
     private CoaType type;
     private Currency currency;
     private AccountStatus status;

@@ -223,10 +223,16 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     private Account accountForWalletCurrency(Wallet wallet, Currency currency) {
         Account primary = accountRepository.findById(wallet.getAccountId())
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + wallet.getAccountId()));
-        if (primary.getCurrency() == currency) {
-            return primary;
-        }
-        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency)
+        // Prefer AVAILABLE book (Phase A multi-role CoA); fall back to primary if same ccy
+        return accountRepository
+            .findFirstByMainAccountAndCurrencyAndAccountRole(
+                primary.getMainAccount(), currency, com.altech.ledger.entity.enu.AccountRole.AVAILABLE)
+            .or(() -> {
+                if (primary.getCurrency() == currency) {
+                    return java.util.Optional.of(primary);
+                }
+                return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency).stream().findFirst();
+            })
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Account currency not found for wallet " + wallet.getId() + " / " + currency));
     }

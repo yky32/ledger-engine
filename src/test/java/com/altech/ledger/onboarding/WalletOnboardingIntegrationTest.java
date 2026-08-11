@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Phase-1: 1 CUST : 1 Wallet + HKD primary + LP account; query by associatedIdentifier.
+ * Phase A: 1 CUST : 1 Wallet + DEFAULT AccountSet + HKD/LP CoA roles.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -23,14 +23,14 @@ class WalletOnboardingIntegrationTest {
     @Autowired MockMvc mockMvc;
 
     @Test
-    void singleOnboardCreatesActiveWalletAndIsQueryable() throws Exception {
+    void singleOnboardCreatesDefaultCoaAndIsQueryable() throws Exception {
         String associatedIdentifier = "01A" + String.format("%08d", Math.abs(UUID.randomUUID().hashCode() % 100_000_000));
 
+        // HKD: AVAILABLE,HELD,ADJUST (3) + LP: AVAILABLE,HELD,REDEEMED,EXPIRED,ADJUST (5) = 8
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice",
-                     "accounts":[{"currency":"LP","name":"Loyalty points","refCode":"LP"}]}
+                    {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice"}
                     """.formatted(associatedIdentifier)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SYS0000"))
@@ -38,42 +38,39 @@ class WalletOnboardingIntegrationTest {
             .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
             .andExpect(jsonPath("$.data.status").value("ACTIVE"))
             .andExpect(jsonPath("$.data.account.currency").value("HKD"))
-            .andExpect(jsonPath("$.data.accounts.length()").value(2));
+            .andExpect(jsonPath("$.data.accounts.length()").value(8))
+            .andExpect(jsonPath("$.data.accountSets.length()").value(1))
+            .andExpect(jsonPath("$.data.accountSets[0].code").value("DEFAULT"))
+            .andExpect(jsonPath("$.data.accountSets[0].accounts.length()").value(8));
 
-        // Query by same associatedIdentifier — full Wallet:Accounts
         mockMvc.perform(get("/wallets/" + associatedIdentifier))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
-            .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
-            .andExpect(jsonPath("$.data.accounts.length()").value(2))
-            .andExpect(jsonPath("$.data.accounts[?(@.currency=='HKD' && @.primary==true)]").exists())
-            .andExpect(jsonPath("$.data.accounts[?(@.currency=='LP')]").exists());
+            .andExpect(jsonPath("$.data.accounts.length()").value(8))
+            .andExpect(jsonPath("$.data.accountSets[0].code").value("DEFAULT"))
+            .andExpect(jsonPath("$.data.accounts[?(@.currency=='HKD' && @.accountRole=='AVAILABLE')]").exists())
+            .andExpect(jsonPath("$.data.accounts[?(@.currency=='LP' && @.accountRole=='AVAILABLE')]").exists())
+            .andExpect(jsonPath("$.data.accounts[?(@.currency=='LP' && @.accountRole=='HELD')]").exists());
 
-        mockMvc.perform(get("/wallets").param("associatedIdentifier", associatedIdentifier))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
-            .andExpect(jsonPath("$.data.accounts.length()").value(2));
-
-        // currencies filter — LP only
+        // currencies filter — LP only (5 LP roles)
         mockMvc.perform(get("/wallets/" + associatedIdentifier).param("currencies", "LP"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.accounts.length()").value(1))
+            .andExpect(jsonPath("$.data.accounts.length()").value(5))
             .andExpect(jsonPath("$.data.accounts[0].currency").value("LP"));
 
-        // currencies filter — HKD,LP (order preserved by wallet sort, both present)
-        mockMvc.perform(get("/wallets").param("associatedIdentifier", associatedIdentifier)
-                .param("currencies", "HKD, LP"))
+        // HKD only (3 roles)
+        mockMvc.perform(get("/wallets/" + associatedIdentifier).param("currencies", "HKD"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.accounts.length()").value(2));
+            .andExpect(jsonPath("$.data.accounts.length()").value(3));
 
-        // Duplicate CUST → conflict
+        // Upsert (idempotent) — 200 not 409
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice again"}
+                    {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice updated"}
                     """.formatted(associatedIdentifier)))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.code").value("WAL0409"));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier));
     }
 
     @Test
@@ -83,10 +80,8 @@ class WalletOnboardingIntegrationTest {
         String body = """
             {
               "wallets": [
-                {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice",
-                 "accounts":[{"currency":"LP","refCode":"LP"}]},
-                {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Bob",
-                 "accounts":[{"currency":"LP","refCode":"LP"}]}
+                {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Alice"},
+                {"associatedIdentifier":"%s","settlementCurrency":"HKD","name":"Bob"}
               ]
             }
             """.formatted(a, b);

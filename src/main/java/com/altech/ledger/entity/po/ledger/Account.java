@@ -3,8 +3,16 @@ package com.altech.ledger.entity.po.ledger;
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
+import com.altech.ledger.entity.enu.AccountRole;
 import com.altech.ledger.entity.enu.AccountStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,10 +25,8 @@ import java.math.BigDecimal;
 /**
  * Chart-of-accounts bucket that holds live balances.
  * <p>
- * One row = one currency balance (ledger + available). Product wallets and program
- * pools both point here. Structure fields (entity/type/main/sub/…) form the COA key;
- * {@link #fullNumber} is the unique COA key used for lookups.
- * Balances change only through movement execution — not by free-form updates.
+ * One row = one (currency, role) book under an {@link AccountSet}.
+ * Phase A adds {@link #accountSetId} + {@link #accountRole}; Phase B journals post here.
  */
 @Entity
 @Table(
@@ -32,7 +38,10 @@ import java.math.BigDecimal;
         @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
             "main_account", "sub_account"
         }),
-        @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
+        @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number"),
+        @UniqueConstraint(name = "uk_account_set_ccy_role", columnNames = {
+            "account_set_id", "currency", "account_role"
+        })
     }
 )
 @Getter
@@ -50,7 +59,6 @@ public class Account extends AuditEntityWithIsActive {
     @Column(length = 200)
     private String fullNumber;
 
-    // === Chart of Account - COA
     @Column(length = 50)
     private String entity;
     @Column(length = 50)
@@ -58,21 +66,30 @@ public class Account extends AuditEntityWithIsActive {
     @Column(length = 50)
     private String subType;
 
-    // === ASSOCIATION
     @Column(length = 100)
     private String mainAccount;
     @Column(length = 200)
     private String subAccount;
-    // === ASSOCIATION
 
     @Column(length = 50)
     private String buffer;
 
-    /** Unit of balance: fiat, loyalty point (LP), or crypto — see {@link Currency}. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private Currency currency;
-    // === Chart of Account - COA
+
+    /** Owning account set (Phase A). Nullable only for legacy rows pre-backfill. */
+    @Column(name = "account_set_id")
+    private Long accountSetId;
+
+    /** Product role within the set (AVAILABLE / HELD / …). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_role", length = 20)
+    private AccountRole accountRole;
+
+    /** Optional display label (e.g. Available HKD). */
+    @Column(length = 200)
+    private String displayName;
 
     @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
@@ -81,14 +98,12 @@ public class Account extends AuditEntityWithIsActive {
     @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal availableBalance = BigDecimal.ZERO;
-    // === BALANCE
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private AccountStatus status = AccountStatus.ACTIVE;
 
-    /** Posting may refuse negative signed balance when false. */
     @Builder.Default
     @Column(nullable = false)
     private boolean allowNegative = false;

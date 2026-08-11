@@ -1,6 +1,14 @@
 package com.altech.ledger.service;
 
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
+import com.altech.ledger.entity.dto.response.GetAccountSetResponseDto;
+import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
+import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
+import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
+import com.altech.ledger.entity.dto.response.GetRuleExecutionResponseDto;
+import com.altech.ledger.entity.dto.response.GetRuleResponseDto;
+import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletBalanceResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
@@ -9,17 +17,11 @@ import com.altech.ledger.entity.po.accounting.Rule;
 import com.altech.ledger.entity.po.accounting.RuleExecution;
 import com.altech.ledger.entity.po.configuration.SystemConfiguration;
 import com.altech.ledger.entity.po.ledger.Account;
+import com.altech.ledger.entity.po.ledger.AccountSet;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 
 import java.util.List;
-import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
-import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
-import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
-import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
-import com.altech.ledger.entity.dto.response.GetRuleExecutionResponseDto;
-import com.altech.ledger.entity.dto.response.GetRuleResponseDto;
-import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 
 /**
  * Static PO ↔ DTO mappers only. No business rules.
@@ -82,13 +84,18 @@ public final class DtoWrapper {
         String displayName
     ) {
         CoaType coa = _coaType(a.getType());
-        String name = displayName != null && !displayName.isBlank() ? displayName : a.getSubAccount();
+        String name = displayName != null && !displayName.isBlank()
+            ? displayName
+            : (a.getDisplayName() != null ? a.getDisplayName() : a.getSubAccount());
+        String roleRef = refCode != null ? refCode
+            : (a.getAccountRole() != null ? a.getAccountRole().name() : null);
         return GetWalletAccountResponseDto.builder()
             .id(a.getId())
             .fullNumber(a.getFullNumber())
             .name(name)
-            .refCode(refCode)
+            .refCode(roleRef)
             .primary(primary)
+            .accountRole(a.getAccountRole())
             .type(coa)
             .currency(a.getCurrency())
             .status(a.getStatus())
@@ -101,6 +108,19 @@ public final class DtoWrapper {
             .createBy(a.getCreatedBy())
             .updateBy(a.getUpdatedBy())
             .isActive(a.getIsActive())
+            .build();
+    }
+
+    public static GetAccountSetResponseDto getAccountSetResponseDto(
+        AccountSet set,
+        List<GetWalletAccountResponseDto> accounts
+    ) {
+        return GetAccountSetResponseDto.builder()
+            .id(set.getId())
+            .code(set.getCode())
+            .name(set.getName())
+            .status(set.getStatus())
+            .accounts(accounts)
             .build();
     }
 

@@ -77,7 +77,8 @@ public class QueryWalletBalanceUseCase {
         if (primary.getCurrency() == currency) {
             return DtoMapper.toAccount(primary);
         }
-        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency)
+        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency).stream()
+            .findFirst()
             .map(DtoMapper::toAccount)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Account not found for wallet " + walletId + " currency " + currency));

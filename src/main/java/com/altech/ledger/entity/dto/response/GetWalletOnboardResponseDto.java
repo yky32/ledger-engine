@@ -40,4 +40,6 @@ public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private GetWalletBalanceResponseDto balance;
     /** Account-set under this wallet (primary only at onboard today). */
     private List<GetWalletAccountResponseDto> accounts;
+    /** Phase A: AccountSets with nested CoA (HKD + LP roles). */
+    private List<GetAccountSetResponseDto> accountSets;
 }

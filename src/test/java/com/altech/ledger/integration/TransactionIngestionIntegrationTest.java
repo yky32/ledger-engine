@@ -98,7 +98,8 @@ class TransactionIngestionIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.associatedIdentifier").value(cust))
             .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
-            .andExpect(jsonPath("$.data.accounts[0].currency").value("LP"));
+            .andExpect(jsonPath("$.data.accounts[0].currency").value("LP"))
+            .andExpect(jsonPath("$.data.accountSets[0].code").value("DEFAULT"));
     }
 
     @Test

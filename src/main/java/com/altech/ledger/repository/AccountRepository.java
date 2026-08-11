@@ -1,6 +1,7 @@
 package com.altech.ledger.repository;
 
 import com.altech.core.constant.enu.Currency;
+import com.altech.ledger.entity.enu.AccountRole;
 import com.altech.ledger.entity.po.ledger.Account;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,10 +17,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByFullNumber(String fullNumber);
 
-    /**
-     * Accounts whose fullNumber equals prefix or starts with prefix + ":".
-     * Used to load a wallet account-set (MAIN + product lines).
-     */
     @Query("select a from Account a where a.fullNumber = :prefix or a.fullNumber like concat(:prefix, ':%') order by a.id")
     List<Account> findAccountSetByWalletRef(@Param("prefix") String prefix);
 
@@ -27,7 +24,15 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     List<Account> findAllByMainAccount(String mainAccount);
 
-    Optional<Account> findByMainAccountAndCurrency(String mainAccount, Currency currency);
+    List<Account> findByMainAccountAndCurrency(String mainAccount, Currency currency);
+
+    Optional<Account> findFirstByMainAccountAndCurrencyAndAccountRole(
+        String mainAccount, Currency currency, AccountRole accountRole);
+
+    List<Account> findByAccountSetIdOrderByIdAsc(Long accountSetId);
+
+    Optional<Account> findByAccountSetIdAndCurrencyAndAccountRole(
+        Long accountSetId, Currency currency, AccountRole accountRole);
 
     @Query("select a.mainAccount from Account a where a.mainAccount is not null")
     List<String> allMainAccountNumbers();
