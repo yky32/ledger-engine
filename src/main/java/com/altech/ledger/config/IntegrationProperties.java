@@ -28,5 +28,17 @@ public class IntegrationProperties {
         private String formula = "AMOUNT";
         /** HOLD | RELEASE | EXPIRE | ADJUST | TRANSFER | SETTLE — for PROCESS only */
         private String processType;
+
+        /**
+         * Eligible transaction currencies (ISO codes). Empty = no currency filter.
+         * Example: HKD, USD
+         */
+        private List<String> eligibleCurrencies = new ArrayList<>();
+
+        /**
+         * Max age of {@code occurredAt} in days. Null = no age check.
+         * When set, missing {@code occurredAt} → skip.
+         */
+        private Integer maxAgeDays;
     }
 }

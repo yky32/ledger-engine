@@ -1,17 +1,38 @@
+# Local stack for ledger-engine.
+# Defaults align with application.yml:
+#   DB_URL=jdbc:postgresql://localhost:5433/ledger-engine
+#   DB_USERNAME=postgres
+#   DB_PASSWORD=postgres
+#
+# Postgres only (host app on IDE):
+#   docker compose up -d postgres
+#
+# Full stack:
+#   docker compose up --build
+#
+# Earn rules (application.yml ledger.integration.rules) can be overridden via env
+# listed in .env.example — e.g. LEDGER_RULE_PURCHASE_MAX_AGE_DAYS=7
+
 services:
   postgres:
     image: postgres:17-alpine
+    container_name: ledger-engine-postgres
+    ports:
+      # host 5433 → container 5432 (matches application.yml default DB_URL)
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     environment:
-      POSTGRES_DB: ledger
-      POSTGRES_USER: ledger
-      POSTGRES_PASSWORD: ledger
+      POSTGRES_DB: ${POSTGRES_DB:-ledger-engine}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ledger -d ledger"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
       retries: 10
     volumes:
       - ledger-postgres:/var/lib/postgresql/data
+      # optional init scripts
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
 
   kafka:
     image: bitnami/kafka:3.7
@@ -37,12 +58,22 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: postgres
-      DB_URL: jdbc:postgresql://postgres:5432/ledger
-      DB_USERNAME: ledger
-      DB_PASSWORD: ledger
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledger-engine}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_URL: kafka:9092
       LEDGER_KAFKA_ENABLED: ${LEDGER_KAFKA_ENABLED:-true}
       LEDGER_KAFKA_TOPIC: ${LEDGER_KAFKA_TOPIC:-ledger.transaction.events}
+      # Earn eligibility (see application.yml ledger.integration.rules)
+      LEDGER_INTEGRATION_ENABLED: ${LEDGER_INTEGRATION_ENABLED:-true}
+      LEDGER_RULE_PURCHASE_MIN_AMOUNT: ${LEDGER_RULE_PURCHASE_MIN_AMOUNT:-0.01}
+      LEDGER_RULE_PURCHASE_FORMULA: ${LEDGER_RULE_PURCHASE_FORMULA:-RATE:0.01}
+      LEDGER_RULE_PURCHASE_POINT_CURRENCY: ${LEDGER_RULE_PURCHASE_POINT_CURRENCY:-LP}
+      LEDGER_RULE_PURCHASE_MAX_AGE_DAYS: ${LEDGER_RULE_PURCHASE_MAX_AGE_DAYS:-7}
+      LEDGER_RULE_PURCHASE_CCY_0: ${LEDGER_RULE_PURCHASE_CCY_0:-HKD}
+      LEDGER_RULE_PURCHASE_CCY_1: ${LEDGER_RULE_PURCHASE_CCY_1:-USD}
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,7 +83,6 @@ services:
   simulator:
     build: ./simulator
     environment:
-      # backfill | webhook | kafka | both
       SIM_MODE: ${SIM_MODE:-webhook}
       SIM_LEDGER_BASE_URL: ${SIM_LEDGER_BASE_URL:-http://app:8080}
       SIM_WEBHOOK_URL: ${SIM_WEBHOOK_URL:-http://app:8080/integrations/webhooks/transactions}
@@ -60,12 +90,11 @@ services:
       SIM_KAFKA_TOPIC: ${SIM_KAFKA_TOPIC:-ledger.transaction.events}
       SIM_INTERVAL_SECONDS: ${SIM_INTERVAL_SECONDS:-2}
       SIM_TRANSACTION_COUNT: ${SIM_TRANSACTION_COUNT:-20}
-      SIM_CURRENCY: ${SIM_CURRENCY:-LP}
+      SIM_CURRENCY: ${SIM_CURRENCY:-HKD}
       SIM_AMOUNT_MIN: ${SIM_AMOUNT_MIN:-10}
       SIM_AMOUNT_MAX: ${SIM_AMOUNT_MAX:-500}
       SIM_EVENT_TYPE: ${SIM_EVENT_TYPE:-PURCHASE}
-      # Phase 1 bulk: SIM_MODE=backfill SIM_USER_COUNT=10000
-      SIM_USER_ID_PREFIX: ${SIM_USER_ID_PREFIX:-CUST-}
+      SIM_USER_ID_PREFIX: ${SIM_USER_ID_PREFIX:-01A}
       SIM_USER_COUNT: ${SIM_USER_COUNT:-5}
       SIM_BATCH_SIZE: ${SIM_BATCH_SIZE:-500}
       SIM_BATCH_PAUSE_SECONDS: ${SIM_BATCH_PAUSE_SECONDS:-0.05}
@@ -75,13 +104,11 @@ services:
       SIM_SMOKE_EVENTS_AFTER_BACKFILL: ${SIM_SMOKE_EVENTS_AFTER_BACKFILL:-0}
       SIM_WAIT_FOR_HEALTH: ${SIM_WAIT_FOR_HEALTH:-true}
     volumes:
-      # mount CRM export for real backfill: - ./data/customers.csv:/data/customers.csv
       - ./simulator/data:/data:ro
     depends_on:
       - app
     profiles:
       - simulator
-
 
 volumes:
   ledger-postgres:

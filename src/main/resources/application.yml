@@ -16,7 +16,9 @@ spring:
   application:
     name: ${SPRING_APPLICATION_NAME:LEDGER-ENGINE}
   datasource:
-    # Local Docker test-db default (host 5433 → container 5432)
+    # Local Docker Postgres (docker compose up -d postgres)
+    #   host port 5433 → container 5432
+    #   DB/user/pass defaults match docker-compose.yml POSTGRES_* 
     url: ${DB_URL:jdbc:postgresql://localhost:5433/ledger-engine}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
@@ -31,7 +33,8 @@ spring:
           time_zone: ${MICROSERVICE_TIME_ZONE:UTC}
     hibernate:
       # create | update | validate | none — be careful with create in shared envs
-      ddl-auto: ${JPA_DDL_AUTO:create}
+      # Creates domain tables including failed_transaction_ingest (earn skip store)
+      ddl-auto: ${JPA_DDL_AUTO:update}
     show-sql: ${JPA_SHOW_SQL:true}
   liquibase:
     # Placeholder master changelog (includeAll). Keep false while using JPA ddl-auto.
@@ -68,9 +71,13 @@ ledger:
     rules:
       - event-type: ${LEDGER_RULE_PURCHASE_EVENT_TYPE:PURCHASE}
         operation: ${LEDGER_RULE_PURCHASE_OPERATION:EARN}
-        min-amount: ${LEDGER_RULE_PURCHASE_MIN_AMOUNT:10}
+        min-amount: ${LEDGER_RULE_PURCHASE_MIN_AMOUNT:0.01}
         point-currency: ${LEDGER_RULE_PURCHASE_POINT_CURRENCY:LP}
-        formula: ${LEDGER_RULE_PURCHASE_FORMULA:AMOUNT}
+        formula: ${LEDGER_RULE_PURCHASE_FORMULA:RATE:0.01}
+        max-age-days: ${LEDGER_RULE_PURCHASE_MAX_AGE_DAYS:7}
+        eligible-currencies:
+          - ${LEDGER_RULE_PURCHASE_CCY_0:HKD}
+          - ${LEDGER_RULE_PURCHASE_CCY_1:USD}
       - event-type: ${LEDGER_RULE_SIGNUP_EVENT_TYPE:SIGNUP}
         operation: ${LEDGER_RULE_SIGNUP_OPERATION:EARN}
         min-amount: ${LEDGER_RULE_SIGNUP_MIN_AMOUNT:0}

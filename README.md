@@ -235,5 +235,6 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 |-----|---------|
 | [PRODUCT.md](PRODUCT.md) | Product model, operations, account roles |
 | [INTEGRATION.md](INTEGRATION.md) | Onboarding + transactional event ingest |
-| [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | **Client adopt:** wallet create curls (HKD + LP) |
+| [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | **Client adopt:** wallet create + query curls (HKD + LP) |
+| [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) | **Client adopt:** earn webhook gates → LP credit |
 | `application.yml` | Env-driven config (`DB_*`, `SERVER_PORT`, …) |
