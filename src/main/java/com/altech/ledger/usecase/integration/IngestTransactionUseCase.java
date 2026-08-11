@@ -6,12 +6,17 @@ import com.altech.ledger.entity.dto.integration.IngestionResult;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.OrderType;
+import com.altech.ledger.entity.po.integration.FailedTransactionIngest;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
+import com.altech.ledger.repository.FailedTransactionIngestRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +24,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Loyalty / transactional event ingest. Applies balances via movement execution.
+ * Loyalty / transactional event ingest with eligibility gates.
+ * Failures / skips are persisted to {@code failed_transaction_ingest} first, then returned as SKIPPED.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class IngestTransactionUseCase {
@@ -29,32 +36,44 @@ public class IngestTransactionUseCase {
     private final WalletRepository walletRepository;
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerMovementShooter ledgerMovementShooter;
+    private final FailedTransactionIngestRepository failedTransactionIngestRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public IngestionResult execute(TransactionalEvent event) {
         if (!integrationProperties.isEnabled()) {
-            return IngestionResult.skipped(event.eventId(), "Integration disabled");
+            return _fail(event, "DISABLED", "Integration disabled");
         }
 
-        Optional<TransactionRuleEngine.RuleDecision> decision = transactionRuleEngine.evaluate(event);
-        if (decision.isEmpty()) {
-            return IngestionResult.skipped(event.eventId(), "No matching rule");
+        TransactionRuleEngine.EvaluationOutcome outcome = transactionRuleEngine.evaluate(event);
+        if (!outcome.matched()) {
+            return _fail(event,
+                outcome.skipReasonCode() == null ? "NO_RULE" : outcome.skipReasonCode(),
+                outcome.skipReason() == null ? "No matching rule" : outcome.skipReason());
         }
 
-        TransactionRuleEngine.RuleDecision rule = decision.get();
+        TransactionRuleEngine.RuleDecision rule = outcome.decision().orElseThrow();
         Currency pointCurrency = Currency.get(rule.pointCurrency());
-        // 1 CUST : 1 Wallet — resolve by customer id only; point currency is movement/account
-        Optional<Wallet> wallet = walletRepository.findByOwnerId(event.userId());
+
+        String custId = event.associatedIdentifier();
+        Optional<Wallet> wallet = walletRepository.findByOwnerId(custId);
         if (wallet.isEmpty()) {
-            return IngestionResult.skipped(event.eventId(),
-                "Wallet not onboarded: " + event.userId());
+            // also try associatedIdentifier column
+            var byAssoc = walletRepository.findByAssociatedIdentifier(custId);
+            if (byAssoc.size() == 1) {
+                wallet = Optional.of(byAssoc.get(0));
+            } else if (byAssoc.isEmpty()) {
+                return _fail(event, "NO_WALLET", "Wallet not onboarded: " + custId);
+            } else {
+                wallet = byAssoc.stream().findFirst();
+            }
         }
-        String walletKey = event.userId();
+        String walletKey = custId;
 
         if (rule.operation() == TransactionRuleEngine.Operation.PROCESS) {
             String processType = rule.processType() == null ? "UNSPECIFIED" : rule.processType().toUpperCase();
             if (!"ADJUST".equals(processType)) {
-                return IngestionResult.skipped(event.eventId(), "Process type not implemented: " + processType);
+                return _fail(event, "PROCESS_TYPE", "Process type not implemented: " + processType);
             }
         }
 
@@ -71,17 +90,50 @@ public class IngestTransactionUseCase {
             return IngestionResult.duplicate(event.eventId(), rule.operation(), id, rule.points(), walletKey);
         }
 
-        GetLedgerMovementResponseDto applied = ledgerMovementShooter.doEarnBurn(
-            wallet.get().getId(),
-            orderType,
-            rule.points(),
-            pointCurrency,
-            movementKey,
-            rule.operation() + " from " + event.eventType() + " (" + rule.formula() + ")"
-        );
+        try {
+            GetLedgerMovementResponseDto applied = ledgerMovementShooter.doEarnBurn(
+                wallet.get().getId(),
+                orderType,
+                rule.points(),
+                pointCurrency,
+                movementKey,
+                rule.operation() + " from " + event.eventType() + " (" + rule.formula() + ")"
+            );
 
-        UUID txnId = applied.id() == null ? null
-            : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());
-        return IngestionResult.applied(event.eventId(), rule.operation(), rule.points(), txnId, walletKey);
+            UUID txnId = applied.id() == null ? null
+                : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());
+            return IngestionResult.applied(event.eventId(), rule.operation(), rule.points(), txnId, walletKey);
+        } catch (RuntimeException ex) {
+            log.error("ingest apply failed eventId={}", event.eventId(), ex);
+            return _fail(event, "ERROR", ex.getMessage() == null ? "apply failed" : ex.getMessage());
+        }
+    }
+
+    private IngestionResult _fail(TransactionalEvent event, String code, String reason) {
+        _persistFailure(event, code, reason);
+        return IngestionResult.skipped(event.eventId(), reason);
+    }
+
+    private void _persistFailure(TransactionalEvent event, String code, String reason) {
+        try {
+            FailedTransactionIngest row = new FailedTransactionIngest();
+            row.setEventId(event.eventId());
+            row.setAssociatedIdentifier(event.associatedIdentifier());
+            row.setEventType(event.eventType());
+            row.setAmount(event.amount());
+            row.setCurrency(event.currency() == null ? null : event.currency().getIsoCode());
+            row.setOccurredAt(event.occurredAt());
+            row.setFailureCode(code);
+            row.setReason(reason == null ? code : (reason.length() > 500 ? reason.substring(0, 500) : reason));
+            row.setStatus("OPEN");
+            try {
+                row.setRawPayload(objectMapper.writeValueAsString(event));
+            } catch (JsonProcessingException e) {
+                row.setRawPayload(null);
+            }
+            failedTransactionIngestRepository.save(row);
+        } catch (RuntimeException ex) {
+            log.error("failed to persist failed_transaction_ingest eventId={}", event.eventId(), ex);
+        }
     }
 }
