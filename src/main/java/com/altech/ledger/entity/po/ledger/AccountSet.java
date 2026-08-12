@@ -36,7 +36,7 @@ public class AccountSet extends AuditEntityWithIsActive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "wallet_id", nullable = false)
+    @Column(nullable = false)
     private Long walletId;
 
     /** Product code within wallet — v1 always {@link #CODE_DEFAULT}. */

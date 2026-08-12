@@ -79,12 +79,12 @@ public class Account extends AuditEntityWithIsActive {
     private Currency currency;
 
     /** Owning account set (Phase A). Nullable only for legacy rows pre-backfill. */
-    @Column(name = "account_set_id")
+    @Column
     private Long accountSetId;
 
     /** Product role within the set (AVAILABLE / HELD / …). */
     @Enumerated(EnumType.STRING)
-    @Column(name = "account_role", length = 20)
+    @Column(length = 20)
     private AccountRole accountRole;
 
     /** Optional display label (e.g. Available HKD). */
