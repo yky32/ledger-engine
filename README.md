@@ -241,6 +241,7 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 | [docs/DOUBLE_ENTRY_EARN.md](docs/DOUBLE_ENTRY_EARN.md) | PROGRAM pool DE legs + ledger-entries query |
 | [docs/INGEST_POLICY.md](docs/INGEST_POLICY.md) | DB ingest policy (auto-wallet + kill-switch) |
 | [docs/HOLD_RELEASE.md](docs/HOLD_RELEASE.md) | HOLD/RELEASE available (ledger unchanged) |
+| [docs/HISTORY_ASOF_REPLAY.md](docs/HISTORY_ASOF_REPLAY.md) | History filters, as-of balance, bulk replay | | HOLD/RELEASE available (ledger unchanged) |
 | [docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md) | Package split: ingest door vs digestion brain |
 | [docs/HERMES_RUNTIME_RULES_TASK.md](docs/HERMES_RUNTIME_RULES_TASK.md) | Task brief: runtime rules + DE visibility |
 | [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) | Fresh DB: `./scripts/bootstrap-runtime.sh` |

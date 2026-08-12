@@ -8,6 +8,7 @@ import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.altech.ledger.util.Pageables;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,8 +26,9 @@ public class QueryMovementUseCase {
     @Transactional(readOnly = true)
     public PageResponse<MovementResponse> listByWallet(Long walletId, Pageable pageable) {
         commonUseCase.requireWallet(walletId);
-        Page<LedgerMovement> page = ledgerMovementRepository.findByWalletId(walletId, pageable);
-        return new PageResponse<>(page.map(this::_response).getContent(), page.getNumber(), page.getSize(),
+        Page<LedgerMovement> page = ledgerMovementRepository.findByWalletId(walletId, Pageables.toZeroBased(pageable));
+        // expose 1-based page number in legacy PageResponse
+        return new PageResponse<>(page.map(this::_response).getContent(), page.getNumber() + 1, page.getSize(),
             page.getTotalElements(), page.getTotalPages());
     }
 

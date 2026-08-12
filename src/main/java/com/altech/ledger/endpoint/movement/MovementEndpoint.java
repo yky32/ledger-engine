@@ -12,6 +12,7 @@ import com.altech.ledger.usecase.movement.SettleMovementUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,7 +54,8 @@ public class MovementEndpoint {
     @GetMapping
     public Result<PageResponse<MovementResponse>> list(
         @RequestParam Long walletId,
-        @PageableDefault(size = 20, sort = "createDt") Pageable pageable
+        @PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "createDt", direction = Sort.Direction.DESC)
+        Pageable pageable
     ) {
         return R.success(queryMovementUseCase.listByWallet(walletId, pageable));
     }

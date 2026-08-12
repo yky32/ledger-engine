@@ -6,6 +6,7 @@ import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.altech.ledger.util.Pageables;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
@@ -23,6 +24,6 @@ public class QueryAccountUseCase {
 
     @Transactional(readOnly = true)
     public Page<GetLedgerAccountResponseDto> list(Pageable pageable) {
-        return accountRepository.findAll(pageable).map(DtoMapper::toAccount);
+        return accountRepository.findAll(Pageables.toZeroBased(pageable)).map(DtoMapper::toAccount);
     }
 }

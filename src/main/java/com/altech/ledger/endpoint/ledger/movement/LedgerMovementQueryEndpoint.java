@@ -3,20 +3,19 @@ package com.altech.ledger.endpoint.ledger.movement;
 import com.altech.core.response.Pagination;
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.usecase.ledger.LedgerMovementQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
 import java.util.List;
-import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
 @RestController
 @RequestMapping("/ledger-accounts/movements")
@@ -31,9 +30,10 @@ public class LedgerMovementQueryEndpoint {
 
     @GetMapping
     public Result<List<GetLedgerMovementResponseDto>> getAll(
-        @PageableDefault(size = 50) Pageable pageable,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDt,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDt,
+        @PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "createDt", direction = Sort.Direction.DESC)
+        Pageable pageable,
+        @RequestParam(required = false) String startDt,
+        @RequestParam(required = false) String endDt,
         @RequestParam(required = false) List<String> statuses
     ) {
         var page = ledgerMovementQueryUseCase.list(pageable, startDt, endDt, statuses);
@@ -43,9 +43,10 @@ public class LedgerMovementQueryEndpoint {
     @GetMapping("/my-movements")
     public Result<List<GetLedgerMovementResponseDto>> myMovements(
         @RequestParam String ownerId,
-        @PageableDefault(size = 50) Pageable pageable,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDt,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDt,
+        @PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "createDt", direction = Sort.Direction.DESC)
+        Pageable pageable,
+        @RequestParam(required = false) String startDt,
+        @RequestParam(required = false) String endDt,
         @RequestParam(required = false) List<String> statuses
     ) {
         var page = ledgerMovementQueryUseCase.myMovements(ownerId, pageable, startDt, endDt, statuses);

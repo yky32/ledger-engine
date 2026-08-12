@@ -55,6 +55,19 @@ public class IngestTransactionUseCase {
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
     private final ObjectMapper objectMapper;
 
+    /** When true, SKIPPED paths do not insert a new failed_transaction_ingest row. */
+    private static final ThreadLocal<Boolean> SUPPRESS_FAIL_PERSIST = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    /** Run ingest without writing a new fail row (used by fail-replay). */
+    public IngestionResult executeWithoutFailPersist(TransactionalEvent event) {
+        SUPPRESS_FAIL_PERSIST.set(Boolean.TRUE);
+        try {
+            return execute(event);
+        } finally {
+            SUPPRESS_FAIL_PERSIST.remove();
+        }
+    }
+
     @Transactional
     public IngestionResult execute(TransactionalEvent event) {
         if (!Boolean.TRUE.equals(ingestPolicyUseCase.requireEffective().getIsEnabled())) {
@@ -182,6 +195,10 @@ public class IngestTransactionUseCase {
     }
 
     private void _persistFailure(TransactionalEvent event, String code, String reason) {
+        if (Boolean.TRUE.equals(SUPPRESS_FAIL_PERSIST.get())) {
+            log.debug("suppress fail persist (replay) eventId={} code={}", event.eventId(), code);
+            return;
+        }
         try {
             FailedTransactionIngest row = new FailedTransactionIngest();
             row.setEventId(event.eventId());

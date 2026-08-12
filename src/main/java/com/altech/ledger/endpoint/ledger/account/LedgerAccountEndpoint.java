@@ -8,6 +8,7 @@ import com.altech.ledger.usecase.account.QueryAccountUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +34,8 @@ public class LedgerAccountEndpoint {
     }
 
     @GetMapping
-    public Result<List<GetLedgerAccountResponseDto>> getAll(@PageableDefault(size = 50) Pageable pageable) {
+    public Result<List<GetLedgerAccountResponseDto>> getAll(@PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "createDt", direction = Sort.Direction.DESC)
+        Pageable pageable) {
         var page = queryAccountUseCase.list(pageable);
         return R.success(page.getContent(), Pagination.create(page));
     }

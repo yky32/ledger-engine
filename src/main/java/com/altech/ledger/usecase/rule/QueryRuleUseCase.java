@@ -7,6 +7,7 @@ import com.altech.ledger.service.DtoMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.altech.ledger.util.Pageables;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import com.altech.ledger.entity.dto.response.GetRuleResponseDto;
@@ -24,6 +25,6 @@ public class QueryRuleUseCase {
 
     @Transactional(readOnly = true)
     public Page<GetRuleResponseDto> list(Pageable pageable) {
-        return ruleRepository.findAll(pageable).map(DtoMapper::toRule);
+        return ruleRepository.findAll(Pageables.toZeroBased(pageable)).map(DtoMapper::toRule);
     }
 }
