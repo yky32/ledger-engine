@@ -3,6 +3,9 @@
 **Audience:** integrator / client system adopting Ledger Engine  
 **Model:** `1 CUST_ID → 1 Wallet` · `settlementCurrency` = default settlement · multi-currency **accounts under the same wallet**
 
+For earn after onboard: [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBHOOK.md).  
+Optional: skip explicit create if `ingest-policy.isAutoCreateWallet=true` ([INGEST_POLICY.md](./INGEST_POLICY.md)).
+
 ---
 
 ## Customer id

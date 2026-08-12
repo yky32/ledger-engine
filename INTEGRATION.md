@@ -1,190 +1,158 @@
 # External event integration
 
-External systems deliver **transactional events** via webhook or Kafka. Ledger Engine applies
-**rule check → Earn / Burn / Process** only. It does **not** onboard wallets during transaction processing.
+External systems deliver **transactional events** via webhook (Kafka optional). Ledger Engine runs:
+
+```text
+IngestPolicy (door) → DigestionRule (brain) → wallet + PROGRAM double-entry
+```
+
+Detail playbooks: **[docs/README.md](docs/README.md)** · **[docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md)** · **[docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md)**
 
 ## Java client SDK
 
-Product backends may integrate with the **ledger-engine-sdk** (Java 17 library) instead of hand-written HTTP.
+Product backends may use **ledger-engine-sdk** (Java 17) instead of hand-written HTTP.
 
 | Topic | Where |
 |-------|--------|
 | SDK overview & channels | [ledger-engine-sdk docs/OVERVIEW.md](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/OVERVIEW.md) |
-| How we deliver the JAR (contract → email) | [docs/DELIVERY.md](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md) |
-| Client install & Phase 1 / 2 | [docs/INTEGRATION.md](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/INTEGRATION.md) |
+| JAR delivery | [docs/DELIVERY.md](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md) |
+| Client install | [docs/INTEGRATION.md](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/INTEGRATION.md) |
 
-SDK is **not** published to Maven Central. Delivery is **manual** (versioned thin JAR + checksum by email after contract).
+SDK is **not** on Maven Central (manual versioned JAR).
 
 ---
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│  PRODUCT SETUP (Ledger Engine owns)                             │
-│  • POST /wallets → onboard one user wallet                      │
-│  • Optional pool accounts via account API if product needs them │
+│  PRODUCT SETUP                                                  │
+│  • ./scripts/bootstrap-runtime.sh  → ingest-policy + rules      │
+│  • POST /wallets (optional if auto-wallet on)                   │
+│  • PROGRAM pool auto-bootstraps on first earn/burn              │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
 │  RUNTIME — external transactional events                        │
 │                                                                 │
-│  External system ── webhook / kafka ──▶ TransactionRuleEngine   │
-│                                              │                  │
-│                                              ▼                  │
-│                                   Earn / Burn / Process         │
-│                                   (wallet must already exist)   │
+│  Upstream ── POST /integrations/webhooks/transactions ──▶       │
+│       IngestPolicy → DigestionRule → EARN/BURN + legs           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Client go-live flow
 
 ```text
-Step 0  Client purchases / deploys Ledger Engine
-Step 1  Client reads CRM → POST /wallets/batch (Phase 1)
-Step 2  Client verifies all customers have wallets
-Step 3  Client enables POS / campaign → webhook or Kafka (Phase 2)
+Step 0  Deploy Ledger Engine + Postgres
+Step 1  bootstrap-runtime.sh (ingest-policy + digestion defaults)
+Step 2  Optional: CRM batch POST /wallets/batch
+Step 3  Enable POS / order system → webhook
 ```
 
 ---
 
-## Two separate concepts
+## Two concepts
 
-| Phase | Concept | Who triggers | API |
+| Phase | Concept | Who | API |
 |---|---|---|---|
-| **1** | Wallet onboarding | Client CRM / membership | `POST /wallets`, `/wallets/batch` |
-| **2** | Transaction processing | POS / e-commerce / campaign | Webhook + Kafka |
+| **Setup** | Runtime policy + rules | Ops | `/ingest-policy`, `/digestion-rules`, bootstrap script |
+| **1** | Wallet onboarding | CRM / membership | `POST /wallets`, `/wallets/batch` (or auto-wallet) |
+| **2** | Transaction processing | POS / e-com | `POST /integrations/webhooks/transactions` |
 
-If Phase 2 runs before Phase 1 completes → **`SKIPPED`** (`Wallet not onboarded`).
+If Phase 2 runs without wallet and **auto-wallet off** → `SKIPPED` / `NO_WALLET`.  
+If **auto-wallet on** (default after bootstrap) → first eligible event creates HKD+LP wallet in same TX.
 
 ---
 
-## 1. Wallet onboarding (Phase 1)
+## 1. Wallet onboarding
 
-### Single customer (ongoing signup)
+See [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md).
 
 ```http
 POST /wallets
 Content-Type: application/json
 
 {
-  "associatedIdentifier": "CUST-10001",
-  "currency": "LP",
+  "associatedIdentifier": "01A12345678",
+  "settlementCurrency": "HKD",
   "name": "Alice wallet",
-  "associatedFrom": "CRM"
+  "associatedFrom": "CRM",
+  "accounts": [{ "currency": "LP", "name": "Loyalty", "refCode": "LP" }]
 }
 ```
 
-`associatedIdentifier` is the sole customer unique key (CRM). Stored as wallet `ownerId` + `associatedIdentifier`.  
-Optional `accounts` is free-form (`refCode` strings); product catalogs live in the client / SDK.
+Customer key: `associatedIdentifier` only. Bulk: `POST /wallets/batch` (idempotent).
 
-### Bulk import from legacy CRM (go-live)
-
-```http
-POST /wallets/batch
-Content-Type: application/json
-
-{
-  "wallets": [
-    { "associatedIdentifier": "CRM-0001", "currency": "LP", "name": "Alice" },
-    { "associatedIdentifier": "CRM-0002", "currency": "LP", "name": "Bob" }
-  ]
-}
-```
-
-Idempotent — safe to re-run; existing wallets reported in `alreadyExistingAssociatedIdentifiers`.
-
-Creates numeric COA `account.full_number` (digit string; primary leaf `0000` under a shared main account).
-
-Program pool accounts are **not** auto-seeded on startup. Create them via the account API if earn/burn needs dedicated pools.
+PROGRAM pool is **lazy** on first earn/burn (not startup YAML seed).
 
 ---
 
-## 2. Transaction processing (Phase 2)
-
-Start only after Phase 1 wallet onboarding is complete.
+## 2. Transaction processing
 
 ### Event payload
 
 ```json
 {
   "eventId": "evt-7b2c",
-  "userId": "CUST-10001",
+  "associatedIdentifier": "01A12345678",
   "eventType": "PURCHASE",
   "amount": 150.00,
-  "currency": "LP",
-  "occurredAt": "2026-08-05T00:00:00Z",
+  "currency": "HKD",
+  "occurredAt": "2026-08-12T00:00:00Z",
   "metadata": { "source": "pos" }
 }
 ```
 
-### Integration points
+(`userId` is accepted as alias for `associatedIdentifier`.)
 
-| Channel | Endpoint / topic |
+### Channel
+
+| Channel | Endpoint |
 |---|---|
 | **Webhook** | `POST /integrations/webhooks/transactions` |
-| **Kafka** | topic `ledger.transaction.events` |
 
-### Processing pipeline
+### Pipeline
 
 ```text
-1. Rule check     → match eventType, minAmount, operation
-2. Wallet lookup  → must exist (no auto-create)
-3. Post journal   → Earn / Burn / Process legs
-4. Return result  → EARNED | BURNED | PROCESSED | SKIPPED | DUPLICATE
+1. IngestPolicy     → enabled? auto-wallet?
+2. DigestionRule    → match eventType, gates, formula → points
+3. Wallet resolve   → create if policy allows
+4. Double-entry     → PROGRAM pool + customer LP (movementKey = loyalty-{op}-{eventId})
+5. Result           → EARNED | BURNED | PROCESSED | SKIPPED | DUPLICATE + legs[]
 ```
 
-### Rules configuration
+### Rules configuration (DB — not YAML)
 
-```yaml
-ledger:
-  integration:
-    rules:
-      - event-type: PURCHASE
-        operation: EARN
-        min-amount: 10
-        point-currency: LP
-        formula: AMOUNT
-      - event-type: REDEEM
-        operation: BURN
-        min-amount: 1
-        point-currency: LP
-        formula: AMOUNT
-      - event-type: ADJUST
-        operation: PROCESS
-        process-type: ADJUST
-        point-currency: LP
-        formula: FIXED:10
+```bash
+./scripts/bootstrap-runtime.sh
+# or POST/PUT /digestion-rules  — see docs/DIGESTION_RULES.md
 ```
 
 | Operation | Posting |
 |---|---|
-| **EARN** | Debit expense pool, credit user wallet |
-| **BURN** | Debit user wallet, credit liability pool |
-| **PROCESS** | Rule-specific (ADJUST implemented; HOLD/EXPIRE roadmap) |
+| **EARN** | DEBIT PROGRAM.LP · CREDIT customer.LP |
+| **BURN** | DEBIT customer.LP · CREDIT PROGRAM.LP |
 
-Formulas: `AMOUNT`, `FIXED:{n}`, `RATE:{n}`.
+Query legs: `GET /integrations/ledger-entries?eventId=` or `?movementId=`  
+Fail ops: `GET/POST /integrations/failed-transactions…` — [docs/HISTORY_ASOF_REPLAY.md](docs/HISTORY_ASOF_REPLAY.md)
+
+Full curls: [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) · [docs/DOUBLE_ENTRY_EARN.md](docs/DOUBLE_ENTRY_EARN.md)
 
 ---
 
-## Docker simulator
-
-Simulates an **external** system. By default it **onboards wallets first**, then shoots events.
+## Simulator (optional)
 
 ```bash
 cp .env.example .env
 docker compose --profile simulator up --build
 ```
 
-| Variable | Default | Description |
-|---|---|---|
-| `SIM_MODE` | `webhook` | `webhook`, `kafka`, or `both` |
-| `SIM_WEBHOOK_URL` | `http://app:8080/integrations/webhooks/transactions` | Ledger webhook |
-| `SIM_LEDGER_BASE_URL` | derived from webhook URL | Base URL for wallet onboarding |
-| `SIM_ONBOARD_WALLETS` | `true` | Call `POST /wallets` before sending events |
-| `SIM_INTERVAL_SECONDS` | `2` | Delay between events |
-| `SIM_TRANSACTION_COUNT` | `20` | Event count (`0` = unlimited) |
-| `SIM_CURRENCY` | `LP` | Event currency |
-| `SIM_AMOUNT_MIN` / `MAX` | `10` / `500` | Random amount range |
-| `SIM_EVENT_TYPE` | `PURCHASE` | Matched against rules |
-| `SIM_USER_COUNT` | `5` | Users to onboard and rotate |
+| Env | Default | |
+|-----|---------|--|
+| `SIM_MODE` | `webhook` | `webhook` / `kafka` / `both` |
+| `SIM_WEBHOOK_URL` | `http://app:8080/integrations/webhooks/transactions` | |
+| `SIM_LEDGER_BASE_URL` | derived | wallet onboard base |
 
-Set `SIM_ONBOARD_WALLETS=false` to simulate external events for users **without** wallets (expect `SKIPPED`).
+---
+
+## Related docs
+
+Index: **[docs/README.md](docs/README.md)**

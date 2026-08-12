@@ -3,7 +3,8 @@
 **No restart. No YAML seed.**  
 Rules live only in DB (`digestion_rule`), managed via **`/digestion-rules`**.
 
-Empty table ⇒ webhook matches nothing (`NO_RULE`) until you create rules via API.
+Empty table ⇒ webhook matches nothing (`NO_RULE`) until you create rules via API  
+or run [BOOTSTRAP.md](./BOOTSTRAP.md).
 
 ---
 

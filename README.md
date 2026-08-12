@@ -233,17 +233,18 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 
 | Doc | Purpose |
 |-----|---------|
+| [docs/README.md](docs/README.md) | **Docs index** (start here) |
 | [PRODUCT.md](PRODUCT.md) | Product model, operations, account roles |
 | [INTEGRATION.md](INTEGRATION.md) | Onboarding + transactional event ingest |
-| [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | **Client adopt:** wallet create + query curls (HKD + LP) |
-| [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) | **Client adopt:** earn webhook gates → LP credit |
-| [docs/DIGESTION_RULES.md](docs/DIGESTION_RULES.md) | Runtime `/digestion-rules` filter + formula (no restart) |
-| [docs/DOUBLE_ENTRY_EARN.md](docs/DOUBLE_ENTRY_EARN.md) | PROGRAM pool DE legs + ledger-entries query |
+| [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | Wallet create + query curls (HKD + LP) |
+| [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) | Upstream webhook playbook → LP + legs |
+| [docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md) | Door vs brain packages |
 | [docs/INGEST_POLICY.md](docs/INGEST_POLICY.md) | DB ingest policy (auto-wallet + kill-switch) |
+| [docs/DIGESTION_RULES.md](docs/DIGESTION_RULES.md) | Runtime `/digestion-rules` filter + formula |
+| [docs/DOUBLE_ENTRY_EARN.md](docs/DOUBLE_ENTRY_EARN.md) | PROGRAM pool DE legs + ledger-entries query |
 | [docs/HOLD_RELEASE.md](docs/HOLD_RELEASE.md) | HOLD/RELEASE available (ledger unchanged) |
-| [docs/HISTORY_ASOF_REPLAY.md](docs/HISTORY_ASOF_REPLAY.md) | History filters, as-of balance, bulk replay | | HOLD/RELEASE available (ledger unchanged) |
-| [docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md) | Package split: ingest door vs digestion brain |
-| [docs/HERMES_RUNTIME_RULES_TASK.md](docs/HERMES_RUNTIME_RULES_TASK.md) | Task brief: runtime rules + DE visibility |
+| [docs/HISTORY_ASOF_REPLAY.md](docs/HISTORY_ASOF_REPLAY.md) | History, as-of, fail replay, pagination |
 | [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) | Fresh DB: `./scripts/bootstrap-runtime.sh` |
-| [scripts/e2e-smoke.sh](scripts/e2e-smoke.sh) | One-shot: onboard → earn → query LP → fail-table API |
-| `application.yml` | Env-driven config (`DB_*`, `SERVER_PORT`, …) |
+| [docs/HERMES_RUNTIME_RULES_TASK.md](docs/HERMES_RUNTIME_RULES_TASK.md) | Task archive — **DONE** |
+| [scripts/e2e-smoke.sh](scripts/e2e-smoke.sh) | bootstrap → earn → LP → fail API |
+| `application.yml` | Env-driven infra (`DB_*`, `SERVER_PORT`, …) |
