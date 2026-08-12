@@ -17,8 +17,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Matches inbound events to <b>runtime</b> {@link DigestionRule} rows (DB).
- * YAML only seeds the table at startup when empty.
+ * Matches inbound events to <b>runtime</b> {@link DigestionRule} rows (DB only).
+ * <p>
+ * Empty table ⇒ no match ({@code NO_RULE}). Bootstrap via {@code POST /digestion-rules}
+ * or {@code ./scripts/bootstrap-runtime.sh} — <b>no YAML rule catalog / startup seed</b>.
  */
 @Component
 @RequiredArgsConstructor

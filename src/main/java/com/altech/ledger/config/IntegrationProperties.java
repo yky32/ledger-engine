@@ -18,7 +18,7 @@ public class IntegrationProperties {
      * When true: after eligibility gates, missing wallet is auto-created then earn/burn continues
      * in the same request/transaction.
      * <p>
-     * YAML: {@code ledger.integration.auto-create-wallet} / env {@code LEDGER_AUTO_CREATE_WALLET}.
+     * Env/bootstrap defaults only ({@code ledger.integration.auto-create-wallet} / {@code LEDGER_AUTO_CREATE_WALLET}). Runtime source of truth is DB {@code ingest_policy}.
      */
     private boolean isAutoCreateWallet = true;
 

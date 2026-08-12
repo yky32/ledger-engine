@@ -82,7 +82,10 @@ Unchanged — see [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBHOOK.md).
 
 ---
 
-## Phase note
+## Status
 
-- **P1:** runtime digestion-rules + formula（DB only）  
-- **P3 later:** double-entry legs visibility
+| Phase | |
+|-------|--|
+| **P1** runtime digestion-rules + formula（DB only） | ✅ |
+| **P3** double-entry legs (PROGRAM pool + query) | ✅ — see [DOUBLE_ENTRY_EARN.md](./DOUBLE_ENTRY_EARN.md) |
+| Fresh DB bootstrap | ✅ — [BOOTSTRAP.md](./BOOTSTRAP.md) |
