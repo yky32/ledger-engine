@@ -84,8 +84,8 @@ class DoubleEntryEarnIntegrationTest {
         assertThat(debit).isEqualByComparingTo(credit);
         assertThat(debit).isEqualByComparingTo("1");
 
-        // Query API by eventId
-        mockMvc.perform(get("/integrations/ledger-entries/by-event/" + eventId))
+        // Query API by eventId / movementId
+        mockMvc.perform(get("/integrations/ledger-entries").param("eventId", eventId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.length()").value(2));
 

@@ -31,8 +31,10 @@ BURN N LP
 
 ## Query legs
 
+Provide **exactly one** of `movementId` or `eventId`:
+
 ```bash
 curl -sS "http://localhost:8080/integrations/ledger-entries?movementId=123"
-curl -sS "http://localhost:8080/integrations/ledger-entries/by-event/{eventId}"
-curl -sS "http://localhost:8080/integrations/ledger-entries/by-event/{eventId}?operation=earn"
+curl -sS "http://localhost:8080/integrations/ledger-entries?eventId=txn-1"
+curl -sS "http://localhost:8080/integrations/ledger-entries?eventId=txn-1&operation=earn"
 ```
