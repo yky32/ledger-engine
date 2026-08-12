@@ -58,16 +58,18 @@ curl -sS -X POST 'http://localhost:8080/integrations/webhooks/transactions' \
 | `occurredAt` | ✅ if maxAgeDays set | ISO-8601; older than N days → skip + **fail table** |
 | `metadata` | optional | Free map |
 
-Default PURCHASE rule (example):
+Default PURCHASE digestion rule example (create via API — not YAML):
 
-| Setting | Default |
+| Setting | Example |
 |---------|---------|
 | operation | EARN |
 | min-amount | 0.01 |
 | formula | `RATE:0.01` → LP = amount × 0.01 |
 | point-currency | LP |
-| max-age-days | **7** (configurable) |
-| eligible-currencies | **HKD**, **USD** (configurable list) |
+| max-age-days | **7** |
+| eligible-currencies | **HKD**, **USD** |
+
+See [DIGESTION_RULES.md](./DIGESTION_RULES.md).
 
 ---
 
@@ -225,12 +227,5 @@ ledger.integration:
   auto-wallet:
     settlement-currency: HKD
     ensure-currency: LP
-  rules:
-  - event-type: PURCHASE
-    operation: EARN
-    min-amount: 0.01
-    point-currency: LP
-    formula: RATE:0.01
-    max-age-days: 7
-    eligible-currencies: [HKD, USD, CNY]
+# Digestion rules: only via POST /digestion-rules (DB) — not YAML
 ```

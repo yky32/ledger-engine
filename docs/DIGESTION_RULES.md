@@ -1,23 +1,45 @@
 # Digestion rules — runtime earn filter + formula
 
-**No restart.** Rules live in DB table `digestion_rule`, API `/digestion-rules`.  
-YAML `ledger.integration.rules` **seeds** the table only when empty.
+**No restart. No YAML seed.**  
+Rules live only in DB (`digestion_rule`), managed via **`/digestion-rules`**.
+
+Empty table ⇒ webhook matches nothing (`NO_RULE`) until you create rules via API.
 
 ---
 
 ## Flow
 
 ```text
-YAML (first boot seed)
-        │
-        ▼
-digestion_rule (DB)  ←── CRUD / enable / disable via API
-        │
-        ▼
-TransactionRuleEngine.evaluate(event)
-        │
-        ▼
-webhook earn / burn (unchanged ingest path)
+POST/PUT /digestion-rules  →  digestion_rule (DB)
+                                    │
+                                    ▼
+                    TransactionRuleEngine.evaluate(event)
+                                    │
+                                    ▼
+                         webhook earn / burn
+```
+
+---
+
+## Bootstrap (ops)
+
+```bash
+# create PURCHASE earn rule
+curl -sS -X POST 'http://localhost:8080/digestion-rules' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "code": "PURCHASE_DEFAULT",
+    "name": "Purchase 1%",
+    "eventType": "PURCHASE",
+    "operation": "EARN",
+    "isEnabled": true,
+    "priority": 10,
+    "minAmount": 0.01,
+    "eligibleCurrencies": ["HKD","USD"],
+    "maxAgeDays": 7,
+    "pointCurrency": "LP",
+    "formula": "RATE:0.01"
+  }'
 ```
 
 ---
@@ -25,42 +47,20 @@ webhook earn / burn (unchanged ingest path)
 ## API
 
 ```bash
-# list
 curl -sS 'http://localhost:8080/digestion-rules'
 curl -sS 'http://localhost:8080/digestion-rules?enabledOnly=true'
+curl -sS 'http://localhost:8080/digestion-rules/{id}'
+curl -sS 'http://localhost:8080/digestion-rules/by-code/PURCHASE_DEFAULT'
 
-# get
-curl -sS 'http://localhost:8080/digestion-rules/1'
-curl -sS 'http://localhost:8080/digestion-rules/by-code/PURCHASE_SEED_1'
-
-# create
-curl -sS -X POST 'http://localhost:8080/digestion-rules' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "code": "PURCHASE_VIP",
-    "name": "VIP 2%",
-    "eventType": "PURCHASE",
-    "operation": "EARN",
-    "isEnabled": true,
-    "priority": 1,
-    "minAmount": 0.01,
-    "eligibleCurrencies": ["HKD","USD"],
-    "maxAgeDays": 7,
-    "pointCurrency": "LP",
-    "formula": "RATE:0.02"
-  }'
-
-# update formula (next webhook uses it immediately)
-curl -sS -X PUT 'http://localhost:8080/digestion-rules/1' \
+curl -sS -X PUT 'http://localhost:8080/digestion-rules/{id}' \
   -H 'Content-Type: application/json' \
   -d '{"formula":"MUL_ADD:0.01:5"}'
 
-# enable / disable
-curl -sS -X POST 'http://localhost:8080/digestion-rules/1/disable'
-curl -sS -X POST 'http://localhost:8080/digestion-rules/1/enable'
+curl -sS -X POST 'http://localhost:8080/digestion-rules/{id}/disable'
+curl -sS -X POST 'http://localhost:8080/digestion-rules/{id}/enable'
 ```
 
-**Priority:** lower number wins first among matching `eventType`.
+**Priority:** lower number first among matching `eventType`.
 
 ---
 
@@ -71,31 +71,18 @@ curl -sS -X POST 'http://localhost:8080/digestion-rules/1/enable'
 | `AMOUNT` | points = amount |
 | `RATE:0.01` | amount × 0.01 |
 | `FIXED:100` | constant 100 |
-| `MUL_ADD:0.01:5` | amount × 0.01 **+** 5 |
+| `MUL_ADD:0.01:5` | amount × 0.01 + 5 |
 | `{"rate":0.01,"fixed":0}` | same as MUL_ADD (JSON) |
 
 ---
 
-## Webhook earn (unchanged shape)
+## Webhook
 
-```bash
-curl -sS -X POST 'http://localhost:8080/integrations/webhooks/transactions' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "eventId": "txn-1",
-    "associatedIdentifier": "01A12345678",
-    "eventType": "PURCHASE",
-    "amount": 200,
-    "currency": "HKD",
-    "occurredAt": "2026-08-12T00:00:00Z"
-  }'
-```
-
-See also [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBHOOK.md).
+Unchanged — see [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBHOOK.md).
 
 ---
 
 ## Phase note
 
-- **P1 done:** runtime digestion-rules + formula  
-- **P3 later:** true double-entry legs visibility (task §D)
+- **P1:** runtime digestion-rules + formula（DB only）  
+- **P3 later:** double-entry legs visibility

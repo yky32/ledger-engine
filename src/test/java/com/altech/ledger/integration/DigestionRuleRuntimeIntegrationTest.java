@@ -3,7 +3,9 @@ package com.altech.ledger.integration;
 import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
 import com.altech.ledger.repository.DigestionRuleRepository;
+import com.altech.ledger.support.DigestionRuleTestData;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -31,11 +33,16 @@ class DigestionRuleRuntimeIntegrationTest {
     @Autowired ObjectMapper objectMapper;
     @Autowired DigestionRuleRepository digestionRuleRepository;
 
+    @BeforeEach
+    void seedRules() {
+        DigestionRuleTestData.ensureDefaultRules(digestionRuleRepository);
+    }
+
     @Test
     void runtimeFormulaChangeAffectsNextWebhookWithoutRedeploy() throws Exception {
         assertThat(digestionRuleRepository.count()).isGreaterThan(0);
 
-        // Find seeded PURCHASE rule
+        // Find PURCHASE rule
         MvcResult list = mockMvc.perform(get("/digestion-rules").param("enabledOnly", "true"))
             .andExpect(status().isOk())
             .andReturn();

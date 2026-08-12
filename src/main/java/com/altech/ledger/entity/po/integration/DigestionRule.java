@@ -19,7 +19,7 @@ import java.math.BigDecimal;
  * Runtime digestion rule: filter + scoring for inbound transactional webhooks.
  * <p>
  * Editable via {@code /digestion-rules}; takes effect without restart.
- * YAML {@code ledger.integration.rules} seeds this table when empty.
+ * <b>No YAML / startup seed</b> — rules are created only via API (or explicit ops).
  * <p>
  * <b>Storage shape (intentional denormalization):</b> one flat row per rule.
  * Digestion is a small, hot-path catalog (filters + formula), not a general-purpose

@@ -9,9 +9,7 @@
 #
 # Full stack:
 #   docker compose up --build
-#
-# Earn rules (application.yml ledger.integration.rules) can be overridden via env
-# listed in .env.example — e.g. LEDGER_RULE_PURCHASE_MAX_AGE_DAYS=7
+# Digestion rules: POST /digestion-rules after app is up (no YAML seed)
 
 services:
   postgres:
@@ -66,14 +64,7 @@ services:
       KAFKA_URL: kafka:9092
       LEDGER_KAFKA_ENABLED: ${LEDGER_KAFKA_ENABLED:-true}
       LEDGER_KAFKA_TOPIC: ${LEDGER_KAFKA_TOPIC:-ledger.transaction.events}
-      # Earn eligibility (see application.yml ledger.integration.rules)
       LEDGER_INTEGRATION_ENABLED: ${LEDGER_INTEGRATION_ENABLED:-true}
-      LEDGER_RULE_PURCHASE_MIN_AMOUNT: ${LEDGER_RULE_PURCHASE_MIN_AMOUNT:-0.01}
-      LEDGER_RULE_PURCHASE_FORMULA: ${LEDGER_RULE_PURCHASE_FORMULA:-RATE:0.01}
-      LEDGER_RULE_PURCHASE_POINT_CURRENCY: ${LEDGER_RULE_PURCHASE_POINT_CURRENCY:-LP}
-      LEDGER_RULE_PURCHASE_MAX_AGE_DAYS: ${LEDGER_RULE_PURCHASE_MAX_AGE_DAYS:-7}
-      LEDGER_RULE_PURCHASE_CCY_0: ${LEDGER_RULE_PURCHASE_CCY_0:-HKD}
-      LEDGER_RULE_PURCHASE_CCY_1: ${LEDGER_RULE_PURCHASE_CCY_1:-USD}
     depends_on:
       postgres:
         condition: service_healthy
