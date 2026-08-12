@@ -126,9 +126,9 @@ public class ReplayFailedTransactionIngestUseCase {
     }
 
     private TransactionalEvent _toEvent(FailedTransactionIngest row) {
-        if (row.getRawPayload() != null && !row.getRawPayload().isBlank()) {
+        if (row.getRawPayload() != null) {
             try {
-                return objectMapper.readValue(row.getRawPayload(), TransactionalEvent.class);
+                return objectMapper.convertValue(row.getRawPayload(), TransactionalEvent.class);
             } catch (Exception ex) {
                 log.warn("rawPayload parse failed id={} — rebuild from columns", row.getId());
             }

@@ -16,21 +16,18 @@ import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 
-/**
- * Digestion rule — filter + scoring (brain). No YAML seed.
- */
+/** Digestion rule — filter + scoring. No YAML seed. */
 @Entity
-@Table(
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_digestion_rule_code", columnNames = "code")
-    }
-)
+@Table(uniqueConstraints = {
+    @UniqueConstraint(name = "uk_digestion_rule_code", columnNames = "code")
+})
 @Getter
 @Setter
 @NoArgsConstructor
 public class DigestionRule extends AuditEntityWithIsActive {
 
     @Id
+    @Column
     @GenericGenerator(name = "digestion_rule_id_generator", type = SnowflakeIdGenerator.class)
     @GeneratedValue(generator = "digestion_rule_id_generator")
     private Long id;
@@ -38,6 +35,7 @@ public class DigestionRule extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private String code;
 
+    @Column
     private String name;
 
     @Column(nullable = false)
@@ -56,8 +54,10 @@ public class DigestionRule extends AuditEntityWithIsActive {
     @Column(precision = 36, scale = 18)
     private BigDecimal minAmount;
 
+    @Column
     private String eligibleCurrencies;
 
+    @Column
     private Integer maxAgeDays;
 
     @Column(nullable = false)
@@ -66,6 +66,7 @@ public class DigestionRule extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private String formula;
 
+    @Column
     private String processType;
 
     @PrePersist

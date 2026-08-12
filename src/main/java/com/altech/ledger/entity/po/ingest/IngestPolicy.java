@@ -12,9 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-/**
- * Ingest policy — webhook door (global on/off + auto-wallet).
- */
+/** Ingest policy — webhook door. */
 @Entity
 @Getter
 @Setter
@@ -22,6 +20,7 @@ import org.hibernate.annotations.GenericGenerator;
 public class IngestPolicy extends AuditEntityWithIsActive {
 
     @Id
+    @Column
     @GenericGenerator(name = "ingest_policy_id_generator", type = SnowflakeIdGenerator.class)
     @GeneratedValue(generator = "ingest_policy_id_generator")
     private Long id;
@@ -38,8 +37,10 @@ public class IngestPolicy extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private String autoWalletEnsureCurrency;
 
+    @Column
     private String autoWalletAssociatedFrom;
 
+    @Column
     private String autoWalletNamePrefix;
 
     @PrePersist

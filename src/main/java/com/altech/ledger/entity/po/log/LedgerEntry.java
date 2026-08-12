@@ -2,34 +2,39 @@ package com.altech.ledger.entity.po.log;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.entity.AuditEntityWithIsActive;
+import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import com.altech.ledger.entity.enu.MovementDirection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 
-/**
- * One balance leg when a {@link LedgerMovement} settles.
- */
+/** One balance leg when a {@link LedgerMovement} settles. */
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 public class LedgerEntry extends AuditEntityWithIsActive {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
+    @GenericGenerator(name = "ledger_entry_id_generator", type = SnowflakeIdGenerator.class)
+    @GeneratedValue(generator = "ledger_entry_id_generator")
     private Long id;
 
+    @Column
     private Long txnId;
 
+    @Column
     private String targetId;
 
     @Column(nullable = false, precision = 38, scale = 18)
@@ -43,10 +48,10 @@ public class LedgerEntry extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private Currency currency;
 
-    /** When false, as-of ledger ignores this leg (HOLD/RELEASE). */
+    @Column
     private Boolean affectsLedger;
 
-    /** When false, as-of available ignores this leg. */
+    @Column
     private Boolean affectsAvailable;
 
     @PrePersist

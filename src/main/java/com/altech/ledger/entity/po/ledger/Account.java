@@ -22,21 +22,17 @@ import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 
-/**
- * Chart-of-accounts bucket that holds live balances.
- */
+/** Chart-of-accounts bucket that holds live balances. */
 @Entity
-@Table(
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uniqueAccountKey", columnNames = {
-            "entity", "type", "sub_type", "main_account", "sub_account", "buffer", "currency"
-        }),
-        @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
-            "main_account", "sub_account"
-        }),
-        @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
-    }
-)
+@Table(uniqueConstraints = {
+    @UniqueConstraint(name = "uniqueAccountKey", columnNames = {
+        "entity", "type", "sub_type", "main_account", "sub_account", "buffer", "currency"
+    }),
+    @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
+        "main_account", "sub_account"
+    }),
+    @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -45,19 +41,27 @@ import java.math.BigDecimal;
 public class Account extends AuditEntityWithIsActive {
 
     @Id
+    @Column
     @GenericGenerator(name = "account_id_generator", type = SnowflakeIdGenerator.class)
     @GeneratedValue(generator = "account_id_generator")
     private Long id;
 
+    @Column
     private String fullNumber;
 
+    @Column
     private String entity;
+    @Column
     private String type;
+    @Column
     private String subType;
 
+    @Column
     private String mainAccount;
+    @Column
     private String subAccount;
 
+    @Column
     private String buffer;
 
     @Enumerated(EnumType.STRING)
@@ -81,7 +85,6 @@ public class Account extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private boolean allowNegative = false;
 
-    /** Covers non-builder {@code new Account()} + setters. */
     @PrePersist
     void applyDefaults() {
         if (ledgerBalance == null) {

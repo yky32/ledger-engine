@@ -9,8 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Audit base that also tracks soft-active flag. New rows default {@code isActive = true}
- * on persist; deactivate by setting false instead of hard-delete when product needs it.
+ * Audit base + soft-active flag. Defaults {@code isActive = true} only when null.
  */
 @MappedSuperclass
 @Getter
@@ -22,7 +21,9 @@ public class AuditEntityWithIsActive extends AuditEntity {
     private Boolean isActive;
 
     @PrePersist
-    private void isActive() {
-        this.isActive = true;
+    void applyIsActiveDefault() {
+        if (isActive == null) {
+            isActive = Boolean.TRUE;
+        }
     }
 }
