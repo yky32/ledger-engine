@@ -2,6 +2,7 @@ package com.altech.ledger.entity.po.ledger;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.entity.AuditEntityWithIsActive;
+import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
 import com.altech.ledger.entity.enu.WalletType;
@@ -10,12 +11,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 /**
  * Customer wallet — lean model.
@@ -37,7 +38,8 @@ import lombok.Setter;
 public class Wallet extends AuditEntityWithIsActive {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GenericGenerator(name = "wallet_id_generator", type = SnowflakeIdGenerator.class)
+    @GeneratedValue(generator = "wallet_id_generator")
     private Long id;
 
     /** Primary account id under this wallet. */
