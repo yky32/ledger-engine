@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.po.integration;
+package com.altech.ledger.entity.po.digestion;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
@@ -16,17 +16,21 @@ import org.hibernate.annotations.GenericGenerator;
 import java.math.BigDecimal;
 
 /**
- * Runtime digestion rule: filter + scoring for inbound transactional webhooks.
+ * <b>Digestion</b> rule — the webhook <em>brain</em> (filter + scoring).
  * <p>
- * Editable via {@code /digestion-rules}; takes effect without restart.
- * <b>No YAML / startup seed</b> — rules are created only via API (or explicit ops).
+ * Answers: which {@code eventType} qualifies, min amount / currency / age gates,
+ * and which formula turns spend into points (EARN/BURN/PROCESS).
+ * Many rows, ordered by {@link #priority}. Editable via {@code /digestion-rules}
+ * (no restart). <b>No YAML seed</b> — create via API.
  * <p>
- * <b>Storage shape (intentional denormalization):</b> one flat row per rule.
- * Digestion is a small, hot-path catalog (filters + formula), not a general-purpose
- * multi-table rules engine. Keeping eventType / currencies / formula on the row
- * makes list/evaluate/CRUD simple and fast. Stable business key is {@link #code};
- * PK is snowflake {@link #id}. If factors grow later, prefer a JSON bag column
- * over EAV — not required for current scope.
+ * <b>Not ingest policy:</b> {@link com.altech.ledger.entity.po.ingest.IngestPolicy}
+ * is the door (global on/off + auto-wallet). Digestion assumes the event was allowed in.
+ * <p>
+ * Storage: intentional flat denormalized row (small hot-path catalog). Business key
+ * {@link #code}; PK snowflake {@link #id}.
+ *
+ * @see com.altech.ledger.entity.po.ingest.IngestPolicy
+ * @see com.altech.ledger.entity.po.digestion.package-info
  */
 @Entity
 @Table(

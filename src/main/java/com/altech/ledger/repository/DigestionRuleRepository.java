@@ -1,6 +1,6 @@
 package com.altech.ledger.repository;
 
-import com.altech.ledger.entity.po.integration.DigestionRule;
+import com.altech.ledger.entity.po.digestion.DigestionRule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

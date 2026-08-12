@@ -1,9 +1,9 @@
-package com.altech.ledger.endpoint.integration;
+package com.altech.ledger.endpoint.ingest;
 
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
 import com.altech.ledger.entity.dto.response.GetFailedTransactionIngestResponseDto;
-import com.altech.ledger.usecase.integration.QueryFailedTransactionIngestUseCase;
+import com.altech.ledger.usecase.ingest.QueryFailedTransactionIngestUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

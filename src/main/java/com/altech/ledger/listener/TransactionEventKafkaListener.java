@@ -1,8 +1,8 @@
 package com.altech.ledger.listener;
 
-import com.altech.ledger.entity.dto.integration.IngestionResult;
-import com.altech.ledger.entity.dto.integration.TransactionalEvent;
-import com.altech.ledger.usecase.integration.IngestTransactionUseCase;
+import com.altech.ledger.entity.dto.ingest.IngestionResult;
+import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
+import com.altech.ledger.usecase.ingest.IngestTransactionUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;

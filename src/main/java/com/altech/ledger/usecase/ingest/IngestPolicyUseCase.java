@@ -1,9 +1,9 @@
-package com.altech.ledger.usecase.integration;
+package com.altech.ledger.usecase.ingest;
 
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.request.UpdateIngestPolicyRequestDto;
 import com.altech.ledger.entity.dto.response.GetIngestPolicyResponseDto;
-import com.altech.ledger.entity.po.integration.IngestPolicy;
+import com.altech.ledger.entity.po.ingest.IngestPolicy;
 import com.altech.ledger.repository.IngestPolicyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

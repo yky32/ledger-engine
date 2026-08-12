@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.po.integration;
+package com.altech.ledger.entity.po.ingest;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
@@ -13,10 +13,19 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 /**
- * Ingest policy: how transactional webhooks behave (on/off + auto-wallet).
+ * <b>Ingest</b> policy — the webhook <em>door</em> (not scoring rules).
  * <p>
- * Typically <b>one active row</b>. API: {@code GET/PUT /ingest-policy}.
- * Example meaning — see docs/INGEST_POLICY.md.
+ * Controls whether inbound transactional events are accepted at all, and how
+ * missing wallets are provisioned. Typically <b>one active row</b>.
+ * <p>
+ * <b>Not digestion:</b> {@link com.altech.ledger.entity.po.digestion.DigestionRule}
+ * decides eventType match, eligibility filters, and points formula.
+ * This policy does <em>not</em> compute LP.
+ * <p>
+ * API: {@code GET/PUT /ingest-policy}. See {@code docs/INGEST_POLICY.md}.
+ *
+ * @see com.altech.ledger.entity.po.digestion.DigestionRule
+ * @see com.altech.ledger.entity.po.ingest.package-info
  */
 @Entity
 @Table

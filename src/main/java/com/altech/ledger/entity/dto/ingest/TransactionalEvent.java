@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.dto.integration;
+package com.altech.ledger.entity.dto.ingest;
 
 import com.altech.core.constant.enu.Currency;
 import com.fasterxml.jackson.annotation.JsonAlias;

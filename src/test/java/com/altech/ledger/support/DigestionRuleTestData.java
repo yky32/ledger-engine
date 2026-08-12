@@ -1,6 +1,6 @@
 package com.altech.ledger.support;
 
-import com.altech.ledger.entity.po.integration.DigestionRule;
+import com.altech.ledger.entity.po.digestion.DigestionRule;
 import com.altech.ledger.repository.DigestionRuleRepository;
 
 import java.math.BigDecimal;

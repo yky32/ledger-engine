@@ -1,9 +1,9 @@
-package com.altech.ledger.endpoint.integration;
+package com.altech.ledger.endpoint.digestion;
 
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
 import com.altech.ledger.entity.dto.response.GetDigestionRuleResponseDto;
-import com.altech.ledger.usecase.integration.DigestionRuleUseCase;
+import com.altech.ledger.usecase.digestion.DigestionRuleUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

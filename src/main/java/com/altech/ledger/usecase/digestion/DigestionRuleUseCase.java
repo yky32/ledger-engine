@@ -1,10 +1,10 @@
-package com.altech.ledger.usecase.integration;
+package com.altech.ledger.usecase.digestion;
 
 import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.dto.request.CreateDigestionRuleRequestDto;
 import com.altech.ledger.entity.dto.request.UpdateDigestionRuleRequestDto;
 import com.altech.ledger.entity.dto.response.GetDigestionRuleResponseDto;
-import com.altech.ledger.entity.po.integration.DigestionRule;
+import com.altech.ledger.entity.po.digestion.DigestionRule;
 import com.altech.ledger.exception.response.DigestionErrorResponse;
 import com.altech.ledger.repository.DigestionRuleRepository;
 import lombok.RequiredArgsConstructor;

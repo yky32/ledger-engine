@@ -240,6 +240,7 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 | [docs/DIGESTION_RULES.md](docs/DIGESTION_RULES.md) | Runtime `/digestion-rules` filter + formula (no restart) |
 | [docs/DOUBLE_ENTRY_EARN.md](docs/DOUBLE_ENTRY_EARN.md) | PROGRAM pool DE legs + ledger-entries query |
 | [docs/INGEST_POLICY.md](docs/INGEST_POLICY.md) | DB ingest policy (auto-wallet + kill-switch) |
+| [docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md) | Package split: ingest door vs digestion brain |
 | [docs/HERMES_RUNTIME_RULES_TASK.md](docs/HERMES_RUNTIME_RULES_TASK.md) | Task brief: runtime rules + DE visibility |
 | [scripts/e2e-smoke.sh](scripts/e2e-smoke.sh) | One-shot: onboard → earn → query LP → fail-table API |
 | `application.yml` | Env-driven config (`DB_*`, `SERVER_PORT`, …) |

@@ -1,10 +1,10 @@
-package com.altech.ledger.endpoint.integration;
+package com.altech.ledger.endpoint.ingest;
 
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
-import com.altech.ledger.entity.dto.integration.IngestionResult;
-import com.altech.ledger.entity.dto.integration.TransactionalEvent;
-import com.altech.ledger.usecase.integration.IngestTransactionUseCase;
+import com.altech.ledger.entity.dto.ingest.IngestionResult;
+import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
+import com.altech.ledger.usecase.ingest.IngestTransactionUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

@@ -1,13 +1,14 @@
-package com.altech.ledger.usecase.integration;
+package com.altech.ledger.usecase.ingest;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
-import com.altech.ledger.entity.dto.integration.IngestionResult;
-import com.altech.ledger.entity.dto.integration.LedgerLegDto;
-import com.altech.ledger.entity.dto.integration.TransactionalEvent;
+import com.altech.ledger.entity.dto.ingest.IngestionResult;
+import com.altech.ledger.entity.dto.ingest.LedgerLegDto;
+import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.OrderType;
-import com.altech.ledger.entity.po.integration.FailedTransactionIngest;
+import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
+import com.altech.ledger.entity.po.ingest.IngestPolicy;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
@@ -15,6 +16,7 @@ import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
 import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
+import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,9 +31,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Loyalty / transactional event ingest with eligibility gates.
+ * <b>Ingest</b> orchestration: run the full webhook pipeline in one TX.
  * <p>
- * Flow: gates → resolve/auto-create wallet → earn/burn (double-entry legs) in same TX.
+ * Order:
+ * <ol>
+ *   <li>{@link IngestPolicy} — door (enabled?)</li>
+ *   <li>{@link com.altech.ledger.usecase.digestion.TransactionRuleEngine} — digestion (match + points)</li>
+ *   <li>Auto-wallet from ingest policy if needed</li>
+ *   <li>Earn/burn double-entry legs</li>
+ * </ol>
+ * Digestion rules themselves are owned by {@code usecase.digestion}; this class only calls them.
  */
 @Slf4j
 @Component

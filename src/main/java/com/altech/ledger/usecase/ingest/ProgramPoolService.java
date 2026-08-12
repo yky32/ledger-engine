@@ -1,4 +1,4 @@
-package com.altech.ledger.usecase.integration;
+package com.altech.ledger.usecase.ingest;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;

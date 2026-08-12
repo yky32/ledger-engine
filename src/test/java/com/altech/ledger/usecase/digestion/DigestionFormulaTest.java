@@ -1,6 +1,6 @@
-package com.altech.ledger.usecase.integration;
+package com.altech.ledger.usecase.digestion;
 
-import com.altech.ledger.usecase.integration.TransactionRuleEngine.DigestionFormula;
+import com.altech.ledger.usecase.digestion.TransactionRuleEngine.DigestionFormula;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

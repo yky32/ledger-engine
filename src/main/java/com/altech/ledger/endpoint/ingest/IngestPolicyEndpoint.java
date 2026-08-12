@@ -1,10 +1,10 @@
-package com.altech.ledger.endpoint.integration;
+package com.altech.ledger.endpoint.ingest;
 
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
 import com.altech.ledger.entity.dto.request.UpdateIngestPolicyRequestDto;
 import com.altech.ledger.entity.dto.response.GetIngestPolicyResponseDto;
-import com.altech.ledger.usecase.integration.IngestPolicyUseCase;
+import com.altech.ledger.usecase.ingest.IngestPolicyUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
