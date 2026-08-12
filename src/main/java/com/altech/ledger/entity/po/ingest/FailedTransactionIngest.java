@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -44,8 +45,15 @@ public class FailedTransactionIngest extends AuditEntity {
     private String reason;
 
     @Column(nullable = false)
-    private String status = "OPEN";
+    private String status;
 
     @Column(columnDefinition = "TEXT")
     private String rawPayload;
+
+    @PrePersist
+    void applyDefaults() {
+        if (status == null) {
+            status = "OPEN";
+        }
+    }
 }

@@ -10,6 +10,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -79,4 +80,18 @@ public class Account extends AuditEntityWithIsActive {
     @Builder.Default
     @Column(nullable = false)
     private boolean allowNegative = false;
+
+    /** Covers non-builder {@code new Account()} + setters. */
+    @PrePersist
+    void applyDefaults() {
+        if (ledgerBalance == null) {
+            ledgerBalance = BigDecimal.ZERO;
+        }
+        if (availableBalance == null) {
+            availableBalance = BigDecimal.ZERO;
+        }
+        if (status == null) {
+            status = AccountStatus.ACTIVE;
+        }
+    }
 }

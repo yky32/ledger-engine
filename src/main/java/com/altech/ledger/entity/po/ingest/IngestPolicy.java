@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,18 +27,40 @@ public class IngestPolicy extends AuditEntityWithIsActive {
     private Long id;
 
     @Column(nullable = false)
-    private Boolean isEnabled = Boolean.TRUE;
+    private Boolean isEnabled;
 
     @Column(nullable = false)
-    private Boolean isAutoCreateWallet = Boolean.TRUE;
+    private Boolean isAutoCreateWallet;
 
     @Column(nullable = false)
-    private String autoWalletSettlementCurrency = "HKD";
+    private String autoWalletSettlementCurrency;
 
     @Column(nullable = false)
-    private String autoWalletEnsureCurrency = "LP";
+    private String autoWalletEnsureCurrency;
 
-    private String autoWalletAssociatedFrom = "CRM";
+    private String autoWalletAssociatedFrom;
 
-    private String autoWalletNamePrefix = "Auto ";
+    private String autoWalletNamePrefix;
+
+    @PrePersist
+    void applyDefaults() {
+        if (isEnabled == null) {
+            isEnabled = Boolean.TRUE;
+        }
+        if (isAutoCreateWallet == null) {
+            isAutoCreateWallet = Boolean.TRUE;
+        }
+        if (autoWalletSettlementCurrency == null) {
+            autoWalletSettlementCurrency = "HKD";
+        }
+        if (autoWalletEnsureCurrency == null) {
+            autoWalletEnsureCurrency = "LP";
+        }
+        if (autoWalletAssociatedFrom == null) {
+            autoWalletAssociatedFrom = "CRM";
+        }
+        if (autoWalletNamePrefix == null) {
+            autoWalletNamePrefix = "Auto ";
+        }
+    }
 }

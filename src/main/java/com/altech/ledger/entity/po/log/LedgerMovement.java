@@ -14,6 +14,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
@@ -22,9 +23,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 /**
- * Business operation log for a deposit, withdrawal, transfer, earn/burn, etc.
- * <p>
- * {@link #movementKey} is the idempotency key; {@link #mode} is AUTO or MANUAL.
+ * Business operation log (deposit, earn/burn, hold, …).
  */
 @Entity
 @Table(
@@ -80,7 +79,7 @@ public class LedgerMovement extends AuditEntityWithIsActive {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LedgerMovementType type = LedgerMovementType.TRANSFER;
+    private LedgerMovementType type;
 
     @Column(columnDefinition = "TEXT")
     private String payerContext;
@@ -101,7 +100,25 @@ public class LedgerMovement extends AuditEntityWithIsActive {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LedgerMovementMode mode = LedgerMovementMode.AUTO;
+    private LedgerMovementMode mode;
+
+    @PrePersist
+    void applyDefaults() {
+        if (mode == null) {
+            mode = LedgerMovementMode.AUTO;
+        }
+        if (type == null) {
+            type = LedgerMovementType.TRANSFER;
+        }
+        if (alias == null) {
+            alias = movementKey;
+        }
+        if (status == null) {
+            status = mode == LedgerMovementMode.AUTO
+                ? LedgerMovementStatus.PROCESSING
+                : LedgerMovementStatus.PENDING;
+        }
+    }
 
     public void markSettled() {
         this.status = LedgerMovementStatus.SETTLED;

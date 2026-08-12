@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
@@ -44,26 +45,48 @@ public class DigestionRule extends AuditEntityWithIsActive {
 
     /** EARN | BURN | PROCESS */
     @Column(nullable = false)
-    private String operation = "EARN";
+    private String operation;
 
     @Column(nullable = false)
-    private Boolean isEnabled = Boolean.TRUE;
+    private Boolean isEnabled;
 
     @Column(nullable = false)
-    private Integer priority = 100;
+    private Integer priority;
 
     @Column(precision = 36, scale = 18)
-    private BigDecimal minAmount = BigDecimal.ZERO;
+    private BigDecimal minAmount;
 
     private String eligibleCurrencies;
 
     private Integer maxAgeDays;
 
     @Column(nullable = false)
-    private String pointCurrency = "LP";
+    private String pointCurrency;
 
     @Column(nullable = false)
-    private String formula = "AMOUNT";
+    private String formula;
 
     private String processType;
+
+    @PrePersist
+    void applyDefaults() {
+        if (operation == null) {
+            operation = "EARN";
+        }
+        if (isEnabled == null) {
+            isEnabled = Boolean.TRUE;
+        }
+        if (priority == null) {
+            priority = 100;
+        }
+        if (minAmount == null) {
+            minAmount = BigDecimal.ZERO;
+        }
+        if (pointCurrency == null) {
+            pointCurrency = "LP";
+        }
+        if (formula == null) {
+            formula = "AMOUNT";
+        }
+    }
 }

@@ -10,16 +10,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 
 /**
- * One balance leg produced when a {@link LedgerMovement} settles.
- * <p>
- * {@link #affectsLedger} / {@link #affectsAvailable} distinguish HOLD (available-only)
- * from true double-entry balance legs — required for as-of rebuild.
+ * One balance leg when a {@link LedgerMovement} settles.
  */
 @Entity
 @Getter
@@ -45,11 +43,21 @@ public class LedgerEntry extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private Currency currency;
 
-    /** When false, as-of ledger ignores this leg (HOLD/RELEASE). Null = true (legacy). */
-    private Boolean affectsLedger = Boolean.TRUE;
+    /** When false, as-of ledger ignores this leg (HOLD/RELEASE). */
+    private Boolean affectsLedger;
 
-    /** When false, as-of available ignores this leg. Null = true (legacy). */
-    private Boolean affectsAvailable = Boolean.TRUE;
+    /** When false, as-of available ignores this leg. */
+    private Boolean affectsAvailable;
+
+    @PrePersist
+    void applyDefaults() {
+        if (affectsLedger == null) {
+            affectsLedger = Boolean.TRUE;
+        }
+        if (affectsAvailable == null) {
+            affectsAvailable = Boolean.TRUE;
+        }
+    }
 
     public boolean isAffectsLedger() {
         return affectsLedger == null || affectsLedger;
