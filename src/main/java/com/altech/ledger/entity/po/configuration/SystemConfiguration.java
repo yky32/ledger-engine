@@ -3,12 +3,12 @@ package com.altech.ledger.entity.po.configuration;
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +18,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
 /**
- * Mirrors tgt.program-management-service SystemConfiguration PO shape.
+ * Aligns with tgt.program-management-service SystemConfiguration.
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -32,14 +32,18 @@ import org.hibernate.annotations.Type;
 public class SystemConfiguration extends AuditEntityWithIsActive {
 
     @Id
+    @Column
     @GenericGenerator(name = "system_configuration_id_generator", type = SnowflakeIdGenerator.class)
     @GeneratedValue(generator = "system_configuration_id_generator")
     private Long id;
 
+    @Column
     private String name; // user-register.otp
 
+    @Column
     private String target; // otp
 
+    @Column
     private String scope; // otp.global
 
     @Type(JsonBinaryType.class)
