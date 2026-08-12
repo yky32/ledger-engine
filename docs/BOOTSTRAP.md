@@ -42,3 +42,13 @@ See [docs/README.md](./README.md) · [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBH
 # CUST=01A12345678 AMOUNT=500 ./scripts/upstream-sim.sh
 # ./scripts/upstream-sim.sh --no-bootstrap bad-jpy
 ```
+
+### Schema stuck / NOT NULL migration errors
+
+Old volume + `ddl-auto=update` cannot add NOT NULL columns onto rows with nulls.
+
+```bash
+./scripts/reset-local-db.sh
+mvn spring-boot:run
+./scripts/upstream-sim.sh
+```
