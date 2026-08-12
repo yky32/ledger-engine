@@ -32,9 +32,10 @@ spring:
         jdbc:
           time_zone: ${MICROSERVICE_TIME_ZONE:UTC}
     hibernate:
-      # create | update | validate | none — be careful with create in shared envs
-      # Creates domain tables including failed_transaction_ingest (earn skip store)
-      ddl-auto: ${JPA_DDL_AUTO:update}
+      # create | update | validate | none
+      # Default create: greenfield local / pre-UAT — drop+recreate schema each boot (no data kept).
+      # Override when you need persistence: JPA_DDL_AUTO=update (or validate in locked envs).
+      ddl-auto: ${JPA_DDL_AUTO:create}
     show-sql: ${JPA_SHOW_SQL:true}
   liquibase:
     # Placeholder master changelog (includeAll). Keep false while using JPA ddl-auto.

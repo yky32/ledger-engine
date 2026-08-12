@@ -42,3 +42,16 @@ See [docs/README.md](./README.md) · [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBH
 # CUST=01A12345678 AMOUNT=500 ./scripts/upstream-sim.sh
 # ./scripts/upstream-sim.sh --no-bootstrap bad-jpy
 ```
+
+### Schema / data
+
+Default `JPA_DDL_AUTO=create` — **each app boot recreates schema** (no durable local data).  
+Fine pre-UAT. Later: `JPA_DDL_AUTO=update` or proper migrations.
+
+If you still hit old-volume NOT NULL errors under `update`:
+
+```bash
+./scripts/reset-local-db.sh
+mvn spring-boot:run
+./scripts/upstream-sim.sh
+```
