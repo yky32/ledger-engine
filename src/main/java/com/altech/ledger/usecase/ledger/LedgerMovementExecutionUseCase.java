@@ -159,6 +159,16 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
                     command.add(customer, amount, BalanceOperation.SUBTRACT);
                 }
             }
+            case HOLD -> {
+                Account customer = resolveAccount(movement.getOriginatorId() != null
+                    ? movement.getOriginatorId() : String.valueOf(movement.getWalletId()), currency);
+                command.add(customer, amount, BalanceOperation.HOLD_LOCK);
+            }
+            case RELEASE -> {
+                Account customer = resolveAccount(movement.getTargetId() != null
+                    ? movement.getTargetId() : String.valueOf(movement.getWalletId()), currency);
+                command.add(customer, amount, BalanceOperation.HOLD_UNLOCK);
+            }
             default -> throw new BizException(MovementErrorResponse.MOV0400, "Unsupported order type: " + movement.getOrderType());
         }
         return command;
@@ -176,7 +186,23 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + cmd.getAccount().getId()));
         BigDecimal ledger = locked.getLedgerBalance();
         BigDecimal available = locked.getAvailableBalance();
-        if (cmd.getOperation() == BalanceOperation.ADD) {
+        BalanceOperation op = cmd.getOperation();
+        if (op == BalanceOperation.HOLD_LOCK) {
+            // ledger unchanged; lock spendable balance
+            if (!locked.isAllowNegative() && available.compareTo(cmd.getAmount()) < 0) {
+                throw new BizException(MovementErrorResponse.MOV0403,
+                    "Insufficient available to hold on account " + locked.getId());
+            }
+            available = available.subtract(cmd.getAmount());
+        } else if (op == BalanceOperation.HOLD_UNLOCK) {
+            // ledger unchanged; unlock — available cannot exceed ledger
+            BigDecimal next = available.add(cmd.getAmount());
+            if (next.compareTo(ledger) > 0) {
+                throw new BizException(MovementErrorResponse.MOV0400,
+                    "Release would make available > ledger on account " + locked.getId());
+            }
+            available = next;
+        } else if (op == BalanceOperation.ADD) {
             ledger = ledger.add(cmd.getAmount());
             available = available.add(cmd.getAmount());
         } else {
@@ -193,8 +219,10 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
 
     private void createLedgerEntries(LedgerMovement movement, BalanceExecutionResultCommand command) {
         for (BalanceExecutionResultCommand.CommandDetail cmd : command.getDetails()) {
-            MovementDirection direction = cmd.getOperation() == BalanceOperation.ADD
-                ? MovementDirection.CREDIT : MovementDirection.DEBIT;
+            MovementDirection direction = switch (cmd.getOperation()) {
+                case ADD, HOLD_UNLOCK -> MovementDirection.CREDIT;
+                case SUBTRACT, HOLD_LOCK -> MovementDirection.DEBIT;
+            };
             ledgerEntryRepository.save(new LedgerEntry(
                 movement.getId(),
                 String.valueOf(cmd.getAccount().getId()),
