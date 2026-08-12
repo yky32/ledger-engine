@@ -120,7 +120,6 @@ public class WalletHistoryQueryUseCase {
     private Wallet _wallet(String associatedIdentifier) {
         String id = associatedIdentifier == null ? "" : associatedIdentifier.trim();
         return walletRepository.findByOwnerId(id)
-            .or(() -> walletRepository.findByAssociatedIdentifier(id).stream().findFirst())
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404, "Wallet not found: " + id));
     }
 }

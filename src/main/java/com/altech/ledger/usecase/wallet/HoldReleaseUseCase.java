@@ -30,7 +30,6 @@ public class HoldReleaseUseCase {
 
     private GetLedgerMovementResponseDto _run(CreateHoldReleaseRequestDto req, OrderType type) {
         Wallet w = walletRepository.findByOwnerId(req.associatedIdentifier().trim())
-            .or(() -> walletRepository.findByAssociatedIdentifier(req.associatedIdentifier().trim()).stream().findFirst())
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
                 "Wallet not found: " + req.associatedIdentifier()));
         String desc = req.description() != null ? req.description() : type.name() + " " + req.currency();

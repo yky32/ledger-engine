@@ -29,7 +29,8 @@ spring:
         jdbc:
           time_zone: ${MICROSERVICE_TIME_ZONE:UTC}
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:update}
+      # create: greenfield lean Wallet schema each suite (pre-UAT)
+      ddl-auto: ${JPA_DDL_AUTO:create}
     show-sql: ${JPA_SHOW_SQL:false}
   liquibase:
     enabled: ${LIQUIBASE_ENABLED:false}

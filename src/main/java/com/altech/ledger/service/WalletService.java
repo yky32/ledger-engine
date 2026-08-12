@@ -1,14 +1,12 @@
 package com.altech.ledger.service;
 
 import com.altech.core.exception.BizException;
-import com.altech.ledger.exception.response.AccountErrorResponse;
-
 import com.altech.ledger.entity.po.ledger.Wallet;
+import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.WalletRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -22,9 +20,9 @@ public class WalletService {
     }
 
     @Transactional(readOnly = true)
-    public Wallet getByAlias(String alias) {
-        return walletRepository.findByAlias(alias)
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found alias: " + alias));
+    public Wallet getByOwnerId(String ownerId) {
+        return walletRepository.findByOwnerId(ownerId)
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + ownerId));
     }
 
     @Transactional(readOnly = true)
@@ -33,14 +31,18 @@ public class WalletService {
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found for account: " + accountId));
     }
 
+    /**
+     * Resolve by numeric id, else by ownerId (CRM / associatedIdentifier).
+     */
     @Transactional(readOnly = true)
-    public Wallet resolve(String idOrAlias) {
+    public Wallet resolve(String idOrOwnerId) {
         try {
-            Long id = Long.valueOf(idOrAlias);
-            return walletRepository.findById(id).or(() -> walletRepository.findByAlias(idOrAlias))
-                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + idOrAlias));
+            Long id = Long.valueOf(idOrOwnerId);
+            return walletRepository.findById(id)
+                .or(() -> walletRepository.findByOwnerId(idOrOwnerId))
+                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + idOrOwnerId));
         } catch (NumberFormatException ex) {
-            return getByAlias(idOrAlias);
+            return getByOwnerId(idOrOwnerId);
         }
     }
 }

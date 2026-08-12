@@ -1,33 +1,34 @@
 package com.altech.ledger.entity.po.ledger;
 
 import com.altech.core.constant.enu.Currency;
+import com.altech.core.entity.AuditEntityWithIsActive;
+import com.altech.ledger.entity.enu.WalletStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.altech.core.entity.AuditEntityWithIsActive;
-import com.altech.core.utils.RandomHashGenerator;
-import com.altech.ledger.entity.enu.WalletAssociationType;
-import com.altech.ledger.entity.enu.WalletStatus;
-import com.altech.ledger.entity.enu.WalletType;
-import jakarta.persistence.*;
-
 /**
- * Customer-facing wallet: <b>1 customer ({@code ownerId} / associated id) → 1 wallet</b>.
+ * Customer wallet — lean model.
  * <p>
- * Holds product identity (ownerId, alias, external CRM ids, status). Money lives on the
- * linked account(s); this row is the association + lifecycle (PENDING → ACTIVE, etc.).
+ * <b>1 {@code ownerId} (CRM cust) → 1 Wallet</b>. Money lives on linked accounts;
+ * this row is identity + lifecycle + default settlement currency.
  * <p>
- * {@link #settlementCurrency} is the wallet default settlement currency only — not part of
- * wallet identity. Uniqueness is on {@code owner_id} (1 CUST : 1 Wallet).
+ * Removed vs legacy: alias, hash, nickname, associatedIdentifier, associatedFrom,
+ * association type, walletType. Public API still exposes {@code associatedIdentifier}
+ * as an alias of {@code ownerId}.
  */
 @Entity
 @Table(
     name = "wallet",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uniqueWalletKey", columnNames = {
-            "account_id", "associated_identifier", "type"
-        }),
-        @UniqueConstraint(name = "uniqueAlias", columnNames = "alias"),
         @UniqueConstraint(name = "uk_wallet_owner", columnNames = "owner_id")
     }
 )
@@ -39,54 +40,29 @@ public class Wallet extends AuditEntityWithIsActive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Primary account id under this wallet. */
     @Column(nullable = false)
     private Long accountId;
 
+    /**
+     * Customer / CRM id — unique. Same value as API {@code associatedIdentifier}.
+     */
     @Column(nullable = false, length = 100)
-    private String alias;
+    private String ownerId;
 
+    /** Optional display name. */
     @Column(length = 200)
-    private String nickname;
-
-    @Column(length = 100)
-    private String associatedIdentifier;
-
-    @Column(length = 50)
-    private String associatedFrom;
-
-    @Column(length = 66)
-    private String hash;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private WalletAssociationType type;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private WalletType walletType;
+    private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private WalletStatus status;
 
-    // --- engine extensions ---
-    /** Customer / CRM id. Unique — one wallet per customer. */
-    @Column(nullable = false, length = 100)
-    private String ownerId;
-
     /**
-     * Default settlement currency for this wallet.
-     * Primary account is opened in this currency at onboard; not a uniqueness key.
+     * Default settlement currency. Primary account is opened in this currency at onboard.
+     * Not a uniqueness key.
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "settlement_currency", nullable = false, length = 16)
+    @Column(nullable = false, length = 16)
     private Currency settlementCurrency;
-
-    /** PG-style public hash: random SHA-256 hex (32 chars) if not set. */
-    @PrePersist
-    private void generateHash() {
-        if (hash == null || hash.isBlank()) {
-            hash = RandomHashGenerator.generateRandomHash(32);
-        }
-    }
 }

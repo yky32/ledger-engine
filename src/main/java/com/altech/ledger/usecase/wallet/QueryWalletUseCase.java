@@ -84,15 +84,6 @@ public class QueryWalletUseCase {
             throw new BizException(WalletErrorResponse.WAL0400, "associatedIdentifier is required");
         }
         String id = associatedIdentifier.trim();
-
-        List<Wallet> byAssoc = walletRepository.findByAssociatedIdentifier(id);
-        if (byAssoc.size() == 1) {
-            return byAssoc.get(0);
-        }
-        if (byAssoc.size() > 1) {
-            return byAssoc.stream().min(Comparator.comparing(Wallet::getId)).orElseThrow();
-        }
-
         return walletRepository.findByOwnerId(id)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
                 "Wallet not found for associatedIdentifier: " + id));
@@ -130,8 +121,8 @@ public class QueryWalletUseCase {
                 || CoaCodes.isPrimarySub(a.getSubAccount());
             String refCode = isPrimary ? null
                 : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : _stripLeadingZeros(a.getSubAccount()));
-            String name = isPrimary && wallet.getNickname() != null
-                ? wallet.getNickname()
+            String name = isPrimary && wallet.getName() != null
+                ? wallet.getName()
                 : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : a.getSubAccount());
             accounts.add(DtoWrapper.getWalletAccountResponseDto(a, refCode, isPrimary, name));
         }

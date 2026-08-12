@@ -9,9 +9,7 @@ import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
 import com.altech.ledger.entity.dto.response.BatchCreateWalletOnboardResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
-import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
-import com.altech.ledger.entity.enu.WalletType;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.AccountErrorResponse;
@@ -172,18 +170,9 @@ public class CreateWalletOnboardingUseCase {
             throw new BizException(AccountErrorResponse.ACC0400, "Primary account is required");
         }
 
-        String alias = _uniqueAlias(associatedIdentifier);
-        String associatedFrom = request.associatedFrom() == null || request.associatedFrom().isBlank()
-            ? "CRM" : request.associatedFrom();
-
         Wallet wallet = new Wallet();
         wallet.setAccountId(primary.getId());
-        wallet.setAlias(alias);
-        wallet.setNickname(displayName);
-        wallet.setAssociatedIdentifier(associatedIdentifier);
-        wallet.setAssociatedFrom(associatedFrom);
-        wallet.setType(WalletAssociationType.CUSTODIAN);
-        wallet.setWalletType(WalletType.INDIVIDUAL);
+        wallet.setName(displayName);
         wallet.setStatus(WalletStatus.ACTIVE);
         wallet.setOwnerId(associatedIdentifier);
         wallet.setSettlementCurrency(settlement);
@@ -255,13 +244,5 @@ public class CreateWalletOnboardingUseCase {
             } while (used.contains(candidate));
         }
         return candidate;
-    }
-
-    private String _uniqueAlias(String associatedIdentifier) {
-        String base = associatedIdentifier;
-        if (!walletRepository.existsByAlias(base)) {
-            return base;
-        }
-        return base + "-" + System.currentTimeMillis() % 100_000;
     }
 }

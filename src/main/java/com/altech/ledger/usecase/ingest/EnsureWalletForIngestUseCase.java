@@ -102,15 +102,7 @@ public class EnsureWalletForIngestUseCase {
     }
 
     private Optional<Wallet> _find(String associatedIdentifier) {
-        Optional<Wallet> byOwner = walletRepository.findByOwnerId(associatedIdentifier);
-        if (byOwner.isPresent()) {
-            return byOwner;
-        }
-        List<Wallet> byAssoc = walletRepository.findByAssociatedIdentifier(associatedIdentifier);
-        if (!byAssoc.isEmpty()) {
-            return Optional.of(byAssoc.get(0));
-        }
-        return Optional.empty();
+        return walletRepository.findByOwnerId(associatedIdentifier);
     }
 
     private void _ensureCurrencyAccount(Wallet wallet, Currency currency) {
