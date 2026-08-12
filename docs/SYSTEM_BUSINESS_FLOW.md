@@ -18,7 +18,7 @@ Ledger Engine is the **system of record for balances and loyalty points** for a 
 | Post **double-entry** loyalty legs (audit-grade) | Multi-tenant SaaS billing |
 | Hold / release spendable points | Tier ranking / complex promotions engine |
 
-**Identity model:** one external customer id (`associatedIdentifier`, e.g. CRM `01A########`) → **exactly one Wallet**.
+**Identity model:** one external customer id (`ownerId`, e.g. CRM `01A########`) → **exactly one Wallet**.
 
 ```text
 CRM Customer id

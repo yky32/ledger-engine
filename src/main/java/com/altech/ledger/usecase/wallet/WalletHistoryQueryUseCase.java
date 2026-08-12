@@ -39,7 +39,7 @@ public class WalletHistoryQueryUseCase {
 
     @Transactional(readOnly = true)
     public Page<GetLedgerMovementResponseDto> history(
-        String associatedIdentifier,
+        String ownerId,
         Pageable pageable,
         String orderType,
         String currency,
@@ -47,7 +47,7 @@ public class WalletHistoryQueryUseCase {
         String startDt,
         String endDt
     ) {
-        Wallet w = _wallet(associatedIdentifier);
+        Wallet w = _wallet(ownerId);
         OrderType ot = null;
         if (orderType != null && !orderType.isBlank()) {
             ot = OrderType.valueOf(orderType.trim().toUpperCase(Locale.ROOT));
@@ -73,8 +73,8 @@ public class WalletHistoryQueryUseCase {
     }
 
     @Transactional(readOnly = true)
-    public GetAsOfBalanceResponseDto asOf(String associatedIdentifier, Instant asOf, String currencyFilter) {
-        Wallet w = _wallet(associatedIdentifier);
+    public GetAsOfBalanceResponseDto asOf(String ownerId, Instant asOf, String currencyFilter) {
+        Wallet w = _wallet(ownerId);
         Instant point = asOf == null ? Instant.now() : asOf;
         Account primary = accountRepository.findById(w.getAccountId())
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404, "primary account missing"));
@@ -110,17 +110,16 @@ public class WalletHistoryQueryUseCase {
                 .build());
         }
         return GetAsOfBalanceResponseDto.builder()
-            .associatedIdentifier(associatedIdentifier)
+            .ownerId(ownerId)
             .walletId(w.getId())
             .asOf(point)
             .accounts(rows)
             .build();
     }
 
-    private Wallet _wallet(String associatedIdentifier) {
-        String id = associatedIdentifier == null ? "" : associatedIdentifier.trim();
+    private Wallet _wallet(String ownerId) {
+        String id = ownerId == null ? "" : ownerId.trim();
         return walletRepository.findByOwnerId(id)
-            .or(() -> walletRepository.findByAssociatedIdentifier(id).stream().findFirst())
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404, "Wallet not found: " + id));
     }
 }

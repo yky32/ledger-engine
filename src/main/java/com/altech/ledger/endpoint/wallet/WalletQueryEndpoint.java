@@ -12,10 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Wallet <b>Query (R)</b> API.
- * <p>
- * Client key = {@code associatedIdentifier} (CUST_ID from create).<br>
- * Response = <b>Wallet → accounts[]</b>; optional {@code currencies} filters account rows.
+ * Wallet Query API — all lookups by {@code ownerId}.
  */
 @RestController
 @RequestMapping("/wallets")
@@ -24,34 +21,26 @@ public class WalletQueryEndpoint {
     private final QueryWalletUseCase queryWalletUseCase;
 
     /**
-     * Query wallet + accounts by CUST_ID.
-     * <pre>
-     * GET /wallets/01A12345678
-     * GET /wallets/01A12345678?currencies=HKD,LP
-     * </pre>
-     *
-     * @param currencies optional CSV filter, e.g. {@code HKD,LP} — only matching rows in {@code accounts[]}
+     * GET /wallets/{ownerId}
+     * GET /wallets/{ownerId}?currencies=HKD,LP
      */
-    @GetMapping("/{associatedIdentifier}")
-    public Result<GetWalletOnboardResponseDto> getByAssociatedIdentifier(
-        @PathVariable String associatedIdentifier,
+    @GetMapping("/{ownerId}")
+    public Result<GetWalletOnboardResponseDto> getByOwnerId(
+        @PathVariable String ownerId,
         @RequestParam(required = false) String currencies
     ) {
-        return R.success(queryWalletUseCase.byAssociatedIdentifier(associatedIdentifier, currencies));
+        return R.success(queryWalletUseCase.byOwnerId(ownerId, currencies));
     }
 
     /**
-     * Same lookup via query params.
-     * <pre>
-     * GET /wallets?associatedIdentifier=01A12345678
-     * GET /wallets?associatedIdentifier=01A12345678&amp;currencies=LP
-     * </pre>
+     * GET /wallets?ownerId=01A12345678
+     * GET /wallets?ownerId=01A12345678&amp;currencies=LP
      */
-    @GetMapping(params = "associatedIdentifier")
-    public Result<GetWalletOnboardResponseDto> getByAssociatedIdentifierParam(
-        @RequestParam String associatedIdentifier,
+    @GetMapping(params = "ownerId")
+    public Result<GetWalletOnboardResponseDto> getByOwnerIdParam(
+        @RequestParam String ownerId,
         @RequestParam(required = false) String currencies
     ) {
-        return R.success(queryWalletUseCase.byAssociatedIdentifier(associatedIdentifier, currencies));
+        return R.success(queryWalletUseCase.byOwnerId(ownerId, currencies));
     }
 }

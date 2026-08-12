@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * Bulk onboarding result: counts plus created wallets and already-existing user ids.
- */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,6 +18,6 @@ public class BatchCreateWalletOnboardResponseDto {
     private int created;
     private int alreadyExists;
     private List<GetWalletOnboardResponseDto> createdWallets;
-    /** Customer associatedIdentifiers that already had a wallet for the requested currency. */
-    private List<String> alreadyExistingAssociatedIdentifiers;
+    /** ownerIds that already had a wallet. */
+    private List<String> alreadyExistingOwnerIds;
 }

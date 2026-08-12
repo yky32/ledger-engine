@@ -42,15 +42,16 @@ public class QueryWalletBalanceUseCase {
 
     @Transactional(readOnly = true)
     public GetLedgerWalletResponseDto byAlias(String alias, String fxTarget) {
-        Wallet wallet = walletRepository.findByAlias(alias)
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found alias: " + alias));
+        // alias retired — treat as ownerId
+        Wallet wallet = walletRepository.findByOwnerId(alias)
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + alias));
         return _withFx(wallet, fxTarget);
     }
 
     @Transactional(readOnly = true)
-    public GetLedgerWalletResponseDto byAssociatedIdentifier(String id, String type) {
-        Wallet wallet = walletRepository.findByAssociatedIdentifierAndAssociatedFrom(id, type)
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found ext: " + type + "/" + id));
+    public GetLedgerWalletResponseDto byAssociatedIdentifier(String id, String typeIgnored) {
+        Wallet wallet = walletRepository.findByOwnerId(id)
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Wallet not found: " + id));
         return _withFx(wallet, null);
     }
 
@@ -120,9 +121,9 @@ public class QueryWalletBalanceUseCase {
                 a.ledgerBalance(), a.availableBalance(), a.status(), a.createDt(), a.updateDt());
         }).toList();
         return new GetLedgerWalletResponseDto(
-            base.id(), base.alias(), base.accountId(), base.nickname(), base.associatedIdentifier(),
-            base.associatedFrom(), base.type(), base.walletType(), base.status(), base.ownerId(),
-            base.settlementCurrency(), converted, base.createDt(), base.updateDt());
+            base.id(), base.accountId(), base.ownerId(), base.name(),
+            base.type(), base.walletType(), base.status(), base.settlementCurrency(),
+            converted, base.createDt(), base.updateDt());
     }
 
     private BigDecimal _convert(BigDecimal amount, Currency from, Currency to) {

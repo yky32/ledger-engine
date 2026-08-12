@@ -33,11 +33,17 @@ public final class DtoMapper {
 
     public static GetLedgerWalletResponseDto toWallet(Wallet w, List<Account> accounts) {
         return new GetLedgerWalletResponseDto(
-            w.getId(), w.getAlias(), w.getAccountId(), w.getNickname(),
-            w.getAssociatedIdentifier(), w.getAssociatedFrom(), w.getType(), w.getWalletType(),
-            w.getStatus(), w.getOwnerId(), w.getSettlementCurrency(),
+            w.getId(),
+            w.getAccountId(),
+            w.getOwnerId(),
+            w.getName(),
+            w.getType(),
+            w.getWalletType(),
+            w.getStatus(),
+            w.getSettlementCurrency(),
             accounts.stream().map(DtoMapper::toAccount).toList(),
-            w.getCreateDt(), w.getUpdateDt());
+            w.getCreateDt(),
+            w.getUpdateDt());
     }
 
     public static GetLedgerMovementResponseDto toMovement(LedgerMovement m) {

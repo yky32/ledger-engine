@@ -133,7 +133,7 @@ public class ReplayFailedTransactionIngestUseCase {
                 log.warn("rawPayload parse failed id={} — rebuild from columns", row.getId());
             }
         }
-        if (row.getEventId() == null || row.getAssociatedIdentifier() == null
+        if (row.getEventId() == null || row.getOwnerId() == null
             || row.getEventType() == null || row.getAmount() == null || row.getCurrency() == null) {
             throw new BizException(MovementErrorResponse.MOV0400,
                 "Cannot rebuild event for failed ingest id=" + row.getId());
@@ -141,7 +141,7 @@ public class ReplayFailedTransactionIngestUseCase {
         Currency ccy = Currency.get(row.getCurrency());
         return new TransactionalEvent(
             row.getEventId(),
-            row.getAssociatedIdentifier(),
+            row.getOwnerId(),
             row.getEventType(),
             row.getAmount(),
             ccy,

@@ -14,10 +14,6 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/**
- * Persisted failed / skipped transactional ingest (eligibility gate, no wallet, errors).
- * Success path does not write here.
- */
 @Entity
 @Table(name = "failed_transaction_ingest")
 @Getter
@@ -33,7 +29,7 @@ public class FailedTransactionIngest extends AuditEntity {
     private String eventId;
 
     @Column(length = 100)
-    private String associatedIdentifier;
+    private String ownerId;
 
     @Column(length = 80)
     private String eventType;
@@ -46,14 +42,12 @@ public class FailedTransactionIngest extends AuditEntity {
 
     private Instant occurredAt;
 
-    /** Stable code: AMOUNT | CURRENCY | AGE | NO_RULE | NO_WALLET | DISABLED | ERROR | … */
     @Column(nullable = false, length = 40)
     private String failureCode;
 
     @Column(nullable = false, length = 500)
     private String reason;
 
-    /** OPEN | REVIEWED | REPLAYED */
     @Column(nullable = false, length = 20)
     private String status = "OPEN";
 

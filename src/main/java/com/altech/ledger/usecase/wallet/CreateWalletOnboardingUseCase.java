@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Wallet create: <b>1 CUST ({@code associatedIdentifier}) → 1 Wallet</b>.
+ * Wallet create: <b>1 ownerId → 1 Wallet</b>.
  * <p>
  * Opens a primary account in {@code settlementCurrency}, plus optional extra accounts
  * (e.g. LP) under the same wallet main COA — multi-currency books, single wallet identity.
@@ -49,10 +49,10 @@ public class CreateWalletOnboardingUseCase {
 
     @Transactional
     public GetWalletOnboardResponseDto execute(CreateWalletOnboardRequestDto request) {
-        String associatedIdentifier = request.associatedIdentifier();
-        if (_exists(associatedIdentifier)) {
+        String ownerId = request.ownerId();
+        if (_exists(ownerId)) {
             throw new BizException(WalletErrorResponse.WAL0409,
-                "Wallet already onboarded for customer: " + associatedIdentifier);
+                "Wallet already onboarded for customer: " + ownerId);
         }
         return _createWallet(request);
     }
@@ -63,13 +63,13 @@ public class CreateWalletOnboardingUseCase {
         int created = 0;
         int alreadyExists = 0;
         List<GetWalletOnboardResponseDto> createdWallets = new ArrayList<>();
-        List<String> existingAssociatedIdentifiers = new ArrayList<>();
+        List<String> existingOwnerIds = new ArrayList<>();
 
         for (CreateWalletOnboardRequestDto item : request.wallets()) {
-            String associatedIdentifier = item.associatedIdentifier();
-            if (_exists(associatedIdentifier)) {
+            String ownerId = item.ownerId();
+            if (_exists(ownerId)) {
                 alreadyExists++;
-                existingAssociatedIdentifiers.add(associatedIdentifier);
+                existingOwnerIds.add(ownerId);
                 continue;
             }
             try {
@@ -80,7 +80,7 @@ public class CreateWalletOnboardingUseCase {
                 if (WalletErrorResponse.WAL0409.getCode().equals(code)
                     || AccountErrorResponse.ACC0409.getCode().equals(code)) {
                     alreadyExists++;
-                    existingAssociatedIdentifiers.add(associatedIdentifier);
+                    existingOwnerIds.add(ownerId);
                 } else {
                     throw ex;
                 }
@@ -92,25 +92,25 @@ public class CreateWalletOnboardingUseCase {
             .created(created)
             .alreadyExists(alreadyExists)
             .createdWallets(createdWallets)
-            .alreadyExistingAssociatedIdentifiers(existingAssociatedIdentifiers)
+            .alreadyExistingOwnerIds(existingOwnerIds)
             .build();
     }
 
-    private boolean _exists(String associatedIdentifier) {
-        return walletRepository.existsByOwnerId(associatedIdentifier);
+    private boolean _exists(String ownerId) {
+        return walletRepository.existsByOwnerId(ownerId);
     }
 
     private GetWalletOnboardResponseDto _createWallet(CreateWalletOnboardRequestDto request) {
-        String associatedIdentifier = request.associatedIdentifier();
+        String ownerId = request.ownerId();
         Currency settlement = commonUseCase.requireCurrency(request.settlementCurrency());
 
-        if (walletRepository.existsByOwnerId(associatedIdentifier)) {
+        if (walletRepository.existsByOwnerId(ownerId)) {
             throw new BizException(WalletErrorResponse.WAL0409,
-                "Wallet already onboarded for customer: " + associatedIdentifier);
+                "Wallet already onboarded for customer: " + ownerId);
         }
 
         String displayName = request.name() == null || request.name().isBlank()
-            ? "Wallet " + associatedIdentifier
+            ? "Wallet " + ownerId
             : request.name();
 
         List<AccountOpenSpecDto> specs = _normalizeAccounts(request.accounts(), settlement);
@@ -172,20 +172,13 @@ public class CreateWalletOnboardingUseCase {
             throw new BizException(AccountErrorResponse.ACC0400, "Primary account is required");
         }
 
-        String alias = _uniqueAlias(associatedIdentifier);
-        String associatedFrom = request.associatedFrom() == null || request.associatedFrom().isBlank()
-            ? "CRM" : request.associatedFrom();
-
         Wallet wallet = new Wallet();
         wallet.setAccountId(primary.getId());
-        wallet.setAlias(alias);
-        wallet.setNickname(displayName);
-        wallet.setAssociatedIdentifier(associatedIdentifier);
-        wallet.setAssociatedFrom(associatedFrom);
+        wallet.setName(displayName);
         wallet.setType(WalletAssociationType.CUSTODIAN);
         wallet.setWalletType(WalletType.INDIVIDUAL);
         wallet.setStatus(WalletStatus.ACTIVE);
-        wallet.setOwnerId(associatedIdentifier);
+        wallet.setOwnerId(ownerId);
         wallet.setSettlementCurrency(settlement);
         wallet = walletRepository.save(wallet);
 
@@ -255,13 +248,5 @@ public class CreateWalletOnboardingUseCase {
             } while (used.contains(candidate));
         }
         return candidate;
-    }
-
-    private String _uniqueAlias(String associatedIdentifier) {
-        String base = associatedIdentifier;
-        if (!walletRepository.existsByAlias(base)) {
-            return base;
-        }
-        return base + "-" + System.currentTimeMillis() % 100_000;
     }
 }

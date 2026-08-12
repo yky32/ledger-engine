@@ -83,7 +83,7 @@ public class IngestTransactionUseCase {
 
         TransactionRuleEngine.RuleDecision rule = outcome.decision().orElseThrow();
         Currency pointCurrency = Currency.get(rule.pointCurrency());
-        String custId = event.associatedIdentifier();
+        String custId = event.ownerId();
 
         EnsureWalletForIngestUseCase.ResolveResult resolved;
         try {
@@ -202,7 +202,7 @@ public class IngestTransactionUseCase {
         try {
             FailedTransactionIngest row = new FailedTransactionIngest();
             row.setEventId(event.eventId());
-            row.setAssociatedIdentifier(event.associatedIdentifier());
+            row.setOwnerId(event.ownerId());
             row.setEventType(event.eventType());
             row.setAmount(event.amount());
             row.setCurrency(event.currency() == null ? null : event.currency().getIsoCode());

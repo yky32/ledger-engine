@@ -25,10 +25,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Wallet read API for adopted clients.
- * <p>
- * Lookup key = {@code associatedIdentifier} (CUST_ID passed at create).<br>
- * Response = <b>Wallet → accounts[]</b>; optional currencies filter limits account rows.
+ * Wallet read API — lookup key = {@code ownerId}.
  */
 @Component
 @RequiredArgsConstructor
@@ -38,69 +35,49 @@ public class QueryWalletUseCase {
     private final CommonUseCase commonUseCase;
 
     @Transactional(readOnly = true)
-    public GetWalletOnboardResponseDto byAssociatedIdentifier(String associatedIdentifier) {
-        return byAssociatedIdentifier(associatedIdentifier, null);
+    public GetWalletOnboardResponseDto byOwnerId(String ownerId) {
+        return byOwnerId(ownerId, null);
     }
 
     /**
-     * @param currenciesCsv optional CSV of currency codes, e.g. {@code "HKD,LP"} or {@code "LP"}.
-     *                      When set, {@code accounts[]} only includes those currencies.
-     *                      Blank / null = all accounts under the wallet.
+     * @param currenciesCsv optional CSV e.g. {@code "HKD,LP"} — filters accounts[].
      */
     @Transactional(readOnly = true)
-    public GetWalletOnboardResponseDto byAssociatedIdentifier(String associatedIdentifier, String currenciesCsv) {
-        Wallet wallet = _requireByAssociatedIdentifier(associatedIdentifier);
+    public GetWalletOnboardResponseDto byOwnerId(String ownerId, String currenciesCsv) {
+        Wallet wallet = _requireByOwnerId(ownerId);
         Set<Currency> filter = _parseCurrenciesFilter(currenciesCsv);
         return _toWalletWithAccounts(wallet, filter);
     }
 
-    /** @deprecated use {@link #byAssociatedIdentifier(String)} */
-    @Deprecated
     @Transactional(readOnly = true)
     public GetWalletOnboardResponseDto one(String ownerId) {
-        return byAssociatedIdentifier(ownerId);
+        return byOwnerId(ownerId);
     }
 
-    /** @deprecated use {@link #byAssociatedIdentifier(String, String)} */
-    @Deprecated
     @Transactional(readOnly = true)
     public GetWalletOnboardResponseDto one(String ownerId, String currency) {
-        return byAssociatedIdentifier(ownerId, currency);
+        return byOwnerId(ownerId, currency);
     }
 
-    /** @deprecated clients should use single-object GET by associatedIdentifier */
-    @Deprecated
     @Transactional(readOnly = true)
     public List<GetWalletOnboardResponseDto> list(String ownerId) {
         try {
-            return List.of(byAssociatedIdentifier(ownerId));
+            return List.of(byOwnerId(ownerId));
         } catch (BizException ex) {
             return List.of();
         }
     }
 
-    private Wallet _requireByAssociatedIdentifier(String associatedIdentifier) {
-        if (associatedIdentifier == null || associatedIdentifier.isBlank()) {
-            throw new BizException(WalletErrorResponse.WAL0400, "associatedIdentifier is required");
+    private Wallet _requireByOwnerId(String ownerId) {
+        if (ownerId == null || ownerId.isBlank()) {
+            throw new BizException(WalletErrorResponse.WAL0400, "ownerId is required");
         }
-        String id = associatedIdentifier.trim();
-
-        List<Wallet> byAssoc = walletRepository.findByAssociatedIdentifier(id);
-        if (byAssoc.size() == 1) {
-            return byAssoc.get(0);
-        }
-        if (byAssoc.size() > 1) {
-            return byAssoc.stream().min(Comparator.comparing(Wallet::getId)).orElseThrow();
-        }
-
+        String id = ownerId.trim();
         return walletRepository.findByOwnerId(id)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
-                "Wallet not found for associatedIdentifier: " + id));
+                "Wallet not found for ownerId: " + id));
     }
 
-    /**
-     * @param currencyFilter empty = no filter (all accounts); otherwise keep only matching ccy
-     */
     private GetWalletOnboardResponseDto _toWalletWithAccounts(Wallet wallet, Set<Currency> currencyFilter) {
         Account primary = commonUseCase.requireAccount(wallet.getAccountId());
         List<Account> set = primary.getMainAccount() == null
@@ -130,51 +107,39 @@ public class QueryWalletUseCase {
                 || CoaCodes.isPrimarySub(a.getSubAccount());
             String refCode = isPrimary ? null
                 : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : _stripLeadingZeros(a.getSubAccount()));
-            String name = isPrimary && wallet.getNickname() != null
-                ? wallet.getNickname()
+            String name = isPrimary && wallet.getName() != null
+                ? wallet.getName()
                 : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : a.getSubAccount());
             accounts.add(DtoWrapper.getWalletAccountResponseDto(a, refCode, isPrimary, name));
         }
 
-        // Shortcuts align with filtered set when filter is on
-        Account shortcutPrimary = primary;
-        if (!currencyFilter.isEmpty()) {
-            if (primary.getCurrency() != null && currencyFilter.contains(primary.getCurrency())
-                && ordered.stream().anyMatch(a -> a.getId().equals(primary.getId()))) {
-                shortcutPrimary = primary;
-            } else if (!ordered.isEmpty()) {
-                shortcutPrimary = ordered.get(0);
-            } else {
-                GetWalletOnboardResponseDto emptyBooks = DtoWrapper.getWalletOnboardResponseDto(
-                    wallet, primary, List.of());
-                emptyBooks.setAccount(null);
-                emptyBooks.setBalance(null);
-                return emptyBooks;
-            }
-        }
-
-        return DtoWrapper.getWalletOnboardResponseDto(wallet, shortcutPrimary, accounts);
+        return DtoWrapper.getWalletOnboardResponseDto(wallet, primary, accounts);
     }
 
-    /**
-     * Parse {@code HKD,LP} / {@code HKD, LP} / single {@code LP}. Invalid codes → BizException.
-     */
     private Set<Currency> _parseCurrenciesFilter(String currenciesCsv) {
         if (currenciesCsv == null || currenciesCsv.isBlank()) {
             return Set.of();
         }
-        LinkedHashSet<Currency> out = new LinkedHashSet<>();
-        Arrays.stream(currenciesCsv.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .forEach(code -> out.add(commonUseCase.requireCurrency(code.toUpperCase(Locale.ROOT))));
+        Set<Currency> out = new LinkedHashSet<>();
+        for (String part : currenciesCsv.split(",")) {
+            String p = part.trim();
+            if (p.isEmpty()) {
+                continue;
+            }
+            try {
+                out.add(Currency.get(p.toUpperCase(Locale.ROOT)));
+            } catch (Exception ignored) {
+                // skip unknown
+            }
+        }
         return out;
     }
 
     private static String _stripLeadingZeros(String sub) {
-        if (sub == null || sub.isBlank()) {
+        if (sub == null) {
             return null;
         }
-        return sub.replaceFirst("^0+(?!$)", "");
+        String s = sub.replaceFirst("^0+(?!$)", "");
+        return s.isEmpty() ? "0" : s;
     }
 }

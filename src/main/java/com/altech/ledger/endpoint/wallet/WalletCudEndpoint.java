@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Wallet <b>CUD</b> API (create / batch create; update-delete when added).
  * <p>
- * Phase-1 onboard: 1 CUST ({@code associatedIdentifier}) → 1 Wallet + accounts.
+ * Phase-1 onboard: 1 CUST ({@code ownerId}) → 1 Wallet + accounts.
  * Read path lives in {@link WalletQueryEndpoint}.
  */
 @RestController

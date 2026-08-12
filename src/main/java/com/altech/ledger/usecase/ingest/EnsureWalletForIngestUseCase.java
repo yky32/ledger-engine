@@ -37,8 +37,8 @@ public class EnsureWalletForIngestUseCase {
     public record ResolveResult(Wallet wallet, boolean provisioned) {}
 
     @Transactional
-    public ResolveResult resolveOrProvision(String associatedIdentifier, Currency pointCurrency) {
-        Optional<Wallet> existing = _find(associatedIdentifier);
+    public ResolveResult resolveOrProvision(String ownerId, Currency pointCurrency) {
+        Optional<Wallet> existing = _find(ownerId);
         if (existing.isPresent()) {
             Wallet w = existing.get();
             _ensureCurrencyAccount(w, pointCurrency);
@@ -70,47 +70,36 @@ public class EnsureWalletForIngestUseCase {
                     ensure));
             }
             String name = (cfg.getAutoWalletNamePrefix() == null ? "Auto " : cfg.getAutoWalletNamePrefix())
-                + associatedIdentifier;
-            String from = cfg.getAutoWalletAssociatedFrom() == null || cfg.getAutoWalletAssociatedFrom().isBlank()
-                ? "CRM" : cfg.getAutoWalletAssociatedFrom();
+                + ownerId;
 
             createWalletOnboardingUseCase.execute(new CreateWalletOnboardRequestDto(
-                associatedIdentifier,
+                ownerId,
                 settlement,
                 name,
-                from,
                 extras
             ));
             provisioned = true;
-            log.info("auto-created wallet for associatedIdentifier={} settlement={} ensure={}",
-                associatedIdentifier, settlement, ensure);
+            log.info("auto-created wallet for ownerId={} settlement={} ensure={}",
+                ownerId, settlement, ensure);
         } catch (BizException ex) {
             String code = ex.getResponse() != null ? ex.getResponse().getCode() : null;
             if (WalletErrorResponse.WAL0409.getCode().equals(code)
                 || AccountErrorResponse.ACC0409.getCode().equals(code)) {
-                log.info("auto-create race, wallet already exists for {}", associatedIdentifier);
+                log.info("auto-create race, wallet already exists for {}", ownerId);
             } else {
                 throw ex;
             }
         }
 
-        Wallet wallet = _find(associatedIdentifier)
+        Wallet wallet = _find(ownerId)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
-                "Wallet not found after auto-create: " + associatedIdentifier));
+                "Wallet not found after auto-create: " + ownerId));
         _ensureCurrencyAccount(wallet, pointCurrency != null ? pointCurrency : ensure);
         return new ResolveResult(wallet, provisioned);
     }
 
-    private Optional<Wallet> _find(String associatedIdentifier) {
-        Optional<Wallet> byOwner = walletRepository.findByOwnerId(associatedIdentifier);
-        if (byOwner.isPresent()) {
-            return byOwner;
-        }
-        List<Wallet> byAssoc = walletRepository.findByAssociatedIdentifier(associatedIdentifier);
-        if (!byAssoc.isEmpty()) {
-            return Optional.of(byAssoc.get(0));
-        }
-        return Optional.empty();
+    private Optional<Wallet> _find(String ownerId) {
+        return walletRepository.findByOwnerId(ownerId);
     }
 
     private void _ensureCurrencyAccount(Wallet wallet, Currency currency) {

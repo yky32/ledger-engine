@@ -22,8 +22,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Movement history filters + balance as-of (audit).
- * Pagination matches tgt.profile: 1-based page + {@code startDt}/{@code endDt} strings.
+ * Movement history + balance as-of. Path key = {@code ownerId}.
+ * Pagination: tgt.profile 1-based page + startDt/endDt.
  */
 @RestController
 @RequestMapping("/wallets")
@@ -32,11 +32,11 @@ public class WalletHistoryEndpoint {
     private final WalletHistoryQueryUseCase walletHistoryQueryUseCase;
 
     /**
-     * GET /wallets/{associatedIdentifier}/movements?orderType=&currency=&status=&startDt=&endDt=&page=&size=
+     * GET /wallets/{ownerId}/movements?...
      */
-    @GetMapping("/{associatedIdentifier}/movements")
+    @GetMapping("/{ownerId}/movements")
     public Result<List<GetLedgerMovementResponseDto>> movements(
-        @PathVariable String associatedIdentifier,
+        @PathVariable String ownerId,
         @PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "createDt", direction = Sort.Direction.DESC)
         Pageable pageable,
         @RequestParam(required = false) String orderType,
@@ -46,20 +46,20 @@ public class WalletHistoryEndpoint {
         @RequestParam(required = false) String endDt
     ) {
         Page<GetLedgerMovementResponseDto> page = walletHistoryQueryUseCase.history(
-            associatedIdentifier, pageable, orderType, currency, status, startDt, endDt);
+            ownerId, pageable, orderType, currency, status, startDt, endDt);
         return R.success(page.getContent(), Pagination.create(page));
     }
 
     /**
-     * GET /wallets/{associatedIdentifier}/balances/as-of?at=ISO-8601&currency=LP
+     * GET /wallets/{ownerId}/balances/as-of?at=&currency=
      */
-    @GetMapping("/{associatedIdentifier}/balances/as-of")
+    @GetMapping("/{ownerId}/balances/as-of")
     public Result<GetAsOfBalanceResponseDto> asOf(
-        @PathVariable String associatedIdentifier,
+        @PathVariable String ownerId,
         @RequestParam(required = false, name = "at")
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant at,
         @RequestParam(required = false) String currency
     ) {
-        return R.success(walletHistoryQueryUseCase.asOf(associatedIdentifier, at, currency));
+        return R.success(walletHistoryQueryUseCase.asOf(ownerId, at, currency));
     }
 }

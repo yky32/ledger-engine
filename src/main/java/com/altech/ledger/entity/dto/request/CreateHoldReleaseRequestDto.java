@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 
 /** HOLD or RELEASE available balance (ledger unchanged). */
 public record CreateHoldReleaseRequestDto(
-    @NotBlank String associatedIdentifier,
+    @NotBlank String ownerId,
     @NotNull Currency currency,
     @NotNull @Positive BigDecimal amount,
     String movementKey,

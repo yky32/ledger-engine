@@ -40,11 +40,9 @@ public class LedgerWalletEndpoint {
     public Result<GetLedgerWalletResponseDto> createFull(
         @RequestParam String ownerId,
         @RequestParam String currency,
-        @RequestParam(required = false) String associatedIdentifier,
-        @RequestParam(required = false) String associatedFrom,
-        @RequestParam(required = false) List<String> extraCurrencies
+                        @RequestParam(required = false) List<String> extraCurrencies
     ) {
-        return R.success(createWalletUseCase.executeFull(ownerId, currency, extraCurrencies, associatedIdentifier, associatedFrom));
+        return R.success(createWalletUseCase.executeFull(ownerId, currency, extraCurrencies));
     }
 
     @PostMapping("/{id}/activations")

@@ -32,7 +32,7 @@ class FailedTransactionIngestQueryIntegrationTest {
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","settlementCurrency":"LP","name":"x"}
+                    {"ownerId":"%s","settlementCurrency":"LP","name":"x"}
                     """.formatted(cust)))
             .andExpect(status().isOk());
 
@@ -46,7 +46,7 @@ class FailedTransactionIngestQueryIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("SKIPPED"));
 
         mockMvc.perform(get("/integrations/failed-transactions")
-                .param("associatedIdentifier", cust)
+                .param("ownerId", cust)
                 .param("failureCode", "CURRENCY")
                 .param("limit", "20"))
             .andExpect(status().isOk())

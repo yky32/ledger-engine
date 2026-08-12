@@ -29,10 +29,9 @@ public class HoldReleaseUseCase {
     }
 
     private GetLedgerMovementResponseDto _run(CreateHoldReleaseRequestDto req, OrderType type) {
-        Wallet w = walletRepository.findByOwnerId(req.associatedIdentifier().trim())
-            .or(() -> walletRepository.findByAssociatedIdentifier(req.associatedIdentifier().trim()).stream().findFirst())
+        Wallet w = walletRepository.findByOwnerId(req.ownerId().trim())
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
-                "Wallet not found: " + req.associatedIdentifier()));
+                "Wallet not found: " + req.ownerId()));
         String desc = req.description() != null ? req.description() : type.name() + " " + req.currency();
         return ledgerMovementShooter.doHoldRelease(
             w.getId(), type, req.amount(), req.currency(), req.movementKey(), desc);

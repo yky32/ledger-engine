@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetAsOfBalanceResponseDto {
-    private String associatedIdentifier;
+    private String ownerId;
     private Long walletId;
     private Instant asOf;
     private List<AccountAsOf> accounts;
