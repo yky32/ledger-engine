@@ -196,6 +196,27 @@ Disable: `LEDGER_AUTO_CREATE_WALLET=false` → missing wallet becomes `NO_WALLET
 
 ---
 
+Formulas (runtime `digestion_rule.formula`):
+
+| formula | points |
+|---------|--------|
+| `RATE:0.01` | amount × 0.01 |
+| `MUL_ADD:0.01:5` | amount × 0.01 + 5 |
+| `FIXED:100` | 100 |
+| `AMOUNT` | amount |
+
+**Change rate without restart:**
+
+```bash
+curl -sS -X PUT 'http://localhost:8080/digestion-rules/{id}' \
+  -H 'Content-Type: application/json' \
+  -d '{"formula":"RATE:0.02"}'
+```
+
+Full API: [DIGESTION_RULES.md](./DIGESTION_RULES.md)
+
+---
+
 ## Config override (env / YAML)
 
 ```yaml
