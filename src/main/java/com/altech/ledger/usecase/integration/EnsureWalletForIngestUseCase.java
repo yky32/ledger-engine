@@ -5,7 +5,7 @@ import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.request.AccountOpenSpecDto;
 import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
-import com.altech.ledger.entity.po.integration.IntegrationConfig;
+import com.altech.ledger.entity.po.integration.IngestPolicy;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.AccountErrorResponse;
@@ -23,13 +23,13 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Resolve wallet for ingest: find existing or auto-create from DB {@link IntegrationConfig}.
+ * Resolve wallet for ingest: find existing or auto-create from DB {@link IngestPolicy}.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class EnsureWalletForIngestUseCase {
-    private final IntegrationConfigUseCase integrationConfigUseCase;
+    private final IngestPolicyUseCase ingestPolicyUseCase;
     private final WalletRepository walletRepository;
     private final AccountRepository accountRepository;
     private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
@@ -45,7 +45,7 @@ public class EnsureWalletForIngestUseCase {
             return new ResolveResult(w, false);
         }
 
-        IntegrationConfig cfg = integrationConfigUseCase.requireEffective();
+        IngestPolicy cfg = ingestPolicyUseCase.requireEffective();
         if (!Boolean.TRUE.equals(cfg.getIsAutoCreateWallet())) {
             return null;
         }

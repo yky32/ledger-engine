@@ -3,7 +3,7 @@ package com.altech.ledger.entity.dto.request;
 import jakarta.validation.constraints.Size;
 
 /** Partial update — null keeps existing. */
-public record UpdateIntegrationConfigRequestDto(
+public record UpdateIngestPolicyRequestDto(
     Boolean isEnabled,
     Boolean isAutoCreateWallet,
     @Size(max = 16) String autoWalletSettlementCurrency,

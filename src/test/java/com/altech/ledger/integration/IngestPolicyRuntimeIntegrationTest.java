@@ -1,7 +1,6 @@
 package com.altech.ledger.integration;
 
-import com.altech.ledger.repository.IntegrationConfigRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.altech.ledger.repository.IngestPolicyRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,30 +16,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class IntegrationConfigRuntimeIntegrationTest {
+class IngestPolicyRuntimeIntegrationTest {
     @Autowired MockMvc mockMvc;
-    @Autowired IntegrationConfigRepository integrationConfigRepository;
+    @Autowired IngestPolicyRepository ingestPolicyRepository;
 
     @Test
     void getCreatesDefaultAndPutUpdatesRuntime() throws Exception {
-        mockMvc.perform(get("/integrations/config"))
+        mockMvc.perform(get("/ingest-policy"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.isEnabled").value(true))
             .andExpect(jsonPath("$.data.isAutoCreateWallet").value(true))
             .andExpect(jsonPath("$.data.autoWalletSettlementCurrency").value("HKD"))
             .andExpect(jsonPath("$.data.autoWalletEnsureCurrency").value("LP"));
 
-        assertThat(integrationConfigRepository.count()).isGreaterThan(0);
+        assertThat(ingestPolicyRepository.count()).isGreaterThan(0);
 
-        mockMvc.perform(put("/integrations/config")
+        mockMvc.perform(put("/ingest-policy")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"isAutoCreateWallet\":false,\"autoWalletNamePrefix\":\"Lazy \"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.isAutoCreateWallet").value(false))
             .andExpect(jsonPath("$.data.autoWalletNamePrefix").value("Lazy "));
 
-        // restore for other tests in same JVM
-        mockMvc.perform(put("/integrations/config")
+        mockMvc.perform(put("/ingest-policy")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"isAutoCreateWallet\":true,\"isEnabled\":true,\"autoWalletNamePrefix\":\"Auto \"}"))
             .andExpect(status().isOk())
