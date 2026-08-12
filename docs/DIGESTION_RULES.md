@@ -50,7 +50,7 @@ curl -sS -X POST 'http://localhost:8080/digestion-rules' \
 curl -sS 'http://localhost:8080/digestion-rules'
 curl -sS 'http://localhost:8080/digestion-rules?enabledOnly=true'
 curl -sS 'http://localhost:8080/digestion-rules/{id}'
-curl -sS 'http://localhost:8080/digestion-rules/by-code/PURCHASE_DEFAULT'
+curl -sS 'http://localhost:8080/digestion-rules?code=PURCHASE_DEFAULT'
 
 curl -sS -X PUT 'http://localhost:8080/digestion-rules/{id}' \
   -H 'Content-Type: application/json' \

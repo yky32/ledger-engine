@@ -15,6 +15,9 @@ import java.util.List;
 
 /**
  * Digestion rules Query (R).
+ * <p>
+ * Filters via query params — no {@code /by-*} paths.
+ * {@code GET /digestion-rules?code=} returns one rule; without {@code code} returns a list.
  */
 @RestController
 @RequestMapping("/digestion-rules")
@@ -23,19 +26,18 @@ public class DigestionRuleQueryEndpoint {
     private final DigestionRuleUseCase digestionRuleUseCase;
 
     @GetMapping
-    public Result<List<GetDigestionRuleResponseDto>> list(
-        @RequestParam(required = false) Boolean enabledOnly
+    public Result<?> listOrByCode(
+        @RequestParam(required = false) Boolean enabledOnly,
+        @RequestParam(required = false) String code
     ) {
+        if (code != null && !code.isBlank()) {
+            return R.success(digestionRuleUseCase.getByCode(code.trim()));
+        }
         return R.success(digestionRuleUseCase.list(enabledOnly));
     }
 
     @GetMapping("/{id}")
     public Result<GetDigestionRuleResponseDto> one(@PathVariable Long id) {
         return R.success(digestionRuleUseCase.get(id));
-    }
-
-    @GetMapping("/by-code/{code}")
-    public Result<GetDigestionRuleResponseDto> byCode(@PathVariable String code) {
-        return R.success(digestionRuleUseCase.getByCode(code));
     }
 }

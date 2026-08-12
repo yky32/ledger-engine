@@ -115,7 +115,7 @@ class DigestionRuleRuntimeIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.isEnabled").value(false));
 
-        mockMvc.perform(get("/digestion-rules/by-code/" + code))
+        mockMvc.perform(get("/digestion-rules").param("code", code))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.isEnabled").value(false));
     }
