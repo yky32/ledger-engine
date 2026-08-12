@@ -1,16 +1,17 @@
 package com.altech.ledger.entity.po.integration;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
+import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 
@@ -19,10 +20,16 @@ import java.math.BigDecimal;
  * <p>
  * Editable via {@code /digestion-rules}; takes effect without restart.
  * YAML {@code ledger.integration.rules} seeds this table when empty.
+ * <p>
+ * <b>Storage shape (intentional denormalization):</b> one flat row per rule.
+ * Digestion is a small, hot-path catalog (filters + formula), not a general-purpose
+ * multi-table rules engine. Keeping eventType / currencies / formula on the row
+ * makes list/evaluate/CRUD simple and fast. Stable business key is {@link #code};
+ * PK is snowflake {@link #id}. If factors grow later, prefer a JSON bag column
+ * over EAV — not required for current scope.
  */
 @Entity
 @Table(
-    name = "digestion_rule",
     uniqueConstraints = {
         @UniqueConstraint(name = "uk_digestion_rule_code", columnNames = "code")
     }
@@ -33,7 +40,8 @@ import java.math.BigDecimal;
 public class DigestionRule extends AuditEntityWithIsActive {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GenericGenerator(name = "digestion_rule_id_generator", type = SnowflakeIdGenerator.class)
+    @GeneratedValue(generator = "digestion_rule_id_generator")
     private Long id;
 
     /** Stable business code, e.g. PURCHASE_DEFAULT. */
