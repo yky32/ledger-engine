@@ -2,7 +2,6 @@ package com.altech.ledger.usecase.integration;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
-import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.integration.IngestionResult;
 import com.altech.ledger.entity.dto.integration.LedgerLegDto;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
@@ -38,7 +37,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class IngestTransactionUseCase {
-    private final IntegrationProperties integrationProperties;
+    private final IntegrationConfigUseCase integrationConfigUseCase;
     private final TransactionRuleEngine transactionRuleEngine;
     private final EnsureWalletForIngestUseCase ensureWalletForIngestUseCase;
     private final LedgerMovementRepository ledgerMovementRepository;
@@ -49,7 +48,7 @@ public class IngestTransactionUseCase {
 
     @Transactional
     public IngestionResult execute(TransactionalEvent event) {
-        if (!integrationProperties.isEnabled()) {
+        if (!Boolean.TRUE.equals(integrationConfigUseCase.requireEffective().getIsEnabled())) {
             return _fail(event, "DISABLED", "Integration disabled");
         }
 

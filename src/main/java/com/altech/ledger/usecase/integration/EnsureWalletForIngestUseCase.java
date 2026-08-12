@@ -2,10 +2,10 @@ package com.altech.ledger.usecase.integration;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
-import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.request.AccountOpenSpecDto;
 import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
+import com.altech.ledger.entity.po.integration.IntegrationConfig;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.AccountErrorResponse;
@@ -23,23 +23,19 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Resolve wallet for ingest: find existing or auto-create (HKD + LP defaults), ensure point book.
+ * Resolve wallet for ingest: find existing or auto-create from DB {@link IntegrationConfig}.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class EnsureWalletForIngestUseCase {
-    private final IntegrationProperties integrationProperties;
+    private final IntegrationConfigUseCase integrationConfigUseCase;
     private final WalletRepository walletRepository;
     private final AccountRepository accountRepository;
     private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
 
     public record ResolveResult(Wallet wallet, boolean provisioned) {}
 
-    /**
-     * @param associatedIdentifier CUST_ID
-     * @param pointCurrency        rule point currency to ensure as account book
-     */
     @Transactional
     public ResolveResult resolveOrProvision(String associatedIdentifier, Currency pointCurrency) {
         Optional<Wallet> existing = _find(associatedIdentifier);
@@ -49,18 +45,15 @@ public class EnsureWalletForIngestUseCase {
             return new ResolveResult(w, false);
         }
 
-        if (!integrationProperties.isAutoCreateWallet()) {
+        IntegrationConfig cfg = integrationConfigUseCase.requireEffective();
+        if (!Boolean.TRUE.equals(cfg.getIsAutoCreateWallet())) {
             return null;
         }
 
-        IntegrationProperties.AutoWallet defaults = integrationProperties.getAutoWallet();
-        if (defaults == null) {
-            defaults = new IntegrationProperties.AutoWallet();
-        }
         Currency settlement = Currency.get(
-            defaults.getSettlementCurrency() == null ? "HKD" : defaults.getSettlementCurrency());
+            cfg.getAutoWalletSettlementCurrency() == null ? "HKD" : cfg.getAutoWalletSettlementCurrency());
         Currency ensure = Currency.get(
-            defaults.getEnsureCurrency() == null ? "LP" : defaults.getEnsureCurrency());
+            cfg.getAutoWalletEnsureCurrency() == null ? "LP" : cfg.getAutoWalletEnsureCurrency());
         if (pointCurrency != null) {
             ensure = pointCurrency;
         }
@@ -76,10 +69,10 @@ public class EnsureWalletForIngestUseCase {
                     false,
                     ensure));
             }
-            String name = (defaults.getNamePrefix() == null ? "Auto " : defaults.getNamePrefix())
+            String name = (cfg.getAutoWalletNamePrefix() == null ? "Auto " : cfg.getAutoWalletNamePrefix())
                 + associatedIdentifier;
-            String from = defaults.getAssociatedFrom() == null || defaults.getAssociatedFrom().isBlank()
-                ? "CRM" : defaults.getAssociatedFrom();
+            String from = cfg.getAutoWalletAssociatedFrom() == null || cfg.getAutoWalletAssociatedFrom().isBlank()
+                ? "CRM" : cfg.getAutoWalletAssociatedFrom();
 
             createWalletOnboardingUseCase.execute(new CreateWalletOnboardRequestDto(
                 associatedIdentifier,
@@ -114,16 +107,12 @@ public class EnsureWalletForIngestUseCase {
             return byOwner;
         }
         List<Wallet> byAssoc = walletRepository.findByAssociatedIdentifier(associatedIdentifier);
-        if (byAssoc.size() == 1) {
-            return Optional.of(byAssoc.get(0));
-        }
         if (!byAssoc.isEmpty()) {
             return Optional.of(byAssoc.get(0));
         }
         return Optional.empty();
     }
 
-    /** Open a balance book under the wallet main COA if missing. */
     private void _ensureCurrencyAccount(Wallet wallet, Currency currency) {
         if (currency == null || wallet.getAccountId() == null) {
             return;
@@ -140,7 +129,6 @@ public class EnsureWalletForIngestUseCase {
             return;
         }
 
-        // allocate next free sub 0001, 0002, ...
         String sub = CoaCodes.subAccountCode(null, 1);
         int n = 1;
         while (accountRepository.findByMainAccountAndSubAccount(primary.getMainAccount(), sub).isPresent()) {
