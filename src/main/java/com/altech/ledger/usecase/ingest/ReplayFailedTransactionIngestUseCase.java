@@ -4,6 +4,7 @@ import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.dto.ingest.IngestionResult;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
+import com.altech.ledger.entity.dto.request.BulkReplayFailedIngestRequestDto;
 import com.altech.ledger.entity.dto.response.GetFailedTransactionIngestResponseDto;
 import com.altech.ledger.entity.dto.response.ReplayFailedIngestResponseDto;
 import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
@@ -16,10 +17,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Ops: mark reviewed / replay failed ingest through {@link IngestTransactionUseCase}.
+ * <p>
+ * Replay uses {@link IngestTransactionUseCase#executeWithoutFailPersist} so a still-skipped
+ * event does <b>not</b> insert a duplicate fail row.
  */
 @Slf4j
 @Component
@@ -54,34 +60,64 @@ public class ReplayFailedTransactionIngestUseCase {
         }
 
         TransactionalEvent event = _toEvent(row);
-        IngestionResult result = ingestTransactionUseCase.execute(event);
+        // no second fail row on still-skipped
+        IngestionResult result = ingestTransactionUseCase.executeWithoutFailPersist(event);
 
-        // Success-ish → REPLAYED; still skipped → leave OPEN (or REVIEWED stays) and refresh reason
         boolean applied = result.status() == IngestionResult.Status.EARNED
             || result.status() == IngestionResult.Status.BURNED
             || result.status() == IngestionResult.Status.PROCESSED
             || result.status() == IngestionResult.Status.DUPLICATE;
 
-        // re-load (ingest may have written another fail row on skip)
         row = _require(id);
         if (applied) {
             row.setStatus(STATUS_REPLAYED);
-            if (result.reason() != null) {
-                row.setReason(_trim("REPLAYED: " + result.status() + " " + result.reason()));
-            } else {
-                row.setReason(_trim("REPLAYED: " + result.status()));
-            }
+            row.setReason(_trim(result.reason() != null
+                ? "REPLAYED: " + result.status() + " " + result.reason()
+                : "REPLAYED: " + result.status()));
         } else {
-            // keep OPEN for retry unless was REVIEWED
             if (!STATUS_REVIEWED.equals(previous)) {
                 row.setStatus(STATUS_OPEN);
             }
             String why = result.reason() != null ? result.reason() : String.valueOf(result.status());
             row.setReason(_trim("REPLAY_STILL_SKIPPED: " + why));
+            // refresh failureCode from skip reason when possible
+            if (result.status() == IngestionResult.Status.SKIPPED && result.reason() != null) {
+                // keep original failureCode; reason carries replay note
+            }
         }
         repository.save(row);
-
         return new ReplayFailedIngestResponseDto(id, previous, row.getStatus(), result);
+    }
+
+    /** Best-effort bulk replay (each id independent; continues on single failures). */
+    @Transactional
+    public List<ReplayFailedIngestResponseDto> replayBulk(BulkReplayFailedIngestRequestDto req) {
+        List<ReplayFailedIngestResponseDto> out = new ArrayList<>();
+        for (Long id : req.ids()) {
+            if (id == null) {
+                continue;
+            }
+            try {
+                out.add(replay(id));
+            } catch (BizException ex) {
+                log.warn("bulk replay skip id={}: {}", id, ex.getMessage());
+                out.add(new ReplayFailedIngestResponseDto(
+                    id,
+                    null,
+                    "ERROR",
+                    IngestionResult.skipped(String.valueOf(id),
+                        ex.getMessage() == null ? "replay failed" : ex.getMessage())
+                ));
+            } catch (RuntimeException ex) {
+                log.error("bulk replay error id={}", id, ex);
+                out.add(new ReplayFailedIngestResponseDto(
+                    id, null, "ERROR",
+                    IngestionResult.skipped(String.valueOf(id),
+                        ex.getMessage() == null ? "replay failed" : ex.getMessage())
+                ));
+            }
+        }
+        return out;
     }
 
     private FailedTransactionIngest _require(Long id) {

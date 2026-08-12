@@ -223,12 +223,17 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
                 case ADD, HOLD_UNLOCK -> MovementDirection.CREDIT;
                 case SUBTRACT, HOLD_LOCK -> MovementDirection.DEBIT;
             };
+            boolean holdLike = cmd.getOperation() == BalanceOperation.HOLD_LOCK
+                || cmd.getOperation() == BalanceOperation.HOLD_UNLOCK;
             ledgerEntryRepository.save(new LedgerEntry(
                 movement.getId(),
                 String.valueOf(cmd.getAccount().getId()),
                 cmd.getAmount(),
                 direction,
-                movement.getCurrency()));
+                movement.getCurrency(),
+                !holdLike,  // affects ledger
+                true        // affects available
+            ));
         }
     }
 
