@@ -10,6 +10,7 @@ import com.altech.ledger.exception.response.WalletErrorResponse;
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
+import com.altech.ledger.entity.enu.LedgerMovementType;
 import com.altech.ledger.entity.enu.MovementDirection;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.log.LedgerEntry;
@@ -52,16 +53,18 @@ public class LedgerMovementUseCase {
         String key = event.getMovementKey() == null
             ? "mv-" + UUID.randomUUID() : event.getMovementKey();
         LedgerMovementMode mode = event.getMode() == null ? LedgerMovementMode.AUTO : event.getMode();
-        LedgerMovement m = new LedgerMovement(
-            key,
-            event.getBelongToWalletId(),
-            event.getOrderType(),
-            mode,
-            event.getOriginatorId(),
-            event.getTargetId(),
-            event.getAmount(),
-            event.getCurrency() == null ? Currency.USD : event.getCurrency(),
-            event.getDescription());
+        LedgerMovement m = new LedgerMovement();
+        m.setMovementKey(key);
+        m.setWalletId(event.getBelongToWalletId());
+        m.setOrderType(event.getOrderType());
+        m.setMode(mode);
+        m.setOriginatorId(event.getOriginatorId());
+        m.setTargetId(event.getTargetId());
+        m.setAmount(event.getAmount());
+        m.setCurrency(event.getCurrency() == null ? Currency.USD : event.getCurrency());
+        m.setMetadata(event.getDescription());
+        m.setAlias(key);
+        m.setType(LedgerMovementType.TRANSFER);
         m.setStatus(event.getStatus() == null ? LedgerMovementStatus.PROCESSING : event.getStatus());
         if (event.getFiles() != null) m.setFiles(event.getFiles());
         if (event.getMetadata() != null) m.setMetadata(event.getMetadata());

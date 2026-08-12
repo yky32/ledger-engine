@@ -1,22 +1,21 @@
 package com.altech.ledger.entity.po.configuration;
 
+import com.altech.core.entity.AuditEntityWithIsActive;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.altech.core.entity.AuditEntityWithIsActive;
-import jakarta.persistence.*;
-
 /**
- * Key/value config scoped by target + scope (e.g. feature or tenant global).
- * <p>
- * Simple runtime settings store; unique on (target, scope). Value is free TEXT
- * (often JSON or a plain string).
+ * Key/value config scoped by target + scope.
  */
 @Entity
-@Table(
-    name = "system_configuration",
-    uniqueConstraints = @UniqueConstraint(name = "uniqueTargetAndScope", columnNames = {"target", "scope"})
-)
+@Table(uniqueConstraints = @UniqueConstraint(name = "uniqueTargetAndScope", columnNames = {"target", "scope"}))
 @Getter
 @Setter
 public class SystemConfiguration extends AuditEntityWithIsActive {
@@ -25,24 +24,12 @@ public class SystemConfiguration extends AuditEntityWithIsActive {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 200)
     private String name;
 
-    @Column(length = 100)
     private String target;
 
-    @Column(length = 100)
     private String scope;
 
     @Column(columnDefinition = "TEXT")
     private String value;
-
-    protected SystemConfiguration() {}
-
-    public SystemConfiguration(String name, String target, String scope, String value) {
-        this.name = name;
-        this.target = target;
-        this.scope = scope;
-        this.value = value;
-    }
 }

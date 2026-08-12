@@ -1,32 +1,34 @@
 package com.altech.ledger.entity.po.log;
 
 import com.altech.core.constant.enu.Currency;
-import lombok.Getter;
-import lombok.Setter;
-
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.LedgerMovementType;
 import com.altech.ledger.entity.enu.OrderType;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 /**
  * Business operation log for a deposit, withdrawal, transfer, earn/burn, etc.
  * <p>
- * One movement = one intent against a wallet (amount, currency, order type, from/to).
- * {@link #movementKey} is the idempotency key; {@link #mode} is AUTO (settle now) or
- * MANUAL (wait for settle/docs). Status moves PROCESSING → SETTLED / ERROR.
- * Optional TEXT context fields store JSON for payer, files, compliance.
+ * {@link #movementKey} is the idempotency key; {@link #mode} is AUTO or MANUAL.
  */
 @Entity
 @Table(
-    name = "ledger_movement",
     uniqueConstraints = {
-        // Legacy unique (txn_id, wallet_id) omitted when txn_id is null-heavy; use movement_key instead.
         @UniqueConstraint(name = "uk_movement_key", columnNames = "movement_key")
     },
     indexes = {
@@ -43,31 +45,28 @@ public class LedgerMovement extends AuditEntityWithIsActive {
 
     private Long txnId;
 
-    @Column(length = 100)
     private String alias;
 
     @Column(nullable = false)
     private Long walletId;
 
-    @Column(length = 100)
     private String originatorId;
 
-    @Column(length = 100)
     private String targetId;
 
     @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(nullable = false)
     private Currency currency;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false)
     private OrderType orderType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 40)
+    @Column(nullable = false)
     private LedgerMovementStatus status;
 
     @Column(columnDefinition = "TEXT")
@@ -80,7 +79,7 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     private String metadata;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private LedgerMovementType type = LedgerMovementType.TRANSFER;
 
     @Column(columnDefinition = "TEXT")
@@ -97,34 +96,12 @@ public class LedgerMovement extends AuditEntityWithIsActive {
 
     private Long associatedLedgerMovementId;
 
-    // --- engine extensions ---
-    @Column(nullable = false, unique = true, length = 150)
+    @Column(nullable = false, unique = true)
     private String movementKey;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false)
     private LedgerMovementMode mode = LedgerMovementMode.AUTO;
-
-    protected LedgerMovement() {}
-
-    public LedgerMovement(String movementKey, Long walletId, OrderType orderType, LedgerMovementMode mode,
-                          String originatorId, String targetId, BigDecimal amount, Currency currency,
-                          String metadata) {
-        this.movementKey = movementKey;
-        this.walletId = walletId;
-        this.orderType = orderType;
-        this.mode = mode == null ? LedgerMovementMode.AUTO : mode;
-        this.status = this.mode == LedgerMovementMode.AUTO
-            ? LedgerMovementStatus.SETTLED
-            : LedgerMovementStatus.PENDING;
-        this.originatorId = originatorId;
-        this.targetId = targetId;
-        this.amount = amount;
-        this.currency = currency;
-        this.metadata = metadata;
-        this.type = LedgerMovementType.TRANSFER;
-        this.alias = movementKey;
-    }
 
     public void markSettled() {
         this.status = LedgerMovementStatus.SETTLED;
