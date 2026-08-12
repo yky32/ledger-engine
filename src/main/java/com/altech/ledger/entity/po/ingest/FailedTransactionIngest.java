@@ -1,56 +1,69 @@
 package com.altech.ledger.entity.po.ingest;
 
 import com.altech.core.entity.AuditEntity;
+import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
-@Table(name = "failed_transaction_ingest")
 @Getter
 @Setter
 @NoArgsConstructor
 public class FailedTransactionIngest extends AuditEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
+    @GenericGenerator(name = "failed_txn_ingest_id_generator", type = SnowflakeIdGenerator.class)
+    @GeneratedValue(generator = "failed_txn_ingest_id_generator")
     private Long id;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false)
     private String eventId;
 
-    @Column(length = 100)
+    @Column
     private String ownerId;
 
-    @Column(length = 80)
+    @Column
     private String eventType;
 
     @Column(precision = 36, scale = 18)
     private BigDecimal amount;
 
-    @Column(length = 16)
+    @Column
     private String currency;
 
+    @Column
     private Instant occurredAt;
 
-    @Column(nullable = false, length = 40)
+    @Column(nullable = false)
     private String failureCode;
 
-    @Column(nullable = false, length = 500)
+    @Column(nullable = false)
     private String reason;
 
-    @Column(nullable = false, length = 20)
-    private String status = "OPEN";
+    @Column(nullable = false)
+    private String status;
 
-    @Column(columnDefinition = "TEXT")
-    private String rawPayload;
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb")
+    private Object rawPayload;
+
+    @PrePersist
+    void applyDefaults() {
+        if (status == null) {
+            status = "OPEN";
+        }
+    }
 }

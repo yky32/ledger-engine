@@ -4,7 +4,15 @@ import com.altech.core.constant.enu.Currency;
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import com.altech.ledger.entity.enu.AccountStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,27 +22,17 @@ import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 
-/**
- * Chart-of-accounts bucket that holds live balances.
- * <p>
- * One row = one currency balance (ledger + available). Product wallets and program
- * pools both point here. Structure fields (entity/type/main/sub/…) form the COA key;
- * {@link #fullNumber} is the unique COA key used for lookups.
- * Balances change only through movement execution — not by free-form updates.
- */
+/** Chart-of-accounts bucket that holds live balances. */
 @Entity
-@Table(
-    name = "account",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uniqueAccountKey", columnNames = {
-            "entity", "type", "sub_type", "main_account", "sub_account", "buffer", "currency"
-        }),
-        @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
-            "main_account", "sub_account"
-        }),
-        @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
-    }
-)
+@Table(uniqueConstraints = {
+    @UniqueConstraint(name = "uniqueAccountKey", columnNames = {
+        "entity", "type", "sub_type", "main_account", "sub_account", "buffer", "currency"
+    }),
+    @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
+        "main_account", "sub_account"
+    }),
+    @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,36 +41,32 @@ import java.math.BigDecimal;
 public class Account extends AuditEntityWithIsActive {
 
     @Id
+    @Column
     @GenericGenerator(name = "account_id_generator", type = SnowflakeIdGenerator.class)
     @GeneratedValue(generator = "account_id_generator")
     private Long id;
 
-    @Column(length = 200)
+    @Column
     private String fullNumber;
 
-    // === Chart of Account - COA
-    @Column(length = 50)
+    @Column
     private String entity;
-    @Column(length = 50)
+    @Column
     private String type;
-    @Column(length = 50)
+    @Column
     private String subType;
 
-    // === ASSOCIATION
-    @Column(length = 100)
+    @Column
     private String mainAccount;
-    @Column(length = 200)
+    @Column
     private String subAccount;
-    // === ASSOCIATION
 
-    @Column(length = 50)
+    @Column
     private String buffer;
 
-    /** Unit of balance: fiat, loyalty point (LP), or crypto — see {@link Currency}. */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(nullable = false)
     private Currency currency;
-    // === Chart of Account - COA
 
     @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
@@ -81,15 +75,26 @@ public class Account extends AuditEntityWithIsActive {
     @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal availableBalance = BigDecimal.ZERO;
-    // === BALANCE
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private AccountStatus status = AccountStatus.ACTIVE;
 
-    /** Posting may refuse negative signed balance when false. */
     @Builder.Default
     @Column(nullable = false)
     private boolean allowNegative = false;
+
+    @PrePersist
+    void applyDefaults() {
+        if (ledgerBalance == null) {
+            ledgerBalance = BigDecimal.ZERO;
+        }
+        if (availableBalance == null) {
+            availableBalance = BigDecimal.ZERO;
+        }
+        if (status == null) {
+            status = AccountStatus.ACTIVE;
+        }
+    }
 }

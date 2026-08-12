@@ -26,6 +26,10 @@ public class CreateFxRateUseCase {
         if (fxRateRepository.findByBaseAndTarget(base, target).isPresent()) {
             throw new BizException(FxErrorResponse.FX0409, "Rate exists for " + base + "/" + target);
         }
-        return DtoMapper.toFx(fxRateRepository.save(new FxRate(base, target, dto.rate())));
+        FxRate fx = new FxRate();
+        fx.setBase(base);
+        fx.setTarget(target);
+        fx.setRate(dto.rate());
+        return DtoMapper.toFx(fxRateRepository.save(fx));
     }
 }

@@ -6,63 +6,62 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-/**
- * <b>Ingest</b> policy — the webhook <em>door</em> (not scoring rules).
- * <p>
- * Controls whether inbound transactional events are accepted at all, and how
- * missing wallets are provisioned. Typically <b>one active row</b>.
- * <p>
- * <b>Not digestion:</b> {@link com.altech.ledger.entity.po.digestion.DigestionRule}
- * decides eventType match, eligibility filters, and points formula.
- * This policy does <em>not</em> compute LP.
- * <p>
- * API: {@code GET/PUT /ingest-policy}. See {@code docs/INGEST_POLICY.md}.
- *
- * @see com.altech.ledger.entity.po.digestion.DigestionRule
- * @see com.altech.ledger.entity.po.ingest.package-info
- */
+/** Ingest policy — webhook door. */
 @Entity
-@Table
 @Getter
 @Setter
 @NoArgsConstructor
 public class IngestPolicy extends AuditEntityWithIsActive {
 
     @Id
+    @Column
     @GenericGenerator(name = "ingest_policy_id_generator", type = SnowflakeIdGenerator.class)
     @GeneratedValue(generator = "ingest_policy_id_generator")
     private Long id;
 
-    /** Webhook ingest master switch. false → all events SKIPPED DISABLED. */
     @Column(nullable = false)
-    private Boolean isEnabled = Boolean.TRUE;
+    private Boolean isEnabled;
 
-    /**
-     * After digestion gates pass: if customer has no wallet, create one automatically
-     * (settlement + ensure currency books) then continue earn/burn.
-     */
     @Column(nullable = false)
-    private Boolean isAutoCreateWallet = Boolean.TRUE;
+    private Boolean isAutoCreateWallet;
 
-    /** Primary account currency when auto-creating wallet (e.g. HKD). */
-    @Column(nullable = false, length = 16)
-    private String autoWalletSettlementCurrency = "HKD";
+    @Column(nullable = false)
+    private String autoWalletSettlementCurrency;
 
-    /** Extra book always opened on auto-create (e.g. LP for points). */
-    @Column(nullable = false, length = 16)
-    private String autoWalletEnsureCurrency = "LP";
+    @Column(nullable = false)
+    private String autoWalletEnsureCurrency;
 
-    /** associatedFrom label on auto-created wallet. */
-    @Column(length = 50)
-    private String autoWalletAssociatedFrom = "CRM";
+    @Column
+    private String autoWalletAssociatedFrom;
 
-    /** Nickname prefix, e.g. "Auto " + CUST_ID. */
-    @Column(length = 50)
-    private String autoWalletNamePrefix = "Auto ";
+    @Column
+    private String autoWalletNamePrefix;
+
+    @PrePersist
+    void applyDefaults() {
+        if (isEnabled == null) {
+            isEnabled = Boolean.TRUE;
+        }
+        if (isAutoCreateWallet == null) {
+            isAutoCreateWallet = Boolean.TRUE;
+        }
+        if (autoWalletSettlementCurrency == null) {
+            autoWalletSettlementCurrency = "HKD";
+        }
+        if (autoWalletEnsureCurrency == null) {
+            autoWalletEnsureCurrency = "LP";
+        }
+        if (autoWalletAssociatedFrom == null) {
+            autoWalletAssociatedFrom = "CRM";
+        }
+        if (autoWalletNamePrefix == null) {
+            autoWalletNamePrefix = "Auto ";
+        }
+    }
 }

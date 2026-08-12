@@ -144,8 +144,18 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
                                        LedgerMovementMode mode, String originatorId, String targetId,
                                        java.math.BigDecimal amount, Currency currency, String description) {
         LedgerMovementMode effective = mode == null ? LedgerMovementMode.AUTO : mode;
-        LedgerMovement m = new LedgerMovement(key, walletId, orderType, effective,
-            originatorId, targetId, amount, currency, description);
+        LedgerMovement m = new LedgerMovement();
+        m.setMovementKey(key);
+        m.setWalletId(walletId);
+        m.setOrderType(orderType);
+        m.setMode(effective);
+        m.setOriginatorId(originatorId);
+        m.setTargetId(targetId);
+        m.setAmount(amount);
+        m.setCurrency(currency);
+        m.setMetadata(description);
+        m.setAlias(key);
+        m.setType(com.altech.ledger.entity.enu.LedgerMovementType.TRANSFER);
         m.setStatus(effective == LedgerMovementMode.AUTO
             ? LedgerMovementStatus.PROCESSING : LedgerMovementStatus.PENDING);
         return m;

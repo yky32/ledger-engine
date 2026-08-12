@@ -1,48 +1,52 @@
 package com.altech.ledger.entity.po.configuration;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import com.altech.core.entity.AuditEntityWithIsActive;
-import jakarta.persistence.*;
+import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 /**
- * Key/value config scoped by target + scope (e.g. feature or tenant global).
- * <p>
- * Simple runtime settings store; unique on (target, scope). Value is free TEXT
- * (often JSON or a plain string).
+ * Aligns with tgt.program-management-service SystemConfiguration.
  */
+@EqualsAndHashCode(callSuper = true)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(
-    name = "system_configuration",
-    uniqueConstraints = @UniqueConstraint(name = "uniqueTargetAndScope", columnNames = {"target", "scope"})
-)
-@Getter
-@Setter
+@Table(uniqueConstraints = {
+    @UniqueConstraint(name = "uniqueTargetAndScope", columnNames = {"target", "scope"})
+})
+@Builder
 public class SystemConfiguration extends AuditEntityWithIsActive {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
+    @GenericGenerator(name = "system_configuration_id_generator", type = SnowflakeIdGenerator.class)
+    @GeneratedValue(generator = "system_configuration_id_generator")
     private Long id;
 
-    @Column(length = 200)
-    private String name;
+    @Column
+    private String name; // user-register.otp
 
-    @Column(length = 100)
-    private String target;
+    @Column
+    private String target; // otp
 
-    @Column(length = 100)
-    private String scope;
+    @Column
+    private String scope; // otp.global
 
-    @Column(columnDefinition = "TEXT")
-    private String value;
-
-    protected SystemConfiguration() {}
-
-    public SystemConfiguration(String name, String target, String scope, String value) {
-        this.name = name;
-        this.target = target;
-        this.scope = scope;
-        this.value = value;
-    }
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb")
+    private Object value; // user-register.otp
 }

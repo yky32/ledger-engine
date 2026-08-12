@@ -5,9 +5,6 @@ import com.altech.ledger.entity.enu.MovementDirection;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/**
- * Rule catalog entry response.
- */
 public record GetRuleResponseDto(
     Long id,
     String name,

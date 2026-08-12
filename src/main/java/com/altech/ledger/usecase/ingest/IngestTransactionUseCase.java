@@ -18,7 +18,6 @@ import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -211,8 +210,8 @@ public class IngestTransactionUseCase {
             row.setReason(reason == null ? code : (reason.length() > 500 ? reason.substring(0, 500) : reason));
             row.setStatus("OPEN");
             try {
-                row.setRawPayload(objectMapper.writeValueAsString(event));
-            } catch (JsonProcessingException e) {
+                row.setRawPayload(objectMapper.convertValue(event, Object.class));
+            } catch (IllegalArgumentException e) {
                 row.setRawPayload(null);
             }
             failedTransactionIngestRepository.save(row);

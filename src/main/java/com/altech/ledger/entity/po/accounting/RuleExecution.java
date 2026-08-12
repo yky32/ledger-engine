@@ -1,48 +1,41 @@
 package com.altech.ledger.entity.po.accounting;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import com.altech.core.entity.AuditEntityWithIsActive;
+import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import com.altech.ledger.entity.enu.OrderType;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
-/**
- * Binds an {@link com.altech.ledger.entity.enu.OrderType} to a set of rules for execution.
- * <p>
- * Lookup by order type (DEPOSIT, WITHDRAWAL, …) when a movement runs. Metadata
- * typically lists which {@link Rule} ids apply. Soft path if none configured.
- */
 @Entity
-@Table(name = "rule_execution")
 @Getter
 @Setter
+@NoArgsConstructor
 public class RuleExecution extends AuditEntityWithIsActive {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
+    @GenericGenerator(name = "rule_execution_id_generator", type = SnowflakeIdGenerator.class)
+    @GeneratedValue(generator = "rule_execution_id_generator")
     private Long id;
 
-    @Column(unique = true, length = 200)
+    @Column(unique = true)
     private String name;
 
-    @Column(length = 500)
+    @Column
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 30)
+    @Column
     private OrderType orderType;
 
-    /** JSON blob — legacy RuleExecutionMetadata (list of rule ids). */
     @Column(columnDefinition = "TEXT")
     private String metadata;
-
-    protected RuleExecution() {}
-
-    public RuleExecution(String name, String description, OrderType orderType, String metadata) {
-        this.name = name;
-        this.description = description;
-        this.orderType = orderType;
-        this.metadata = metadata;
-    }
 }

@@ -14,7 +14,7 @@ public record GetFailedTransactionIngestResponseDto(
     String failureCode,
     String reason,
     String status,
-    String rawPayload,
+    Object rawPayload,
     Instant createDt,
     Instant updateDt
 ) {}

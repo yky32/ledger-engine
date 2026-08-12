@@ -5,9 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.math.BigDecimal;
 
-/**
- * Create a catalog rule (direction, multiplier, target account, content).
- */
 public record CreateRuleRequestDto(
     @NotBlank String name,
     String description,
