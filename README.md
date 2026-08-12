@@ -234,6 +234,7 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 | Doc | Purpose |
 |-----|---------|
 | [docs/README.md](docs/README.md) | **Docs index** (start here) |
+| [docs/SYSTEM_BUSINESS_FLOW.md](docs/SYSTEM_BUSINESS_FLOW.md) | **Business flow** (for product review) |
 | [PRODUCT.md](PRODUCT.md) | Product model, operations, account roles |
 | [INTEGRATION.md](INTEGRATION.md) | Onboarding + transactional event ingest |
 | [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | Wallet create + query curls (HKD + LP) |
