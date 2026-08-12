@@ -7,7 +7,6 @@ import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.LedgerMovementType;
 import com.altech.ledger.entity.enu.OrderType;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,11 +21,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
 
-/** Business operation log (deposit, earn/burn, hold, …). */
+/**
+ * Business operation log (deposit, earn/burn, hold, …).
+ * <p>
+ * Free-form context fields stay TEXT (often plain description strings, not JSON objects).
+ * True JSON config POs use jsonb — see SystemConfiguration / Rule.
+ */
 @Entity
 @Table(
     uniqueConstraints = {
@@ -77,36 +80,30 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private LedgerMovementStatus status;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String remarks;
 
-    @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb")
-    private Object event;
+    @Column(columnDefinition = "TEXT")
+    private String event;
 
-    @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb")
-    private Object metadata;
+    @Column(columnDefinition = "TEXT")
+    private String metadata;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LedgerMovementType type;
 
-    @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb")
-    private Object payerContext;
+    @Column(columnDefinition = "TEXT")
+    private String payerContext;
 
-    @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb")
-    private Object recipientContext;
+    @Column(columnDefinition = "TEXT")
+    private String recipientContext;
 
-    @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb")
-    private Object files;
+    @Column(columnDefinition = "TEXT")
+    private String files;
 
-    @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb")
-    private Object complianceContext;
+    @Column(columnDefinition = "TEXT")
+    private String complianceContext;
 
     @Column
     private Long associatedLedgerMovementId;

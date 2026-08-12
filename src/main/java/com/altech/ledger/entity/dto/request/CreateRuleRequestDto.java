@@ -11,5 +11,5 @@ public record CreateRuleRequestDto(
     MovementDirection direction,
     BigDecimal multiplier,
     String targetAccount,
-    Object content
+    String content
 ) {}

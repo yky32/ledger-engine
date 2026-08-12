@@ -9,6 +9,6 @@ public record GetRuleExecutionResponseDto(
     String name,
     String description,
     OrderType orderType,
-    Object metadata,
+    String metadata,
     Instant createDt
 ) {}

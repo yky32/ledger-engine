@@ -8,5 +8,5 @@ public record CreateRuleExecutionRequestDto(
     @NotBlank String name,
     String description,
     @NotNull OrderType orderType,
-    Object metadata
+    String metadata
 ) {}

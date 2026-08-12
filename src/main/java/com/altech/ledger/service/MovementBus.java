@@ -78,7 +78,7 @@ public class MovementBus {
         e.setOrderType(m.getOrderType());
         e.setMode(m.getMode());
         e.setStatus(m.getStatus());
-        e.setDescription(m.getMetadata() == null ? null : String.valueOf(m.getMetadata()));
+        e.setDescription(m.getMetadata());
         e.setFiles(m.getFiles());
         e.setMetadata(m.getMetadata());
         return e;

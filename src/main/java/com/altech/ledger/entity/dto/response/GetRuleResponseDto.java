@@ -12,6 +12,6 @@ public record GetRuleResponseDto(
     MovementDirection direction,
     BigDecimal multiplier,
     String targetAccount,
-    Object content,
+    String content,
     Instant createDt
 ) {}

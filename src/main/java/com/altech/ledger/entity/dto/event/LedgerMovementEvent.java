@@ -41,6 +41,6 @@ public class LedgerMovementEvent extends BaseEvent {
     private LedgerMovementMode mode = LedgerMovementMode.AUTO;
     private LedgerMovementStatus status = LedgerMovementStatus.PROCESSING;
     private String description;
-    private Object files;
-    private Object metadata;
+    private String files;
+    private String metadata;
 }

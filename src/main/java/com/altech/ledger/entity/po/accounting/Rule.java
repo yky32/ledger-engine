@@ -3,7 +3,6 @@ package com.altech.ledger.entity.po.accounting;
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
 import com.altech.ledger.entity.enu.MovementDirection;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,11 +13,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
 
-/** Reusable accounting rule definition. */
+/**
+ * Reusable accounting rule definition.
+ * {@code content} kept as TEXT for now (API still string; promote to jsonb when payload is structured).
+ */
 @Entity
 @Getter
 @Setter
@@ -47,8 +48,6 @@ public class Rule extends AuditEntityWithIsActive {
     @Column
     private String targetAccount;
 
-    /** Free-form rule payload (JSON). */
-    @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb")
-    private Object content;
+    @Column(columnDefinition = "TEXT")
+    private String content;
 }

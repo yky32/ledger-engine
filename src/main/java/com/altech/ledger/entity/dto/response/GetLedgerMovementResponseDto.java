@@ -24,9 +24,9 @@ public record GetLedgerMovementResponseDto(
     LedgerMovementMode mode,
     LedgerMovementType type,
     String remarks,
-    Object metadata,
-    Object complianceContext,
-    Object files,
+    String metadata,
+    String complianceContext,
+    String files,
     Instant createDt,
     Instant updateDt
 ) {}
