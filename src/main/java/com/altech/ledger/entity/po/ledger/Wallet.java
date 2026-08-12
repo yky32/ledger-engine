@@ -31,7 +31,6 @@ import org.hibernate.annotations.GenericGenerator;
  */
 @Entity
 @Table(
-    name = "wallet",
     uniqueConstraints = {
         @UniqueConstraint(name = "uk_wallet_owner", columnNames = "owner_id"),
         @UniqueConstraint(name = "uk_wallet_vanity_code", columnNames = "vanity_code")
