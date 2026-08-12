@@ -1,15 +1,20 @@
 package com.altech.ledger.usecase.integration;
 
 import com.altech.core.constant.enu.Currency;
+import com.altech.core.exception.BizException;
 import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.integration.IngestionResult;
+import com.altech.ledger.entity.dto.integration.LedgerLegDto;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.integration.FailedTransactionIngest;
 import com.altech.ledger.entity.po.ledger.Wallet;
+import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
+import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
+import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,14 +24,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Loyalty / transactional event ingest with eligibility gates.
  * <p>
- * Flow: gates → resolve/auto-create wallet (optional) → earn/process/burn in same TX.<br>
- * Failures / skips are persisted to {@code failed_transaction_ingest} first, then returned as SKIPPED.
+ * Flow: gates → resolve/auto-create wallet → earn/burn (double-entry legs) in same TX.
  */
 @Slf4j
 @Component
@@ -36,6 +42,7 @@ public class IngestTransactionUseCase {
     private final TransactionRuleEngine transactionRuleEngine;
     private final EnsureWalletForIngestUseCase ensureWalletForIngestUseCase;
     private final LedgerMovementRepository ledgerMovementRepository;
+    private final LedgerEntryRepository ledgerEntryRepository;
     private final LedgerMovementShooter ledgerMovementShooter;
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
     private final ObjectMapper objectMapper;
@@ -46,7 +53,6 @@ public class IngestTransactionUseCase {
             return _fail(event, "DISABLED", "Integration disabled");
         }
 
-        // 1) eligibility gates first — do not auto-create wallet for bad events
         TransactionRuleEngine.EvaluationOutcome outcome = transactionRuleEngine.evaluate(event);
         if (!outcome.matched()) {
             return _fail(event,
@@ -58,7 +64,6 @@ public class IngestTransactionUseCase {
         Currency pointCurrency = Currency.get(rule.pointCurrency());
         String custId = event.associatedIdentifier();
 
-        // 2) wallet exists? else upsert create (HKD+LP defaults) then continue
         EnsureWalletForIngestUseCase.ResolveResult resolved;
         try {
             resolved = ensureWalletForIngestUseCase.resolveOrProvision(custId, pointCurrency);
@@ -89,12 +94,14 @@ public class IngestTransactionUseCase {
 
         Optional<LedgerMovement> existing = ledgerMovementRepository.findByMovementKey(movementKey);
         if (existing.isPresent()) {
-            UUID id = existing.get().getId() == null ? null
-                : UUID.nameUUIDFromBytes(("movement:" + existing.get().getId()).getBytes());
-            return IngestionResult.duplicate(event.eventId(), rule.operation(), id, rule.points(), walletKey);
+            LedgerMovement m = existing.get();
+            UUID id = m.getId() == null ? null
+                : UUID.nameUUIDFromBytes(("movement:" + m.getId()).getBytes());
+            return IngestionResult.duplicate(
+                event.eventId(), rule.operation(), id, rule.points(), walletKey,
+                m.getId(), _legs(m.getId()));
         }
 
-        // 3) earn / burn / process
         try {
             GetLedgerMovementResponseDto applied = ledgerMovementShooter.doEarnBurn(
                 wallet.getId(),
@@ -108,11 +115,57 @@ public class IngestTransactionUseCase {
 
             UUID txnId = applied.id() == null ? null
                 : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());
-            return IngestionResult.applied(event.eventId(), rule.operation(), rule.points(), txnId, walletKey);
+            return IngestionResult.applied(
+                event.eventId(), rule.operation(), rule.points(), txnId, walletKey,
+                applied.id(), _legs(applied.id()));
         } catch (RuntimeException ex) {
             log.error("ingest apply failed eventId={}", event.eventId(), ex);
             return _fail(event, "ERROR", ex.getMessage() == null ? "apply failed" : ex.getMessage());
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<LedgerLegDto> legsForMovementId(Long movementId) {
+        if (movementId == null) {
+            throw new BizException(MovementErrorResponse.MOV0400, "movementId required");
+        }
+        return _legs(movementId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LedgerLegDto> legsForEventId(String eventId, String operationHint) {
+        List<String> keys = new ArrayList<>();
+        if (operationHint != null && !operationHint.isBlank()) {
+            keys.add("loyalty-" + operationHint.trim().toLowerCase() + "-" + eventId);
+        } else {
+            keys.add("loyalty-earn-" + eventId);
+            keys.add("loyalty-burn-" + eventId);
+            keys.add("loyalty-process-" + eventId);
+        }
+        for (String key : keys) {
+            Optional<LedgerMovement> m = ledgerMovementRepository.findByMovementKey(key);
+            if (m.isPresent()) {
+                return _legs(m.get().getId());
+            }
+        }
+        throw new BizException(MovementErrorResponse.MOV0404, "No movement for eventId=" + eventId);
+    }
+
+    private List<LedgerLegDto> _legs(Long movementId) {
+        if (movementId == null) {
+            return List.of();
+        }
+        List<LedgerLegDto> out = new ArrayList<>();
+        for (LedgerEntry e : ledgerEntryRepository.findByTxnId(movementId)) {
+            Long accountId = null;
+            try {
+                accountId = Long.valueOf(e.getTargetId());
+            } catch (Exception ignored) {
+                // leave null
+            }
+            out.add(new LedgerLegDto(e.getId(), accountId, e.getDirection(), e.getAmount(), e.getCurrency()));
+        }
+        return out;
     }
 
     private IngestionResult _fail(TransactionalEvent event, String code, String reason) {
