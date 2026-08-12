@@ -26,6 +26,8 @@ import org.hibernate.annotations.GenericGenerator;
  * <p>
  * {@link #vanityCode} is optional customer-facing display (lucky / premium number).
  * Never use it as PK, FK, or integration identity — see {@link com.altech.ledger.util.WalletVanityCodes}.
+ * <p>
+ * Column lengths left to dialect defaults — no hand {@code @Column(length)}.
  */
 @Entity
 @Table(
@@ -49,30 +51,28 @@ public class Wallet extends AuditEntityWithIsActive {
     private Long accountId;
 
     /** Customer / CRM id — unique. Query key for all wallet GET APIs. */
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false)
     private String ownerId;
 
     /**
      * Optional customer-facing vanity / premium display code (e.g. lucky digits).
      * Mutable over product life; unique when set. Not a system identity.
      */
-    @Column(length = 64)
     private String vanityCode;
 
     /** Optional display name. */
-    @Column(length = 200)
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private WalletAssociationType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private WalletType walletType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private WalletStatus status;
 
     /**
@@ -80,6 +80,6 @@ public class Wallet extends AuditEntityWithIsActive {
      * Not a uniqueness key.
      */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(nullable = false)
     private Currency settlementCurrency;
 }
