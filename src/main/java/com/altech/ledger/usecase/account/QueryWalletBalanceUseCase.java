@@ -121,7 +121,7 @@ public class QueryWalletBalanceUseCase {
                 a.ledgerBalance(), a.availableBalance(), a.status(), a.createDt(), a.updateDt());
         }).toList();
         return new GetLedgerWalletResponseDto(
-            base.id(), base.accountId(), base.ownerId(), base.name(),
+            base.id(), base.accountId(), base.ownerId(), base.vanityCode(), base.name(),
             base.type(), base.walletType(), base.status(), base.settlementCurrency(),
             converted, base.createDt(), base.updateDt());
     }

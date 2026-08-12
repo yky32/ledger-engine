@@ -16,6 +16,10 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
     Optional<Wallet> findByAccountId(Long accountId);
 
+    Optional<Wallet> findByVanityCode(String vanityCode);
+
+    boolean existsByVanityCode(String vanityCode);
+
     /**
      * @deprecated currency is settlement only; use {@link #findByOwnerId(String)}.
      */

@@ -7,5 +7,11 @@ public record CreateLedgerWalletRequestDto(
     Long accountId,
     String ownerId,
     Currency settlementCurrency,
-    String name
-) {}
+    String name,
+    /** Optional vanity display code. */
+    String vanityCode
+) {
+    public CreateLedgerWalletRequestDto(Long accountId, String ownerId, Currency settlementCurrency, String name) {
+        this(accountId, ownerId, settlementCurrency, name, null);
+    }
+}

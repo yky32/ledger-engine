@@ -22,6 +22,7 @@ import com.altech.ledger.service.CommonService;
 import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import com.altech.ledger.util.CoaCodes;
+import com.altech.ledger.util.WalletVanityCodes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -179,6 +180,7 @@ public class CreateWalletOnboardingUseCase {
         wallet.setWalletType(WalletType.INDIVIDUAL);
         wallet.setStatus(WalletStatus.ACTIVE);
         wallet.setOwnerId(ownerId);
+        wallet.setVanityCode(WalletVanityCodes.resolveForCreate(request.vanityCode(), ownerId));
         wallet.setSettlementCurrency(settlement);
         wallet = walletRepository.save(wallet);
 

@@ -13,6 +13,7 @@ public record GetLedgerWalletResponseDto(
     Long id,
     Long accountId,
     String ownerId,
+    String vanityCode,
     String name,
     WalletAssociationType type,
     WalletType walletType,
