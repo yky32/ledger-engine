@@ -186,15 +186,15 @@ start_server() {
   info "start engine JPA_DDL_AUTO=create SERVER_PORT=$PORT → log $SERVER_LOG"
   (
     cd "$ROOT"
-    # shellcheck disable=SC2030
     export JPA_DDL_AUTO=create
     export SERVER_PORT="$PORT"
-    # optional DB still required (Postgres)
-    nohup mvn -q spring-boot:run -Dspring-boot.run.jvmArguments="-DJPA_DDL_AUTO=create" \
+    # Prefer Spring args (reliable) + env for placeholders
+    nohup env JPA_DDL_AUTO=create SERVER_PORT="$PORT" \
+      mvn -q spring-boot:run \
+      -Dspring-boot.run.arguments="--spring.jpa.hibernate.ddl-auto=create --server.port=${PORT}" \
       >"$SERVER_LOG" 2>&1 &
     echo $! >"$ROOT/target/upstream-sim-server.pid"
   )
-  # mvn wraps java — wait on health not pid only
   SERVER_PID="$(cat "$ROOT/target/upstream-sim-server.pid" 2>/dev/null || true)"
   wait_health
 }
