@@ -21,6 +21,7 @@ import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.MovementBus;
+import com.altech.ledger.usecase.integration.ProgramPoolService;
 import com.altech.ledger.usecase.rule.QueryRuleExecutionUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     @Lazy
     private final MovementBus movementBus;
     private final QueryRuleExecutionUseCase queryRuleExecutionUseCase;
+    private final ProgramPoolService programPoolService;
 
     @Override
     @Transactional
@@ -139,14 +141,23 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
                 command.add(origin, amount, BalanceOperation.SUBTRACT);
             }
             case EARN, ADJUSTMENT -> {
-                Account target = resolveAccount(movement.getTargetId() != null
+                // Double-entry: DEBIT PROGRAM pool + CREDIT customer (same currency, balanced)
+                Account customer = resolveAccount(movement.getTargetId() != null
                     ? movement.getTargetId() : String.valueOf(movement.getWalletId()), currency);
-                command.add(target, amount, BalanceOperation.ADD);
+                Account pool = programPoolService.ensurePoolAccount(currency);
+                command.add(pool, amount, BalanceOperation.SUBTRACT);
+                command.add(customer, amount, BalanceOperation.ADD);
             }
             case BURN, BANK_CHARGE, HANDLING_CHARGE, CHARGE -> {
-                Account origin = resolveAccount(movement.getOriginatorId() != null
+                Account customer = resolveAccount(movement.getOriginatorId() != null
                     ? movement.getOriginatorId() : String.valueOf(movement.getWalletId()), currency);
-                command.add(origin, amount, BalanceOperation.SUBTRACT);
+                if (movement.getOrderType() == OrderType.BURN) {
+                    Account pool = programPoolService.ensurePoolAccount(currency);
+                    command.add(customer, amount, BalanceOperation.SUBTRACT);
+                    command.add(pool, amount, BalanceOperation.ADD);
+                } else {
+                    command.add(customer, amount, BalanceOperation.SUBTRACT);
+                }
             }
             default -> throw new BizException(MovementErrorResponse.MOV0400, "Unsupported order type: " + movement.getOrderType());
         }

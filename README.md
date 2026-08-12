@@ -238,6 +238,7 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 | [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | **Client adopt:** wallet create + query curls (HKD + LP) |
 | [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) | **Client adopt:** earn webhook gates → LP credit |
 | [docs/DIGESTION_RULES.md](docs/DIGESTION_RULES.md) | Runtime `/digestion-rules` filter + formula (no restart) |
+| [docs/DOUBLE_ENTRY_EARN.md](docs/DOUBLE_ENTRY_EARN.md) | PROGRAM pool DE legs + ledger-entries query |
 | [docs/HERMES_RUNTIME_RULES_TASK.md](docs/HERMES_RUNTIME_RULES_TASK.md) | Task brief: runtime rules + DE visibility |
 | [scripts/e2e-smoke.sh](scripts/e2e-smoke.sh) | One-shot: onboard → earn → query LP → fail-table API |
 | `application.yml` | Env-driven config (`DB_*`, `SERVER_PORT`, …) |

@@ -15,6 +15,8 @@ import java.util.List;
 
 /**
  * Failed transactional ingest <b>Query (R)</b> — ops visibility for D5 skip store.
+ * <p>
+ * Lookup filters are query params only — no {@code /by-*} paths.
  */
 @RestController
 @RequestMapping("/integrations/failed-transactions")
@@ -27,6 +29,7 @@ public class FailedTransactionIngestQueryEndpoint {
      * <pre>
      * GET /integrations/failed-transactions?status=OPEN&amp;failureCode=AGE&amp;limit=20
      * GET /integrations/failed-transactions?associatedIdentifier=01A12345678
+     * GET /integrations/failed-transactions?eventId=txn-xxx
      * </pre>
      */
     @GetMapping
@@ -34,8 +37,12 @@ public class FailedTransactionIngestQueryEndpoint {
         @RequestParam(required = false) String status,
         @RequestParam(required = false) String associatedIdentifier,
         @RequestParam(required = false) String failureCode,
+        @RequestParam(required = false) String eventId,
         @RequestParam(required = false) Integer limit
     ) {
+        if (eventId != null && !eventId.isBlank()) {
+            return R.success(queryFailedTransactionIngestUseCase.byEventId(eventId.trim()));
+        }
         return R.success(queryFailedTransactionIngestUseCase.search(
             status, associatedIdentifier, failureCode, limit));
     }
@@ -43,10 +50,5 @@ public class FailedTransactionIngestQueryEndpoint {
     @GetMapping("/{id}")
     public Result<GetFailedTransactionIngestResponseDto> one(@PathVariable Long id) {
         return R.success(queryFailedTransactionIngestUseCase.one(id));
-    }
-
-    @GetMapping("/by-event/{eventId}")
-    public Result<List<GetFailedTransactionIngestResponseDto>> byEvent(@PathVariable String eventId) {
-        return R.success(queryFailedTransactionIngestUseCase.byEventId(eventId));
     }
 }

@@ -160,7 +160,7 @@ curl -sS 'http://localhost:8080/integrations/failed-transactions?associatedIdent
 curl -sS 'http://localhost:8080/integrations/failed-transactions?failureCode=CURRENCY&limit=50'
 
 # by event id
-curl -sS 'http://localhost:8080/integrations/failed-transactions/by-event/txn-xxx'
+curl -sS 'http://localhost:8080/integrations/failed-transactions?eventId=txn-xxx'
 ```
 
 ---

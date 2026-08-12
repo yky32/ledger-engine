@@ -55,8 +55,8 @@ class FailedTransactionIngestQueryIntegrationTest {
             .andExpect(jsonPath("$.data[0].failureCode").value("CURRENCY"))
             .andExpect(jsonPath("$.data[0].status").value("OPEN"));
 
-        mockMvc.perform(get("/integrations/failed-transactions/by-event/" + eventId))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data[0].associatedIdentifier").value(cust));
+        mockMvc.perform(get("/integrations/failed-transactions").param("eventId", eventId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data[0].eventId").value(eventId));
     }
 }
