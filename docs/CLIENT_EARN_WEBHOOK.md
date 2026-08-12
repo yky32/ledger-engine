@@ -1,7 +1,9 @@
 # Client earn webhook — eligibility → equation → LP credit
 
-**Audience:** integrator  
-**Depends on:** wallet onboard with **LP account** (see [CLIENT_WALLET_ONBOARDING.md](./CLIENT_WALLET_ONBOARDING.md))
+**Audience:** integrator playing **upstream** (POS / order service)  
+**Depends on:** runtime config ([BOOTSTRAP.md](./BOOTSTRAP.md)) + optional explicit onboard ([CLIENT_WALLET_ONBOARDING.md](./CLIENT_WALLET_ONBOARDING.md))
+
+See also: [INGEST_VS_DIGESTION.md](./INGEST_VS_DIGESTION.md) · [DOUBLE_ENTRY_EARN.md](./DOUBLE_ENTRY_EARN.md)
 
 ---
 
@@ -9,67 +11,70 @@
 
 ```text
 POST /integrations/webhooks/transactions
-  associatedIdentifier + amount + currency + occurredAt + eventType
+  eventId + associatedIdentifier + eventType + amount + currency + occurredAt
         │
         ▼
-  Gates (config per rule)
-  • amount > 0 (spend formulas RATE/AMOUNT)
-  • amount >= minAmount
-  • currency ∈ eligibleCurrencies
-  • occurredAt within maxAgeDays (required if maxAgeDays set)
-        │ fail → row in failed_transaction_ingest + SKIPPED response
-        ▼
-  points = formula(amount)   e.g. RATE:0.01 → amount * 0.01
+  IngestPolicy (door)          ← /ingest-policy
+  • isEnabled?
+  • isAutoCreateWallet if no wallet
         │
         ▼
-  wallet[associatedIdentifier] → account[LP] += points
+  DigestionRule (brain)        ← /digestion-rules
+  • match eventType + priority
+  • amount / currency / age gates
+  • formula → points
+        │ fail → failed_transaction_ingest + status SKIPPED
+        ▼
+  PROGRAM double-entry earn/burn on pointCurrency (default LP)
         │
         ▼
-  EARNED (idempotent on eventId)
+  EARNED / BURNED + legs[]  (idempotent on eventId / movementKey)
 ```
-
-Burn is out of scope for this guide.
 
 ---
 
-## 1) Webhook payload
+## 0) One-time bootstrap (empty DB)
 
 ```bash
-curl -sS -X POST 'http://localhost:8080/integrations/webhooks/transactions' \
+./scripts/bootstrap-runtime.sh
+# sets ingest-policy + PURCHASE/SIGNUP/REDEEM digestion defaults
+```
+
+Or see [DIGESTION_RULES.md](./DIGESTION_RULES.md) / [INGEST_POLICY.md](./INGEST_POLICY.md).
+
+---
+
+## 1) Play upstream — webhook payload
+
+```bash
+BASE=http://localhost:8080
+CUST=01A12345678
+EVENT_ID="txn-$(date +%s)-$RANDOM"
+
+curl -sS -X POST "$BASE/integrations/webhooks/transactions" \
   -H 'Content-Type: application/json' \
-  -d '{
-    "eventId": "txn-20260811-0001",
-    "associatedIdentifier": "01A12345678",
-    "eventType": "PURCHASE",
-    "amount": 200.00,
-    "currency": "HKD",
-    "occurredAt": "2026-08-11T10:00:00Z",
-    "metadata": { "source": "pos" }
-  }'
+  -d "{
+    \"eventId\": \"$EVENT_ID\",
+    \"associatedIdentifier\": \"$CUST\",
+    \"eventType\": \"PURCHASE\",
+    \"amount\": 200.00,
+    \"currency\": \"HKD\",
+    \"occurredAt\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+    \"metadata\": { \"source\": \"pos-sim\" }
+  }" | jq .
 ```
 
 | Field | Required | Notes |
 |-------|----------|--------|
 | `eventId` | ✅ | Idempotency key |
-| `associatedIdentifier` | ✅ | Same CUST_ID as wallet create (`userId` alias accepted) |
-| `eventType` | ✅ | Must match a rule (default `PURCHASE`) |
-| `amount` | ✅ | Txn amount; spend formulas need **> 0** |
-| `currency` | ✅ | Must be in rule `eligibleCurrencies` when configured |
-| `occurredAt` | ✅ if maxAgeDays set | ISO-8601; older than N days → skip + **fail table** |
+| `associatedIdentifier` | ✅ | Same CUST_ID as wallet (`userId` alias accepted) |
+| `eventType` | ✅ | Must match a digestion rule (`PURCHASE`, `SIGNUP`, `REDEEM`, …) |
+| `amount` | ✅ | Spend formulas need **> 0** |
+| `currency` | ✅ | Must be in rule `eligibleCurrencies` when set |
+| `occurredAt` | ✅ if maxAgeDays set | ISO-8601 |
 | `metadata` | optional | Free map |
 
-Default PURCHASE digestion rule example (create via API — not YAML):
-
-| Setting | Example |
-|---------|---------|
-| operation | EARN |
-| min-amount | 0.01 |
-| formula | `RATE:0.01` → LP = amount × 0.01 |
-| point-currency | LP |
-| max-age-days | **7** |
-| eligible-currencies | **HKD**, **USD** |
-
-See [DIGESTION_RULES.md](./DIGESTION_RULES.md).
+Default PURCHASE rule after bootstrap: **EARN** · `RATE:0.01` · HKD/USD · maxAge 7d · LP.
 
 ---
 
@@ -79,126 +84,115 @@ See [DIGESTION_RULES.md](./DIGESTION_RULES.md).
 {
   "code": "SYS0000",
   "data": {
-    "eventId": "txn-20260811-0001",
+    "eventId": "txn-…",
     "status": "EARNED",
     "operation": "EARN",
     "points": 2.0,
-    "walletExternalReference": "01A12345678"
+    "walletExternalReference": "01A12345678",
+    "movementId": 123,
+    "legs": [
+      { "entryId": 1, "accountId": 99, "direction": "DEBIT",  "amount": 2, "currency": "LP" },
+      { "entryId": 2, "accountId": 88, "direction": "CREDIT", "amount": 2, "currency": "LP" }
+    ]
   }
 }
 ```
 
-Verify LP balance:
-
 ```bash
-curl -sS 'http://localhost:8080/wallets/01A12345678?currencies=LP'
+# LP balance
+curl -sS "$BASE/wallets/$CUST?currencies=LP" | jq .
+
+# legs by event
+curl -sS "$BASE/integrations/ledger-entries?eventId=$EVENT_ID" | jq .
 ```
 
 ---
 
 ## 3) Failures → DB then SKIPPED
 
-On eligibility / no-wallet / apply error the engine **first inserts** `failed_transaction_ingest`, then returns:
+Engine **inserts** `failed_transaction_ingest`, then returns:
 
 ```json
-{ "data": { "eventId": "...", "status": "SKIPPED", "reason": "..." } }
+{ "data": { "eventId": "…", "status": "SKIPPED", "reason": "…" } }
 ```
 
 | failureCode | Meaning |
 |-------------|---------|
-| `AMOUNT` | amount ≤ 0 for RATE/AMOUNT formula |
+| `AMOUNT` | amount ≤ 0 for RATE/AMOUNT/MUL_ADD |
 | `MIN_AMOUNT` | below rule min |
-| `CURRENCY` | ccy not in eligible list |
-| `AGE` | missing `occurredAt` or older than maxAgeDays |
-| `NO_RULE` | no eventType match |
-| `NO_WALLET` | customer not onboarded |
-| `ERROR` | apply/balance failure |
-| `DISABLED` | integration off |
-
-Table (JPA): `failed_transaction_ingest`  
-Columns include: `event_id`, `associated_identifier`, `failure_code`, `reason`, `raw_payload`, `status=OPEN`.
+| `CURRENCY` | ccy not eligible |
+| `AGE` | missing/old `occurredAt` |
+| `NO_RULE` | no matching digestion rule |
+| `NO_WALLET` | no wallet and auto-create off |
+| `ERROR` | apply failure |
+| `DISABLED` | ingest policy `isEnabled=false` |
 
 ---
 
-## 4) End-to-end
+## 4) End-to-end (manual or auto-wallet)
 
 ```bash
-# A) Onboard HKD settlement + LP book
-curl -sS -X POST 'http://localhost:8080/wallets' \
+# Optional explicit onboard (skip if isAutoCreateWallet=true)
+curl -sS -X POST "$BASE/wallets" \
   -H 'Content-Type: application/json' \
-  -d '{
-    "associatedIdentifier": "01A12345678",
-    "settlementCurrency": "HKD",
-    "accounts": [{ "currency": "LP", "name": "Loyalty", "refCode": "LP" }]
-  }'
+  -d "{
+    \"associatedIdentifier\": \"$CUST\",
+    \"settlementCurrency\": \"HKD\",
+    \"accounts\": [{ \"currency\": \"LP\", \"name\": \"Loyalty\", \"refCode\": \"LP\" }]
+  }"
 
-# B) Purchase webhook
-curl -sS -X POST 'http://localhost:8080/integrations/webhooks/transactions' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "eventId": "txn-e2e-1",
-    "associatedIdentifier": "01A12345678",
-    "eventType": "PURCHASE",
-    "amount": 200,
-    "currency": "HKD",
-    "occurredAt": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-  }'
+# Upstream purchase (section 1)
+# …
+```
 
-# C) Query LP
-curl -sS 'http://localhost:8080/wallets/01A12345678?currencies=LP'
+Lazy path:
+
+```bash
+SKIP_ONBOARD=1 ./scripts/e2e-smoke.sh
 ```
 
 ---
 
 ## 5) Query failed ingest (ops)
 
+Pagination is **1-based** (`page`, `size`) — not `limit`.
+
 ```bash
-# list OPEN skips for a customer
-curl -sS 'http://localhost:8080/integrations/failed-transactions?associatedIdentifier=01A12345678&status=OPEN&limit=20'
-
-# by failure code
-curl -sS 'http://localhost:8080/integrations/failed-transactions?failureCode=CURRENCY&limit=50'
-
-# by event id
-curl -sS 'http://localhost:8080/integrations/failed-transactions?eventId=txn-xxx'
+curl -sS "$BASE/integrations/failed-transactions?status=OPEN&page=1&size=20"
+curl -sS "$BASE/integrations/failed-transactions?associatedIdentifier=$CUST&status=OPEN"
+curl -sS "$BASE/integrations/failed-transactions?failureCode=CURRENCY"
+curl -sS "$BASE/integrations/failed-transactions?eventId=$EVENT_ID"
 ```
 
 ---
 
-## 6) E2E smoke script
-
-With app + Postgres running:
+## 6) Fail replay
 
 ```bash
-chmod +x scripts/e2e-smoke.sh
+# single
+curl -sS -X POST "$BASE/integrations/failed-transactions/{id}/review"
+curl -sS -X POST "$BASE/integrations/failed-transactions/{id}/replay"
+# → REPLAYED when fixed; still-skipped does NOT insert a second fail row
+
+# bulk (max 50)
+curl -sS -X POST "$BASE/integrations/failed-transactions/replay" \
+  -H 'Content-Type: application/json' \
+  -d '{"ids":[1,2,3]}'
+```
+
+---
+
+## 7) Smoke
+
+```bash
+./scripts/bootstrap-runtime.sh
 ./scripts/e2e-smoke.sh
 # BASE_URL=http://localhost:8080 ./scripts/e2e-smoke.sh
 ```
 
 ---
 
-## Auto wallet on webhook
-
-When `ledger.integration.auto-create-wallet=true` (default):
-
-```text
-gates pass → wallet missing?
-  → create settlement HKD + LP book
-  → earn/burn same request (same TX)
-```
-
-No separate onboard required for first eligible event.
-
-```bash
-# lazy provision smoke
-SKIP_ONBOARD=1 ./scripts/e2e-smoke.sh
-```
-
-Disable: `LEDGER_AUTO_CREATE_WALLET=false` → missing wallet becomes `NO_WALLET` fail row again.
-
----
-
-Formulas (runtime `digestion_rule.formula`):
+## 8) Formulas & runtime rate change
 
 | formula | points |
 |---------|--------|
@@ -207,46 +201,29 @@ Formulas (runtime `digestion_rule.formula`):
 | `FIXED:100` | 100 |
 | `AMOUNT` | amount |
 
-**Change rate without restart:**
-
 ```bash
-curl -sS -X PUT 'http://localhost:8080/digestion-rules/{id}' \
+curl -sS -X PUT "$BASE/digestion-rules/{id}" \
   -H 'Content-Type: application/json' \
   -d '{"formula":"RATE:0.02"}'
+# next webhook uses new rate — no restart
 ```
 
-Full API: [DIGESTION_RULES.md](./DIGESTION_RULES.md)
+Full rule API: [DIGESTION_RULES.md](./DIGESTION_RULES.md)
 
 ---
 
-## Config (runtime)
+## 9) Config (runtime)
 
-**Door / auto-wallet** — DB, not rule YAML:
+**Door / auto-wallet** — DB:
 
 ```bash
-curl -sS 'http://localhost:8080/ingest-policy'
-curl -sS -X PUT 'http://localhost:8080/ingest-policy' \
+curl -sS "$BASE/ingest-policy"
+curl -sS -X PUT "$BASE/ingest-policy" \
   -H 'Content-Type: application/json' \
   -d '{"isEnabled":true,"isAutoCreateWallet":true,"autoWalletSettlementCurrency":"HKD","autoWalletEnsureCurrency":"LP"}'
 ```
 
-Env values (if present) only seed the first `ingest_policy` row when empty.  
-**Digestion rules:** only via `/digestion-rules` (DB) — no YAML catalog.
+Env only seeds the first empty `ingest_policy` row.  
+**Digestion:** `/digestion-rules` only — no YAML rule catalog.
 
-See [INGEST_POLICY.md](./INGEST_POLICY.md) · [DIGESTION_RULES.md](./DIGESTION_RULES.md) · [BOOTSTRAP.md](./BOOTSTRAP.md)
-
----
-
-## Fail replay (ops)
-
-```bash
-# list OPEN
-curl -sS 'http://localhost:8080/integrations/failed-transactions?status=OPEN&limit=20'
-
-# mark reviewed (no re-run)
-curl -sS -X POST "http://localhost:8080/integrations/failed-transactions/{id}/review"
-
-# replay payload through webhook pipeline
-curl -sS -X POST "http://localhost:8080/integrations/failed-transactions/{id}/replay"
-# → data.status REPLAYED + data.ingestion (EARNED/…) when fixed
-```
+[INGEST_POLICY.md](./INGEST_POLICY.md) · [BOOTSTRAP.md](./BOOTSTRAP.md)

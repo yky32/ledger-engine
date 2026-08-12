@@ -30,3 +30,6 @@ curl -sS -X POST 'http://localhost:8080/wallets/releases' \
 ```
 
 Idempotent by `movementKey`. Order types: `HOLD` / `RELEASE`.
+
+Entry rows mark `affectsLedger=false` so as-of **ledger** rebuild ignores holds; available still moves.  
+See [HISTORY_ASOF_REPLAY.md](./HISTORY_ASOF_REPLAY.md) · [DOUBLE_ENTRY_EARN.md](./DOUBLE_ENTRY_EARN.md).

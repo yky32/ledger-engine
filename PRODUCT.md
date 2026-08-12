@@ -82,16 +82,16 @@ Status key: **Shipped** | **Partial** | **Planned**
 | **Movement query** | By id, my-movements, admin list | `GET /movements/{id}`, `GET /movements?walletId=` | **Shipped** |
 | **Movement workflow** | AUTO / MANUAL, admin settle | AUTO + `PUT /movements/{id}/settle` | **Partial** |
 | **Earn / Burn** | Via order types / rules | Rule engine + webhook/Kafka ingestion | **Shipped** |
-| **Process** | Hold, expire, adjust | ADJUST shipped; HOLD/EXPIRE planned | **Partial** |
+| **Process** | Hold, expire, adjust | **HOLD/RELEASE shipped**; EXPIRE planned | **Partial** |
 | **Virtual accounts** | Application + approval flow | — | **Planned** |
 | **Recipients** | CRUD + auto-save on transfer | — | **Planned** |
 | **Linked bank accounts** | CRUD for withdrawal targets | — | **Planned** |
 | **Payment methods** | Card/bank per wallet | — | **Planned** |
-| **FX rates** | CRUD + wallet view conversion | — | **Planned** |
-| **Accounting rules** | Rule + RuleExecution per OrderType | YAML rules + journal posting | **Partial** |
+| **FX rates** | CRUD + wallet view conversion | CRUD endpoints | **Partial** |
+| **Accounting rules** | Rule + RuleExecution per OrderType | Legacy `/rules`; **loyalty earn uses `digestion_rule` DB** (not YAML) | **Partial** |
 | **Compliance** | Movement compliance context + files | Movement metadata field | **Planned** |
 | **Kafka pipeline** | MOVEMENT_INITIATED → BALANCE_UPDATE → DONE | Transaction events consumer; movement events planned | **Partial** |
-| **Webhooks inbound** | Activation + deposit callback | Transaction webhook | **Partial** |
+| **Webhooks inbound** | Activation + deposit callback | **Transaction webhook + digestion + DE legs** | **Shipped** (loyalty path) |
 | **Webhooks outbound** | Wallet activation to core | — | **Planned** |
 | **Auth / tenancy** | OAuth2 JWT + tenant filter | Client gateway (optional module planned) | **Planned** |
 | **Dashboard** | Stub | — | **Planned** |
