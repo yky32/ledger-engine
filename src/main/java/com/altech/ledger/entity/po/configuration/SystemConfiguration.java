@@ -1,6 +1,7 @@
 package com.altech.ledger.entity.po.configuration;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,9 +11,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 /**
  * Key/value config scoped by target + scope.
+ * <p>
+ * {@code value} is JSONB (e.g. key {@code user-register.otp} → object payload).
  */
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "uniqueTargetAndScope", columnNames = {"target", "scope"}))
@@ -30,6 +34,11 @@ public class SystemConfiguration extends AuditEntityWithIsActive {
 
     private String scope;
 
-    @Column(columnDefinition = "TEXT")
-    private String value;
+    /**
+     * Free-form JSON value, e.g. OTP policy / feature flags.
+     * Example name: {@code user-register.otp}
+     */
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb")
+    private Object value;
 }

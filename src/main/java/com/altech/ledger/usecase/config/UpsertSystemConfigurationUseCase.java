@@ -14,7 +14,7 @@ public class UpsertSystemConfigurationUseCase {
     private final SystemConfigurationRepository systemConfigurationRepository;
 
     @Transactional
-    public GetSystemConfigurationResponseDto execute(String name, String target, String scope, String value) {
+    public GetSystemConfigurationResponseDto execute(String name, String target, String scope, Object value) {
         SystemConfiguration cfg = systemConfigurationRepository.findByTargetAndScope(target, scope)
             .orElseGet(() -> {
                 SystemConfiguration c = new SystemConfiguration();
