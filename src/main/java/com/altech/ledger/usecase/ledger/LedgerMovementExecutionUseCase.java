@@ -225,15 +225,15 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             };
             boolean holdLike = cmd.getOperation() == BalanceOperation.HOLD_LOCK
                 || cmd.getOperation() == BalanceOperation.HOLD_UNLOCK;
-            ledgerEntryRepository.save(new LedgerEntry(
-                movement.getId(),
-                String.valueOf(cmd.getAccount().getId()),
-                cmd.getAmount(),
-                direction,
-                movement.getCurrency(),
-                !holdLike,  // affects ledger
-                true        // affects available
-            ));
+            LedgerEntry entry = new LedgerEntry();
+            entry.setTxnId(movement.getId());
+            entry.setTargetId(String.valueOf(cmd.getAccount().getId()));
+            entry.setAmount(cmd.getAmount());
+            entry.setDirection(direction);
+            entry.setCurrency(movement.getCurrency());
+            entry.setAffectsLedger(!holdLike);
+            entry.setAffectsAvailable(true);
+            ledgerEntryRepository.save(entry);
         }
     }
 

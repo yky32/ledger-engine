@@ -71,12 +71,13 @@ public class LedgerMovementUseCase {
     @Transactional
     public void createLedgerEntries(LedgerMovement movement, List<EntryLeg> legs) {
         for (EntryLeg leg : legs) {
-            ledgerEntryRepository.save(new LedgerEntry(
-                movement.getId(),
-                leg.targetId(),
-                leg.amount(),
-                leg.direction(),
-                movement.getCurrency()));
+            LedgerEntry entry = new LedgerEntry();
+            entry.setTxnId(movement.getId());
+            entry.setTargetId(leg.targetId());
+            entry.setAmount(leg.amount());
+            entry.setDirection(leg.direction());
+            entry.setCurrency(movement.getCurrency());
+            ledgerEntryRepository.save(entry);
         }
     }
 

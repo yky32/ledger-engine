@@ -10,7 +10,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,7 +22,6 @@ import java.math.BigDecimal;
  * from true double-entry balance legs — required for as-of rebuild.
  */
 @Entity
-@Table(name = "ledger_entry")
 @Getter
 @Setter
 public class LedgerEntry extends AuditEntityWithIsActive {
@@ -34,46 +32,24 @@ public class LedgerEntry extends AuditEntityWithIsActive {
 
     private Long txnId;
 
-    @Column(length = 100)
     private String targetId;
 
     @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false)
     private MovementDirection direction;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(nullable = false)
     private Currency currency;
 
     /** When false, as-of ledger ignores this leg (HOLD/RELEASE). Null = true (legacy). */
-    @Column
     private Boolean affectsLedger = Boolean.TRUE;
 
     /** When false, as-of available ignores this leg. Null = true (legacy). */
-    @Column
     private Boolean affectsAvailable = Boolean.TRUE;
-
-    protected LedgerEntry() {}
-
-    public LedgerEntry(Long txnId, String targetId, BigDecimal amount,
-                       MovementDirection direction, Currency currency) {
-        this(txnId, targetId, amount, direction, currency, true, true);
-    }
-
-    public LedgerEntry(Long txnId, String targetId, BigDecimal amount,
-                       MovementDirection direction, Currency currency,
-                       boolean affectsLedger, boolean affectsAvailable) {
-        this.txnId = txnId;
-        this.targetId = targetId;
-        this.amount = amount;
-        this.direction = direction;
-        this.currency = currency;
-        this.affectsLedger = affectsLedger;
-        this.affectsAvailable = affectsAvailable;
-    }
 
     public boolean isAffectsLedger() {
         return affectsLedger == null || affectsLedger;
