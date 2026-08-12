@@ -19,5 +19,9 @@ public enum OrderType {
     EARN,
     BURN,
     PROCESS,
-    CHARGE
+    CHARGE,
+    /** Lock available without changing ledger. */
+    HOLD,
+    /** Unlock available previously held. */
+    RELEASE
 }

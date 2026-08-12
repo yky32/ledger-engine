@@ -106,6 +106,36 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         });
     }
 
+    /**
+     * HOLD locks available only; RELEASE unlocks available only (ledger unchanged).
+     */
+    @Transactional
+    public GetLedgerMovementResponseDto doHoldRelease(
+        Long walletId,
+        OrderType orderType,
+        java.math.BigDecimal amount,
+        Currency currency,
+        String movementKey,
+        String description
+    ) {
+        if (orderType != OrderType.HOLD && orderType != OrderType.RELEASE) {
+            throw new BizException(MovementErrorResponse.MOV0400, "orderType must be HOLD or RELEASE");
+        }
+        Wallet wallet = walletService.get(walletId);
+        requireActive(wallet);
+        String key = key(movementKey, orderType.name().toLowerCase());
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+            String walletRef = String.valueOf(walletId);
+            // HOLD uses originator; RELEASE uses target (same wallet)
+            String origin = orderType == OrderType.HOLD ? walletRef : null;
+            String target = orderType == OrderType.RELEASE ? walletRef : null;
+            LedgerMovement m = newMovement(key, walletId, orderType, LedgerMovementMode.AUTO,
+                origin, target, amount, currency, description);
+            ledgerMovementRepository().save(m);
+            return DtoMapper.toMovement(execute(m));
+        });
+    }
+
     public LedgerMovementEvent convert(LedgerMovement m) {
         return MovementBus.toEvent(m);
     }
