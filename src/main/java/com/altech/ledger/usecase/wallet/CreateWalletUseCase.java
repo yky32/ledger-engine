@@ -54,6 +54,8 @@ public class CreateWalletUseCase {
         wallet.setAccountId(account.getId());
         wallet.setOwnerId(ownerId);
         wallet.setName(dto.name() == null || dto.name().isBlank() ? null : dto.name().trim());
+        wallet.setType(com.altech.ledger.entity.enu.WalletAssociationType.CUSTODIAN);
+        wallet.setWalletType(com.altech.ledger.entity.enu.WalletType.CORPORATE);
         wallet.setStatus(WalletStatus.PENDING);
         wallet.setSettlementCurrency(settlementCurrency);
         wallet = walletRepository.save(wallet);

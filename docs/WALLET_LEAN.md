@@ -1,33 +1,37 @@
 # Lean Wallet PO
 
-Greenfield simplification (no UAT data to migrate).
+Greenfield simplification (pre-UAT).
 
-## Kept
+## Fields
 
 | Field | Role |
 |-------|------|
 | `id` | PK |
 | `accountId` | Primary account |
-| `ownerId` | **Unique** CRM / customer id (`associatedIdentifier` in API) |
+| `ownerId` | **Unique** CRM / customer id — **all wallet queries** |
 | `name` | Optional display |
+| `type` | `WalletAssociationType` (default `CUSTODIAN`) |
+| `walletType` | `WalletType` (default `INDIVIDUAL` product / `CORPORATE` ledger attach) |
 | `status` | Lifecycle |
 | `settlementCurrency` | Default settlement book |
-| audit / `isActive` | Base entity |
+| audit / `isActive` | Base |
 
 ## Removed
 
-| Was | Why |
-|-----|-----|
-| `alias` | Redundant with ownerId |
-| `hash` | No product use |
-| `nickname` | → `name` |
-| `associatedIdentifier` | Same as ownerId |
-| `associatedFrom` | Policy-level label, not wallet identity |
-| `type` (CUSTODIAN/CRYPTO) | Always product custodian |
-| `walletType` (INDIVIDUAL/CORPORATE) | Unused product branch |
+`alias` · `hash` · `nickname` · DB column `associated_identifier` · `associatedFrom`
 
-## API
+## Query = ownerId only
 
-- Request still uses `associatedIdentifier` → stored as `ownerId`
-- Response `associatedIdentifier` = `ownerId`
-- Lookup: `findByOwnerId` only
+```text
+GET /wallets/{ownerId}
+GET /wallets?ownerId=
+GET /wallets/{ownerId}/movements
+GET /wallets/{ownerId}/balances/as-of
+POST /wallets/holds   body: { ownerId, ... }
+POST /wallets/releases body: { ownerId, ... }
+```
+
+## Create / ingest
+
+- Onboard still accepts `associatedIdentifier` → stored as `ownerId`
+- Webhook event field remains `associatedIdentifier` (upstream CRM id) → maps to wallet `ownerId`

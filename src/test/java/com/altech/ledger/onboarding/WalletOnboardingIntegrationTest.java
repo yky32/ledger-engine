@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Phase-1: 1 CUST : 1 Wallet + HKD primary + LP account; query by associatedIdentifier.
+ * Phase-1: 1 CUST : 1 Wallet + HKD primary + LP account; query by ownerId.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,24 +34,24 @@ class WalletOnboardingIntegrationTest {
                     """.formatted(associatedIdentifier)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SYS0000"))
-            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
+            .andExpect(jsonPath("$.data.ownerId").value(associatedIdentifier))
             .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
             .andExpect(jsonPath("$.data.status").value("ACTIVE"))
             .andExpect(jsonPath("$.data.account.currency").value("HKD"))
             .andExpect(jsonPath("$.data.accounts.length()").value(2));
 
-        // Query by same associatedIdentifier — full Wallet:Accounts
+        // Query by same ownerId — full Wallet:Accounts
         mockMvc.perform(get("/wallets/" + associatedIdentifier))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
+            .andExpect(jsonPath("$.data.ownerId").value(associatedIdentifier))
             .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
             .andExpect(jsonPath("$.data.accounts.length()").value(2))
             .andExpect(jsonPath("$.data.accounts[?(@.currency=='HKD' && @.primary==true)]").exists())
             .andExpect(jsonPath("$.data.accounts[?(@.currency=='LP')]").exists());
 
-        mockMvc.perform(get("/wallets").param("associatedIdentifier", associatedIdentifier))
+        mockMvc.perform(get("/wallets").param("ownerId", associatedIdentifier))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.associatedIdentifier").value(associatedIdentifier))
+            .andExpect(jsonPath("$.data.ownerId").value(associatedIdentifier))
             .andExpect(jsonPath("$.data.accounts.length()").value(2));
 
         // currencies filter — LP only
@@ -61,7 +61,7 @@ class WalletOnboardingIntegrationTest {
             .andExpect(jsonPath("$.data.accounts[0].currency").value("LP"));
 
         // currencies filter — HKD,LP (order preserved by wallet sort, both present)
-        mockMvc.perform(get("/wallets").param("associatedIdentifier", associatedIdentifier)
+        mockMvc.perform(get("/wallets").param("ownerId", associatedIdentifier)
                 .param("currencies", "HKD, LP"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.accounts.length()").value(2));

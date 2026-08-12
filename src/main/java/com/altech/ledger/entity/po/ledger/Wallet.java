@@ -2,7 +2,9 @@ package com.altech.ledger.entity.po.ledger;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.entity.AuditEntityWithIsActive;
+import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
+import com.altech.ledger.entity.enu.WalletType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,12 +20,10 @@ import lombok.Setter;
 /**
  * Customer wallet — lean model.
  * <p>
- * <b>1 {@code ownerId} (CRM cust) → 1 Wallet</b>. Money lives on linked accounts;
- * this row is identity + lifecycle + default settlement currency.
+ * <b>1 {@code ownerId} → 1 Wallet</b>. Money on linked accounts.
+ * All wallet <b>queries</b> use {@code ownerId} (path / query param).
  * <p>
- * Removed vs legacy: alias, hash, nickname, associatedIdentifier, associatedFrom,
- * association type, walletType. Public API still exposes {@code associatedIdentifier}
- * as an alias of {@code ownerId}.
+ * Upstream webhook still sends {@code associatedIdentifier}; ingest maps it → {@code ownerId}.
  */
 @Entity
 @Table(
@@ -44,9 +44,7 @@ public class Wallet extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private Long accountId;
 
-    /**
-     * Customer / CRM id — unique. Same value as API {@code associatedIdentifier}.
-     */
+    /** Customer / CRM id — unique. Query key for all wallet GET APIs. */
     @Column(nullable = false, length = 100)
     private String ownerId;
 
@@ -56,10 +54,18 @@ public class Wallet extends AuditEntityWithIsActive {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    private WalletAssociationType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private WalletType walletType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private WalletStatus status;
 
     /**
-     * Default settlement currency. Primary account is opened in this currency at onboard.
+     * Default settlement currency. Primary account opened in this currency at onboard.
      * Not a uniqueness key.
      */
     @Enumerated(EnumType.STRING)

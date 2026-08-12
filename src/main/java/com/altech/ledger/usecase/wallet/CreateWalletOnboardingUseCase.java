@@ -9,7 +9,9 @@ import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
 import com.altech.ledger.entity.dto.response.BatchCreateWalletOnboardResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
+import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
+import com.altech.ledger.entity.enu.WalletType;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.AccountErrorResponse;
@@ -173,6 +175,8 @@ public class CreateWalletOnboardingUseCase {
         Wallet wallet = new Wallet();
         wallet.setAccountId(primary.getId());
         wallet.setName(displayName);
+        wallet.setType(WalletAssociationType.CUSTODIAN);
+        wallet.setWalletType(WalletType.INDIVIDUAL);
         wallet.setStatus(WalletStatus.ACTIVE);
         wallet.setOwnerId(associatedIdentifier);
         wallet.setSettlementCurrency(settlement);

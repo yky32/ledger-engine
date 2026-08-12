@@ -98,7 +98,7 @@ class TransactionIngestionIntegrationTest {
 
         mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.associatedIdentifier").value(cust))
+            .andExpect(jsonPath("$.data.ownerId").value(cust))
             .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
             .andExpect(jsonPath("$.data.accounts[0].currency").value("LP"));
     }

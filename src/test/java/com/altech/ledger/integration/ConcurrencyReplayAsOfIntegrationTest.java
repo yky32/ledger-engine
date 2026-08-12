@@ -87,7 +87,7 @@ class ConcurrencyReplayAsOfIntegrationTest {
         _earn(cust, "500"); // 5 LP
         String key = "hold-idem-" + UUID.randomUUID();
         String body = """
-            {"associatedIdentifier":"%s","currency":"LP","amount":2,"movementKey":"%s"}
+            {"ownerId":"%s","currency":"LP","amount":2,"movementKey":"%s"}
             """.formatted(cust, key);
         mockMvc.perform(post("/wallets/holds").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk());
@@ -130,7 +130,7 @@ class ConcurrencyReplayAsOfIntegrationTest {
         mockMvc.perform(post("/wallets/holds")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","currency":"LP","amount":4,"movementKey":"h-%s"}
+                    {"ownerId":"%s","currency":"LP","amount":4,"movementKey":"h-%s"}
                     """.formatted(cust, UUID.randomUUID())))
             .andExpect(status().isOk());
 
@@ -183,7 +183,7 @@ class ConcurrencyReplayAsOfIntegrationTest {
             int status = mockMvc.perform(post("/wallets/holds")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                        {"associatedIdentifier":"%s","currency":"LP","amount":%s,"movementKey":"race-%s"}
+                        {"ownerId":"%s","currency":"LP","amount":%s,"movementKey":"race-%s"}
                         """.formatted(cust, amt, UUID.randomUUID())))
                 .andReturn().getResponse().getStatus();
             if (status == 200) {

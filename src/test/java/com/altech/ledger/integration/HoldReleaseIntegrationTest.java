@@ -62,7 +62,7 @@ class HoldReleaseIntegrationTest {
         mockMvc.perform(post("/wallets/holds")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","currency":"LP","amount":3,"movementKey":"hold-%s"}
+                    {"ownerId":"%s","currency":"LP","amount":3,"movementKey":"hold-%s"}
                     """.formatted(cust, UUID.randomUUID())))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.orderType").value("HOLD"));
@@ -76,7 +76,7 @@ class HoldReleaseIntegrationTest {
         mockMvc.perform(post("/wallets/releases")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","currency":"LP","amount":3,"movementKey":"rel-%s"}
+                    {"ownerId":"%s","currency":"LP","amount":3,"movementKey":"rel-%s"}
                     """.formatted(cust, UUID.randomUUID())))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.orderType").value("RELEASE"));

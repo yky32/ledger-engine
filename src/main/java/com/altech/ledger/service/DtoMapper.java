@@ -36,8 +36,9 @@ public final class DtoMapper {
             w.getId(),
             w.getAccountId(),
             w.getOwnerId(),
-            w.getOwnerId(), // associatedIdentifier API alias
             w.getName(),
+            w.getType(),
+            w.getWalletType(),
             w.getStatus(),
             w.getSettlementCurrency(),
             accounts.stream().map(DtoMapper::toAccount).toList(),
