@@ -18,6 +18,7 @@ import com.altech.ledger.service.CommonService;
 import com.altech.ledger.service.DtoMapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import com.altech.ledger.usecase.account.CreateAccountUseCase;
+import com.altech.ledger.util.WalletVanityCodes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,7 @@ public class CreateWalletUseCase {
         Wallet wallet = new Wallet();
         wallet.setAccountId(account.getId());
         wallet.setOwnerId(ownerId);
+        wallet.setVanityCode(WalletVanityCodes.resolveForCreate(dto.vanityCode(), ownerId));
         wallet.setName(dto.name() == null || dto.name().isBlank() ? null : dto.name().trim());
         wallet.setType(WalletAssociationType.CUSTODIAN);
         wallet.setWalletType(WalletType.CORPORATE);

@@ -36,6 +36,7 @@ public final class DtoMapper {
             w.getId(),
             w.getAccountId(),
             w.getOwnerId(),
+            w.getVanityCode(),
             w.getName(),
             w.getType(),
             w.getWalletType(),

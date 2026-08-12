@@ -42,6 +42,7 @@ public final class DtoWrapper {
         return GetWalletOnboardResponseDto.builder()
             .walletId(wallet.getId())
             .ownerId(wallet.getOwnerId())
+            .vanityCode(wallet.getVanityCode())
             .settlementCurrency(wallet.getSettlementCurrency())
             .status(wallet.getStatus())
             .type(wallet.getType())

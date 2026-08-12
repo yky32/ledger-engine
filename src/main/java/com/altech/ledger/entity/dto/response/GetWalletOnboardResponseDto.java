@@ -25,6 +25,8 @@ public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private Long walletId;
     /** Query key — CRM / customer id. */
     private String ownerId;
+    /** Customer-facing vanity / premium display (optional). */
+    private String vanityCode;
     private Currency settlementCurrency;
     private WalletStatus status;
     private WalletAssociationType type;

@@ -24,13 +24,15 @@ import org.hibernate.annotations.GenericGenerator;
  * <b>1 {@code ownerId} → 1 Wallet</b>. Money on linked accounts.
  * All wallet <b>queries</b> use {@code ownerId} (path / query param).
  * <p>
- * Upstream webhook / onboard use {@code ownerId}.
+ * {@link #vanityCode} is optional customer-facing display (lucky / premium number).
+ * Never use it as PK, FK, or integration identity — see {@link com.altech.ledger.util.WalletVanityCodes}.
  */
 @Entity
 @Table(
     name = "wallet",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_wallet_owner", columnNames = "owner_id")
+        @UniqueConstraint(name = "uk_wallet_owner", columnNames = "owner_id"),
+        @UniqueConstraint(name = "uk_wallet_vanity_code", columnNames = "vanity_code")
     }
 )
 @Getter
@@ -49,6 +51,13 @@ public class Wallet extends AuditEntityWithIsActive {
     /** Customer / CRM id — unique. Query key for all wallet GET APIs. */
     @Column(nullable = false, length = 100)
     private String ownerId;
+
+    /**
+     * Optional customer-facing vanity / premium display code (e.g. lucky digits).
+     * Mutable over product life; unique when set. Not a system identity.
+     */
+    @Column(length = 64)
+    private String vanityCode;
 
     /** Optional display name. */
     @Column(length = 200)
