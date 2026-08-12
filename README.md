@@ -247,6 +247,6 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 | [docs/HISTORY_ASOF_REPLAY.md](docs/HISTORY_ASOF_REPLAY.md) | History, as-of, fail replay, pagination |
 | [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) | Fresh DB: `./scripts/bootstrap-runtime.sh` |
 | [docs/HERMES_RUNTIME_RULES_TASK.md](docs/HERMES_RUNTIME_RULES_TASK.md) | Task archive — **DONE** |
-| [scripts/upstream-sim.sh](scripts/upstream-sim.sh) | **One cmd:** pretend upstream POS webhook |
+| [scripts/upstream-sim.sh](scripts/upstream-sim.sh) | **One cmd e2e:** restart ddl=create + multi-txn filter suite |
 | [scripts/e2e-smoke.sh](scripts/e2e-smoke.sh) | bootstrap → earn → LP → fail API |
 | `application.yml` | Env-driven infra (`DB_*`, `SERVER_PORT`, …) |
