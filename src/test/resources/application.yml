@@ -66,23 +66,4 @@ ledger:
       enabled: ${LEDGER_KAFKA_ENABLED:false}
       topic: ${LEDGER_KAFKA_TOPIC:ledger.transaction.events}
       group-id: ${LEDGER_KAFKA_GROUP:ledger-engine-test}
-    rules:
-      - event-type: ${LEDGER_RULE_PURCHASE_EVENT_TYPE:PURCHASE}
-        operation: ${LEDGER_RULE_PURCHASE_OPERATION:EARN}
-        min-amount: ${LEDGER_RULE_PURCHASE_MIN_AMOUNT:0.01}
-        point-currency: ${LEDGER_RULE_PURCHASE_POINT_CURRENCY:LP}
-        formula: ${LEDGER_RULE_PURCHASE_FORMULA:RATE:0.01}
-        max-age-days: ${LEDGER_RULE_PURCHASE_MAX_AGE_DAYS:7}
-        eligible-currencies:
-          - ${LEDGER_RULE_PURCHASE_CCY_0:HKD}
-          - ${LEDGER_RULE_PURCHASE_CCY_1:USD}
-      - event-type: ${LEDGER_RULE_SIGNUP_EVENT_TYPE:SIGNUP}
-        operation: ${LEDGER_RULE_SIGNUP_OPERATION:EARN}
-        min-amount: ${LEDGER_RULE_SIGNUP_MIN_AMOUNT:0}
-        point-currency: ${LEDGER_RULE_SIGNUP_POINT_CURRENCY:LP}
-        formula: ${LEDGER_RULE_SIGNUP_FORMULA:FIXED:100}
-      - event-type: ${LEDGER_RULE_REDEEM_EVENT_TYPE:REDEEM}
-        operation: ${LEDGER_RULE_REDEEM_OPERATION:BURN}
-        min-amount: ${LEDGER_RULE_REDEEM_MIN_AMOUNT:1}
-        point-currency: ${LEDGER_RULE_REDEEM_POINT_CURRENCY:LP}
-        formula: ${LEDGER_RULE_REDEEM_FORMULA:AMOUNT}
+    # Digestion rules: insert via test helper / API — no YAML seed

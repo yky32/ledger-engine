@@ -58,16 +58,18 @@ curl -sS -X POST 'http://localhost:8080/integrations/webhooks/transactions' \
 | `occurredAt` | ✅ if maxAgeDays set | ISO-8601; older than N days → skip + **fail table** |
 | `metadata` | optional | Free map |
 
-Default PURCHASE rule (example):
+Default PURCHASE digestion rule example (create via API — not YAML):
 
-| Setting | Default |
+| Setting | Example |
 |---------|---------|
 | operation | EARN |
 | min-amount | 0.01 |
 | formula | `RATE:0.01` → LP = amount × 0.01 |
 | point-currency | LP |
-| max-age-days | **7** (configurable) |
-| eligible-currencies | **HKD**, **USD** (configurable list) |
+| max-age-days | **7** |
+| eligible-currencies | **HKD**, **USD** |
+
+See [DIGESTION_RULES.md](./DIGESTION_RULES.md).
 
 ---
 
@@ -196,6 +198,27 @@ Disable: `LEDGER_AUTO_CREATE_WALLET=false` → missing wallet becomes `NO_WALLET
 
 ---
 
+Formulas (runtime `digestion_rule.formula`):
+
+| formula | points |
+|---------|--------|
+| `RATE:0.01` | amount × 0.01 |
+| `MUL_ADD:0.01:5` | amount × 0.01 + 5 |
+| `FIXED:100` | 100 |
+| `AMOUNT` | amount |
+
+**Change rate without restart:**
+
+```bash
+curl -sS -X PUT 'http://localhost:8080/digestion-rules/{id}' \
+  -H 'Content-Type: application/json' \
+  -d '{"formula":"RATE:0.02"}'
+```
+
+Full API: [DIGESTION_RULES.md](./DIGESTION_RULES.md)
+
+---
+
 ## Config override (env / YAML)
 
 ```yaml
@@ -204,12 +227,5 @@ ledger.integration:
   auto-wallet:
     settlement-currency: HKD
     ensure-currency: LP
-  rules:
-  - event-type: PURCHASE
-    operation: EARN
-    min-amount: 0.01
-    point-currency: LP
-    formula: RATE:0.01
-    max-age-days: 7
-    eligible-currencies: [HKD, USD, CNY]
+# Digestion rules: only via POST /digestion-rules (DB) — not YAML
 ```

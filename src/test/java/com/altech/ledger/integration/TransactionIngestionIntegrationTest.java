@@ -30,9 +30,11 @@ class TransactionIngestionIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired FailedTransactionIngestRepository failedTransactionIngestRepository;
+    @Autowired com.altech.ledger.repository.DigestionRuleRepository digestionRuleRepository;
 
     @BeforeEach
     void onboardWallets() throws Exception {
+        com.altech.ledger.support.DigestionRuleTestData.ensureDefaultRules(digestionRuleRepository);
         for (String id : new String[] { "CUST-9001", "CUST-9003" }) {
             ensureOnboarded(id);
         }

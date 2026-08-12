@@ -1,10 +1,14 @@
 package com.altech.ledger.usecase.integration;
 
 import com.altech.core.constant.enu.Currency;
-import com.altech.ledger.config.IntegrationProperties;
 import com.altech.ledger.entity.dto.integration.TransactionalEvent;
+import com.altech.ledger.entity.po.integration.DigestionRule;
+import com.altech.ledger.repository.DigestionRuleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -13,25 +17,30 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class TransactionRuleEngineTest {
 
-    private IntegrationProperties props;
+    @Mock DigestionRuleRepository repo;
     private TransactionRuleEngine engine;
 
     @BeforeEach
     void setUp() {
-        props = new IntegrationProperties();
-        IntegrationProperties.TransactionRule purchase = new IntegrationProperties.TransactionRule();
+        engine = new TransactionRuleEngine(repo);
+        DigestionRule purchase = new DigestionRule();
+        purchase.setCode("PURCHASE_T");
         purchase.setEventType("PURCHASE");
         purchase.setOperation("EARN");
+        purchase.setIsEnabled(true);
+        purchase.setPriority(10);
         purchase.setMinAmount(new BigDecimal("0.01"));
         purchase.setPointCurrency("LP");
         purchase.setFormula("RATE:0.01");
         purchase.setMaxAgeDays(7);
-        purchase.setEligibleCurrencies(List.of("HKD", "USD"));
-        props.setRules(List.of(purchase));
-        engine = new TransactionRuleEngine(props);
+        purchase.setEligibleCurrencies("HKD,USD");
+        purchase.setIsActive(true);
+        when(repo.findAllEnabledOrdered()).thenReturn(List.of(purchase));
     }
 
     @Test

@@ -20,6 +20,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DeepParityIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
+    @Autowired com.altech.ledger.repository.DigestionRuleRepository digestionRuleRepository;
+
+    @org.junit.jupiter.api.BeforeEach
+    void digestionRules() {
+        com.altech.ledger.support.DigestionRuleTestData.ensureDefaultRules(digestionRuleRepository);
+    }
 
     @Test
     void manualMultipartDepositThenSettle() throws Exception {
