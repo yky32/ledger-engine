@@ -182,7 +182,15 @@ curl -sS -X POST "$BASE/integrations/failed-transactions/replay" \
 
 ---
 
-## 7) Smoke
+## 7) One-command CLI (recommended)
+
+```bash
+./scripts/upstream-sim.sh
+# CUST=01A87654321 AMOUNT=500 ./scripts/upstream-sim.sh purchase
+# ./scripts/upstream-sim.sh --no-bootstrap bad-jpy
+```
+
+## 7b) Smoke
 
 ```bash
 ./scripts/bootstrap-runtime.sh
