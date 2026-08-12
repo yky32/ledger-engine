@@ -229,3 +229,19 @@ ledger.integration:
     ensure-currency: LP
 # Digestion rules: only via POST /digestion-rules (DB) — not YAML
 ```
+
+---
+
+## Fail replay (ops)
+
+```bash
+# list OPEN
+curl -sS 'http://localhost:8080/integrations/failed-transactions?status=OPEN&limit=20'
+
+# mark reviewed (no re-run)
+curl -sS -X POST "http://localhost:8080/integrations/failed-transactions/{id}/review"
+
+# replay payload through webhook pipeline
+curl -sS -X POST "http://localhost:8080/integrations/failed-transactions/{id}/replay"
+# → data.status REPLAYED + data.ingestion (EARNED/…) when fixed
+```
