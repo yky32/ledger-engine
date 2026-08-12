@@ -34,3 +34,11 @@ mvn spring-boot:run
 ```
 
 See [docs/README.md](./README.md) · [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBHOOK.md).
+
+### One-command upstream sim
+
+```bash
+./scripts/upstream-sim.sh
+# CUST=01A12345678 AMOUNT=500 ./scripts/upstream-sim.sh
+# ./scripts/upstream-sim.sh --no-bootstrap bad-jpy
+```
