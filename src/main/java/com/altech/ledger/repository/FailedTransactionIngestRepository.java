@@ -15,17 +15,17 @@ public interface FailedTransactionIngestRepository extends JpaRepository<FailedT
 
     List<FailedTransactionIngest> findByStatusOrderByIdDesc(String status);
 
-    List<FailedTransactionIngest> findByAssociatedIdentifierOrderByIdDesc(String associatedIdentifier);
+    List<FailedTransactionIngest> findByOwnerIdOrderByIdDesc(String ownerId);
 
     @Query("""
         select f from FailedTransactionIngest f
         where (:status is null or f.status = :status)
-          and (:associatedIdentifier is null or f.associatedIdentifier = :associatedIdentifier)
+          and (:ownerId is null or f.ownerId = :ownerId)
           and (:failureCode is null or f.failureCode = :failureCode)
         """)
     Page<FailedTransactionIngest> search(
         @Param("status") String status,
-        @Param("associatedIdentifier") String associatedIdentifier,
+        @Param("ownerId") String ownerId,
         @Param("failureCode") String failureCode,
         Pageable pageable
     );

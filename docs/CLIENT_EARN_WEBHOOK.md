@@ -11,7 +11,7 @@ See also: [INGEST_VS_DIGESTION.md](./INGEST_VS_DIGESTION.md) · [DOUBLE_ENTRY_EA
 
 ```text
 POST /integrations/webhooks/transactions
-  eventId + associatedIdentifier + eventType + amount + currency + occurredAt
+  eventId + ownerId + eventType + amount + currency + occurredAt
         │
         ▼
   IngestPolicy (door)          ← /ingest-policy
@@ -55,7 +55,7 @@ curl -sS -X POST "$BASE/integrations/webhooks/transactions" \
   -H 'Content-Type: application/json' \
   -d "{
     \"eventId\": \"$EVENT_ID\",
-    \"associatedIdentifier\": \"$CUST\",
+    \"ownerId\": \"$CUST\",
     \"eventType\": \"PURCHASE\",
     \"amount\": 200.00,
     \"currency\": \"HKD\",
@@ -67,7 +67,7 @@ curl -sS -X POST "$BASE/integrations/webhooks/transactions" \
 | Field | Required | Notes |
 |-------|----------|--------|
 | `eventId` | ✅ | Idempotency key |
-| `associatedIdentifier` | ✅ | Same CUST_ID as wallet (`userId` alias accepted) |
+| `ownerId` | ✅ | Same CUST_ID as wallet (`userId` alias accepted) |
 | `eventType` | ✅ | Must match a digestion rule (`PURCHASE`, `SIGNUP`, `REDEEM`, …) |
 | `amount` | ✅ | Spend formulas need **> 0** |
 | `currency` | ✅ | Must be in rule `eligibleCurrencies` when set |
@@ -136,7 +136,7 @@ Engine **inserts** `failed_transaction_ingest`, then returns:
 curl -sS -X POST "$BASE/wallets" \
   -H 'Content-Type: application/json' \
   -d "{
-    \"associatedIdentifier\": \"$CUST\",
+    \"ownerId\": \"$CUST\",
     \"settlementCurrency\": \"HKD\",
     \"accounts\": [{ \"currency\": \"LP\", \"name\": \"Loyalty\", \"refCode\": \"LP\" }]
   }"
@@ -159,7 +159,7 @@ Pagination is **1-based** (`page`, `size`) — not `limit`.
 
 ```bash
 curl -sS "$BASE/integrations/failed-transactions?status=OPEN&page=1&size=20"
-curl -sS "$BASE/integrations/failed-transactions?associatedIdentifier=$CUST&status=OPEN"
+curl -sS "$BASE/integrations/failed-transactions?ownerId=$CUST&status=OPEN"
 curl -sS "$BASE/integrations/failed-transactions?failureCode=CURRENCY"
 curl -sS "$BASE/integrations/failed-transactions?eventId=$EVENT_ID"
 ```

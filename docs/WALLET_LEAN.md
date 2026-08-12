@@ -1,37 +1,22 @@
-# Lean Wallet PO
+# Lean Wallet — ownerId everywhere
 
-Greenfield simplification (pre-UAT).
+Pre-production full cutover. No dual keys.
 
-## Fields
+## Wallet PO
 
-| Field | Role |
-|-------|------|
-| `id` | PK |
-| `accountId` | Primary account |
-| `ownerId` | **Unique** CRM / customer id — **all wallet queries** |
-| `name` | Optional display |
-| `type` | `WalletAssociationType` (default `CUSTODIAN`) |
-| `walletType` | `WalletType` (default `INDIVIDUAL` product / `CORPORATE` ledger attach) |
-| `status` | Lifecycle |
-| `settlementCurrency` | Default settlement book |
-| audit / `isActive` | Base |
+`id · accountId · ownerId · name · type · walletType · status · settlementCurrency`
+
+## API
+
+| Surface | Field |
+|---------|--------|
+| Onboard `POST /wallets` | `ownerId` |
+| Query `GET /wallets/{ownerId}` | path / `?ownerId=` |
+| History / as-of | `{ownerId}` |
+| Hold / release | body `ownerId` |
+| Webhook event | `ownerId` (`associatedIdentifier` JSON alias still accepted once) |
+| Failed ingest | column + filter `ownerId` |
 
 ## Removed
 
-`alias` · `hash` · `nickname` · DB column `associated_identifier` · `associatedFrom`
-
-## Query = ownerId only
-
-```text
-GET /wallets/{ownerId}
-GET /wallets?ownerId=
-GET /wallets/{ownerId}/movements
-GET /wallets/{ownerId}/balances/as-of
-POST /wallets/holds   body: { ownerId, ... }
-POST /wallets/releases body: { ownerId, ... }
-```
-
-## Create / ingest
-
-- Onboard still accepts `associatedIdentifier` → stored as `ownerId`
-- Webhook event field remains `associatedIdentifier` (upstream CRM id) → maps to wallet `ownerId`
+`alias · hash · nickname · associatedIdentifier` column · `associatedFrom`

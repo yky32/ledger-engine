@@ -86,7 +86,7 @@ fire() {
     -H 'Content-Type: application/json' \
     -d "{
       \"eventId\": \"$event_id\",
-      \"associatedIdentifier\": \"$CUST\",
+      \"ownerId\": \"$CUST\",
       \"eventType\": \"$event_type\",
       \"amount\": $amount,
       \"currency\": \"$currency\",
@@ -103,7 +103,7 @@ fire() {
 
   info "wallet LP"
   curl -sS "$BASE_URL/wallets/${CUST}?currencies=LP" | jq '{
-    id: .data.associatedIdentifier // .data.ownerId,
+    id: .data.ownerId // .data.ownerId,
     settlement: .data.settlementCurrency,
     accounts: [.data.accounts[]? | {currency, ledgerBalance, availableBalance}]
   }' 2>/dev/null || curl -sS "$BASE_URL/wallets/${CUST}?currencies=LP" | jq .

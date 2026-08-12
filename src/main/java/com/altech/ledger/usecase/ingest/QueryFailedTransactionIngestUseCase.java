@@ -37,12 +37,12 @@ public class QueryFailedTransactionIngestUseCase {
     @Transactional(readOnly = true)
     public Page<GetFailedTransactionIngestResponseDto> search(
         String status,
-        String associatedIdentifier,
+        String ownerId,
         String failureCode,
         Pageable pageable
     ) {
         String st = blankToNull(status);
-        String aid = blankToNull(associatedIdentifier);
+        String aid = blankToNull(ownerId);
         String code = blankToNull(failureCode);
         return repository.search(st, aid, code, Pageables.toZeroBased(pageable)).map(this::_toDto);
     }
@@ -58,7 +58,7 @@ public class QueryFailedTransactionIngestUseCase {
         return new GetFailedTransactionIngestResponseDto(
             f.getId(),
             f.getEventId(),
-            f.getAssociatedIdentifier(),
+            f.getOwnerId(),
             f.getEventType(),
             f.getAmount(),
             f.getCurrency(),

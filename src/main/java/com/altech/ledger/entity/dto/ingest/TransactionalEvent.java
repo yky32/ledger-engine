@@ -13,18 +13,17 @@ import java.util.Map;
 
 /**
  * Inbound commerce / loyalty event (webhook or Kafka).
- * <p>
- * Customer key is {@link #associatedIdentifier} — same value used at wallet onboard.
- * JSON alias {@code userId} is accepted for older samples only.
+ * Customer key = {@link #ownerId} (same as wallet {@code ownerId}).
+ * JSON aliases {@code associatedIdentifier} / {@code userId} accepted for older samples.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TransactionalEvent(
     @NotBlank String eventId,
 
-    /** CUST_ID / CRM id — must match wallet onboard {@code associatedIdentifier}. */
+    /** CRM / customer id — wallet ownerId. */
     @NotBlank
-    @JsonAlias("userId")
-    String associatedIdentifier,
+    @JsonAlias({"associatedIdentifier", "userId"})
+    String ownerId,
 
     @NotBlank String eventType,
 
@@ -32,14 +31,13 @@ public record TransactionalEvent(
 
     @NotNull Currency currency,
 
-    /** Event time; required when rule has {@code maxAgeDays}. */
     Instant occurredAt,
 
     Map<String, String> metadata
 ) {
     public TransactionalEvent {
-        if (associatedIdentifier != null) {
-            associatedIdentifier = associatedIdentifier.trim();
+        if (ownerId != null) {
+            ownerId = ownerId.trim();
         }
         if (metadata == null) {
             metadata = Map.of();

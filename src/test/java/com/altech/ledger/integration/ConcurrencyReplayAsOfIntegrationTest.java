@@ -161,7 +161,7 @@ class ConcurrencyReplayAsOfIntegrationTest {
     private void _onboardLp(String cust) throws Exception {
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"associatedIdentifier\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"x\"}"
+                .content("{\"ownerId\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"x\"}"
                     .formatted(cust)))
             .andExpect(status().isOk());
     }
@@ -170,7 +170,7 @@ class ConcurrencyReplayAsOfIntegrationTest {
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"eventId":"e-%s","associatedIdentifier":"%s","eventType":"PURCHASE",
+                    {"eventId":"e-%s","ownerId":"%s","eventType":"PURCHASE",
                      "amount":%s,"currency":"HKD","occurredAt":"%s"}
                     """.formatted(UUID.randomUUID(), cust, amount, Instant.now())))
             .andExpect(status().isOk())

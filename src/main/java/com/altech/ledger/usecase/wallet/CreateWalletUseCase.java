@@ -6,7 +6,9 @@ import com.altech.ledger.entity.dto.request.CreateLedgerAccountRequestDto;
 import com.altech.ledger.entity.dto.request.CreateLedgerWalletRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
+import com.altech.ledger.entity.enu.WalletAssociationType;
 import com.altech.ledger.entity.enu.WalletStatus;
+import com.altech.ledger.entity.enu.WalletType;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.WalletErrorResponse;
@@ -39,11 +41,9 @@ public class CreateWalletUseCase {
         Currency settlementCurrency = dto.settlementCurrency() != null
             ? commonUseCase.requireCurrency(dto.settlementCurrency())
             : account.getCurrency();
-        String ownerId = dto.ownerId() != null && !dto.ownerId().isBlank()
-            ? dto.ownerId().trim()
-            : (dto.associatedIdentifier() != null ? dto.associatedIdentifier().trim() : null);
+        String ownerId = dto.ownerId() == null ? null : dto.ownerId().trim();
         if (ownerId == null || ownerId.isBlank()) {
-            throw new BizException(WalletErrorResponse.WAL0400, "ownerId / associatedIdentifier required");
+            throw new BizException(WalletErrorResponse.WAL0400, "ownerId required");
         }
         if (walletRepository.existsByOwnerId(ownerId)) {
             throw new BizException(WalletErrorResponse.WAL0409,
@@ -54,8 +54,8 @@ public class CreateWalletUseCase {
         wallet.setAccountId(account.getId());
         wallet.setOwnerId(ownerId);
         wallet.setName(dto.name() == null || dto.name().isBlank() ? null : dto.name().trim());
-        wallet.setType(com.altech.ledger.entity.enu.WalletAssociationType.CUSTODIAN);
-        wallet.setWalletType(com.altech.ledger.entity.enu.WalletType.CORPORATE);
+        wallet.setType(WalletAssociationType.CUSTODIAN);
+        wallet.setWalletType(WalletType.CORPORATE);
         wallet.setStatus(WalletStatus.PENDING);
         wallet.setSettlementCurrency(settlementCurrency);
         wallet = walletRepository.save(wallet);
@@ -63,13 +63,9 @@ public class CreateWalletUseCase {
         return DtoMapper.toWallet(wallet, myAccounts);
     }
 
-    /**
-     * Main account (+ optional multi-ccy) then wallet row.
-     */
     @Transactional
     public GetLedgerWalletResponseDto executeFull(String ownerId, String mainCurrency,
-                                                  List<String> extraCurrencies,
-                                                  String associatedIdentifier, String associatedFromIgnored) {
+                                                  List<String> extraCurrencies) {
         Currency currency = commonUseCase.requireCurrency(mainCurrency);
         String mainAccountNo = commonService.getNextMainAccount();
         GetLedgerAccountResponseDto main = createAccountUseCase.execute(new CreateLedgerAccountRequestDto(
@@ -77,8 +73,6 @@ public class CreateWalletUseCase {
         if (extraCurrencies != null && !extraCurrencies.isEmpty()) {
             createAccountUseCase.executeByAssociatedCurrencies(mainAccountNo, extraCurrencies);
         }
-        String oid = ownerId != null ? ownerId : associatedIdentifier;
-        return execute(new CreateLedgerWalletRequestDto(
-            main.id(), associatedIdentifier, oid, currency, oid));
+        return execute(new CreateLedgerWalletRequestDto(main.id(), ownerId, currency, ownerId));
     }
 }

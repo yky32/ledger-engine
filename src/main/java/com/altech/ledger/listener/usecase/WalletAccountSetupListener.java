@@ -35,17 +35,15 @@ public class WalletAccountSetupListener {
     public void onMessage(ConsumerRecord<String, String> record) {
         try {
             JsonNode node = objectMapper.readTree(record.value());
-            String ownerId = text(node, "ownerId", "userId", "walletAssociatedIdentifier");
+            String ownerId = text(node, "ownerId", "userId", "walletAssociatedIdentifier", "associatedIdentifier");
             String currency = text(node, "mainCurrency", "currency");
             if (currency == null) currency = "USD";
-            String extId = text(node, "walletAssociatedIdentifier", "associatedIdentifier");
-            String associatedFrom = text(node, "walletAssociatedFrom", "associatedFrom");
             List<String> extras = new ArrayList<>();
             if (node.has("accountCurrencies") && node.get("accountCurrencies").isArray()) {
                 node.get("accountCurrencies").forEach(c -> extras.add(c.asText()));
             }
             GetLedgerWalletResponseDto created = createWalletUseCase.executeFull(
-                ownerId, currency, extras, extId, associatedFrom);
+                ownerId, currency, extras);
             log.info("WALLET_CREATED processed walletId={}", created.id());
         } catch (Exception ex) {
             log.error("Failed WALLET_CREATED: {}", ex.getMessage(), ex);

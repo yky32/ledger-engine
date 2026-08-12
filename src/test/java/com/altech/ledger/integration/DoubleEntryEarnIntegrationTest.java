@@ -46,7 +46,7 @@ class DoubleEntryEarnIntegrationTest {
         String cust = "DE-" + UUID.randomUUID().toString().substring(0, 8);
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"associatedIdentifier\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"de\"}"
+                .content("{\"ownerId\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"de\"}"
                     .formatted(cust)))
             .andExpect(status().isOk());
 

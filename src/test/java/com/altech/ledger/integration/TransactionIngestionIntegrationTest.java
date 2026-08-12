@@ -63,7 +63,7 @@ class TransactionIngestionIntegrationTest {
         String body = """
             {
               "eventId": "evt-alias-%s",
-              "associatedIdentifier": "CUST-9010",
+              "ownerId": "CUST-9010",
               "eventType": "PURCHASE",
               "amount": 100,
               "currency": "HKD",
@@ -175,12 +175,12 @@ class TransactionIngestionIntegrationTest {
     }
 
     /** settlement LP primary so earn/burn points hit LP account */
-    private void ensureOnboarded(String associatedIdentifier) throws Exception {
+    private void ensureOnboarded(String ownerId) throws Exception {
         var result = mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","settlementCurrency":"LP","name":"Test wallet"}
-                    """.formatted(associatedIdentifier)))
+                    {"ownerId":"%s","settlementCurrency":"LP","name":"Test wallet"}
+                    """.formatted(ownerId)))
             .andReturn();
         assertThat(result.getResponse().getStatus()).isIn(200, 409);
     }

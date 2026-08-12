@@ -23,7 +23,7 @@ import lombok.Setter;
  * <b>1 {@code ownerId} → 1 Wallet</b>. Money on linked accounts.
  * All wallet <b>queries</b> use {@code ownerId} (path / query param).
  * <p>
- * Upstream webhook still sends {@code associatedIdentifier}; ingest maps it → {@code ownerId}.
+ * Upstream webhook / onboard use {@code ownerId}.
  */
 @Entity
 @Table(

@@ -38,7 +38,7 @@ class HoldReleaseIntegrationTest {
         String cust = "HD-" + UUID.randomUUID().toString().substring(0, 8);
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"associatedIdentifier\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"h\"}"
+                .content("{\"ownerId\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"h\"}"
                     .formatted(cust)))
             .andExpect(status().isOk());
 
@@ -46,7 +46,7 @@ class HoldReleaseIntegrationTest {
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"eventId":"hd-%s","associatedIdentifier":"%s","eventType":"PURCHASE",
+                    {"eventId":"hd-%s","ownerId":"%s","eventType":"PURCHASE",
                      "amount":1000,"currency":"HKD","occurredAt":"%s"}
                     """.formatted(UUID.randomUUID(), cust, java.time.Instant.now())))
             .andExpect(status().isOk())

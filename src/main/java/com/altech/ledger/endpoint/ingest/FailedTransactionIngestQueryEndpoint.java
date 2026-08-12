@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Failed transactional ingest <b>Query (R)</b> — ops visibility for D5 skip store.
- * <p>
- * Lookup filters are query params only — no {@code /by-*} paths.
- * Pagination: tgt.profile style 1-based {@link PageableDefault}.
+ * Failed transactional ingest Query — filters via query params only.
  */
 @RestController
 @RequestMapping("/integrations/failed-transactions")
@@ -31,19 +28,15 @@ public class FailedTransactionIngestQueryEndpoint {
     private final QueryFailedTransactionIngestUseCase queryFailedTransactionIngestUseCase;
 
     /**
-     * Search failed / skipped ingest rows.
-     * <pre>
-     * GET /integrations/failed-transactions?status=OPEN&amp;failureCode=AGE
-     * GET /integrations/failed-transactions?associatedIdentifier=01A12345678
+     * GET /integrations/failed-transactions?status=OPEN&amp;ownerId=01A…
      * GET /integrations/failed-transactions?eventId=txn-xxx
-     * </pre>
      */
     @GetMapping
     public Result<List<GetFailedTransactionIngestResponseDto>> search(
         @PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "id", direction = Sort.Direction.DESC)
         Pageable pageable,
         @RequestParam(required = false) String status,
-        @RequestParam(required = false) String associatedIdentifier,
+        @RequestParam(required = false) String ownerId,
         @RequestParam(required = false) String failureCode,
         @RequestParam(required = false) String eventId
     ) {
@@ -51,7 +44,7 @@ public class FailedTransactionIngestQueryEndpoint {
             return R.success(queryFailedTransactionIngestUseCase.byEventId(eventId.trim()));
         }
         Page<GetFailedTransactionIngestResponseDto> page = queryFailedTransactionIngestUseCase.search(
-            status, associatedIdentifier, failureCode, pageable);
+            status, ownerId, failureCode, pageable);
         return R.success(page.getContent(), Pagination.create(page));
     }
 

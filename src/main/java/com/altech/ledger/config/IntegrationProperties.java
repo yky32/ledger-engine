@@ -12,7 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ledger.integration")
 public class IntegrationProperties {
     private boolean enabled = true;
-    private String walletRefTemplate = "wallet:{associatedIdentifier}:{currency}";
+    private String walletRefTemplate = "wallet:{ownerId}:{currency}";
 
     /**
      * When true: after eligibility gates, missing wallet is auto-created then earn/burn continues

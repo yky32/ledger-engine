@@ -53,7 +53,7 @@ class FailedIngestReplayIntegrationTest {
         String cust = "RP-" + UUID.randomUUID().toString().substring(0, 8);
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"associatedIdentifier\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"r\"}"
+                .content("{\"ownerId\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"r\"}"
                     .formatted(cust)))
             .andExpect(status().isOk());
 

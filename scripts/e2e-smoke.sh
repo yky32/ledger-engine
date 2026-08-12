@@ -42,7 +42,7 @@ if [[ "$SKIP_ONBOARD" != "1" ]]; then
   ONBOARD=$(curl -sS -X POST "$BASE_URL/wallets" \
     -H 'Content-Type: application/json' \
     -d "{
-      \"associatedIdentifier\": \"$CUST_ID\",
+      \"ownerId\": \"$CUST_ID\",
       \"settlementCurrency\": \"HKD\",
       \"name\": \"Smoke $CUST_ID\",
       \"associatedFrom\": \"CRM\",
@@ -65,7 +65,7 @@ EARN=$(curl -sS -X POST "$BASE_URL/integrations/webhooks/transactions" \
   -H 'Content-Type: application/json' \
   -d "{
     \"eventId\": \"$EVENT_ID\",
-    \"associatedIdentifier\": \"$CUST_ID\",
+    \"ownerId\": \"$CUST_ID\",
     \"eventType\": \"PURCHASE\",
     \"amount\": $AMOUNT,
     \"currency\": \"$CURRENCY\",
@@ -82,8 +82,8 @@ green "earned points=$POINTS legs=2 movementId=$MOVEMENT_ID (expect ~$RATE_EXPEC
 
 info "3) query wallet LP + ledger-entries?eventId="
 WALLET=$(curl -sS "$BASE_URL/wallets/${CUST_ID}?currencies=LP")
-echo "$WALLET" | jq '{associatedIdentifier: .data.associatedIdentifier, settlementCurrency: .data.settlementCurrency, accounts: .data.accounts}'
-echo "$WALLET" | jq -e '.data.associatedIdentifier=="'"$CUST_ID"'"' >/dev/null
+echo "$WALLET" | jq '{ownerId: .data.ownerId, settlementCurrency: .data.settlementCurrency, accounts: .data.accounts}'
+echo "$WALLET" | jq -e '.data.ownerId=="'"$CUST_ID"'"' >/dev/null
 LP_BAL=$(echo "$WALLET" | jq -r '[.data.accounts[]? | select(.currency=="LP") | .ledgerBalance] | add // 0')
 info "LP ledgerBalance sum=$LP_BAL"
 python3 - <<PY
@@ -110,7 +110,7 @@ BAD=$(curl -sS -X POST "$BASE_URL/integrations/webhooks/transactions" \
   -H 'Content-Type: application/json' \
   -d "{
     \"eventId\": \"$BAD_EVENT\",
-    \"associatedIdentifier\": \"$CUST_ID\",
+    \"ownerId\": \"$CUST_ID\",
     \"eventType\": \"PURCHASE\",
     \"amount\": 50,
     \"currency\": \"JPY\",

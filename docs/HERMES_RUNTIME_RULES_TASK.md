@@ -86,6 +86,6 @@ Legs on earn response + `GET /integrations/ledger-entries?movementId=` / `?event
 ./scripts/bootstrap-runtime.sh
 curl -sS -X POST 'http://localhost:8080/integrations/webhooks/transactions' \
   -H 'Content-Type: application/json' \
-  -d '{"eventId":"txn-1","associatedIdentifier":"01A12345678","eventType":"PURCHASE","amount":200,"currency":"HKD","occurredAt":"2026-08-12T10:00:00Z"}'
+  -d '{"eventId":"txn-1","ownerId":"01A12345678","eventType":"PURCHASE","amount":200,"currency":"HKD","occurredAt":"2026-08-12T10:00:00Z"}'
 curl -sS 'http://localhost:8080/integrations/ledger-entries?eventId=txn-1'
 ```

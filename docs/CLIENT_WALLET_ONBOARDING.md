@@ -12,8 +12,8 @@ Optional: skip explicit create if `ingest-policy.isAutoCreateWallet=true` ([INGE
 
 | Field | Value |
 |-------|--------|
-| JSON | `associatedIdentifier` |
-| Stored as | `wallet.ownerId` + `wallet.associatedIdentifier` |
+| JSON | `ownerId` |
+| Stored as | `wallet.ownerId` + `wallet.ownerId` |
 | Example format | `01A` + **8 digits** → `01A12345678` |
 | Uniqueness | One wallet per id (`WAL0409` if already onboarded) |
 
@@ -46,7 +46,7 @@ CRM CUST 01A12345678
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
-    "associatedIdentifier": "01A12345678",
+    "ownerId": "01A12345678",
     "settlementCurrency": "HKD",
     "name": "Customer 01A12345678",
     "associatedFrom": "CRM",
@@ -64,7 +64,7 @@ curl -sS -X POST 'http://localhost:8080/wallets' \
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `associatedIdentifier` | ✅ | Client customer id (`01A` + 8 digits) |
+| `ownerId` | ✅ | Client customer id (`01A` + 8 digits) |
 | `settlementCurrency` | ✅ | Wallet default settlement (`HKD`) |
 | `name` | optional | Display name |
 | `associatedFrom` | optional | Source system (default `CRM`) |
@@ -84,7 +84,7 @@ Do **not** pass a second wallet for LP — LP is an **account** under the same w
   "data": {
     "walletId": 1,
     "ownerId": "01A12345678",
-    "associatedIdentifier": "01A12345678",
+    "ownerId": "01A12345678",
     "associatedFrom": "CRM",
     "settlementCurrency": "HKD",
     "status": "ACTIVE",
@@ -120,12 +120,12 @@ Do **not** pass a second wallet for LP — LP is an **account** under the same w
 
 | HTTP | Code | When |
 |------|------|------|
-| 409 | `WAL0409` | Same `associatedIdentifier` already has a wallet |
-| 400 | validation | Missing `associatedIdentifier` / `settlementCurrency` |
+| 409 | `WAL0409` | Same `ownerId` already has a wallet |
+| 400 | validation | Missing `ownerId` / `settlementCurrency` |
 
 ---
 
-## 2) Query wallet by CUST_ID (`associatedIdentifier`)
+## 2) Query wallet by CUST_ID (`ownerId`)
 
 Client uses **the same id** passed at create.  
 Engine returns the **whole structure**: **Wallet → `accounts[]`** (HKD primary + LP, balances, ids).
@@ -139,22 +139,22 @@ curl -sS 'http://localhost:8080/wallets/01A12345678'
 
 ```bash
 # Same via query param
-curl -sS 'http://localhost:8080/wallets?associatedIdentifier=01A12345678'
+curl -sS 'http://localhost:8080/wallets?ownerId=01A12345678'
 ```
 
 ```bash
 # Filter accounts[] by currency (CSV). Spaces optional.
 curl -sS 'http://localhost:8080/wallets/01A12345678?currencies=HKD,LP'
 curl -sS 'http://localhost:8080/wallets/01A12345678?currencies=LP'
-curl -sS 'http://localhost:8080/wallets?associatedIdentifier=01A12345678&currencies=HKD,LP'
+curl -sS 'http://localhost:8080/wallets?ownerId=01A12345678&currencies=HKD,LP'
 ```
 
 | Param | Required | Effect |
 |-------|----------|--------|
-| path / `associatedIdentifier` | ✅ | CUST_ID from create |
+| path / `ownerId` | ✅ | CUST_ID from create |
 | `currencies` | optional | CSV filter on **`accounts[]` only** (e.g. `HKD,LP`). Omit = all accounts. |
 
-Wallet header (`walletId`, `associatedIdentifier`, `settlementCurrency`, …) always returned.  
+Wallet header (`walletId`, `ownerId`, `settlementCurrency`, …) always returned.  
 `account` / `balance` shortcuts follow the filtered set (prefer primary if still included).
 
 ### What you get back (Wallet : Accounts)
@@ -164,7 +164,7 @@ Wallet header (`walletId`, `associatedIdentifier`, `settlementCurrency`, …) al
   "code": "SYS0000",
   "data": {
     "walletId": 1,
-    "associatedIdentifier": "01A12345678",
+    "ownerId": "01A12345678",
     "ownerId": "01A12345678",
     "associatedFrom": "CRM",
     "settlementCurrency": "HKD",
@@ -208,7 +208,7 @@ Wallet header (`walletId`, `associatedIdentifier`, `settlementCurrency`, …) al
 
 | Layer | Fields |
 |-------|--------|
-| **Wallet** | `walletId`, `associatedIdentifier`, `settlementCurrency`, `status`, … |
+| **Wallet** | `walletId`, `ownerId`, `settlementCurrency`, `status`, … |
 | **Accounts** | `data.accounts[]` — every book under that wallet (HKD + LP) |
 | **Primary shortcut** | `data.account` / `data.balance` = settlement (HKD) line |
 
@@ -216,7 +216,7 @@ Wallet header (`walletId`, `associatedIdentifier`, `settlementCurrency`, …) al
 
 | HTTP | Code | When |
 |------|------|------|
-| 404 | `WAL0404` | No wallet for this `associatedIdentifier` |
+| 404 | `WAL0404` | No wallet for this `ownerId` |
 
 ---
 
@@ -230,7 +230,7 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
   -d '{
     "wallets": [
       {
-        "associatedIdentifier": "01A12345678",
+        "ownerId": "01A12345678",
         "settlementCurrency": "HKD",
         "name": "Customer 01A12345678",
         "associatedFrom": "CRM",
@@ -239,7 +239,7 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
         ]
       },
       {
-        "associatedIdentifier": "01A87654321",
+        "ownerId": "01A87654321",
         "settlementCurrency": "HKD",
         "name": "Customer 01A87654321",
         "associatedFrom": "CRM",
@@ -278,7 +278,7 @@ If the customer only needs settlement book (no LP yet):
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
-    "associatedIdentifier": "01A12345678",
+    "ownerId": "01A12345678",
     "settlementCurrency": "HKD",
     "name": "Customer 01A12345678"
   }'
@@ -288,10 +288,10 @@ curl -sS -X POST 'http://localhost:8080/wallets' \
 
 ## Integrator checklist
 
-1. Map CRM customer id → `associatedIdentifier` (`01A` + 8 digits).  
+1. Map CRM customer id → `ownerId` (`01A` + 8 digits).  
 2. Call `POST /wallets` (or batch) **before** posting loyalty / cash movements.  
 3. Keep **one wallet** per customer; add LP as `accounts[]`, not a second wallet.  
-4. Use `GET /wallets/{associatedIdentifier}` to verify HKD + LP accounts.  
+4. Use `GET /wallets/{ownerId}` to verify HKD + LP accounts.  
 5. Phase-2 events / deposits reference the same customer id (`ownerId` / `userId` = `01A…`).
 
 ---

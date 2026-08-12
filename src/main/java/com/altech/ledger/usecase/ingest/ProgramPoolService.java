@@ -66,7 +66,6 @@ public class ProgramPoolService {
                 PROGRAM_OWNER,
                 Currency.HKD,
                 "System PROGRAM",
-                "SYSTEM",
                 List.of(new AccountOpenSpecDto("LP", "PROGRAM LP pool", false, true, Currency.LP))
             ));
         } catch (BizException ex) {

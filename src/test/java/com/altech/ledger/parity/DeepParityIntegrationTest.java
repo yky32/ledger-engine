@@ -105,14 +105,14 @@ class DeepParityIntegrationTest {
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"associatedIdentifier":"%s","settlementCurrency":"LP","name":"Earn User"}
+                    {"ownerId":"%s","settlementCurrency":"LP","name":"Earn User"}
                     """.formatted(userId)))
             .andExpect(status().isOk());
 
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"eventId":"earn-evt-%s","associatedIdentifier":"%s","eventType":"PURCHASE","amount":100,"currency":"HKD","occurredAt":"%s"}
+                    {"eventId":"earn-evt-%s","ownerId":"%s","eventType":"PURCHASE","amount":100,"currency":"HKD","occurredAt":"%s"}
                     """.formatted(UUID.randomUUID(), userId, java.time.Instant.now().toString())))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("EARNED"));
