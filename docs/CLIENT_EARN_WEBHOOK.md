@@ -219,16 +219,21 @@ Full API: [DIGESTION_RULES.md](./DIGESTION_RULES.md)
 
 ---
 
-## Config override (env / YAML)
+## Config (runtime)
 
-```yaml
-ledger.integration:
-  auto-create-wallet: true
-  auto-wallet:
-    settlement-currency: HKD
-    ensure-currency: LP
-# Digestion rules: only via POST /digestion-rules (DB) — not YAML
+**Door / auto-wallet** — DB, not rule YAML:
+
+```bash
+curl -sS 'http://localhost:8080/ingest-policy'
+curl -sS -X PUT 'http://localhost:8080/ingest-policy' \
+  -H 'Content-Type: application/json' \
+  -d '{"isEnabled":true,"isAutoCreateWallet":true,"autoWalletSettlementCurrency":"HKD","autoWalletEnsureCurrency":"LP"}'
 ```
+
+Env values (if present) only seed the first `ingest_policy` row when empty.  
+**Digestion rules:** only via `/digestion-rules` (DB) — no YAML catalog.
+
+See [INGEST_POLICY.md](./INGEST_POLICY.md) · [DIGESTION_RULES.md](./DIGESTION_RULES.md) · [BOOTSTRAP.md](./BOOTSTRAP.md)
 
 ---
 

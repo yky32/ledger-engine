@@ -1,149 +1,91 @@
 ## Hermes Task: Ledger Engine — Runtime Configurable Earn Rules + Double-entry Visibility
 
-### Context
+> **Status: DONE** (main, post PR #7–#16)  
+> Original brief kept below for history. Implementation notes supersede YAML-era wording.
+
+### Implementation (current)
+
+| Area | How it works now |
+|------|------------------|
+| Rules | DB `digestion_rule` · API `/digestion-rules` · **no YAML rule catalog / startup seed** |
+| Engine | `TransactionRuleEngine` reads **DB only** (empty ⇒ `NO_RULE`) |
+| Formula | `AMOUNT` · `RATE:{n}` · `FIXED:{n}` · `MUL_ADD:{rate}:{fixed}` |
+| Door / auto-wallet | DB `ingest_policy` · `GET/PUT /ingest-policy` |
+| Double-entry | PROGRAM pool legs · earn response `legs` · `GET /integrations/ledger-entries?movementId=` / `?eventId=` |
+| Bootstrap | `./scripts/bootstrap-runtime.sh` (API seed) · docs/BOOTSTRAP.md |
+| Packages | `ingest` (door) vs `digestion` (brain) |
+
+Docs: [DIGESTION_RULES.md](./DIGESTION_RULES.md) · [DOUBLE_ENTRY_EARN.md](./DOUBLE_ENTRY_EARN.md) · [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBHOOK.md) · [INGEST_VS_DIGESTION.md](./INGEST_VS_DIGESTION.md)
+
+---
+
+### Original context (historical)
+
 Repo: `yky32/ledger-engine`  
-Core flow already works:
+Core flow (at task write-time):
 - 1 Customer = 1 Wallet
 - Webhook `POST /integrations/webhooks/transactions`
-- Filter + formula via **YAML** `ledger.integration.rules`
+- ~~Filter + formula via YAML `ledger.integration.rules`~~ → **replaced by digestion_rule DB**
 - Earn points into LP account
 - Idempotent by `eventId`
 - Failures stored in `failed_transaction_ingest`
 
-### Product goal (must implement)
+### Product goal (must implement) — ✅
+
 客完成交易 → webhook → **runtime configurable filter** → **runtime configurable scoring formula** → deposit LP → **can show double-entry legs**
 
-Rules / formulas must be changeable **without redeploy / restart**.
+Rules / formulas changeable **without redeploy / restart**.
 
 ---
 
-### Current gaps to close
+### Gaps (original) — closed
 
-1. **Filter + Formula are YAML-only**  
-   `TransactionRuleEngine` reads `IntegrationProperties` (application.yml).  
-   Changing minAmount / currencies / formula requires config change + restart.  
-   **Not acceptable.**
-
-2. **Formula too limited**  
-   Only supports:
-   - `AMOUNT`
-   - `RATE:{n}`
-   - `FIXED:{n}`  
-   Need composable equation with multiple factors.
-
-3. **Double-entry visibility**  
-   Earn path posts movement/entries, but response/query must clearly expose debit + credit legs.
-
-Note: There is already a DB `Rule` entity + `/rules` API, but it is **not wired** into the webhook earn flow. Prefer reusing/extending existing structures where sensible, or introduce a proper integration-rule store if cleaner.
+1. ~~Filter + Formula YAML-only~~ → **DB + API**
+2. ~~Formula too limited~~ → + `MUL_ADD`
+3. ~~Double-entry visibility~~ → PROGRAM legs + query
 
 ---
 
-### Requirements to implement
+### Requirements A–D — ✅
 
-#### A. Runtime-configurable Integration Rules (no deploy)
-Store earn/burn rules in DB (or equivalent runtime store), editable via API.
+#### A. Runtime-configurable rules (no deploy) ✅
+`digestion_rule` fields: eventType, operation, enabled, minAmount, eligibleCurrencies, maxAgeDays, pointCurrency, formula, priority.  
+APIs: create/update/enable/disable/list/get. Engine reads DB only — **no YAML seed**.
 
-Each rule should support at least:
-- `eventType`
-- `operation` (`EARN` / `BURN` / `PROCESS`)
-- `enabled` (true/false)
-- `minAmount`
-- `eligibleCurrencies` (list)
-- `maxAgeDays` (nullable)
-- `pointCurrency` (default `LP`)
-- `formula` / equation definition
-- priority / ordering if multiple rules can match
+#### B. Configurable scoring ✅
+`AMOUNT` · `RATE:{n}` · `FIXED:{n}` · `MUL_ADD:{rate}:{fixed}`
 
-**APIs needed:**
-- Create / Update / Enable-Disable rule
-- List / Get active rules
-- Changes must take effect without application restart
+#### C. Earn flow ✅
+Webhook: validate → evaluate digestion → filter → points → auto-wallet (ingest policy) → DE earn · fail table on skip · idempotent eventId
 
-`TransactionRuleEngine` must read from this runtime source (not only YAML).  
-YAML may remain as bootstrap/default seed, but runtime DB/API wins.
-
-#### B. Configurable scoring equation
-Support composable formula, not only single RATE/FIXED.
-
-Minimum viable:
-- `AMOUNT`
-- `RATE:{n}` → `amount * n`
-- `FIXED:{n}`
-- Simple combination, e.g. `amount * rate + fixed`
-
-Design formula storage so more factors can be added later (category, tier, channel, etc.) without schema rewrite if possible.
-
-#### C. Earn flow (keep existing behavior)
-Webhook still:
-1. Validate payload
-2. Evaluate rules (runtime)
-3. Filter
-4. Compute points
-5. Ensure wallet (existing auto-create behavior OK)
-6. Post earn to LP account (idempotent by eventId/movementKey)
-7. On skip/fail → write `failed_transaction_ingest` + return SKIPPED
-
-#### D. Show double-entry
-After successful earn:
-- Persist full double-entry (debit + credit)
-- API must be able to return:
-  - movement id / eventId
-  - points earned
-  - debit leg (account, amount, currency)
-  - credit leg (account, amount, currency)
-
-Either:
-- include legs in earn response, and/or
-- provide clear query by movementId / eventId that returns legs
+#### D. Double-entry ✅
+Legs on earn response + `GET /integrations/ledger-entries?movementId=` / `?eventId=`
 
 ---
 
-### Non-goals (do not expand scope)
-- Tier / ranking engine
-- Campaign UI
-- Complex expression language beyond practical composable factors
-- Multi-tenant redesign
-- Changing 1 Customer = 1 Wallet model
+### Non-goals (unchanged)
+- Tier / ranking · Campaign UI · Complex CEL · Multi-tenant redesign · 1:1 wallet model change
 
 ---
 
-### Acceptance criteria
-1. Can create/update an earn rule via API and have next webhook use new filter/formula **without restart**
-2. Can set formula equivalent to `points = amount * multiplier` and change multiplier at runtime
-3. Webhook earn still idempotent on `eventId`
-4. Successful earn credits customer LP account
-5. Can query/show debit + credit legs for that earn
-6. Existing YAML bootstrap still works or is cleanly migrated/seeded
-7. Tests cover:
-   - runtime rule change affects next event
-   - filter reject paths
-   - formula calculation
-   - idempotent replay
-   - double-entry legs present and balanced
+### Acceptance criteria — ✅
+
+1. Runtime rule change without restart  
+2. `amount * multiplier` at runtime (`RATE` / `MUL_ADD`)  
+3. Idempotent `eventId`  
+4. Credit customer LP  
+5. Query debit + credit legs  
+6. YAML bootstrap **cleanly removed**; API/`bootstrap-runtime.sh` seed  
+7. ITs: runtime rule, filter reject, formula, idempotency, balanced legs  
 
 ---
 
-### Implementation guidance
-- Inspect existing:
-  - `TransactionRuleEngine`
-  - `IntegrationProperties`
-  - `IngestTransactionUseCase`
-  - `LedgerMovementShooter` / movement + entry model
-  - DB `Rule` entity + `/rules` endpoints
-- Prefer minimal clean design over big rewrite
-- Keep package conventions (`usecase`, `endpoint`, `entity/po`, etc.)
-- Add migration/changelog if new tables needed
-- Update docs: `docs/CLIENT_EARN_WEBHOOK.md` + short note in README/INTEGRATION
+### Ops cheat sheet
 
----
-
-### Deliverable
-1. Code changes implementing A–D
-2. Short summary:
-   - what was already done
-   - what you added
-   - how to create/update a rule at runtime
-   - how to query double-entry legs
-3. Test evidence (unit/integration)
-
-Start by mapping current earn path end-to-end, then implement runtime rule source + wire `TransactionRuleEngine` to it.
+```bash
+./scripts/bootstrap-runtime.sh
+curl -sS -X POST 'http://localhost:8080/integrations/webhooks/transactions' \
+  -H 'Content-Type: application/json' \
+  -d '{"eventId":"txn-1","associatedIdentifier":"01A12345678","eventType":"PURCHASE","amount":200,"currency":"HKD","occurredAt":"2026-08-12T10:00:00Z"}'
+curl -sS 'http://localhost:8080/integrations/ledger-entries?eventId=txn-1'
+```
