@@ -43,9 +43,12 @@ See [docs/README.md](./README.md) · [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBH
 # ./scripts/upstream-sim.sh --no-bootstrap bad-jpy
 ```
 
-### Schema stuck / NOT NULL migration errors
+### Schema / data
 
-Old volume + `ddl-auto=update` cannot add NOT NULL columns onto rows with nulls.
+Default `JPA_DDL_AUTO=create` — **each app boot recreates schema** (no durable local data).  
+Fine pre-UAT. Later: `JPA_DDL_AUTO=update` or proper migrations.
+
+If you still hit old-volume NOT NULL errors under `update`:
 
 ```bash
 ./scripts/reset-local-db.sh
