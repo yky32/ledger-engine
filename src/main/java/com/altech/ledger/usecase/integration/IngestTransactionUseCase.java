@@ -37,7 +37,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class IngestTransactionUseCase {
-    private final IntegrationConfigUseCase integrationConfigUseCase;
+    private final IngestPolicyUseCase ingestPolicyUseCase;
     private final TransactionRuleEngine transactionRuleEngine;
     private final EnsureWalletForIngestUseCase ensureWalletForIngestUseCase;
     private final LedgerMovementRepository ledgerMovementRepository;
@@ -48,7 +48,7 @@ public class IngestTransactionUseCase {
 
     @Transactional
     public IngestionResult execute(TransactionalEvent event) {
-        if (!Boolean.TRUE.equals(integrationConfigUseCase.requireEffective().getIsEnabled())) {
+        if (!Boolean.TRUE.equals(ingestPolicyUseCase.requireEffective().getIsEnabled())) {
             return _fail(event, "DISABLED", "Integration disabled");
         }
 

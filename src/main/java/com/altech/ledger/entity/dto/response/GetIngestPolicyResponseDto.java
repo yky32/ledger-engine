@@ -13,7 +13,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class GetIntegrationConfigResponseDto {
+public class GetIngestPolicyResponseDto {
     private Long id;
     private Boolean isEnabled;
     private Boolean isAutoCreateWallet;
