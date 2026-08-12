@@ -1,8 +1,8 @@
-package com.altech.ledger.usecase.integration;
+package com.altech.ledger.usecase.ingest;
 
 import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.dto.response.GetFailedTransactionIngestResponseDto;
-import com.altech.ledger.entity.po.integration.FailedTransactionIngest;
+import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
 import com.altech.ledger.exception.response.IntegrationErrorResponse;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
 import lombok.RequiredArgsConstructor;

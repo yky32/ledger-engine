@@ -1,11 +1,11 @@
-package com.altech.ledger.endpoint.integration;
+package com.altech.ledger.endpoint.ingest;
 
 import com.altech.core.exception.BizException;
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
-import com.altech.ledger.entity.dto.integration.LedgerLegDto;
+import com.altech.ledger.entity.dto.ingest.LedgerLegDto;
 import com.altech.ledger.exception.response.MovementErrorResponse;
-import com.altech.ledger.usecase.integration.IngestTransactionUseCase;
+import com.altech.ledger.usecase.ingest.IngestTransactionUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,11 +1,11 @@
-package com.altech.ledger.usecase.integration;
+package com.altech.ledger.usecase.ingest;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.request.AccountOpenSpecDto;
 import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
-import com.altech.ledger.entity.po.integration.IngestPolicy;
+import com.altech.ledger.entity.po.ingest.IngestPolicy;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.AccountErrorResponse;

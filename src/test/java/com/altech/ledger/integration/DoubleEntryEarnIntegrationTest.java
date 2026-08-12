@@ -1,7 +1,7 @@
 package com.altech.ledger.integration;
 
 import com.altech.core.constant.enu.Currency;
-import com.altech.ledger.entity.dto.integration.TransactionalEvent;
+import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.enu.MovementDirection;
 import com.altech.ledger.repository.DigestionRuleRepository;
 import com.altech.ledger.repository.LedgerEntryRepository;

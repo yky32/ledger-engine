@@ -21,7 +21,7 @@ import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.MovementBus;
-import com.altech.ledger.usecase.integration.ProgramPoolService;
+import com.altech.ledger.usecase.ingest.ProgramPoolService;
 import com.altech.ledger.usecase.rule.QueryRuleExecutionUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

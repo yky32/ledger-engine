@@ -1,6 +1,6 @@
-package com.altech.ledger.entity.dto.integration;
+package com.altech.ledger.entity.dto.ingest;
 
-import com.altech.ledger.usecase.integration.TransactionRuleEngine;
+import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 
 import java.math.BigDecimal;
 import java.util.List;

@@ -1,8 +1,8 @@
-package com.altech.ledger.usecase.integration;
+package com.altech.ledger.usecase.digestion;
 
 import com.altech.core.constant.enu.Currency;
-import com.altech.ledger.entity.dto.integration.TransactionalEvent;
-import com.altech.ledger.entity.po.integration.DigestionRule;
+import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
+import com.altech.ledger.entity.po.digestion.DigestionRule;
 import com.altech.ledger.repository.DigestionRuleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

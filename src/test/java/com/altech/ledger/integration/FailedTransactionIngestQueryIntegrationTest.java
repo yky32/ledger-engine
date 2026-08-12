@@ -1,7 +1,7 @@
 package com.altech.ledger.integration;
 
 import com.altech.core.constant.enu.Currency;
-import com.altech.ledger.entity.dto.integration.TransactionalEvent;
+import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

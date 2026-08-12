@@ -1,4 +1,4 @@
-package com.altech.ledger.entity.po.integration;
+package com.altech.ledger.entity.po.ingest;
 
 import com.altech.core.entity.AuditEntity;
 import jakarta.persistence.Column;

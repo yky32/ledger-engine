@@ -1,6 +1,6 @@
 package com.altech.ledger.repository;
 
-import com.altech.ledger.entity.po.integration.IngestPolicy;
+import com.altech.ledger.entity.po.ingest.IngestPolicy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
