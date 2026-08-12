@@ -11,6 +11,7 @@ import com.altech.ledger.usecase.wallet.UpdateWalletUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,7 +74,8 @@ public class LedgerWalletEndpoint {
 
     @GetMapping
     public Result<List<GetLedgerWalletResponseDto>> getAll(
-        @PageableDefault(size = 50) Pageable pageable,
+        @PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "createDt", direction = Sort.Direction.DESC)
+        Pageable pageable,
         @RequestParam(required = false) String fxTarget
     ) {
         var page = queryWalletBalanceUseCase.list(pageable, fxTarget);

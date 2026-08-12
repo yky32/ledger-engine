@@ -5,8 +5,10 @@ import com.altech.ledger.entity.dto.response.GetFailedTransactionIngestResponseD
 import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
 import com.altech.ledger.exception.response.IntegrationErrorResponse;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
+import com.altech.ledger.util.Pageables;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,24 +34,17 @@ public class QueryFailedTransactionIngestUseCase {
         return repository.findByEventIdOrderByIdDesc(eventId).stream().map(this::_toDto).toList();
     }
 
-    /**
-     * @param status optional OPEN | REVIEWED | REPLAYED
-     * @param associatedIdentifier optional CUST_ID
-     * @param failureCode optional AGE | CURRENCY | NO_WALLET | …
-     * @param limit max rows (default 50, cap 200)
-     */
     @Transactional(readOnly = true)
-    public List<GetFailedTransactionIngestResponseDto> search(
+    public Page<GetFailedTransactionIngestResponseDto> search(
         String status,
         String associatedIdentifier,
         String failureCode,
-        Integer limit
+        Pageable pageable
     ) {
-        int size = limit == null || limit <= 0 ? 50 : Math.min(limit, 200);
         String st = blankToNull(status);
         String aid = blankToNull(associatedIdentifier);
         String code = blankToNull(failureCode);
-        return repository.search(st, aid, code, PageRequest.of(0, size)).stream().map(this::_toDto).toList();
+        return repository.search(st, aid, code, Pageables.toZeroBased(pageable)).map(this::_toDto);
     }
 
     private static String blankToNull(String s) {

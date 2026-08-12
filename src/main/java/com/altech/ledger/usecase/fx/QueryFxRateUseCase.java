@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import com.altech.ledger.util.Pageables;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,14 +35,15 @@ public class QueryFxRateUseCase {
 
     @Transactional(readOnly = true)
     public Page<GetFxRateResponseDto> list(Pageable pageable, String base, String target) {
+        Pageable zero = Pageables.toZeroBased(pageable);
         if (base != null && target != null) {
             Currency b = commonUseCase.requireCurrency(base);
             Currency t = commonUseCase.requireCurrency(target);
             return fxRateRepository.findByBaseAndTarget(b, t)
-                .<Page<GetFxRateResponseDto>>map(r -> new PageImpl<>(List.of(DtoMapper.toFx(r)), pageable, 1))
-                .orElseGet(() -> Page.empty(pageable));
+                .<Page<GetFxRateResponseDto>>map(r -> new PageImpl<>(List.of(DtoMapper.toFx(r)), zero, 1))
+                .orElseGet(() -> Page.empty(zero));
         }
-        return fxRateRepository.findAll(pageable).map(DtoMapper::toFx);
+        return fxRateRepository.findAll(zero).map(DtoMapper::toFx);
     }
 
     @Transactional(readOnly = true)

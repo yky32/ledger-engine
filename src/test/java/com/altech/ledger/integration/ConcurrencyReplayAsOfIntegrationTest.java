@@ -136,16 +136,15 @@ class ConcurrencyReplayAsOfIntegrationTest {
 
         mockMvc.perform(get("/wallets/" + cust + "/movements").param("orderType", "HOLD"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.content").isArray())
-            .andExpect(jsonPath("$.data.totalElements").value(1));
+            .andExpect(jsonPath("$.data").isArray())
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.pagination.currentPage").value(1));
 
-        mockMvc.perform(get("/wallets/" + cust + "/movements").param("currency", "LP"))
+        MvcResult all = mockMvc.perform(get("/wallets/" + cust + "/movements").param("currency", "LP"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").isNumber());
-        int te = objectMapper.readTree(
-            mockMvc.perform(get("/wallets/" + cust + "/movements").param("currency", "LP"))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()
-        ).get("data").get("totalElements").asInt();
+            .andExpect(jsonPath("$.data").isArray())
+            .andReturn();
+        int te = objectMapper.readTree(all.getResponse().getContentAsString()).get("data").size();
         assertThat(te).isGreaterThanOrEqualTo(2);
 
         MvcResult asOf = mockMvc.perform(get("/wallets/" + cust + "/balances/as-of")

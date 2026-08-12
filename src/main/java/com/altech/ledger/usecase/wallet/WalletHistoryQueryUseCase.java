@@ -10,16 +10,16 @@ import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerEntry;
-import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.exception.response.WalletErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.util.Pageables;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,13 +40,12 @@ public class WalletHistoryQueryUseCase {
     @Transactional(readOnly = true)
     public Page<GetLedgerMovementResponseDto> history(
         String associatedIdentifier,
+        Pageable pageable,
         String orderType,
         String currency,
         String status,
-        Instant from,
-        Instant to,
-        int page,
-        int size
+        String startDt,
+        String endDt
     ) {
         Wallet w = _wallet(associatedIdentifier);
         OrderType ot = null;
@@ -61,20 +60,15 @@ public class WalletHistoryQueryUseCase {
         if (status != null && !status.isBlank()) {
             st = LedgerMovementStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
         }
-        int p = Math.max(0, page);
-        int s = size <= 0 ? 20 : Math.min(size, 100);
-        Instant fromBound = from == null ? Instant.EPOCH : from;
-        Instant toBound = to == null ? Instant.parse("9999-12-31T23:59:59Z") : to;
-        boolean hasOt = ot != null;
-        boolean hasCcy = ccy != null;
-        boolean hasSt = st != null;
+        Instant fromBound = Pageables.parseStartDt(startDt);
+        Instant toBound = Pageables.parseEndDt(endDt);
         return ledgerMovementRepository.search(
             w.getId(),
-            hasOt, ot,
-            hasCcy, ccy,
-            hasSt, st,
+            ot != null, ot,
+            ccy != null, ccy,
+            st != null, st,
             fromBound, toBound,
-            PageRequest.of(p, s)
+            Pageables.toZeroBased(pageable)
         ).map(DtoMapper::toMovement);
     }
 

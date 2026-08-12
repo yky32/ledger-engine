@@ -1,5 +1,6 @@
 package com.altech.ledger.endpoint.wallet;
 
+import com.altech.core.response.Pagination;
 import com.altech.core.response.R;
 import com.altech.core.response.Result;
 import com.altech.ledger.entity.dto.response.GetAsOfBalanceResponseDto;
@@ -7,6 +8,9 @@ import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.usecase.wallet.WalletHistoryQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,11 +19,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Movement history filters + balance as-of (audit).
+ * Pagination matches tgt.profile: 1-based page + {@code startDt}/{@code endDt} strings.
  */
 @RestController
 @RequestMapping("/wallets")
@@ -28,28 +32,22 @@ public class WalletHistoryEndpoint {
     private final WalletHistoryQueryUseCase walletHistoryQueryUseCase;
 
     /**
-     * GET /wallets/{associatedIdentifier}/movements?orderType=&currency=&status=&from=&to=&page=&size=
+     * GET /wallets/{associatedIdentifier}/movements?orderType=&currency=&status=&startDt=&endDt=&page=&size=
      */
     @GetMapping("/{associatedIdentifier}/movements")
-    public Result<Map<String, Object>> movements(
+    public Result<List<GetLedgerMovementResponseDto>> movements(
         @PathVariable String associatedIdentifier,
+        @PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "createDt", direction = Sort.Direction.DESC)
+        Pageable pageable,
         @RequestParam(required = false) String orderType,
         @RequestParam(required = false) String currency,
         @RequestParam(required = false) String status,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
-        @RequestParam(required = false, defaultValue = "0") int page,
-        @RequestParam(required = false, defaultValue = "20") int size
+        @RequestParam(required = false) String startDt,
+        @RequestParam(required = false) String endDt
     ) {
-        Page<GetLedgerMovementResponseDto> p = walletHistoryQueryUseCase.history(
-            associatedIdentifier, orderType, currency, status, from, to, page, size);
-        Map<String, Object> body = new HashMap<>();
-        body.put("content", p.getContent());
-        body.put("page", p.getNumber());
-        body.put("size", p.getSize());
-        body.put("totalElements", p.getTotalElements());
-        body.put("totalPages", p.getTotalPages());
-        return R.success(body);
+        Page<GetLedgerMovementResponseDto> page = walletHistoryQueryUseCase.history(
+            associatedIdentifier, pageable, orderType, currency, status, startDt, endDt);
+        return R.success(page.getContent(), Pagination.create(page));
     }
 
     /**

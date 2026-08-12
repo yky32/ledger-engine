@@ -14,6 +14,7 @@ import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.altech.ledger.util.Pageables;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,7 +56,7 @@ public class QueryWalletBalanceUseCase {
 
     @Transactional(readOnly = true)
     public Page<GetLedgerWalletResponseDto> list(Pageable pageable, String fxTarget) {
-        return walletRepository.findAll(pageable).map(w -> _withFx(w, fxTarget));
+        return walletRepository.findAll(Pageables.toZeroBased(pageable)).map(w -> _withFx(w, fxTarget));
     }
 
     @Transactional(readOnly = true)

@@ -1,16 +1,27 @@
 # History + as-of + replay polish + concurrency
 
+## Pagination (tgt.profile style)
+
+All list endpoints use **1-based** Spring `Pageable`:
+
+```text
+@PageableDefault(page = 1, size = Integer.MAX_VALUE, sort = "createDt", direction = DESC)
+Pageable pageable
+@RequestParam(required = false) String startDt   // ISO-8601 or yyyy-MM-dd
+@RequestParam(required = false) String endDt
+```
+
+Use case converts via `Pageables.toZeroBased(pageable)` before JPA.
+Response: `R.success(list, Pagination.create(page))` → `data[]` + `pagination{currentPage,pageSize,total,…}`.
+
 ## Movement history
 
 ```bash
-curl -sS "http://localhost:8080/wallets/{CUST}/movements?orderType=HOLD&currency=LP&page=0&size=20"
-# optional: status=SETTLED&from=2026-01-01T00:00:00Z&to=2026-12-31T23:59:59Z
+curl -sS "http://localhost:8080/wallets/{CUST}/movements?orderType=HOLD&currency=LP&page=1&size=20"
+curl -sS "http://localhost:8080/wallets/{CUST}/movements?startDt=2026-01-01&endDt=2026-12-31"
 ```
 
 ## Balance as-of
-
-Rebuilds from `ledger_entry` with `affectsLedger` / `affectsAvailable` flags
-(HOLD legs affect available only).
 
 ```bash
 curl -sS "http://localhost:8080/wallets/{CUST}/balances/as-of?currency=LP"
