@@ -1,7 +1,6 @@
 package com.altech.ledger.usecase.digestion;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.altech.core.utils.JSONUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -19,8 +18,8 @@ import java.util.Map;
  * { "type": "FIXED",  "value": 100 }
  * { "type": "LINEAR", "rate": 0.01, "fixed": 5 }   // amount * rate + fixed
  * </pre>
- * Legacy string DSL ({@code RATE:0.01}, {@code FIXED:100}, {@code MUL_ADD:…}) is still
- * accepted on write and normalized to JSON.
+ * Uses {@link JSONUtil} (tgt-style) for Map/string coercion — no private ObjectMapper.
+ * Legacy string DSL is still accepted on write and normalized to JSON.
  */
 public final class DigestionFormulaConfig {
 
@@ -28,9 +27,6 @@ public final class DigestionFormulaConfig {
     public static final String TYPE_RATE = "RATE";
     public static final String TYPE_FIXED = "FIXED";
     public static final String TYPE_LINEAR = "LINEAR";
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
     private DigestionFormulaConfig() {}
 
@@ -70,22 +66,21 @@ public final class DigestionFormulaConfig {
             return ofAmount();
         }
         if (raw instanceof String s) {
-            return fromLegacyString(s.trim());
+            String t = s.trim();
+            if (t.startsWith("{")) {
+                return normalize(JSONUtil.toMap(t));
+            }
+            return fromLegacyString(t);
         }
 
-        Map<String, Object> in = coerceToStringKeyMap(raw);
-        if (in.isEmpty()) {
-            // last resort Jackson
-            try {
-                Map<String, Object> via = MAPPER.convertValue(raw, MAP_TYPE);
-                if (via != null) {
-                    in = via;
-                }
-            } catch (IllegalArgumentException ignored) {
-                // fall through
-            }
+        Map<String, Object> in;
+        try {
+            in = JSONUtil.toMap(raw);
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException(
+                "formula must be a JSON object, got " + raw.getClass().getName() + ": " + raw, ex);
         }
-        if (in == null || in.isEmpty()) {
+        if (in.isEmpty()) {
             throw new IllegalArgumentException(
                 "formula must be a non-empty JSON object, got " + raw.getClass().getName() + ": " + raw);
         }
@@ -96,7 +91,7 @@ public final class DigestionFormulaConfig {
                 return ofLinear(decimal(in.get("rate")), decimal(in.get("fixed")));
             }
             throw new IllegalArgumentException(
-                "formula.type is required; keys=" + in.keySet() + " raw=" + raw);
+                "formula.type is required; keys=" + in.keySet() + " raw=" + JSONUtil.toJson(raw));
         }
         type = type.trim().toUpperCase(Locale.ROOT);
         return switch (type) {
@@ -122,34 +117,6 @@ public final class DigestionFormulaConfig {
                 ofLinear(decimal(in.get("rate")), decimal(first(in, "fixed", "value")));
             default -> throw new IllegalArgumentException("Unsupported formula.type: " + type);
         };
-    }
-
-    /** Copy any Map-like (Java / Jackson / wrapper) into a mutable LinkedHashMap. */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static Map<String, Object> coerceToStringKeyMap(Object raw) {
-        Map<String, Object> out = new LinkedHashMap<>();
-        if (raw instanceof Map<?, ?> m) {
-            for (Map.Entry<?, ?> e : m.entrySet()) {
-                if (e.getKey() != null) {
-                    out.put(String.valueOf(e.getKey()), e.getValue());
-                }
-            }
-            return out;
-        }
-        // Iterable of entries?
-        try {
-            Object entrySet = raw.getClass().getMethod("entrySet").invoke(raw);
-            if (entrySet instanceof Iterable<?> it) {
-                for (Object o : it) {
-                    if (o instanceof Map.Entry<?, ?> e && e.getKey() != null) {
-                        out.put(String.valueOf(e.getKey()), e.getValue());
-                    }
-                }
-            }
-        } catch (ReflectiveOperationException ignored) {
-            // ignore
-        }
-        return out;
     }
 
     public static BigDecimal compute(Object formula, BigDecimal amount) {
@@ -191,12 +158,7 @@ public final class DigestionFormulaConfig {
         }
         String raw = formula.trim();
         if (raw.startsWith("{")) {
-            try {
-                Map<String, Object> m = MAPPER.readValue(raw, MAP_TYPE);
-                return normalize(m);
-            } catch (Exception ex) {
-                throw new IllegalArgumentException("Invalid formula JSON string: " + formula, ex);
-            }
+            return normalize(JSONUtil.toMap(raw));
         }
         String f = raw.toUpperCase(Locale.ROOT);
         if ("AMOUNT".equals(f) || "AMT".equals(f)) {
@@ -243,7 +205,6 @@ public final class DigestionFormulaConfig {
             return BigDecimal.valueOf(l);
         }
         if (o instanceof Number n) {
-            // Double/Float from JSON — use valueOf carefully
             return new BigDecimal(n.toString());
         }
         String s = String.valueOf(o).trim();
