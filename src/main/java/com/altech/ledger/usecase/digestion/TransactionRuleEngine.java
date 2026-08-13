@@ -62,13 +62,25 @@ public class TransactionRuleEngine {
                 continue;
             }
 
-            List<String> eligible = DigestionRuleUseCase.splitCurrencies(rule.getEligibleCurrencies());
+            List<String> eligible = DigestionRuleUseCase.splitCodes(rule.getEligibleCurrencies());
             if (!eligible.isEmpty()) {
                 Set<String> allowed = new HashSet<>(eligible);
                 String ccy = event.currency() == null ? null : event.currency().getIsoCode().toUpperCase(Locale.ROOT);
                 if (ccy == null || !allowed.contains(ccy)) {
                     lastReasonCode = "CURRENCY";
                     lastReason = "currency " + ccy + " not in eligible list " + allowed;
+                    continue;
+                }
+            }
+
+            List<String> mccs = DigestionRuleUseCase.splitCodes(rule.getEligibleMccs());
+            if (!mccs.isEmpty()) {
+                String eventMcc = extractMcc(event);
+                Set<String> allowedMcc = new HashSet<>(mccs);
+                if (eventMcc == null || eventMcc.isBlank() || !allowedMcc.contains(eventMcc)) {
+                    lastReasonCode = "MCC";
+                    lastReason = "mcc " + eventMcc + " not in eligible list " + allowedMcc
+                        + " (send metadata.mcc / mccCode / merchantCategoryCode)";
                     continue;
                 }
             }
@@ -117,6 +129,23 @@ public class TransactionRuleEngine {
         }
 
         return EvaluationOutcome.noMatch(lastReasonCode, lastReason);
+    }
+
+    /**
+     * MCC from event metadata (issuer/POS). Keys tried in order:
+     * {@code mcc}, {@code mccCode}, {@code merchantCategoryCode}.
+     */
+    static String extractMcc(TransactionalEvent event) {
+        if (event == null || event.metadata() == null || event.metadata().isEmpty()) {
+            return null;
+        }
+        for (String key : List.of("mcc", "mccCode", "merchantCategoryCode", "MCC")) {
+            String v = event.metadata().get(key);
+            if (v != null && !v.isBlank()) {
+                return v.trim().toUpperCase(Locale.ROOT);
+            }
+        }
+        return null;
     }
 
     public record RuleDecision(

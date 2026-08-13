@@ -123,9 +123,8 @@ Each scenario: business meaning · upstream event shape · Door/Brain config · 
 | | |
 |--|--|
 | **Business** | MCC 5411 → 3%; else 1% |
-| **Today** | Upstream sets `eventType=PURCHASE_GROCERY` vs `PURCHASE` **or** two webhooks with different types after MCC map |
-| **Brain** | Two rules, different `eventType` + `RATE` 0.03 / 0.01, priority ordered |
-| **Fit** | ⚠️ **Workaround only** — not native MCC matching |
+| **Today** | DigestionRule `eligibleMccs` e.g. `["5411"]` + webhook `metadata.mcc`. Or still map MCC → dedicated `eventType`. |
+| **Fit** | ✅ Native MCC allow-list on Brain rule |
 
 ---
 
@@ -315,7 +314,7 @@ Prioritised for **credit card / finance** adoption:
 | ID | Capability | Client pain | Suggested design |
 |----|------------|-------------|------------------|
 | CC-1 | **JSON formula only** (done/in progress) | String DSL hard to explain | `formula` JSONB `{type,rate,value,fixed}` |
-| CC-2 | **MCC / category match** | Grocery vs general | Rule filter `eligibleMcc` or `metadataPath` |
+| CC-2 | **MCC / category match** | Grocery vs general | ✅ **Done** — `eligibleMccs` + metadata.mcc |
 | CC-3 | **Period earn cap** | Monthly max LP | Policy + running counter per ownerId |
 | CC-4 | **Tier / product rate** | Gold vs standard | `owner attributes` or event dimension table |
 | CC-5 | **Ladder rates** | First N @ higher % | Formula type `TIER` + period base |
@@ -339,7 +338,7 @@ Prioritised for **credit card / finance** adoption:
 | Hold / release | ✅ | ✅ | |
 | Fail queue / replay | ✅ | ✅ | |
 | DE audit legs | ✅ | ✅ | |
-| Category / MCC native | ❌ | ⚠️ via types | CC-2 |
+| Category / MCC native | ✅ `eligibleMccs` + `metadata.mcc` | ✅ | |
 | Monthly cap | ❌ | ⚠️ upstream | CC-3 |
 | Tier native | ❌ | ⚠️ via types | CC-4 |
 | Ladder | ❌ | ⚠️ upstream split | CC-5 |
