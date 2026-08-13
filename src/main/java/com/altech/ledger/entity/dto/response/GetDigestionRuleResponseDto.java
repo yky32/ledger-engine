@@ -25,6 +25,8 @@ public class GetDigestionRuleResponseDto {
     private Integer priority;
     private BigDecimal minAmount;
     private List<String> eligibleCurrencies;
+    /** MCC allow-list; empty = any MCC. */
+    private List<String> eligibleMccs;
     private Integer maxAgeDays;
     private String pointCurrency;
     /** JSON config object, e.g. {@code {"type":"RATE","rate":0.01}}. */

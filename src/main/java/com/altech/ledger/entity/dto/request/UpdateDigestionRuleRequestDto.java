@@ -14,6 +14,7 @@ public record UpdateDigestionRuleRequestDto(
     Integer priority,
     BigDecimal minAmount,
     List<@Size(max = 16) String> eligibleCurrencies,
+    List<@Size(max = 16) String> eligibleMccs,
     Integer maxAgeDays,
     @Size(max = 16) String pointCurrency,
     Object formula,

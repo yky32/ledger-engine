@@ -66,6 +66,13 @@ public class DigestionRule extends AuditEntityWithIsActive {
     @Column
     private String eligibleCurrencies;
 
+    /**
+     * Optional MCC allow-list (CSV), e.g. {@code 5411,5812}.
+     * Blank = any MCC. Event MCC read from metadata keys {@code mcc} / {@code mccCode} / {@code merchantCategoryCode}.
+     */
+    @Column
+    private String eligibleMccs;
+
     @Column
     private Integer maxAgeDays;
 

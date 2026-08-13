@@ -15,7 +15,7 @@
 |---------|------------------|
 | Own wallets & multi-currency books | Own customer master / CRM |
 | Receive **business events** from upstream (POS, e‑com, campaign) | Process card payments / PSP |
-| Apply **configurable** earn/burn rules at runtime | Host marketing campaign UI |
+| Apply **configurable** earn/burn rules at runtime (currency / MCC / age + formula) | Host marketing campaign UI |
 | Post **double-entry** loyalty legs (audit-grade) | Multi-tenant SaaS billing |
 | Hold / release spendable points | Tier ranking / complex promotions engine |
 
@@ -133,7 +133,7 @@ Upstream: "Customer 01A… bought HKD 200 at store"
                 │
                 ▼
          Digestion matches PURCHASE rule
-         · gates: min amount, currency list, max age
+         · eligibility: min amount, currency list, **MCC list**, max age
          · formula e.g. points = amount × 1%
                 │
                 ▼

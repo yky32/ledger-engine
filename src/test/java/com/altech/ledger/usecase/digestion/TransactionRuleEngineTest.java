@@ -92,4 +92,54 @@ class TransactionRuleEngineTest {
         assertThat(out.matched()).isFalse();
         assertThat(out.skipReasonCode()).isEqualTo("AMOUNT");
     }
+
+    @Test
+    void rejectsIneligibleMccWhenConfigured() {
+        DigestionRule grocery = new DigestionRule();
+        grocery.setCode("GROCERY");
+        grocery.setEventType("PURCHASE");
+        grocery.setOperation("EARN");
+        grocery.setIsEnabled(true);
+        grocery.setPriority(5);
+        grocery.setMinAmount(BigDecimal.ZERO);
+        grocery.setPointCurrency("LP");
+        grocery.setFormula(DigestionFormulaConfig.ofRate(new BigDecimal("0.03")));
+        grocery.setEligibleCurrencies("HKD");
+        grocery.setEligibleMccs("5411");
+        grocery.setIsActive(true);
+        when(repo.findAllEnabledOrdered()).thenReturn(List.of(grocery));
+
+        var bad = new TransactionalEvent(
+            "e6", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
+            Instant.now(), Map.of("mcc", "5812"));
+        assertThat(engine.evaluate(bad).skipReasonCode()).isEqualTo("MCC");
+
+        var ok = new TransactionalEvent(
+            "e7", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
+            Instant.now(), Map.of("mcc", "5411"));
+        var out = engine.evaluate(ok);
+        assertThat(out.matched()).isTrue();
+        assertThat(out.decision().orElseThrow().points()).isEqualByComparingTo("3");
+    }
+
+    @Test
+    void rejectsMissingMccWhenAllowListSet() {
+        DigestionRule grocery = new DigestionRule();
+        grocery.setCode("GROCERY2");
+        grocery.setEventType("PURCHASE");
+        grocery.setOperation("EARN");
+        grocery.setIsEnabled(true);
+        grocery.setPriority(5);
+        grocery.setMinAmount(BigDecimal.ZERO);
+        grocery.setPointCurrency("LP");
+        grocery.setFormula(DigestionFormulaConfig.ofRate(new BigDecimal("0.01")));
+        grocery.setEligibleMccs("5411");
+        grocery.setIsActive(true);
+        when(repo.findAllEnabledOrdered()).thenReturn(List.of(grocery));
+
+        var event = new TransactionalEvent(
+            "e8", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
+            Instant.now(), Map.of());
+        assertThat(engine.evaluate(event).skipReasonCode()).isEqualTo("MCC");
+    }
 }

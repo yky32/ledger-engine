@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -58,7 +57,8 @@ public class DigestionRuleUseCase {
         r.setIsEnabled(req.isEnabled() == null || req.isEnabled());
         r.setPriority(req.priority() == null ? 100 : req.priority());
         r.setMinAmount(req.minAmount() == null ? BigDecimal.ZERO : req.minAmount());
-        r.setEligibleCurrencies(joinCurrencies(req.eligibleCurrencies()));
+        r.setEligibleCurrencies(joinCodes(req.eligibleCurrencies()));
+        r.setEligibleMccs(joinCodes(req.eligibleMccs()));
         r.setMaxAgeDays(req.maxAgeDays());
         r.setPointCurrency(req.pointCurrency() == null || req.pointCurrency().isBlank()
             ? "LP" : req.pointCurrency().trim().toUpperCase(Locale.ROOT));
@@ -94,12 +94,14 @@ public class DigestionRuleUseCase {
             r.setMinAmount(req.minAmount());
         }
         if (req.eligibleCurrencies() != null) {
-            r.setEligibleCurrencies(joinCurrencies(req.eligibleCurrencies()));
+            r.setEligibleCurrencies(joinCodes(req.eligibleCurrencies()));
+        }
+        if (req.eligibleMccs() != null) {
+            r.setEligibleMccs(joinCodes(req.eligibleMccs()));
         }
         if (req.maxAgeDays() != null) {
-            r.setMaxAgeDays(req.maxAgeDays()); // use -1 sentinel? allow null via omit only
+            r.setMaxAgeDays(req.maxAgeDays());
         }
-        // allow clearing maxAgeDays with empty body field — skip for simplicity
         if (req.pointCurrency() != null && !req.pointCurrency().isBlank()) {
             r.setPointCurrency(req.pointCurrency().trim().toUpperCase(Locale.ROOT));
         }
@@ -128,7 +130,8 @@ public class DigestionRuleUseCase {
             .orElseThrow(() -> new BizException(DigestionErrorResponse.DIG0404, "id=" + id));
     }
 
-    public static String joinCurrencies(List<String> list) {
+    /** Join currency / MCC codes to CSV (upper). Empty list → null (means unrestricted). */
+    public static String joinCodes(List<String> list) {
         if (list == null || list.isEmpty()) {
             return null;
         }
@@ -139,7 +142,11 @@ public class DigestionRuleUseCase {
             .collect(Collectors.joining(","));
     }
 
-    public static List<String> splitCurrencies(String csv) {
+    public static String joinCurrencies(List<String> list) {
+        return joinCodes(list);
+    }
+
+    public static List<String> splitCodes(String csv) {
         if (csv == null || csv.isBlank()) {
             return List.of();
         }
@@ -152,6 +159,10 @@ public class DigestionRuleUseCase {
         return out;
     }
 
+    public static List<String> splitCurrencies(String csv) {
+        return splitCodes(csv);
+    }
+
     private GetDigestionRuleResponseDto toDto(DigestionRule r) {
         return GetDigestionRuleResponseDto.builder()
             .id(r.getId())
@@ -162,7 +173,8 @@ public class DigestionRuleUseCase {
             .isEnabled(r.getIsEnabled())
             .priority(r.getPriority())
             .minAmount(r.getMinAmount())
-            .eligibleCurrencies(splitCurrencies(r.getEligibleCurrencies()))
+            .eligibleCurrencies(splitCodes(r.getEligibleCurrencies()))
+            .eligibleMccs(splitCodes(r.getEligibleMccs()))
             .maxAgeDays(r.getMaxAgeDays())
             .pointCurrency(r.getPointCurrency())
             .formula(r.getFormula())
