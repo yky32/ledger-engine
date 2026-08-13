@@ -20,8 +20,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class IntegrationWebhookEndpoint {
     private final IngestTransactionUseCase ingestTransactionUseCase;
 
+    /** Live ingest: Door → Brain → wallet → books. Result includes eligibilityTrace. */
     @PostMapping("/transactions")
     public Result<IngestionResult> receive(@Valid @RequestBody TransactionalEvent event) {
         return R.success(ingestTransactionUseCase.execute(event));
+    }
+
+    /**
+     * Trust pack B — dry-run: same Brain match + points, no wallet / movements / fail-row.
+     * {@code data.dryRun=true}.
+     */
+    @PostMapping("/transactions/dry-run")
+    public Result<IngestionResult> dryRun(@Valid @RequestBody TransactionalEvent event) {
+        return R.success(ingestTransactionUseCase.dryRun(event));
     }
 }

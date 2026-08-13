@@ -145,3 +145,28 @@ POST/PUT /digestion-rules  →  digestion_rule (filters + formula jsonb)
 ```
 
 Code: `TransactionRuleEngine` · `DigestionFormulaConfig` · `DigestionRuleUseCase`.
+
+---
+
+## Trust pack B — evaluate trace + dry-run
+
+Live webhook and dry-run return:
+
+| Field | Meaning |
+|-------|---------|
+| `matchedRuleCode` | Winning `DigestionRule.code` |
+| `eligibilityTrace[]` | Candidate rules (same eventType): `ruleCode`, `priority`, `matched`, `failStep`, `detail` |
+| `dryRun` | `true` only on dry-run path |
+
+```bash
+# no wallet / no books
+curl -sS -X POST 'http://localhost:8080/integrations/webhooks/transactions/dry-run' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "eventId":"dry-1","ownerId":"01A1","eventType":"PURCHASE",
+    "amount":500,"currency":"HKD","occurredAt":"2026-08-13T10:00:00Z",
+    "metadata":{"mcc":"5411"}
+  }'
+```
+
+`failStep`: `AMOUNT` · `MIN_AMOUNT` · `CURRENCY` · `MCC` · `AGE` · `FORMULA` · `POINTS` · `BAD_RULE`
