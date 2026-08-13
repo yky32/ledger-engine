@@ -36,7 +36,7 @@ import java.util.Set;
 
 /**
  * Wallet create: <b>1 ownerId → 1 Wallet</b>.
- * COA segments from default {@code coa_profile} bindings (simple 1-table COA).
+ * COA segments from {@code coaProfileCode} (product stream) or default profile.
  */
 @Component
 @RequiredArgsConstructor
@@ -115,7 +115,10 @@ public class CreateWalletOnboardingUseCase {
 
         List<AccountOpenSpecDto> specs = _normalizeAccounts(request.accounts(), settlement);
         String mainAccount = commonService.getNextMainAccount();
-        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(null);
+        String profileCode = request.coaProfileCode();
+        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(profileCode);
+        // resolved code for wallet stamp (DEFAULT if blank)
+        String resolvedProfileCode = coaProfileUseCase.requireByCodeOrDefault(profileCode).getCode();
 
         Map<String, AccountOpenSpecDto> byKey = new LinkedHashMap<>();
         Map<String, Account> opened = new LinkedHashMap<>();
@@ -182,6 +185,7 @@ public class CreateWalletOnboardingUseCase {
         wallet.setOwnerId(ownerId);
         wallet.setVanityCode(WalletVanityCodes.resolveForCreate(request.vanityCode(), ownerId));
         wallet.setSettlementCurrency(settlement);
+        wallet.setCoaProfileCode(resolvedProfileCode);
         wallet = walletRepository.save(wallet);
 
         List<GetWalletAccountResponseDto> accountDtos = new ArrayList<>();

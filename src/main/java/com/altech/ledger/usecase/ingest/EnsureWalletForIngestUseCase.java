@@ -130,7 +130,7 @@ public class EnsureWalletForIngestUseCase {
                     "No free sub-account under main " + primary.getMainAccount());
             }
         }
-        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(null);
+        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(wallet.getCoaProfileCode());
         String fullNumber = CoaCodes.fullNumber(
             seg.entity(), seg.type(), seg.subType(), primary.getMainAccount(), sub, seg.buffer(), currency);
         accountRepository.save(Account.builder()

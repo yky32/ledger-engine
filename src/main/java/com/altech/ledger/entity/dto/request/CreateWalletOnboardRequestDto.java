@@ -10,6 +10,7 @@ import java.util.List;
 
 /**
  * Product onboarding: <b>one wallet per ownerId</b> + account lines.
+ * Optional {@code coaProfileCode} selects product-stream COA (e.g. UAF_CC / UAF_LOAN).
  */
 public record CreateWalletOnboardRequestDto(
     @NotBlank @Size(max = 100) String ownerId,
@@ -17,6 +18,8 @@ public record CreateWalletOnboardRequestDto(
     @Size(max = 200) String name,
     /** Optional vanity / premium display code; if blank, generator placeholder runs (may leave null). */
     @Size(max = 64) String vanityCode,
+    /** Optional COA profile code; null/blank → default profile. */
+    @Size(max = 40) String coaProfileCode,
     @Size(max = 32) List<@Valid AccountOpenSpecDto> accounts
 ) {
     public CreateWalletOnboardRequestDto {
@@ -32,10 +35,18 @@ public record CreateWalletOnboardRequestDto(
                 vanityCode = null;
             }
         }
+        if (coaProfileCode != null) {
+            coaProfileCode = coaProfileCode.trim();
+            if (coaProfileCode.isEmpty()) {
+                coaProfileCode = null;
+            } else {
+                coaProfileCode = coaProfileCode.toUpperCase(java.util.Locale.ROOT);
+            }
+        }
     }
 
     public CreateWalletOnboardRequestDto(String ownerId, Currency settlementCurrency, String name) {
-        this(ownerId, settlementCurrency, name, null, null);
+        this(ownerId, settlementCurrency, name, null, null, null);
     }
 
     public CreateWalletOnboardRequestDto(
@@ -44,6 +55,16 @@ public record CreateWalletOnboardRequestDto(
         String name,
         List<AccountOpenSpecDto> accounts
     ) {
-        this(ownerId, settlementCurrency, name, null, accounts);
+        this(ownerId, settlementCurrency, name, null, null, accounts);
+    }
+
+    public CreateWalletOnboardRequestDto(
+        String ownerId,
+        Currency settlementCurrency,
+        String name,
+        String coaProfileCode,
+        List<AccountOpenSpecDto> accounts
+    ) {
+        this(ownerId, settlementCurrency, name, null, coaProfileCode, accounts);
     }
 }

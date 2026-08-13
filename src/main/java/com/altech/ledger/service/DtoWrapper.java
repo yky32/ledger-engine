@@ -44,6 +44,7 @@ public final class DtoWrapper {
             .ownerId(wallet.getOwnerId())
             .vanityCode(wallet.getVanityCode())
             .settlementCurrency(wallet.getSettlementCurrency())
+            .coaProfileCode(wallet.getCoaProfileCode())
             .status(wallet.getStatus())
             .type(wallet.getType())
             .walletType(wallet.getWalletType())
