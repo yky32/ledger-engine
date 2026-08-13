@@ -1,11 +1,14 @@
-# Ledger Engine — docs index
+# LedgeRX — docs index
 
-Adopt / ops guides under `docs/`. Code of truth is **main** APIs; these pages track product surface after PR **#7–#17**.
+**Product:** [LedgeRX](./BRAND.md) · **Module:** `ledger-engine`
+
+Adopt / ops guides under `docs/`. Code of truth is **main** APIs.
 
 ## Start here
 
 | Role | Read |
 |------|------|
+| **Brand / naming** | [BRAND.md](./BRAND.md) |
 | **Business / product review** | [SYSTEM_BUSINESS_FLOW.md](./SYSTEM_BUSINESS_FLOW.md) ⭐ |
 | **Credit card / issuer adopt** | [CREDIT_CARD_CLIENT_SCENARIOS.md](./CREDIT_CARD_CLIENT_SCENARIOS.md) ⭐ |
 | Fresh local run | [BOOTSTRAP.md](./BOOTSTRAP.md) → `./scripts/upstream-sim.sh` or `e2e-smoke.sh` |
