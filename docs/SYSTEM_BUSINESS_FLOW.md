@@ -152,6 +152,9 @@ Upstream: "Customer 01A… bought HKD 200 at store"
 
 **Example:** HKD 200 purchase @ 1% → **2 LP** credited.
 
+**More issuer / credit-card scenarios** (welcome bonus, overseas FX, category, hold, clawback, caps):  
+→ [CREDIT_CARD_CLIENT_SCENARIOS.md](./CREDIT_CARD_CLIENT_SCENARIOS.md) §4–5.
+
 ---
 
 ### 5.4 Burn points (redeem)
