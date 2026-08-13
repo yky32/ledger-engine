@@ -20,11 +20,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * Resolve wallet for ingest: find existing or auto-create from DB {@link IngestPolicy}.
- * Extra currency books use default {@code coa_profile} segments.
+ * COA: event metadata override → Door autoWalletCoaProfileCode → DEFAULT.
  */
 @Slf4j
 @Component
@@ -40,6 +42,11 @@ public class EnsureWalletForIngestUseCase {
 
     @Transactional
     public ResolveResult resolveOrProvision(String ownerId, Currency pointCurrency) {
+        return resolveOrProvision(ownerId, pointCurrency, Map.of());
+    }
+
+    @Transactional
+    public ResolveResult resolveOrProvision(String ownerId, Currency pointCurrency, Map<String, String> metadata) {
         Optional<Wallet> existing = _find(ownerId);
         if (existing.isPresent()) {
             Wallet w = existing.get();
@@ -60,6 +67,8 @@ public class EnsureWalletForIngestUseCase {
             ensure = pointCurrency;
         }
 
+        String coaCode = resolveCoaProfileCode(cfg, metadata);
+
         boolean provisioned = false;
         try {
             List<AccountOpenSpecDto> extras = List.of();
@@ -78,11 +87,13 @@ public class EnsureWalletForIngestUseCase {
                 ownerId,
                 settlement,
                 name,
+                null,
+                coaCode,
                 extras
             ));
             provisioned = true;
-            log.info("auto-created wallet for ownerId={} settlement={} ensure={}",
-                ownerId, settlement, ensure);
+            log.info("auto-created wallet for ownerId={} settlement={} ensure={} coa={}",
+                ownerId, settlement, ensure, coaCode);
         } catch (BizException ex) {
             String code = ex.getResponse() != null ? ex.getResponse().getCode() : null;
             if (WalletErrorResponse.WAL0409.getCode().equals(code)
@@ -98,6 +109,50 @@ public class EnsureWalletForIngestUseCase {
                 "Wallet not found after auto-create: " + ownerId));
         _ensureCurrencyAccount(wallet, pointCurrency != null ? pointCurrency : ensure);
         return new ResolveResult(wallet, provisioned);
+    }
+
+    /**
+     * Priority: metadata.coaProfileCode → metadata.productStream map → Door autoWalletCoaProfileCode → null (DEFAULT).
+     */
+    static String resolveCoaProfileCode(IngestPolicy cfg, Map<String, String> metadata) {
+        Map<String, String> md = metadata == null ? Map.of() : metadata;
+        String fromMeta = firstNonBlank(md.get("coaProfileCode"), md.get("coa_profile_code"));
+        if (fromMeta != null) {
+            return fromMeta.trim().toUpperCase(Locale.ROOT);
+        }
+        String stream = firstNonBlank(md.get("productStream"), md.get("product_stream"), md.get("stream"));
+        if (stream != null) {
+            String mapped = mapProductStream(stream);
+            if (mapped != null) {
+                return mapped;
+            }
+        }
+        if (cfg != null && cfg.getAutoWalletCoaProfileCode() != null
+            && !cfg.getAutoWalletCoaProfileCode().isBlank()) {
+            return cfg.getAutoWalletCoaProfileCode().trim().toUpperCase(Locale.ROOT);
+        }
+        return null;
+    }
+
+    static String mapProductStream(String raw) {
+        String s = raw.trim().toUpperCase(Locale.ROOT);
+        return switch (s) {
+            case "CC", "CARD", "CREDIT_CARD", "CREDITCARD", "UAF_CC" -> "UAF_CC";
+            case "LOAN", "LN", "UAF_LOAN" -> "UAF_LOAN";
+            default -> s.startsWith("UAF_") ? s : null;
+        };
+    }
+
+    private static String firstNonBlank(String... vals) {
+        if (vals == null) {
+            return null;
+        }
+        for (String v : vals) {
+            if (v != null && !v.isBlank()) {
+                return v;
+            }
+        }
+        return null;
     }
 
     private Optional<Wallet> _find(String ownerId) {
@@ -144,6 +199,7 @@ public class EnsureWalletForIngestUseCase {
             .currency(currency)
             .allowNegative(false)
             .build());
-        log.info("ensured {} account under wallet {} main={}", currency, wallet.getId(), primary.getMainAccount());
+        log.info("ensured {} account under wallet {} main={} coa={}",
+            currency, wallet.getId(), primary.getMainAccount(), wallet.getCoaProfileCode());
     }
 }

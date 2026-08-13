@@ -43,6 +43,13 @@ public class IngestPolicy extends AuditEntityWithIsActive {
     @Column
     private String autoWalletNamePrefix;
 
+    /**
+     * COA profile for Door lazy onboard (product stream), e.g. UAF_CC.
+     * Blank → DEFAULT. Overridden by event metadata.coaProfileCode / productStream when present.
+     */
+    @Column
+    private String autoWalletCoaProfileCode;
+
     @PrePersist
     void applyDefaults() {
         if (isEnabled == null) {
@@ -62,6 +69,12 @@ public class IngestPolicy extends AuditEntityWithIsActive {
         }
         if (autoWalletNamePrefix == null) {
             autoWalletNamePrefix = "Auto ";
+        }
+        if (autoWalletCoaProfileCode != null) {
+            autoWalletCoaProfileCode = autoWalletCoaProfileCode.trim().toUpperCase();
+            if (autoWalletCoaProfileCode.isEmpty()) {
+                autoWalletCoaProfileCode = null;
+            }
         }
     }
 }

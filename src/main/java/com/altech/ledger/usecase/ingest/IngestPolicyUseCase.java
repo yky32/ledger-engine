@@ -52,6 +52,10 @@ public class IngestPolicyUseCase {
         if (req.autoWalletNamePrefix() != null) {
             p.setAutoWalletNamePrefix(req.autoWalletNamePrefix());
         }
+        if (req.autoWalletCoaProfileCode() != null) {
+            String code = req.autoWalletCoaProfileCode().trim();
+            p.setAutoWalletCoaProfileCode(code.isEmpty() ? null : code.toUpperCase(Locale.ROOT));
+        }
         return toDto(ingestPolicyRepository.save(p));
     }
 
@@ -88,6 +92,7 @@ public class IngestPolicyUseCase {
             .autoWalletEnsureCurrency(p.getAutoWalletEnsureCurrency())
             .autoWalletAssociatedFrom(p.getAutoWalletAssociatedFrom())
             .autoWalletNamePrefix(p.getAutoWalletNamePrefix())
+            .autoWalletCoaProfileCode(p.getAutoWalletCoaProfileCode())
             .createDt(p.getCreateDt())
             .updateDt(p.getUpdateDt())
             .build();

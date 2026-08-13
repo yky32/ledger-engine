@@ -35,6 +35,11 @@ public class GetWalletAccountResponseDto extends BaseResponseDto {
     private String refCode;
     /** True when this is wallet.accountId (primary). */
     private Boolean primary;
+    /** COA segment: product stream for UAF (01=CC, 02=Loan). */
+    private String entity;
+    private String coaTypeCode;
+    private String subType;
+    private String buffer;
     private CoaType type;
     private Currency currency;
     private AccountStatus status;

@@ -5,7 +5,9 @@ import com.altech.core.response.Result;
 import com.altech.ledger.entity.dto.request.CreateCoaProfileRequestDto;
 import com.altech.ledger.entity.dto.request.UpdateCoaProfileRequestDto;
 import com.altech.ledger.entity.dto.response.GetCoaProfileResponseDto;
+import com.altech.ledger.entity.dto.response.UafDemoSeedResponseDto;
 import com.altech.ledger.usecase.coa.CoaProfileUseCase;
+import com.altech.ledger.usecase.coa.UafDemoSeedUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CoaProfileEndpoint {
     private final CoaProfileUseCase coaProfileUseCase;
+    private final UafDemoSeedUseCase uafDemoSeedUseCase;
 
     @GetMapping
     public Result<List<GetCoaProfileResponseDto>> list() {
@@ -33,6 +36,12 @@ public class CoaProfileEndpoint {
     @GetMapping("/default")
     public Result<GetCoaProfileResponseDto> getDefault() {
         return R.success(coaProfileUseCase.getOrCreateDefault());
+    }
+
+    /** Idempotent UAF_CC + UAF_LOAN profiles + two demo wallets. */
+    @PostMapping("/uaf-demo-seed")
+    public Result<UafDemoSeedResponseDto> seedUafDemo() {
+        return R.success(uafDemoSeedUseCase.execute());
     }
 
     @GetMapping(params = "code")
@@ -58,3 +67,4 @@ public class CoaProfileEndpoint {
         return R.success(coaProfileUseCase.update(id, body));
     }
 }
+

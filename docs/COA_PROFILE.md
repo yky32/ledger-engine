@@ -18,6 +18,24 @@ One row = one **product stream** (UAF: entity is stream, not legal entity).
 
 Wallet stamps `wallet.coaProfileCode` at onboard. Extra books (ensure LP) reuse that profile.
 
+## Door lazy onboard COA
+
+`ingest_policy.auto_wallet_coa_profile_code` — used when webhook auto-creates wallet.
+
+Override via event metadata (priority):
+
+1. `metadata.coaProfileCode`
+2. `metadata.productStream` → `CC`/`CARD` → `UAF_CC`, `LOAN` → `UAF_LOAN`
+3. Door `autoWalletCoaProfileCode`
+4. DEFAULT
+
+## UAF demo seed
+
+```bash
+POST /coa-profiles/uaf-demo-seed
+# → UAF_CC (01) + UAF_LOAN (02) + wallets UAF-CARD-DEMO / UAF-LOAN-DEMO
+```
+
 ## UAF example
 
 ```text
