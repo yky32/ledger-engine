@@ -11,7 +11,6 @@ import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.exception.response.WalletErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
-import com.altech.ledger.usecase.coa.CoaBindings;
 import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.usecase.wallet.CreateWalletOnboardingUseCase;
 import com.altech.ledger.util.CoaCodes;
@@ -131,7 +130,7 @@ public class EnsureWalletForIngestUseCase {
                     "No free sub-account under main " + primary.getMainAccount());
             }
         }
-        CoaBindings.RoleSegments seg = coaProfileUseCase.segmentsForMemberCurrency(null, currency);
+        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(null);
         String fullNumber = CoaCodes.fullNumber(
             seg.entity(), seg.type(), seg.subType(), primary.getMainAccount(), sub, seg.buffer(), currency);
         accountRepository.save(Account.builder()
@@ -143,7 +142,7 @@ public class EnsureWalletForIngestUseCase {
             .subAccount(sub)
             .buffer(seg.buffer())
             .currency(currency)
-            .allowNegative(seg.allowNegative())
+            .allowNegative(false)
             .build());
         log.info("ensured {} account under wallet {} main={}", currency, wallet.getId(), primary.getMainAccount());
     }

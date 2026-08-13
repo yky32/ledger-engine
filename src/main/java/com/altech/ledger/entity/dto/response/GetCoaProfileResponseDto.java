@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.Map;
 
 @Data
 @Builder
@@ -20,7 +19,12 @@ public class GetCoaProfileResponseDto {
     private String name;
     private Boolean isDefault;
     private Boolean isEnabled;
-    private Map<String, Object> bindings;
+    private String entity;
+    private String type;
+    private String subType;
+    private String buffer;
+    private String lpCurrency;
+    private Boolean poolAllowNegative;
     private Instant createDt;
     private Instant updateDt;
 }

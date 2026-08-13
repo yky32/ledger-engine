@@ -15,10 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
- * Single-table COA profiles. Lazy-seed DEFAULT (= legacy CoaCodes).
+ * Flat COA profile (no JSONB). Lazy-seed DEFAULT = legacy CoaCodes values.
  */
 @Component
 @RequiredArgsConstructor
@@ -44,19 +43,17 @@ public class CoaProfileUseCase {
             .orElseThrow(() -> new BizException(CoaErrorResponse.COA0404, "code=" + code));
     }
 
+    /** Segments for any member book (settlement or LP) — same entity/type/sub/buffer. */
     @Transactional
-    public Map<String, Object> effectiveBindings(String profileCode) {
-        return requireByCodeOrDefault(profileCode).bindingsMap();
+    public Segments segments(String profileCode) {
+        CoaProfile p = requireByCodeOrDefault(profileCode);
+        return new Segments(p.getEntity(), p.getType(), p.getSubType(), p.getBuffer(),
+            Boolean.TRUE.equals(p.getPoolAllowNegative()));
     }
 
     @Transactional
-    public CoaBindings.RoleSegments segmentsForMemberCurrency(String profileCode, Currency currency) {
-        return CoaBindings.forMemberCurrency(effectiveBindings(profileCode), currency);
-    }
-
-    @Transactional
-    public CoaBindings.RoleSegments segmentsForPool(String profileCode) {
-        return CoaBindings.require(effectiveBindings(profileCode), CoaBindings.ROLE_PROGRAM_POOL);
+    public boolean poolAllowNegative(String profileCode) {
+        return Boolean.TRUE.equals(requireByCodeOrDefault(profileCode).getPoolAllowNegative());
     }
 
     @Transactional(readOnly = true)
@@ -90,14 +87,15 @@ public class CoaProfileUseCase {
         }
         CoaProfile p = new CoaProfile();
         p.setCode(code);
-        p.setName(req.name() == null || req.name().isBlank() ? code : req.name().trim());
+        p.setName(blankTo(req.name(), code));
         p.setIsDefault(Boolean.TRUE.equals(req.isDefault()));
         p.setIsEnabled(req.isEnabled() == null || req.isEnabled());
-        try {
-            p.setBindingsMap(CoaBindings.normalize(req.bindings()));
-        } catch (RuntimeException ex) {
-            throw new BizException(CoaErrorResponse.COA0400, ex.getMessage());
-        }
+        p.setEntity(blankTo(req.entity(), CoaCodes.ENTITY));
+        p.setType(blankTo(req.type(), CoaCodes.typeCodeLiability()));
+        p.setSubType(blankTo(req.subType(), CoaCodes.SUB_TYPE));
+        p.setBuffer(blankTo(req.buffer(), CoaCodes.BUFFER));
+        p.setLpCurrency(blankTo(req.lpCurrency(), "LP"));
+        p.setPoolAllowNegative(req.poolAllowNegative() == null || req.poolAllowNegative());
         p.setIsActive(true);
         if (Boolean.TRUE.equals(p.getIsDefault())) {
             _clearOtherDefaults(null);
@@ -114,12 +112,23 @@ public class CoaProfileUseCase {
         if (req.isEnabled() != null) {
             p.setIsEnabled(req.isEnabled());
         }
-        if (req.bindings() != null) {
-            try {
-                p.setBindingsMap(CoaBindings.normalize(req.bindings()));
-            } catch (RuntimeException ex) {
-                throw new BizException(CoaErrorResponse.COA0400, ex.getMessage());
-            }
+        if (req.entity() != null && !req.entity().isBlank()) {
+            p.setEntity(req.entity().trim());
+        }
+        if (req.type() != null && !req.type().isBlank()) {
+            p.setType(req.type().trim());
+        }
+        if (req.subType() != null && !req.subType().isBlank()) {
+            p.setSubType(req.subType().trim());
+        }
+        if (req.buffer() != null && !req.buffer().isBlank()) {
+            p.setBuffer(req.buffer().trim());
+        }
+        if (req.lpCurrency() != null && !req.lpCurrency().isBlank()) {
+            p.setLpCurrency(req.lpCurrency().trim().toUpperCase(Locale.ROOT));
+        }
+        if (req.poolAllowNegative() != null) {
+            p.setPoolAllowNegative(req.poolAllowNegative());
         }
         if (req.isDefault() != null) {
             p.setIsDefault(req.isDefault());
@@ -130,8 +139,7 @@ public class CoaProfileUseCase {
         return toDto(coaProfileRepository.save(p));
     }
 
-    /** Compose fullNumber using profile segments + main/sub + ccy. */
-    public String fullNumber(CoaBindings.RoleSegments seg, String mainAccount, String subAccount, Currency currency) {
+    public String fullNumber(Segments seg, String mainAccount, String subAccount, Currency currency) {
         return CoaCodes.fullNumber(
             seg.entity(), seg.type(), seg.subType(), mainAccount, subAccount, seg.buffer(), currency);
     }
@@ -142,7 +150,12 @@ public class CoaProfileUseCase {
         p.setName("Default COA (legacy CoaCodes)");
         p.setIsDefault(true);
         p.setIsEnabled(true);
-        p.setBindingsMap(CoaBindings.defaultBindings());
+        p.setEntity(CoaCodes.ENTITY);
+        p.setType(CoaCodes.typeCodeLiability());
+        p.setSubType(CoaCodes.SUB_TYPE);
+        p.setBuffer(CoaCodes.BUFFER);
+        p.setLpCurrency("LP");
+        p.setPoolAllowNegative(true);
         p.setIsActive(true);
         return coaProfileRepository.save(p);
     }
@@ -161,6 +174,10 @@ public class CoaProfileUseCase {
             .orElseThrow(() -> new BizException(CoaErrorResponse.COA0404, "id=" + id));
     }
 
+    private static String blankTo(String v, String d) {
+        return v == null || v.isBlank() ? d : v.trim();
+    }
+
     private GetCoaProfileResponseDto toDto(CoaProfile p) {
         return GetCoaProfileResponseDto.builder()
             .id(p.getId())
@@ -168,9 +185,22 @@ public class CoaProfileUseCase {
             .name(p.getName())
             .isDefault(p.getIsDefault())
             .isEnabled(p.getIsEnabled())
-            .bindings(p.bindingsMap())
+            .entity(p.getEntity())
+            .type(p.getType())
+            .subType(p.getSubType())
+            .buffer(p.getBuffer())
+            .lpCurrency(p.getLpCurrency())
+            .poolAllowNegative(p.getPoolAllowNegative())
             .createDt(p.getCreateDt())
             .updateDt(p.getUpdateDt())
             .build();
     }
+
+    public record Segments(
+        String entity,
+        String type,
+        String subType,
+        String buffer,
+        boolean poolAllowNegative
+    ) {}
 }

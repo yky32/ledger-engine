@@ -20,7 +20,6 @@ import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.CommonService;
 import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
-import com.altech.ledger.usecase.coa.CoaBindings;
 import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.util.CoaCodes;
 import com.altech.ledger.util.WalletVanityCodes;
@@ -116,7 +115,7 @@ public class CreateWalletOnboardingUseCase {
 
         List<AccountOpenSpecDto> specs = _normalizeAccounts(request.accounts(), settlement);
         String mainAccount = commonService.getNextMainAccount();
-        Map<String, Object> coaBindings = coaProfileUseCase.effectiveBindings(null);
+        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(null);
 
         Map<String, AccountOpenSpecDto> byKey = new LinkedHashMap<>();
         Map<String, Account> opened = new LinkedHashMap<>();
@@ -141,7 +140,6 @@ public class CreateWalletOnboardingUseCase {
             }
             usedSubs.add(sub);
 
-            CoaBindings.RoleSegments seg = CoaBindings.forMemberCurrency(coaBindings, accountCcy);
             String fullNumber = CoaCodes.fullNumber(
                 seg.entity(), seg.type(), seg.subType(), mainAccount, sub, seg.buffer(), accountCcy);
             if (accountRepository.existsByFullNumber(fullNumber)
@@ -149,7 +147,7 @@ public class CreateWalletOnboardingUseCase {
                 throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
             }
 
-            boolean allowNegative = Boolean.TRUE.equals(spec.allowNegative()) || seg.allowNegative();
+            boolean allowNegative = Boolean.TRUE.equals(spec.allowNegative());
             Account account = accountRepository.save(Account.builder()
                 .fullNumber(fullNumber)
                 .entity(seg.entity())

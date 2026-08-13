@@ -1,45 +1,37 @@
-# COA profile — simple 1-table design
+# COA profile — flat 1-table (no JSONB)
 
 **Table:** `coa_profile`  
-**API:** `/coa-profiles`  
-**Idea:** one row per client; `bindings` JSONB holds 3 roles. No entity/type dictionary tables.
+**API:** `/coa-profiles`
 
-## Roles
+One row per client. Shared segment codes for all member books.
 
-| Role | Use |
-|------|-----|
-| `MEMBER_SETTLEMENT` | Member settlement book (HKD…) |
-| `MEMBER_LP` | Member points book |
-| `PROGRAM_POOL` | Earn/burn counterparty (`allowNegative`) |
+| Column | Default (legacy) | Meaning |
+|--------|------------------|---------|
+| `code` | `DEFAULT` | unique |
+| `entity` | `10` | entity segment |
+| `type` | `20` | account type (LIABILITY) |
+| `sub_type` | `00` | sub-type |
+| `buffer` | `00` | buffer |
+| `lp_currency` | `LP` | points currency label |
+| `pool_allow_negative` | `true` | PROGRAM pool |
 
-## Binding fields
-
-```json
-{
-  "entity": "10",
-  "type": "20",
-  "subType": "00",
-  "buffer": "00",
-  "currencyMode": "SETTLEMENT|ENSURE|FIXED",
-  "currency": "LP",
-  "allowNegative": false
-}
-```
-
-`mainAccount` / `subAccount` still from wallet sequence (not in JSON).
+`mainAccount` / `subAccount` still from wallet sequence.
 
 ## API
 
 ```bash
-curl -sS localhost:8080/coa-profiles
-curl -sS localhost:8080/coa-profiles/default   # lazy seed DEFAULT
+curl -sS localhost:8080/coa-profiles/default
 curl -sS -X POST localhost:8080/coa-profiles -H 'Content-Type: application/json' -d '{
   "code":"BANK_A",
   "name":"Bank A",
-  "bindings":{
-    "MEMBER_LP":{"entity":"01","type":"99","subType":"00","buffer":"00","currencyMode":"FIXED","currency":"LP"}
-  }
+  "entity":"01",
+  "type":"99",
+  "subType":"00",
+  "buffer":"00"
+}'
+curl -sS -X PUT localhost:8080/coa-profiles/{id} -H 'Content-Type: application/json' -d '{
+  "entity":"01","type":"99"
 }'
 ```
 
-DEFAULT seed = legacy `CoaCodes` (entity 10, LIABILITY 20, …). Onboard / ensure-LP read default profile.
+Onboard uses **default** profile for fullNumber segments.

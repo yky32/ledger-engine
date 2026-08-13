@@ -2,7 +2,6 @@ package com.altech.ledger.entity.po.coa;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,15 +14,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
-
-import com.altech.ledger.usecase.coa.CoaBindings;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
- * One row = one client COA profile. Role segments live in {@link #bindings} JSONB.
- * Simple Phase-1: no separate entity/type dictionary tables.
+ * One row = one client COA profile. Flat columns only (no JSONB).
+ * All member books share the same segment codes; currency comes from settlement / LP.
  */
 @Entity
 @Table(uniqueConstraints = {
@@ -52,13 +46,29 @@ public class CoaProfile extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private Boolean isEnabled;
 
-    /**
-     * Keys: MEMBER_SETTLEMENT | MEMBER_LP | PROGRAM_POOL (JSON object).
-     * Stored as Object for Hypersistence jsonb (same pattern as SystemConfiguration).
-     */
-    @Type(JsonBinaryType.class)
-    @Column(nullable = false, columnDefinition = "jsonb")
-    private Object bindings;
+    /** COA entity segment, e.g. 10 or 01 (Bank A). */
+    @Column(nullable = false)
+    private String entity;
+
+    /** Account type segment, e.g. 20 LIABILITY / 99 Custodian. */
+    @Column(nullable = false)
+    private String type;
+
+    /** Sub-type segment, e.g. 00 or 21 Fees. */
+    @Column(nullable = false)
+    private String subType;
+
+    /** Buffer segment, e.g. 00. */
+    @Column(nullable = false)
+    private String buffer;
+
+    /** Points currency code for LP books (default LP). */
+    @Column(nullable = false)
+    private String lpCurrency;
+
+    /** PROGRAM pool accounts may go negative. */
+    @Column(nullable = false)
+    private Boolean poolAllowNegative;
 
     @PrePersist
     @PreUpdate
@@ -72,16 +82,37 @@ public class CoaProfile extends AuditEntityWithIsActive {
         if (isEnabled == null) {
             isEnabled = Boolean.TRUE;
         }
-        if (bindings == null) {
-            bindings = new LinkedHashMap<>();
+        if (entity == null || entity.isBlank()) {
+            entity = "10";
         }
+        if (type == null || type.isBlank()) {
+            type = "20";
+        }
+        if (subType == null || subType.isBlank()) {
+            subType = "00";
+        }
+        if (buffer == null || buffer.isBlank()) {
+            buffer = "00";
+        }
+        if (lpCurrency == null || lpCurrency.isBlank()) {
+            lpCurrency = "LP";
+        } else {
+            lpCurrency = lpCurrency.trim().toUpperCase();
+        }
+        if (poolAllowNegative == null) {
+            poolAllowNegative = Boolean.TRUE;
+        }
+        entity = digits(entity, "10");
+        type = digits(type, "20");
+        subType = digits(subType, "00");
+        buffer = digits(buffer, "00");
     }
 
-    public Map<String, Object> bindingsMap() {
-        return CoaBindings.normalize(bindings);
-    }
-
-    public void setBindingsMap(Map<String, Object> map) {
-        this.bindings = map == null ? new LinkedHashMap<>() : new LinkedHashMap<>(map);
+    private static String digits(String v, String fallback) {
+        if (v == null) {
+            return fallback;
+        }
+        String s = v.trim();
+        return s.matches("\\d+") ? s : fallback;
     }
 }
