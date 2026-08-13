@@ -2,13 +2,13 @@ package com.altech.ledger.usecase.ingest;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
+import com.altech.ledger.entity.dto.ingest.EligibilityTraceEntry;
 import com.altech.ledger.entity.dto.ingest.IngestionResult;
 import com.altech.ledger.entity.dto.ingest.LedgerLegDto;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
-import com.altech.ledger.entity.po.ingest.IngestPolicy;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
@@ -30,16 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * <b>Ingest</b> orchestration: run the full webhook pipeline in one TX.
- * <p>
- * Order:
- * <ol>
- *   <li>{@link IngestPolicy} — door (enabled?)</li>
- *   <li>{@link com.altech.ledger.usecase.digestion.TransactionRuleEngine} — digestion (match + points)</li>
- *   <li>Auto-wallet from ingest policy if needed</li>
- *   <li>Earn/burn double-entry legs</li>
- * </ol>
- * Digestion rules themselves are owned by {@code usecase.digestion}; this class only calls them.
+ * Ingest orchestration. Trust pack B: eligibilityTrace + matchedRuleCode; dry-run (no books).
  */
 @Slf4j
 @Component
@@ -54,10 +45,8 @@ public class IngestTransactionUseCase {
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
     private final ObjectMapper objectMapper;
 
-    /** When true, SKIPPED paths do not insert a new failed_transaction_ingest row. */
     private static final ThreadLocal<Boolean> SUPPRESS_FAIL_PERSIST = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-    /** Run ingest without writing a new fail row (used by fail-replay). */
     public IngestionResult executeWithoutFailPersist(TransactionalEvent event) {
         SUPPRESS_FAIL_PERSIST.set(Boolean.TRUE);
         try {
@@ -67,22 +56,48 @@ public class IngestTransactionUseCase {
         }
     }
 
+    /**
+     * Dry-run: Door + Brain only. No fail-row, no wallet create, no movements.
+     */
+    @Transactional(readOnly = true)
+    public IngestionResult dryRun(TransactionalEvent event) {
+        if (!Boolean.TRUE.equals(ingestPolicyUseCase.requireEffective().getIsEnabled())) {
+            return IngestionResult.previewSkipped(event.eventId(), "Integration disabled", List.of());
+        }
+        TransactionRuleEngine.EvaluationOutcome outcome = transactionRuleEngine.evaluate(event);
+        if (!outcome.matched()) {
+            String reason = outcome.skipReason() == null ? "No matching rule" : outcome.skipReason();
+            return IngestionResult.previewSkipped(event.eventId(), reason, outcome.trace());
+        }
+        TransactionRuleEngine.RuleDecision rule = outcome.decision().orElseThrow();
+        return IngestionResult.preview(
+            event.eventId(),
+            rule.operation(),
+            rule.points(),
+            rule.matchedRule(),
+            outcome.trace()
+        );
+    }
+
     @Transactional
     public IngestionResult execute(TransactionalEvent event) {
         if (!Boolean.TRUE.equals(ingestPolicyUseCase.requireEffective().getIsEnabled())) {
-            return _fail(event, "DISABLED", "Integration disabled");
+            return _fail(event, "DISABLED", "Integration disabled", List.of());
         }
 
         TransactionRuleEngine.EvaluationOutcome outcome = transactionRuleEngine.evaluate(event);
+        List<EligibilityTraceEntry> trace = outcome.trace();
         if (!outcome.matched()) {
             return _fail(event,
                 outcome.skipReasonCode() == null ? "NO_RULE" : outcome.skipReasonCode(),
-                outcome.skipReason() == null ? "No matching rule" : outcome.skipReason());
+                outcome.skipReason() == null ? "No matching rule" : outcome.skipReason(),
+                trace);
         }
 
         TransactionRuleEngine.RuleDecision rule = outcome.decision().orElseThrow();
         Currency pointCurrency = Currency.get(rule.pointCurrency());
         String custId = event.ownerId();
+        String matchedCode = rule.matchedRule();
 
         EnsureWalletForIngestUseCase.ResolveResult resolved;
         try {
@@ -90,11 +105,13 @@ public class IngestTransactionUseCase {
         } catch (RuntimeException ex) {
             log.error("wallet resolve/provision failed custId={}", custId, ex);
             return _fail(event, "WALLET_PROVISION",
-                ex.getMessage() == null ? "wallet provision failed" : ex.getMessage());
+                ex.getMessage() == null ? "wallet provision failed" : ex.getMessage(),
+                trace);
         }
         if (resolved == null) {
             return _fail(event, "NO_WALLET",
-                "Wallet not onboarded and auto-create disabled: " + custId);
+                "Wallet not onboarded and auto-create disabled: " + custId,
+                trace);
         }
         Wallet wallet = resolved.wallet();
         String walletKey = custId;
@@ -102,7 +119,7 @@ public class IngestTransactionUseCase {
         if (rule.operation() == TransactionRuleEngine.Operation.PROCESS) {
             String processType = rule.processType() == null ? "UNSPECIFIED" : rule.processType().toUpperCase();
             if (!"ADJUST".equals(processType)) {
-                return _fail(event, "PROCESS_TYPE", "Process type not implemented: " + processType);
+                return _fail(event, "PROCESS_TYPE", "Process type not implemented: " + processType, trace);
             }
         }
 
@@ -119,7 +136,7 @@ public class IngestTransactionUseCase {
                 : UUID.nameUUIDFromBytes(("movement:" + m.getId()).getBytes());
             return IngestionResult.duplicate(
                 event.eventId(), rule.operation(), id, rule.points(), walletKey,
-                m.getId(), _legs(m.getId()));
+                m.getId(), _legs(m.getId()), matchedCode, trace);
         }
 
         try {
@@ -130,6 +147,7 @@ public class IngestTransactionUseCase {
                 pointCurrency,
                 movementKey,
                 rule.operation() + " from " + event.eventType() + " (" + rule.formula() + ")"
+                    + " rule=" + matchedCode
                     + (resolved.provisioned() ? " [wallet-auto]" : "")
             );
 
@@ -137,10 +155,10 @@ public class IngestTransactionUseCase {
                 : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());
             return IngestionResult.applied(
                 event.eventId(), rule.operation(), rule.points(), txnId, walletKey,
-                applied.id(), _legs(applied.id()));
+                applied.id(), _legs(applied.id()), matchedCode, trace);
         } catch (RuntimeException ex) {
             log.error("ingest apply failed eventId={}", event.eventId(), ex);
-            return _fail(event, "ERROR", ex.getMessage() == null ? "apply failed" : ex.getMessage());
+            return _fail(event, "ERROR", ex.getMessage() == null ? "apply failed" : ex.getMessage(), trace);
         }
     }
 
@@ -188,9 +206,14 @@ public class IngestTransactionUseCase {
         return out;
     }
 
-    private IngestionResult _fail(TransactionalEvent event, String code, String reason) {
+    private IngestionResult _fail(
+        TransactionalEvent event,
+        String code,
+        String reason,
+        List<EligibilityTraceEntry> trace
+    ) {
         _persistFailure(event, code, reason);
-        return IngestionResult.skipped(event.eventId(), reason);
+        return IngestionResult.skipped(event.eventId(), reason, trace);
     }
 
     private void _persistFailure(TransactionalEvent event, String code, String reason) {
