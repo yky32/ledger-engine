@@ -2,7 +2,6 @@ package com.altech.ledger.usecase.wallet;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
-import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.request.AccountOpenSpecDto;
 import com.altech.ledger.entity.dto.request.BatchCreateWalletOnboardRequestDto;
 import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
@@ -21,6 +20,7 @@ import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.CommonService;
 import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
+import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.util.CoaCodes;
 import com.altech.ledger.util.WalletVanityCodes;
 import lombok.RequiredArgsConstructor;
@@ -36,9 +36,7 @@ import java.util.Set;
 
 /**
  * Wallet create: <b>1 ownerId → 1 Wallet</b>.
- * <p>
- * Opens a primary account in {@code settlementCurrency}, plus optional extra accounts
- * (e.g. LP) under the same wallet main COA — multi-currency books, single wallet identity.
+ * COA segments from {@code coaProfileCode} (product stream) or default profile.
  */
 @Component
 @RequiredArgsConstructor
@@ -47,6 +45,7 @@ public class CreateWalletOnboardingUseCase {
     private final WalletRepository walletRepository;
     private final CommonService commonService;
     private final CommonUseCase commonUseCase;
+    private final CoaProfileUseCase coaProfileUseCase;
 
     @Transactional
     public GetWalletOnboardResponseDto execute(CreateWalletOnboardRequestDto request) {
@@ -116,7 +115,10 @@ public class CreateWalletOnboardingUseCase {
 
         List<AccountOpenSpecDto> specs = _normalizeAccounts(request.accounts(), settlement);
         String mainAccount = commonService.getNextMainAccount();
-        CoaType coaType = CoaType.LIABILITY;
+        String profileCode = request.coaProfileCode();
+        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(profileCode);
+        // resolved code for wallet stamp (DEFAULT if blank)
+        String resolvedProfileCode = coaProfileUseCase.requireByCodeOrDefault(profileCode).getCode();
 
         Map<String, AccountOpenSpecDto> byKey = new LinkedHashMap<>();
         Map<String, Account> opened = new LinkedHashMap<>();
@@ -141,7 +143,8 @@ public class CreateWalletOnboardingUseCase {
             }
             usedSubs.add(sub);
 
-            String fullNumber = CoaCodes.fullNumber(mainAccount, sub, coaType, accountCcy);
+            String fullNumber = CoaCodes.fullNumber(
+                seg.entity(), seg.type(), seg.subType(), mainAccount, sub, seg.buffer(), accountCcy);
             if (accountRepository.existsByFullNumber(fullNumber)
                 || accountRepository.findByMainAccountAndSubAccount(mainAccount, sub).isPresent()) {
                 throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
@@ -150,12 +153,12 @@ public class CreateWalletOnboardingUseCase {
             boolean allowNegative = Boolean.TRUE.equals(spec.allowNegative());
             Account account = accountRepository.save(Account.builder()
                 .fullNumber(fullNumber)
-                .entity(CoaCodes.ENTITY)
-                .type(CoaCodes.typeCode(coaType))
-                .subType(CoaCodes.SUB_TYPE)
+                .entity(seg.entity())
+                .type(seg.type())
+                .subType(seg.subType())
                 .mainAccount(mainAccount)
                 .subAccount(sub)
-                .buffer(CoaCodes.BUFFER)
+                .buffer(seg.buffer())
                 .currency(accountCcy)
                 .allowNegative(allowNegative)
                 .build());
@@ -182,6 +185,7 @@ public class CreateWalletOnboardingUseCase {
         wallet.setOwnerId(ownerId);
         wallet.setVanityCode(WalletVanityCodes.resolveForCreate(request.vanityCode(), ownerId));
         wallet.setSettlementCurrency(settlement);
+        wallet.setCoaProfileCode(resolvedProfileCode);
         wallet = walletRepository.save(wallet);
 
         List<GetWalletAccountResponseDto> accountDtos = new ArrayList<>();

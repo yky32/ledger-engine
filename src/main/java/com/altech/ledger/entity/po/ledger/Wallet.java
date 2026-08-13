@@ -68,6 +68,13 @@ public class Wallet extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private Currency settlementCurrency;
 
+    /**
+     * COA profile code used at onboard (product stream), e.g. DEFAULT / UAF_CC / UAF_LOAN.
+     * Null on legacy rows → treat as default when ensuring books.
+     */
+    @Column
+    private String coaProfileCode;
+
     @PrePersist
     void applyDefaults() {
         if (type == null) {
@@ -78,6 +85,12 @@ public class Wallet extends AuditEntityWithIsActive {
         }
         if (status == null) {
             status = WalletStatus.ACTIVE;
+        }
+        if (coaProfileCode != null) {
+            coaProfileCode = coaProfileCode.trim().toUpperCase();
+            if (coaProfileCode.isEmpty()) {
+                coaProfileCode = null;
+            }
         }
     }
 }

@@ -19,15 +19,20 @@ public final class CoaCodes {
 
     public static String typeCode(CoaType type) {
         if (type == null) {
-            return "20";
+            return typeCodeLiability();
         }
         return switch (type) {
             case ASSET -> "10";
-            case LIABILITY -> "20";
+            case LIABILITY -> typeCodeLiability();
             case EQUITY -> "30";
             case REVENUE -> "40";
             case EXPENSE -> "50";
         };
+    }
+
+    /** LIABILITY segment used by member wallets / pool (default COA). */
+    public static String typeCodeLiability() {
+        return "20";
     }
 
     /**
