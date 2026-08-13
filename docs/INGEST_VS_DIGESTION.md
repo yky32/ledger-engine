@@ -8,7 +8,7 @@ Two **different** product concepts — keep packages and ops screens separate.
 | Package | `…po.ingest` · `…usecase.ingest` | `…po.digestion` · `…usecase.digestion` |
 | Main type | `IngestPolicy` | `DigestionRule` |
 | Table | `ingest_policy` | `digestion_rule` |
-| API | `/ingest-policy`, webhooks, fail-table, legs | `/digestion-rules` |
+| API | `/ingest-policies`, webhooks, fail-table, legs | `/digestion-rules` |
 | Cardinality | ~1 policy row | N rules |
 | Checks | `isEnabled`, auto-wallet ccy/prefix | eventType, minAmount, **currency**, **MCC**, **age**, formula |
 

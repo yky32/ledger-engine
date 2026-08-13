@@ -53,7 +53,7 @@ Step 3  Enable POS / order system → webhook
 
 | Phase | Concept | Who | API |
 |---|---|---|---|
-| **Setup** | Runtime policy + rules | Ops | `/ingest-policy`, `/digestion-rules`, bootstrap script |
+| **Setup** | Runtime policy + rules | Ops | `/ingest-policies`, `/digestion-rules`, bootstrap script |
 | **1** | Wallet onboarding | CRM / membership | `POST /wallets`, `/wallets/batch` (or auto-wallet) |
 | **2** | Transaction processing | POS / e-com | `POST /integrations/webhooks/transactions` |
 

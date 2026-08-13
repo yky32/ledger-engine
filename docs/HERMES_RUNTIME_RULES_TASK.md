@@ -10,7 +10,7 @@
 | Rules | DB `digestion_rule` · API `/digestion-rules` · **no YAML rule catalog / startup seed** |
 | Engine | `TransactionRuleEngine` reads **DB only** (empty ⇒ `NO_RULE`) |
 | Formula | `AMOUNT` · `RATE:{n}` · `FIXED:{n}` · `MUL_ADD:{rate}:{fixed}` |
-| Door / auto-wallet | DB `ingest_policy` · `GET/PUT /ingest-policy` |
+| Door / auto-wallet | DB `ingest_policy` · `GET/PUT /ingest-policies` |
 | Double-entry | PROGRAM pool legs · earn response `legs` · `GET /integrations/ledger-entries?movementId=` / `?eventId=` |
 | Bootstrap | `./scripts/bootstrap-runtime.sh` (API seed) · docs/BOOTSTRAP.md |
 | Packages | `ingest` (door) vs `digestion` (brain) |

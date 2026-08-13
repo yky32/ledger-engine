@@ -21,7 +21,7 @@ Adopt / ops guides under `docs/`. Code of truth is **main** APIs.
 
 | Doc | API / script |
 |-----|----------------|
-| [INGEST_POLICY.md](./INGEST_POLICY.md) | `GET/PUT /ingest-policy` — kill-switch + auto-wallet |
+| [INGEST_POLICY.md](./INGEST_POLICY.md) | `GET/PUT /ingest-policies` — kill-switch + auto-wallet |
 | [DIGESTION_RULES.md](./DIGESTION_RULES.md) | `/digestion-rules` — filter + formula |
 | [BOOTSTRAP.md](./BOOTSTRAP.md) | `./scripts/bootstrap-runtime.sh` |
 

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Ingest policy (webhook on/off + auto-wallet defaults) — DB-backed.
  */
 @RestController
-@RequestMapping("/ingest-policy")
+@RequestMapping("/ingest-policies")
 @RequiredArgsConstructor
 public class IngestPolicyEndpoint {
     private final IngestPolicyUseCase ingestPolicyUseCase;

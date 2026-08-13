@@ -3,7 +3,7 @@
 # Idempotent: safe to re-run.
 #
 # Ensures:
-#   1) IngestPolicy via PUT /ingest-policy
+#   1) IngestPolicy via PUT /ingest-policies
 #   2) Digestion rules PURCHASE_DEFAULT / SIGNUP_DEFAULT / REDEEM_DEFAULT
 #
 #   ./scripts/bootstrap-runtime.sh
@@ -28,7 +28,7 @@ curl -sf "$BASE_URL/actuator/health" >/dev/null \
 green "app up"
 
 info "1) ingest-policy (door)"
-POLICY=$(curl -sS -X PUT "$BASE_URL/ingest-policy" \
+POLICY=$(curl -sS -X PUT "$BASE_URL/ingest-policies" \
   -H 'Content-Type: application/json' \
   -d '{
     "isEnabled": true,
@@ -116,7 +116,7 @@ upsert_rule REDEEM_DEFAULT '{
 }'
 
 info "3) summary"
-curl -sS "$BASE_URL/ingest-policy" | jq '.data | {isEnabled,isAutoCreateWallet}'
+curl -sS "$BASE_URL/ingest-policies" | jq '.data | {isEnabled,isAutoCreateWallet}'
 curl -sS "$BASE_URL/digestion-rules?enabledOnly=true" | jq '[.data[]? | {code,eventType,operation,formula,priority}]'
 
 echo

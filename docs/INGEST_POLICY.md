@@ -2,7 +2,7 @@
 
 **Product name:** ingest policy  
 **Table:** `ingest_policy`  
-**API:** `GET/PUT /ingest-policy`  
+**API:** `GET/PUT /ingest-policies`  
 **Role:** 控制 **webhook 入嚟之後** 點做 — 開唔開、冇 wallet 自唔自動開。
 
 唔係 digestion formula（嗰個係 `/digestion-rules`）。
@@ -63,7 +63,7 @@ POST /integrations/webhooks/transactions
 ## 實例 A — 預設 adopt（lazy wallet）
 
 ```bash
-GET /ingest-policy
+GET /ingest-policies
 # → isAutoCreateWallet: true, settlement HKD, ensure LP
 ```
 
@@ -78,7 +78,7 @@ GET /ingest-policy
 ## 實例 B — 關閉 auto-create（要先 onboard）
 
 ```bash
-PUT /ingest-policy
+PUT /ingest-policies
 { "isAutoCreateWallet": false }
 ```
 
@@ -89,7 +89,7 @@ PUT /ingest-policy
 ## 實例 C — 停晒 webhook
 
 ```bash
-PUT /ingest-policy
+PUT /ingest-policies
 { "isEnabled": false }
 ```
 
@@ -100,9 +100,9 @@ PUT /ingest-policy
 ## API
 
 ```bash
-curl -sS 'http://localhost:8080/ingest-policy'
+curl -sS 'http://localhost:8080/ingest-policies'
 
-curl -sS -X PUT 'http://localhost:8080/ingest-policy' \
+curl -sS -X PUT 'http://localhost:8080/ingest-policies' \
   -H 'Content-Type: application/json' \
   -d '{
     "isEnabled": true,
