@@ -2,7 +2,6 @@ package com.altech.ledger.usecase.ingest;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
-import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.request.AccountOpenSpecDto;
 import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
 import com.altech.ledger.entity.po.ingest.IngestPolicy;
@@ -12,6 +11,8 @@ import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.exception.response.WalletErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
+import com.altech.ledger.usecase.coa.CoaBindings;
+import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.usecase.wallet.CreateWalletOnboardingUseCase;
 import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 /**
  * Resolve wallet for ingest: find existing or auto-create from DB {@link IngestPolicy}.
+ * Extra currency books use default {@code coa_profile} segments.
  */
 @Slf4j
 @Component
@@ -33,6 +35,7 @@ public class EnsureWalletForIngestUseCase {
     private final WalletRepository walletRepository;
     private final AccountRepository accountRepository;
     private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
+    private final CoaProfileUseCase coaProfileUseCase;
 
     public record ResolveResult(Wallet wallet, boolean provisioned) {}
 
@@ -128,18 +131,19 @@ public class EnsureWalletForIngestUseCase {
                     "No free sub-account under main " + primary.getMainAccount());
             }
         }
-        CoaType coaType = CoaType.LIABILITY;
-        String fullNumber = CoaCodes.fullNumber(primary.getMainAccount(), sub, coaType, currency);
+        CoaBindings.RoleSegments seg = coaProfileUseCase.segmentsForMemberCurrency(null, currency);
+        String fullNumber = CoaCodes.fullNumber(
+            seg.entity(), seg.type(), seg.subType(), primary.getMainAccount(), sub, seg.buffer(), currency);
         accountRepository.save(Account.builder()
             .fullNumber(fullNumber)
-            .entity(CoaCodes.ENTITY)
-            .type(CoaCodes.typeCode(coaType))
-            .subType(CoaCodes.SUB_TYPE)
+            .entity(seg.entity())
+            .type(seg.type())
+            .subType(seg.subType())
             .mainAccount(primary.getMainAccount())
             .subAccount(sub)
-            .buffer(CoaCodes.BUFFER)
+            .buffer(seg.buffer())
             .currency(currency)
-            .allowNegative(false)
+            .allowNegative(seg.allowNegative())
             .build());
         log.info("ensured {} account under wallet {} main={}", currency, wallet.getId(), primary.getMainAccount());
     }
