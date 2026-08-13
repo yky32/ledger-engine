@@ -36,7 +36,7 @@ class TransactionRuleEngineTest {
         purchase.setPriority(10);
         purchase.setMinAmount(new BigDecimal("0.01"));
         purchase.setPointCurrency("LP");
-        purchase.setFormula("RATE:0.01");
+        purchase.setFormula(DigestionFormulaConfig.ofRate(new BigDecimal("0.01")));
         purchase.setMaxAgeDays(7);
         purchase.setEligibleCurrencies("HKD,USD");
         purchase.setIsActive(true);

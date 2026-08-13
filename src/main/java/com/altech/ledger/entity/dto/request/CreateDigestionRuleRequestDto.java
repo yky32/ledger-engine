@@ -7,6 +7,10 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Create digestion rule. {@code formula} is JSON config, e.g.
+ * {@code {"type":"RATE","rate":0.01}} — legacy strings still accepted and normalized.
+ */
 public record CreateDigestionRuleRequestDto(
     @NotBlank @Size(max = 80) String code,
     @Size(max = 200) String name,
@@ -18,6 +22,6 @@ public record CreateDigestionRuleRequestDto(
     List<@Size(max = 16) String> eligibleCurrencies,
     Integer maxAgeDays,
     @Size(max = 16) String pointCurrency,
-    @NotBlank @Size(max = 500) String formula,
+    @NotNull Object formula,
     @Size(max = 40) String processType
 ) {}

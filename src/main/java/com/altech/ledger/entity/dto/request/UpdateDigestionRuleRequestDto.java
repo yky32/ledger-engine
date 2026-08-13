@@ -16,6 +16,6 @@ public record UpdateDigestionRuleRequestDto(
     List<@Size(max = 16) String> eligibleCurrencies,
     Integer maxAgeDays,
     @Size(max = 16) String pointCurrency,
-    @Size(max = 500) String formula,
+    Object formula,
     @Size(max = 40) String processType
 ) {}

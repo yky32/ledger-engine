@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
@@ -17,10 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Matches inbound events to <b>runtime</b> {@link DigestionRule} rows (DB only).
- * <p>
- * Empty table ⇒ no match ({@code NO_RULE}). Bootstrap via {@code POST /digestion-rules}
- * or {@code ./scripts/bootstrap-runtime.sh} — <b>no YAML rule catalog / startup seed</b>.
+ * Matches inbound events to runtime {@link DigestionRule} rows (DB only).
  */
 @Component
 @RequiredArgsConstructor
@@ -49,9 +45,10 @@ public class TransactionRuleEngine {
                 continue;
             }
 
-            String formula = rule.getFormula() == null ? "" : rule.getFormula().trim();
+            Object formula = rule.getFormula();
             if (operation == Operation.EARN || operation == Operation.BURN) {
-                if (isSpendBased(formula) && (event.amount() == null || event.amount().signum() <= 0)) {
+                if (DigestionFormulaConfig.isSpendBased(formula)
+                    && (event.amount() == null || event.amount().signum() <= 0)) {
                     lastReasonCode = "AMOUNT";
                     lastReason = "amount must be > 0 for formula " + formula;
                     continue;
@@ -122,27 +119,12 @@ public class TransactionRuleEngine {
         return EvaluationOutcome.noMatch(lastReasonCode, lastReason);
     }
 
-    private static boolean isSpendBased(String formula) {
-        if (formula == null || formula.isBlank()) {
-            return true;
-        }
-        String f = formula.trim();
-        if (f.startsWith("{")) {
-            return true; // JSON rate/fixed uses amount
-        }
-        String u = f.toUpperCase(Locale.ROOT);
-        if ("AMOUNT".equals(u) || u.startsWith("RATE:") || u.startsWith("MUL_ADD:")) {
-            return true;
-        }
-        return u.startsWith("FIXED:") ? false : true;
-    }
-
     public record RuleDecision(
         Operation operation,
         String pointCurrency,
         BigDecimal points,
         String matchedRule,
-        String formula,
+        Object formula,
         String processType
     ) {}
 
@@ -164,83 +146,20 @@ public class TransactionRuleEngine {
         }
     }
 
-    /** Scoring helpers for digestion formulas. */
+    /**
+     * Scoring facade — delegates to {@link DigestionFormulaConfig}.
+     * Accepts JSON object / Map / legacy string DSL.
+     */
     public static final class DigestionFormula {
         private DigestionFormula() {}
 
-        public static BigDecimal compute(String formula, BigDecimal amount) {
-            if (formula == null || formula.isBlank()) {
-                throw new IllegalArgumentException("formula is blank");
-            }
-            String raw = formula.trim();
-            BigDecimal amt = amount == null ? BigDecimal.ZERO : amount;
-
-            // JSON: {"rate":0.01,"fixed":0}
-            if (raw.startsWith("{")) {
-                BigDecimal rate = extractJsonNumber(raw, "rate");
-                BigDecimal fixed = extractJsonNumber(raw, "fixed");
-                if (rate == null) {
-                    rate = BigDecimal.ZERO;
-                }
-                if (fixed == null) {
-                    fixed = BigDecimal.ZERO;
-                }
-                return amt.multiply(rate).add(fixed).setScale(18, RoundingMode.HALF_UP);
-            }
-
-            String f = raw.toUpperCase(Locale.ROOT);
-            if ("AMOUNT".equals(f)) {
-                return amt.setScale(18, RoundingMode.HALF_UP);
-            }
-            if (f.startsWith("FIXED:")) {
-                return new BigDecimal(raw.substring("FIXED:".length()).trim()).setScale(18, RoundingMode.HALF_UP);
-            }
-            if (f.startsWith("RATE:")) {
-                BigDecimal rate = new BigDecimal(raw.substring("RATE:".length()).trim());
-                return amt.multiply(rate).setScale(18, RoundingMode.HALF_UP);
-            }
-            // MUL_ADD:rate:fixed → amount * rate + fixed
-            if (f.startsWith("MUL_ADD:")) {
-                String rest = raw.substring("MUL_ADD:".length()).trim();
-                String[] parts = rest.split(":");
-                if (parts.length < 1) {
-                    throw new IllegalArgumentException("MUL_ADD needs rate");
-                }
-                BigDecimal rate = new BigDecimal(parts[0].trim());
-                BigDecimal fixed = parts.length > 1 ? new BigDecimal(parts[1].trim()) : BigDecimal.ZERO;
-                return amt.multiply(rate).add(fixed).setScale(18, RoundingMode.HALF_UP);
-            }
-            throw new IllegalArgumentException("Unsupported formula: " + formula);
+        public static BigDecimal compute(Object formula, BigDecimal amount) {
+            return DigestionFormulaConfig.compute(formula, amount);
         }
 
-        private static BigDecimal extractJsonNumber(String json, String key) {
-            // minimal parse — avoid extra deps
-            String pattern = "\"" + key + "\"";
-            int i = json.indexOf(pattern);
-            if (i < 0) {
-                return null;
-            }
-            int colon = json.indexOf(':', i + pattern.length());
-            if (colon < 0) {
-                return null;
-            }
-            int j = colon + 1;
-            while (j < json.length() && Character.isWhitespace(json.charAt(j))) {
-                j++;
-            }
-            int k = j;
-            while (k < json.length()) {
-                char c = json.charAt(k);
-                if (c == ',' || c == '}' || Character.isWhitespace(c)) {
-                    break;
-                }
-                k++;
-            }
-            String num = json.substring(j, k).trim();
-            if (num.isEmpty()) {
-                return null;
-            }
-            return new BigDecimal(num);
+        /** @deprecated prefer {@link #compute(Object, BigDecimal)} */
+        public static BigDecimal compute(String formula, BigDecimal amount) {
+            return DigestionFormulaConfig.compute(formula, amount);
         }
     }
 }
