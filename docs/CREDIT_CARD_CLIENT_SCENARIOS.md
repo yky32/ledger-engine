@@ -1,24 +1,25 @@
-# Credit card / issuer client — scenarios & requirements
+# LedgeRX — Credit card / issuer client scenarios
 
-**Audience:** product, solutions, client success (credit card / bank / issuer programmes using ledger-engine)  
+**Product:** **LedgeRX** · module `ledger-engine`  
+**Audience:** product, solutions, client success (credit card / bank / issuer programmes)  
 **Status:** Draft for alignment · drives Brain formula + event catalog design  
-**Related:** [SYSTEM_BUSINESS_FLOW.md](./SYSTEM_BUSINESS_FLOW.md) §5.3–5.5 · [DIGESTION_RULES.md](./DIGESTION_RULES.md) · [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBHOOK.md)
+**Related:** [BRAND.md](./BRAND.md) · [SYSTEM_BUSINESS_FLOW.md](./SYSTEM_BUSINESS_FLOW.md) §5.3–5.5 · [DIGESTION_RULES.md](./DIGESTION_RULES.md) · [CLIENT_EARN_WEBHOOK.md](./CLIENT_EARN_WEBHOOK.md)
 
 ---
 
 ## 1. Why this client type matters
 
-A **credit card issuer** (or co-brand bank) is a primary adopters of ledger-engine as the **loyalty points system of record**:
+A **credit card issuer** (or co-brand bank) is a primary adopter of **LedgeRX** as the **loyalty points system of record**:
 
-| They own | We own (ledger-engine) |
-|----------|-------------------------|
+| They own | LedgeRX owns |
+|----------|----------------|
 | Card issuing, credit limit, clearing/settlement with schemes | Wallet + LP books per member |
 | Auth / presentment / dispute rails | Earn / burn / hold posting + audit legs |
 | MCC, merchant, FX rate at payment time | Configurable digestion of **business events** they send |
 | Card product / tier / campaign CRM | Runtime rules (Door + Brain) without redeploy |
 
 **Positioning line:**  
-> Upstream (issuer/processor) decides *what happened*; Ledger Engine decides *how many points book*, and posts **true double-entry** against a programme pool.
+> Upstream (issuer/processor) decides *what happened*; **LedgeRX** decides *how many points book*, and posts **true double-entry** against a programme pool.
 
 ---
 

@@ -1,14 +1,15 @@
-# Ledger Engine — System Business Flow
+# LedgeRX — System Business Flow
 
 **Audience:** product / business review (e.g. @wilfredkan)  
 **Status:** Draft for alignment · reflects **shipped** engine behaviour on main  
-**Product:** Ledger Engine — wallet + loyalty ledger core (not payment rails, not CRM)
+**Product:** **LedgeRX** (`ledger-engine`) — wallet + loyalty ledger core (not payment rails, not CRM)  
+**Brand:** [BRAND.md](./BRAND.md)
 
 ---
 
 ## 1. What this system is
 
-Ledger Engine is the **system of record for balances and loyalty points** for a customer programme.
+**LedgeRX** is the **system of record for balances and loyalty points** for a customer programme.
 
 | It does | It does **not** |
 |---------|------------------|

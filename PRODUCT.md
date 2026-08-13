@@ -1,14 +1,15 @@
-# Ledger Engine — Product Overview
+# LedgeRX — Product Overview
 
-**Ledger Engine** is a standalone, deployable **wallet + ledger** product for enterprise clients. It supports
-custodial wallets (deposits, withdrawals, transfers), loyalty points/credits, and full double-entry
-accounting.
+**LedgeRX** is the business product name for our standalone, deployable **wallet + ledger** platform
+(engineering module: `ledger-engine`). It supports custodial wallets (deposits, withdrawals, transfers),
+loyalty points/credits, and full double-entry accounting — especially for **credit card / issuer** and
+retail loyalty programmes.
 
-Clients deploy it in their own environment (on-prem, private cloud, or VPC), define their Chart of Accounts
-(COA), and integrate via a stable HTTP API. The engine enforces double-entry rules, immutable history, and
+Clients deploy it in their own environment (on-prem, private cloud, or VPC), configure Door + Brain rules
+at runtime, and integrate via a stable HTTP API. LedgeRX enforces double-entry rules, immutable history, and
 idempotent posting so downstream systems can treat it as the financial source of truth.
 
-For technical setup and API details, see [README.md](README.md) and [INTEGRATION.md](INTEGRATION.md).
+Brand: [docs/BRAND.md](docs/BRAND.md) · Setup: [README.md](README.md) · Integration: [INTEGRATION.md](INTEGRATION.md).
 
 **Java SDK:** clients may receive **ledger-engine-sdk** as a versioned JAR under contract (manual email delivery — not Maven Central). See [SDK OVERVIEW](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/OVERVIEW.md) and [SDK DELIVERY](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md).
 
@@ -16,17 +17,19 @@ For technical setup and API details, see [README.md](README.md) and [INTEGRATION
 
 ## Product summary
 
-Ledger Engine is a **standalone wallet + ledger product** built as a Spring Boot service. It supports loyalty
-points, custodial wallets, deposits, withdrawals, transfers, and full audit-grade double-entry accounting.
+**LedgeRX** is a **standalone wallet + ledger product** built as a Spring Boot service (`ledger-engine`).
+It supports loyalty points, custodial wallets, deposits, withdrawals, transfers, and full audit-grade
+double-entry accounting.
 
 Clients deploy it in their own infrastructure and integrate over HTTP (and optionally Kafka).
 
 | Aspect | Description |
 |---|---|
+| **Product name** | **LedgeRX** |
 | **Purpose** | System of record for wallet balances and every movement between accounts |
-| **Model** | Chart of Accounts (COA) + immutable journal — balances **derived** from entries, not mutable columns |
-| **Customer unit** | `Wallet` entity linked to a `ledger_account` per owner per currency |
-| **Operations** | **Earn / Burn / Process** (loyalty) + **Deposit / Withdrawal / Transfer** (wallet) |
+| **Model** | Chart of Accounts (COA) + double-entry legs — programme pool + member books |
+| **Customer unit** | `Wallet` (1 `ownerId` → 1 wallet) + multi-ccy accounts (e.g. HKD + LP) |
+| **Operations** | **Earn / Burn / Process** (loyalty) + **Deposit / Withdrawal / Transfer** + **Hold/Release** |
 | **Go-live** | **Phase 1** onboard wallets from CRM → **Phase 2** ingest transactional events |
 | **Guarantees** | Double-entry, idempotent posting, append-only history, reversal support |
 

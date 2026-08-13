@@ -1,6 +1,9 @@
-# Ledger Engine
+# LedgeRX
 
-**Version `1.0.0`** — standalone wallet + ledger core.  
+**Product:** **LedgeRX** · **Engine module:** `ledger-engine` `1.0.0`  
+Brand note: [docs/BRAND.md](docs/BRAND.md).
+
+Standalone wallet + ledger core for loyalty & programme books.  
 Optional client: [ledger-engine-sdk](https://github.com/yky32/ledger-engine-sdk) (manual JAR delivery; see [DELIVERY](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md)).
 
 Java 17 / Spring Boot service for **customer wallets**, **chart-of-accounts balances**, and **movements** (deposit, withdrawal, transfer, earn/burn). It is **ledger core**, not payment rails, identity/CRM, compliance UI, or settlement orchestration.
