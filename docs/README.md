@@ -7,6 +7,7 @@ Adopt / ops guides under `docs/`. Code of truth is **main** APIs; these pages tr
 | Role | Read |
 |------|------|
 | **Business / product review** | [SYSTEM_BUSINESS_FLOW.md](./SYSTEM_BUSINESS_FLOW.md) ⭐ |
+| **Credit card / issuer adopt** | [CREDIT_CARD_CLIENT_SCENARIOS.md](./CREDIT_CARD_CLIENT_SCENARIOS.md) ⭐ |
 | Fresh local run | [BOOTSTRAP.md](./BOOTSTRAP.md) → `./scripts/upstream-sim.sh` or `e2e-smoke.sh` |
 | Concepts (door vs brain) | [INGEST_VS_DIGESTION.md](./INGEST_VS_DIGESTION.md) |
 | Wallet onboard | [WALLET_LEAN.md](./WALLET_LEAN.md) | Lean Wallet PO |
