@@ -14,7 +14,7 @@ POST /integrations/webhooks/transactions
   eventId + ownerId + eventType + amount + currency + occurredAt
         │
         ▼
-  IngestPolicy (door)          ← /ingest-policy
+  IngestPolicy (door)          ← /ingest-policies
   • isEnabled?
   • isAutoCreateWallet if no wallet
         │
@@ -225,8 +225,8 @@ Full rule API: [DIGESTION_RULES.md](./DIGESTION_RULES.md)
 **Door / auto-wallet** — DB:
 
 ```bash
-curl -sS "$BASE/ingest-policy"
-curl -sS -X PUT "$BASE/ingest-policy" \
+curl -sS "$BASE/ingest-policies"
+curl -sS -X PUT "$BASE/ingest-policies" \
   -H 'Content-Type: application/json' \
   -d '{"isEnabled":true,"isAutoCreateWallet":true,"autoWalletSettlementCurrency":"HKD","autoWalletEnsureCurrency":"LP"}'
 ```

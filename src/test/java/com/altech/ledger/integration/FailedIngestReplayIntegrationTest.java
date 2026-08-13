@@ -42,7 +42,7 @@ class FailedIngestReplayIntegrationTest {
     void seed() throws Exception {
         DigestionRuleTestData.ensureDefaultRules(digestionRuleRepository);
         ingestPolicyUseCase.getOrCreate();
-        mockMvc.perform(put("/ingest-policy")
+        mockMvc.perform(put("/ingest-policies")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"isEnabled\":true,\"isAutoCreateWallet\":true}"))
             .andExpect(status().isOk());

@@ -13,7 +13,7 @@ Idempotent. Creates / refreshes:
 
 | Resource | Default |
 |----------|---------|
-| `PUT /ingest-policy` | enabled + auto-wallet HKD/LP |
+| `PUT /ingest-policies` | enabled + auto-wallet HKD/LP |
 | `PURCHASE_DEFAULT` | EARN `RATE:0.01` · HKD,USD · maxAge 7d |
 | `SIGNUP_DEFAULT` | EARN `FIXED:100` |
 | `REDEEM_DEFAULT` | BURN `AMOUNT` |

@@ -26,7 +26,7 @@ Each **DigestionRule** row does **two jobs** in order:
 | **Eligibility** | `eventType`, `minAmount`, `eligibleCurrencies`, **`eligibleMccs`**, `maxAgeDays`, `priority` | `CURRENCY`, `MCC`, `AGE`, `MIN_AMOUNT`, `AMOUNT`, `NO_RULE` |
 | **Formula** | `formula` (JSONB), `operation`, `pointCurrency` | `FORMULA`, `POINTS` |
 
-**Door (`/ingest-policy`)** does **not** run these checks — only enabled + auto-wallet.  
+**Door (`/ingest-policies`)** does **not** run these checks — only enabled + auto-wallet.  
 See [INGEST_VS_DIGESTION.md](./INGEST_VS_DIGESTION.md).
 
 **Priority:** lower number wins among candidates; **first full match** stops the loop.

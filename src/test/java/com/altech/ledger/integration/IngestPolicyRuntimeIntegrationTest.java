@@ -22,7 +22,7 @@ class IngestPolicyRuntimeIntegrationTest {
 
     @Test
     void getCreatesDefaultAndPutUpdatesRuntime() throws Exception {
-        mockMvc.perform(get("/ingest-policy"))
+        mockMvc.perform(get("/ingest-policies"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.isEnabled").value(true))
             .andExpect(jsonPath("$.data.isAutoCreateWallet").value(true))
@@ -31,14 +31,14 @@ class IngestPolicyRuntimeIntegrationTest {
 
         assertThat(ingestPolicyRepository.count()).isGreaterThan(0);
 
-        mockMvc.perform(put("/ingest-policy")
+        mockMvc.perform(put("/ingest-policies")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"isAutoCreateWallet\":false,\"autoWalletNamePrefix\":\"Lazy \"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.isAutoCreateWallet").value(false))
             .andExpect(jsonPath("$.data.autoWalletNamePrefix").value("Lazy "));
 
-        mockMvc.perform(put("/ingest-policy")
+        mockMvc.perform(put("/ingest-policies")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"isAutoCreateWallet\":true,\"isEnabled\":true,\"autoWalletNamePrefix\":\"Auto \"}"))
             .andExpect(status().isOk())
