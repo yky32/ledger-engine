@@ -2,21 +2,30 @@ package com.altech.ledger.entity.po.digestion;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
+import com.altech.ledger.usecase.digestion.DigestionFormulaConfig;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
-/** Digestion rule — filter + scoring. No YAML seed. */
+/**
+ * Digestion rule — filter + scoring (Brain). No YAML seed.
+ * <p>
+ * {@link #formula} is JSONB config, e.g. {@code {"type":"RATE","rate":0.01}}.
+ */
 @Entity
 @Table(uniqueConstraints = {
     @UniqueConstraint(name = "uk_digestion_rule_code", columnNames = "code")
@@ -63,13 +72,19 @@ public class DigestionRule extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private String pointCurrency;
 
-    @Column(nullable = false)
-    private String formula;
+    /**
+     * Scoring config (JSONB). See {@link DigestionFormulaConfig}.
+     * Example: {@code {"type":"RATE","rate":0.01}}
+     */
+    @Type(JsonBinaryType.class)
+    @Column(nullable = false, columnDefinition = "jsonb")
+    private Map<String, Object> formula;
 
     @Column
     private String processType;
 
     @PrePersist
+    @PreUpdate
     void applyDefaults() {
         if (operation == null) {
             operation = "EARN";
@@ -87,7 +102,9 @@ public class DigestionRule extends AuditEntityWithIsActive {
             pointCurrency = "LP";
         }
         if (formula == null) {
-            formula = "AMOUNT";
+            formula = DigestionFormulaConfig.ofAmount();
+        } else {
+            formula = DigestionFormulaConfig.normalize(formula);
         }
     }
 }

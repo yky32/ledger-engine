@@ -62,7 +62,11 @@ public class DigestionRuleUseCase {
         r.setMaxAgeDays(req.maxAgeDays());
         r.setPointCurrency(req.pointCurrency() == null || req.pointCurrency().isBlank()
             ? "LP" : req.pointCurrency().trim().toUpperCase(Locale.ROOT));
-        r.setFormula(req.formula().trim());
+        try {
+            r.setFormula(DigestionFormulaConfig.normalize(req.formula()));
+        } catch (IllegalArgumentException ex) {
+            throw new BizException(DigestionErrorResponse.DIG0400, ex.getMessage());
+        }
         r.setProcessType(req.processType());
         r.setIsActive(true);
         return toDto(digestionRuleRepository.save(r));
@@ -99,8 +103,12 @@ public class DigestionRuleUseCase {
         if (req.pointCurrency() != null && !req.pointCurrency().isBlank()) {
             r.setPointCurrency(req.pointCurrency().trim().toUpperCase(Locale.ROOT));
         }
-        if (req.formula() != null && !req.formula().isBlank()) {
-            r.setFormula(req.formula().trim());
+        if (req.formula() != null) {
+            try {
+                r.setFormula(DigestionFormulaConfig.normalize(req.formula()));
+            } catch (IllegalArgumentException ex) {
+                throw new BizException(DigestionErrorResponse.DIG0400, ex.getMessage());
+            }
         }
         if (req.processType() != null) {
             r.setProcessType(req.processType().isBlank() ? null : req.processType());

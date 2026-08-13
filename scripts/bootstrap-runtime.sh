@@ -90,7 +90,7 @@ upsert_rule PURCHASE_DEFAULT '{
   "eligibleCurrencies": ["HKD","USD"],
   "maxAgeDays": 7,
   "pointCurrency": "LP",
-  "formula": "RATE:0.01"
+  "formula": {"type":"RATE","rate":0.01}
 }'
 
 upsert_rule SIGNUP_DEFAULT '{
@@ -101,7 +101,7 @@ upsert_rule SIGNUP_DEFAULT '{
   "priority": 20,
   "minAmount": 0,
   "pointCurrency": "LP",
-  "formula": "FIXED:100"
+  "formula": {"type":"FIXED","value":100}
 }'
 
 upsert_rule REDEEM_DEFAULT '{
@@ -112,7 +112,7 @@ upsert_rule REDEEM_DEFAULT '{
   "priority": 30,
   "minAmount": 1,
   "pointCurrency": "LP",
-  "formula": "AMOUNT"
+  "formula": {"type":"AMOUNT"}
 }'
 
 info "3) summary"

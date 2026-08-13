@@ -2,21 +2,25 @@ package com.altech.ledger.support;
 
 import com.altech.ledger.entity.po.digestion.DigestionRule;
 import com.altech.ledger.repository.DigestionRuleRepository;
+import com.altech.ledger.usecase.digestion.DigestionFormulaConfig;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
-/**
- * Test-only default digestion rules (no YAML / no startup seed in app).
- */
+/** Test-only default digestion rules (no YAML / no startup seed in app). */
 public final class DigestionRuleTestData {
     private DigestionRuleTestData() {}
 
-    /** Idempotent: ensures PURCHASE / SIGNUP / REDEEM rows exist for IT. */
     public static void ensureDefaultRules(DigestionRuleRepository repo) {
-        upsert(repo, "PURCHASE_IT", "PURCHASE", "EARN", "RATE:0.01", new BigDecimal("0.01"),
-            "HKD,USD", 7, 10);
-        upsert(repo, "SIGNUP_IT", "SIGNUP", "EARN", "FIXED:100", BigDecimal.ZERO, null, null, 20);
-        upsert(repo, "REDEEM_IT", "REDEEM", "BURN", "AMOUNT", BigDecimal.ONE, null, null, 30);
+        upsert(repo, "PURCHASE_IT", "PURCHASE", "EARN",
+            DigestionFormulaConfig.ofRate(new BigDecimal("0.01")),
+            new BigDecimal("0.01"), "HKD,USD", 7, 10);
+        upsert(repo, "SIGNUP_IT", "SIGNUP", "EARN",
+            DigestionFormulaConfig.ofFixed(new BigDecimal("100")),
+            BigDecimal.ZERO, null, null, 20);
+        upsert(repo, "REDEEM_IT", "REDEEM", "BURN",
+            DigestionFormulaConfig.ofAmount(),
+            BigDecimal.ONE, null, null, 30);
     }
 
     private static void upsert(
@@ -24,7 +28,7 @@ public final class DigestionRuleTestData {
         String code,
         String eventType,
         String operation,
-        String formula,
+        Map<String, Object> formula,
         BigDecimal minAmount,
         String eligible,
         Integer maxAgeDays,

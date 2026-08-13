@@ -59,9 +59,10 @@ class DigestionRuleRuntimeIntegrationTest {
         // Set rate to 0.05 → 100 HKD = 5 LP
         mockMvc.perform(put("/digestion-rules/" + purchaseId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"formula\":\"RATE:0.05\"}"))
+                .content("{\"formula\":{\"type\":\"RATE\",\"rate\":0.05}}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.formula").value("RATE:0.05"));
+            .andExpect(jsonPath("$.data.formula.type").value("RATE"))
+            .andExpect(jsonPath("$.data.formula.rate").value(0.05));
 
         String cust = "DIG-" + UUID.randomUUID().toString().substring(0, 8);
         mockMvc.perform(post("/wallets")
@@ -84,7 +85,7 @@ class DigestionRuleRuntimeIntegrationTest {
         // Restore seed-like rate for other tests in same JVM
         mockMvc.perform(put("/digestion-rules/" + purchaseId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"formula\":\"RATE:0.01\"}"))
+                .content("{\"formula\":{\"type\":\"RATE\",\"rate\":0.01}}"))
             .andExpect(status().isOk());
     }
 
@@ -102,12 +103,13 @@ class DigestionRuleRuntimeIntegrationTest {
                       "isEnabled":true,
                       "priority":5,
                       "minAmount":0,
-                      "formula":"FIXED:1",
+                      "formula":{"type":"FIXED","value":1},
                       "pointCurrency":"LP"
                     }
                     """.formatted(code)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.code").value(code))
+            .andExpect(jsonPath("$.data.formula.type").value("FIXED"))
             .andReturn();
         long id = objectMapper.readTree(created.getResponse().getContentAsString()).get("data").get("id").asLong();
 
