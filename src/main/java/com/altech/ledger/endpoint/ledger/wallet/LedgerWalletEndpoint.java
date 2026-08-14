@@ -21,6 +21,12 @@ import com.altech.ledger.entity.dto.request.CreateLedgerWalletRequestDto;
 import com.altech.ledger.entity.dto.request.UpdateLedgerWalletRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
 
+/**
+ * @deprecated Product APIs: {@code /wallets} (ownerId). Prefer CreateWalletOnboardingUseCase path.
+ * Still served for in-cluster compatibility; do not use for new LedgeRX product work.
+ * @see docs/TECH_DEBT.md TD-API-001
+ */
+@Deprecated(since = "coa-profile", forRemoval = false)
 @RestController
 @RequestMapping("/ledger-wallets")
 @RequiredArgsConstructor

@@ -45,8 +45,8 @@ Status: `open` | `doing` | `done` | `wontfix`
 ### TD-API-001 — Legacy `/ledger-*` vs product APIs
 | | |
 |--|--|
-| **Status** | `open` |
-| **Note** | Product path = `/wallets`, `/movements`, `/integrations/*`, `/digestion-rules`, `/ingest-policies`, `/coa-profiles`. Legacy ledger catalog endpoints still in tree — mark deprecate or hide from Admin to avoid dual contracts. |
+| **Status** | `doing` → controllers `@Deprecated` (still served); Admin legacy pages removed |
+| **Note** | Product path = `/wallets`, `/movements`, `/integrations/*`, `/digestion-rules`, `/ingest-policies`, `/coa-profiles`. Legacy: `/ledger-wallets`, `/ledger-accounts`, `/accounts`, `/rules`, `/rule-executions`. Prefer product APIs for new work; remove endpoints only after no in-cluster callers. |
 
 ### TD-API-002 — COA segments stay internal
 | | |
