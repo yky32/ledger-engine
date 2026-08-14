@@ -1,16 +1,18 @@
 # COA profile — flat 1-table (no JSONB)
 
+**Product:** LedgeRX (standalone)  
 **Table:** `coa_profile`  
 **API:** `/coa-profiles`  
-**Onboard:** `POST /wallets` field `coaProfileCode` (optional → DEFAULT)
+**Onboard:** `POST /wallets` optional `coaProfileCode` (omit → DEFAULT)
 
-One row = one **product stream** (UAF: entity is stream, not legal entity).
+One row = one COA scheme / product line the operator defines.  
+`entity` is a **numeric segment** in `fullNumber` — meaning is defined by your COA catalog, not hard-coded clients.
 
 | Column | Default | Meaning |
 |--------|---------|---------|
 | `code` | `DEFAULT` | unique key used by onboard |
-| `entity` | `10` | **product stream** segment (UAF: `01`=CC, `02`=Loan) |
-| `type` | `20` | account type |
+| `entity` | `10` | entity segment |
+| `type` | `20` | account type segment |
 | `sub_type` | `00` | sub-type |
 | `buffer` | `00` | buffer |
 | `lp_currency` | `LP` | points currency label |
@@ -18,36 +20,39 @@ One row = one **product stream** (UAF: entity is stream, not legal entity).
 
 Wallet stamps `wallet.coaProfileCode` at onboard. Extra books (ensure LP) reuse that profile.
 
-## UAF example
+## Door lazy onboard COA
 
-```text
-POST /coa-profiles  { "code":"UAF_CC",   "entity":"01", "type":"20", "subType":"00", "buffer":"00" }
-POST /coa-profiles  { "code":"UAF_LOAN", "entity":"02", "type":"20", "subType":"00", "buffer":"00" }
+`ingest_policy.auto_wallet_coa_profile_code` — when webhook auto-creates a wallet.
 
-POST /wallets {
-  "ownerId": "UAF-CARD-10086",
-  "settlementCurrency": "HKD",
-  "coaProfileCode": "UAF_CC",
-  "accounts": [ { "primary": true }, { "currency": "LP" } ]
-}
-→ accounts fullNumber start with entity 01-…
+Priority:
 
-POST /wallets {
-  "ownerId": "UAF-LOAN-7788",
-  "settlementCurrency": "HKD",
-  "coaProfileCode": "UAF_LOAN"
-}
-→ entity 02-…
+1. `metadata.coaProfileCode`
+2. Door `autoWalletCoaProfileCode`
+3. DEFAULT
+
+## Example (generic)
+
+```bash
+# custom scheme
+curl -sS -X POST localhost:8080/coa-profiles -H 'Content-Type: application/json' -d '{
+  "code":"STREAM_A",
+  "name":"Product line A",
+  "entity":"01",
+  "type":"20",
+  "subType":"00",
+  "buffer":"00"
+}'
+
+# onboard onto that scheme
+curl -sS -X POST localhost:8080/wallets -H 'Content-Type: application/json' -d '{
+  "ownerId":"CUST-10086",
+  "settlementCurrency":"HKD",
+  "coaProfileCode":"STREAM_A",
+  "accounts":[{ "currency":"LP" }]
+}'
 ```
-
-Same person card+loan → **two ownerIds** (1 ownerId → 1 wallet rule).
-
-## API
 
 ```bash
 curl -sS localhost:8080/coa-profiles/default
-curl -sS -X POST localhost:8080/coa-profiles -H 'Content-Type: application/json' \
-  -d '{"code":"UAF_CC","name":"UAF Credit Card","entity":"01","type":"20","subType":"00","buffer":"00"}'
-curl -sS -X POST localhost:8080/wallets -H 'Content-Type: application/json' \
-  -d '{"ownerId":"UAF-CARD-1","settlementCurrency":"HKD","coaProfileCode":"UAF_CC"}'
+curl -sS localhost:8080/coa-profiles
 ```

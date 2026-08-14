@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 
 /**
  * Nested account slice inside onboarding responses (reference, type, balances).
+ * COA segment codes stay internal — not exposed on product wallet APIs.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

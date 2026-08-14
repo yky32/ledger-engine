@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Product onboarding: <b>one wallet per ownerId</b> + account lines.
- * Optional {@code coaProfileCode} selects product-stream COA (e.g. UAF_CC / UAF_LOAN).
+ * Optional {@code coaProfileCode} selects product-stream COA (e.g. custom profile code).
  */
 public record CreateWalletOnboardRequestDto(
     @NotBlank @Size(max = 100) String ownerId,

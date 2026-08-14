@@ -79,6 +79,30 @@ public class CoaProfileUseCase {
         return toDto(requireDefault());
     }
 
+    /**
+     * Idempotent ensure by code (create if missing). Idempotent ensure by code.
+     */
+    @Transactional
+    public GetCoaProfileResponseDto ensureProfile(
+        String code,
+        String name,
+        String entity,
+        boolean isDefault
+    ) {
+        String c = code.trim().toUpperCase(Locale.ROOT);
+        return coaProfileRepository.findByCode(c)
+            .map(existing -> {
+                // keep existing segments; only refresh name if blank
+                if ((existing.getName() == null || existing.getName().isBlank()) && name != null) {
+                    existing.setName(name);
+                    return toDto(coaProfileRepository.save(existing));
+                }
+                return toDto(existing);
+            })
+            .orElseGet(() -> create(new CreateCoaProfileRequestDto(
+                c, name, isDefault, true, entity, null, null, null, "LP", true)));
+    }
+
     @Transactional
     public GetCoaProfileResponseDto create(CreateCoaProfileRequestDto req) {
         String code = req.code().trim().toUpperCase(Locale.ROOT);

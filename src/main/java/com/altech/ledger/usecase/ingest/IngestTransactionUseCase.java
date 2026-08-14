@@ -101,7 +101,7 @@ public class IngestTransactionUseCase {
 
         EnsureWalletForIngestUseCase.ResolveResult resolved;
         try {
-            resolved = ensureWalletForIngestUseCase.resolveOrProvision(custId, pointCurrency);
+            resolved = ensureWalletForIngestUseCase.resolveOrProvision(custId, pointCurrency, event.metadata());
         } catch (RuntimeException ex) {
             log.error("wallet resolve/provision failed custId={}", custId, ex);
             return _fail(event, "WALLET_PROVISION",

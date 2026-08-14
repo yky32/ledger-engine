@@ -69,7 +69,7 @@ public class Wallet extends AuditEntityWithIsActive {
     private Currency settlementCurrency;
 
     /**
-     * COA profile code used at onboard (product stream), e.g. DEFAULT / UAF_CC / UAF_LOAN.
+     * COA profile code used at onboard (product stream), e.g. DEFAULT or custom profile code.
      * Null on legacy rows → treat as default when ensuring books.
      */
     @Column

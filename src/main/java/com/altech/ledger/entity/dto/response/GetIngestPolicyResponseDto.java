@@ -21,6 +21,7 @@ public class GetIngestPolicyResponseDto {
     private String autoWalletEnsureCurrency;
     private String autoWalletAssociatedFrom;
     private String autoWalletNamePrefix;
+    private String autoWalletCoaProfileCode;
     private Instant createDt;
     private Instant updateDt;
 }
