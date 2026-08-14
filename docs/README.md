@@ -46,3 +46,4 @@ Adopt / ops guides under `docs/`. Code of truth is **main** APIs.
 - **1 CUST → 1 Wallet**; multi-ccy = accounts under that wallet.
 - Root product docs: [../PRODUCT.md](../PRODUCT.md) · [../INTEGRATION.md](../INTEGRATION.md) · [../README.md](../README.md)
 | [COA_PROFILE.md](./COA_PROFILE.md) | 1-table COA `/coa-profiles` |
+| [TECH_DEBT.md](./TECH_DEBT.md) | Deferred work — API key later, migrations, legacy API |
