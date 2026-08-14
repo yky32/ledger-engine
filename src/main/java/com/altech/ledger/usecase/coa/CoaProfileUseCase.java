@@ -80,7 +80,7 @@ public class CoaProfileUseCase {
     }
 
     /**
-     * Idempotent ensure by code (create if missing). Used by UAF demo seed.
+     * Idempotent ensure by code (create if missing). Idempotent ensure by code.
      */
     @Transactional
     public GetCoaProfileResponseDto ensureProfile(

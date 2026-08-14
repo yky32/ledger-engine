@@ -44,7 +44,7 @@ public class IngestPolicy extends AuditEntityWithIsActive {
     private String autoWalletNamePrefix;
 
     /**
-     * COA profile for Door lazy onboard (product stream), e.g. UAF_CC.
+     * COA profile for Door lazy onboard (product stream), e.g. STREAM_A.
      * Blank → DEFAULT. Overridden by event metadata.coaProfileCode / productStream when present.
      */
     @Column

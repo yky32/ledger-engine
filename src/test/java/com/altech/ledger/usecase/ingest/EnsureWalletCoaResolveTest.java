@@ -12,26 +12,17 @@ class EnsureWalletCoaResolveTest {
     @Test
     void metadataCoaWins() {
         IngestPolicy p = new IngestPolicy();
-        p.setAutoWalletCoaProfileCode("UAF_LOAN");
+        p.setAutoWalletCoaProfileCode("STREAM_B");
         assertThat(EnsureWalletForIngestUseCase.resolveCoaProfileCode(
-            p, Map.of("coaProfileCode", "UAF_CC"))).isEqualTo("UAF_CC");
-    }
-
-    @Test
-    void productStreamMaps() {
-        IngestPolicy p = new IngestPolicy();
-        assertThat(EnsureWalletForIngestUseCase.resolveCoaProfileCode(
-            p, Map.of("productStream", "CC"))).isEqualTo("UAF_CC");
-        assertThat(EnsureWalletForIngestUseCase.resolveCoaProfileCode(
-            p, Map.of("productStream", "loan"))).isEqualTo("UAF_LOAN");
+            p, Map.of("coaProfileCode", "STREAM_A"))).isEqualTo("STREAM_A");
     }
 
     @Test
     void doorFallback() {
         IngestPolicy p = new IngestPolicy();
-        p.setAutoWalletCoaProfileCode("UAF_CC");
+        p.setAutoWalletCoaProfileCode("STREAM_A");
         assertThat(EnsureWalletForIngestUseCase.resolveCoaProfileCode(p, Map.of()))
-            .isEqualTo("UAF_CC");
+            .isEqualTo("STREAM_A");
     }
 
     @Test

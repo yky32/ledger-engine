@@ -112,7 +112,8 @@ public class EnsureWalletForIngestUseCase {
     }
 
     /**
-     * Priority: metadata.coaProfileCode → metadata.productStream map → Door autoWalletCoaProfileCode → null (DEFAULT).
+     * Priority: metadata.coaProfileCode → Door autoWalletCoaProfileCode → null (DEFAULT).
+     * Standalone product: no client-specific stream aliases.
      */
     static String resolveCoaProfileCode(IngestPolicy cfg, Map<String, String> metadata) {
         Map<String, String> md = metadata == null ? Map.of() : metadata;
@@ -120,27 +121,11 @@ public class EnsureWalletForIngestUseCase {
         if (fromMeta != null) {
             return fromMeta.trim().toUpperCase(Locale.ROOT);
         }
-        String stream = firstNonBlank(md.get("productStream"), md.get("product_stream"), md.get("stream"));
-        if (stream != null) {
-            String mapped = mapProductStream(stream);
-            if (mapped != null) {
-                return mapped;
-            }
-        }
         if (cfg != null && cfg.getAutoWalletCoaProfileCode() != null
             && !cfg.getAutoWalletCoaProfileCode().isBlank()) {
             return cfg.getAutoWalletCoaProfileCode().trim().toUpperCase(Locale.ROOT);
         }
         return null;
-    }
-
-    static String mapProductStream(String raw) {
-        String s = raw.trim().toUpperCase(Locale.ROOT);
-        return switch (s) {
-            case "CC", "CARD", "CREDIT_CARD", "CREDITCARD", "UAF_CC" -> "UAF_CC";
-            case "LOAN", "LN", "UAF_LOAN" -> "UAF_LOAN";
-            default -> s.startsWith("UAF_") ? s : null;
-        };
     }
 
     private static String firstNonBlank(String... vals) {
