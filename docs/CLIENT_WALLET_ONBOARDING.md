@@ -1,5 +1,7 @@
 # Client wallet onboarding — sample API
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **Audience:** integrator / client system adopting Ledger Engine  
 **Model:** `1 CUST_ID → 1 Wallet` · `settlementCurrency` = default settlement · multi-currency **accounts under the same wallet**
 

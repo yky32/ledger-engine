@@ -9,7 +9,7 @@ Clients deploy it in their own environment (on-prem, private cloud, or VPC), con
 at runtime, and integrate via a stable HTTP API. LedgeRX enforces double-entry rules, immutable history, and
 idempotent posting so downstream systems can treat it as the financial source of truth.
 
-Brand: [docs/BRAND.md](docs/BRAND.md) · Setup: [README.md](README.md) · Integration: [INTEGRATION.md](INTEGRATION.md).
+Brand: [docs/BRAND.md](docs/BRAND.md) · Docs entry: [docs/START_HERE.md](docs/START_HERE.md) · Setup: [README.md](README.md) · Integration: [INTEGRATION.md](INTEGRATION.md).
 
 **Java SDK:** clients may receive **ledger-engine-sdk** as a versioned JAR under contract (manual email delivery — not Maven Central). See [SDK OVERVIEW](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/OVERVIEW.md) and [SDK DELIVERY](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md).
 

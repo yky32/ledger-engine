@@ -1,5 +1,7 @@
 # LedgeRX — System Business Flow
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **Audience:** product / business review (e.g. @wilfredkan)  
 **Status:** Draft for alignment · reflects **shipped** engine behaviour on main  
 **Product:** **LedgeRX** (`ledger-engine`) — wallet + loyalty ledger core (not payment rails, not CRM)  

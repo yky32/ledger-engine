@@ -1,5 +1,7 @@
 # Ingest vs Digestion
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 Two **different** product concepts — keep packages and ops screens separate.
 
 | | **Ingest policy (Door)** | **Digestion rules (Brain)** |

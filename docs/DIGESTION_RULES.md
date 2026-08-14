@@ -1,5 +1,7 @@
 # Digestion rules — Brain: **eligibility + formula**
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **No restart. No YAML seed.**  
 Rules live only in DB (`digestion_rule`), managed via **`/digestion-rules`**.
 

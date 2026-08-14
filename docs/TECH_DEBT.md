@@ -1,5 +1,7 @@
 # LedgeRX — Tech debt & deferred work
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **Product:** LedgeRX · module `ledger-engine`  
 **Deploy assumption:** **in-cluster only** — no public internet Ingress. Callers are internal workloads (Admin, other services) on ClusterIP / internal DNS.
 

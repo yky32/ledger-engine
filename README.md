@@ -234,22 +234,17 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 
 ## Docs
 
+**唯一入口 → [docs/START_HERE.md](docs/START_HERE.md)**
+
 | Doc | Purpose |
 |-----|---------|
-| [docs/README.md](docs/README.md) | **Docs index** (start here) |
-| [docs/SYSTEM_BUSINESS_FLOW.md](docs/SYSTEM_BUSINESS_FLOW.md) | **Business flow** (for product review) |
-| [PRODUCT.md](PRODUCT.md) | Product model, operations, account roles |
-| [INTEGRATION.md](INTEGRATION.md) | Onboarding + transactional event ingest |
-| [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md) | Wallet create + query curls (HKD + LP) |
-| [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) | Upstream webhook playbook → LP + legs |
-| [docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md) | Door vs brain packages |
-| [docs/INGEST_POLICY.md](docs/INGEST_POLICY.md) | DB ingest policy (auto-wallet + kill-switch) |
-| [docs/DIGESTION_RULES.md](docs/DIGESTION_RULES.md) | Runtime `/digestion-rules` filter + formula |
-| [docs/DOUBLE_ENTRY_EARN.md](docs/DOUBLE_ENTRY_EARN.md) | PROGRAM pool DE legs + ledger-entries query |
-| [docs/HOLD_RELEASE.md](docs/HOLD_RELEASE.md) | HOLD/RELEASE available (ledger unchanged) |
-| [docs/HISTORY_ASOF_REPLAY.md](docs/HISTORY_ASOF_REPLAY.md) | History, as-of, fail replay, pagination |
-| [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) | Fresh DB: `./scripts/bootstrap-runtime.sh` |
-| [docs/HERMES_RUNTIME_RULES_TASK.md](docs/HERMES_RUNTIME_RULES_TASK.md) | Task archive — **DONE** |
-| [scripts/upstream-sim.sh](scripts/upstream-sim.sh) | **One cmd:** pretend upstream POS webhook |
-| [scripts/e2e-smoke.sh](scripts/e2e-smoke.sh) | bootstrap → earn → LP → fail API |
-| `application.yml` | Env-driven infra (`DB_*`, `SERVER_PORT`, …) |
+| [docs/START_HERE.md](docs/START_HERE.md) | **Start here** — map + happy path |
+| [docs/BUSINESS_SHOOT_EXAMPLE.md](docs/BUSINESS_SHOOT_EXAMPLE.md) | 射單 Ingest→Digest→Book + COA |
+| [docs/SYSTEM_BUSINESS_FLOW.md](docs/SYSTEM_BUSINESS_FLOW.md) | Product business flow |
+| [PRODUCT.md](PRODUCT.md) | Product model summary |
+| [INTEGRATION.md](INTEGRATION.md) | Integration summary |
+| [docs/TECH_DEBT.md](docs/TECH_DEBT.md) | Deferred work |
+| [docs/archive/](docs/archive/) | Old briefs / long scenarios (not daily) |
+| [scripts/upstream-sim.sh](scripts/upstream-sim.sh) | One-cmd upstream sim |
+| [scripts/e2e-smoke.sh](scripts/e2e-smoke.sh) | bootstrap → earn smoke |
+| `application.yml` | Env-driven infra |

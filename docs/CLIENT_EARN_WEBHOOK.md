@@ -1,5 +1,7 @@
 # Client earn webhook — eligibility → equation → LP credit
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **Audience:** integrator playing **upstream** (POS / order service)  
 **Depends on:** runtime config ([BOOTSTRAP.md](./BOOTSTRAP.md)) + optional explicit onboard ([CLIENT_WALLET_ONBOARDING.md](./CLIENT_WALLET_ONBOARDING.md))
 

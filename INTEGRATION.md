@@ -6,7 +6,7 @@ External systems deliver **transactional events** via webhook (Kafka optional). 
 IngestPolicy (door) → DigestionRule (brain) → wallet + PROGRAM double-entry
 ```
 
-Detail playbooks: **[docs/README.md](docs/README.md)** · **[docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md)** · **[docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md)**
+Detail playbooks: **[docs/START_HERE.md](docs/START_HERE.md)** ⭐ · [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) · [docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md)
 
 ## Java client SDK
 
@@ -155,4 +155,4 @@ docker compose --profile simulator up --build
 
 ## Related docs
 
-Index: **[docs/README.md](docs/README.md)**
+Index: **[docs/START_HERE.md](docs/START_HERE.md)**
