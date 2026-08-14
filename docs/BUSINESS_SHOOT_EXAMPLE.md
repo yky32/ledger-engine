@@ -1,5 +1,7 @@
 # LedgeRX — 業務例：點樣射事件（Ingest → Digest → Book）同點開 COA
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **Audience:** 業務 / ops / 內部 integrator  
 **Product:** LedgeRX（standalone · in-cluster）  
 **Module:** `ledger-engine`  

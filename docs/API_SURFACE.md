@@ -1,5 +1,7 @@
 # LedgeRX API surface
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **In-cluster only.** See [TECH_DEBT.md](./TECH_DEBT.md).
 
 ## Product APIs (use these)

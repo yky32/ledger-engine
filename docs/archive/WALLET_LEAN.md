@@ -1,3 +1,5 @@
+> **Archived** — 入口請用 [../START_HERE.md](../START_HERE.md)。本檔僅存檔/細節。
+
 # Lean Wallet — ownerId everywhere
 
 Pre-production full cutover. No dual keys.

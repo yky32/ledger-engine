@@ -1,5 +1,7 @@
 # COA profile — flat 1-table (no JSONB)
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **Product:** LedgeRX (standalone)  
 **Table:** `coa_profile`  
 **API:** `/coa-profiles`  

@@ -1,5 +1,7 @@
 # Hold / Release
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 Lock **available** balance without changing **ledger**.
 
 ```text

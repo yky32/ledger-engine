@@ -1,5 +1,7 @@
 # Double-entry earn (PROGRAM pool)
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 Earn/burn loyalty points post **two balanced legs** per currency:
 
 ```text

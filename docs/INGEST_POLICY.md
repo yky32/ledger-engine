@@ -1,5 +1,7 @@
 # Ingest policy — what it is (example)
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 **Product name:** ingest policy  
 **Table:** `ingest_policy`  
 **API:** `GET/PUT /ingest-policies`  

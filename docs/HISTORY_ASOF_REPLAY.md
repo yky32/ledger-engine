@@ -1,5 +1,7 @@
 # History + as-of + fail replay + concurrency
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 ## Pagination (tgt.profile style)
 
 List endpoints use **1-based** Spring `Pageable`:

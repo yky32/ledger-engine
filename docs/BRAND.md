@@ -1,5 +1,7 @@
 # LedgeRX — product brand
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 | | |
 |--|--|
 | **Product name** | **LedgeRX** |

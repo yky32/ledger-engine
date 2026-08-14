@@ -1,5 +1,7 @@
 # Runtime bootstrap (fresh DB)
 
+> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+
 Empty DB has **no** digestion rules. Ingest policy is created lazily on first read/write with code/env defaults.
 
 **After app is up:**
