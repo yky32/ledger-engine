@@ -38,12 +38,13 @@ Adopt / ops guides under `docs/`. Code of truth is **main** APIs.
 | Doc | Note |
 |-----|------|
 | [HERMES_RUNTIME_RULES_TASK.md](./HERMES_RUNTIME_RULES_TASK.md) | Original brief — **DONE** |
+| [COA_PROFILE.md](./COA_PROFILE.md) | 1-table COA `/coa-profiles` |
+| [TECH_DEBT.md](./TECH_DEBT.md) | Deferred — **API key later**, migrations, legacy API |
 
 ## Conventions
 
 - **No `/by-*` path segments** — filters are query params (`?eventId=`, `?code=`).
 - **Pagination** (list APIs): 1-based `page` / `size` + optional `startDt` / `endDt` (see HISTORY_ASOF_REPLAY).
 - **1 CUST → 1 Wallet**; multi-ccy = accounts under that wallet.
+- **In-cluster only** today — public auth deferred → [TECH_DEBT.md](./TECH_DEBT.md) TD-SEC-001.
 - Root product docs: [../PRODUCT.md](../PRODUCT.md) · [../INTEGRATION.md](../INTEGRATION.md) · [../README.md](../README.md)
-| [COA_PROFILE.md](./COA_PROFILE.md) | 1-table COA `/coa-profiles` |
-| [TECH_DEBT.md](./TECH_DEBT.md) | Deferred work — API key later, migrations, legacy API |
