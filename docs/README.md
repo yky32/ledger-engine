@@ -10,6 +10,7 @@ Adopt / ops guides under `docs/`. Code of truth is **main** APIs.
 |------|------|
 | **Brand / naming** | [BRAND.md](./BRAND.md) |
 | **Business / product review** | [SYSTEM_BUSINESS_FLOW.md](./SYSTEM_BUSINESS_FLOW.md) ⭐ |
+| **業務例：射單 Ingest→Digest→Book+COA** | [BUSINESS_SHOOT_EXAMPLE.md](./BUSINESS_SHOOT_EXAMPLE.md) ⭐ |
 | **Credit card / issuer adopt** | [CREDIT_CARD_CLIENT_SCENARIOS.md](./CREDIT_CARD_CLIENT_SCENARIOS.md) ⭐ |
 | Fresh local run | [BOOTSTRAP.md](./BOOTSTRAP.md) → `./scripts/upstream-sim.sh` or `e2e-smoke.sh` |
 | Concepts (door vs brain) | [INGEST_VS_DIGESTION.md](./INGEST_VS_DIGESTION.md) |
