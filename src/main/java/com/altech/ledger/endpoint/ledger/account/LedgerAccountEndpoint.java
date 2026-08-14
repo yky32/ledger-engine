@@ -16,6 +16,12 @@ import java.util.List;
 import com.altech.ledger.entity.dto.request.CreateLedgerAccountRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
 
+/**
+ * @deprecated Product multi-ccy books under wallet onboard; COA via {@code /coa-profiles}. Prefer product wallet APIs.
+ * Still served for in-cluster compatibility; do not use for new LedgeRX product work.
+ * @see docs/TECH_DEBT.md TD-API-001
+ */
+@Deprecated(since = "coa-profile", forRemoval = false)
 @RestController
 @RequestMapping("/ledger-accounts")
 @RequiredArgsConstructor

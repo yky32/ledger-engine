@@ -11,6 +11,12 @@ import lombok.RequiredArgsConstructor;
 import com.altech.ledger.entity.dto.request.UpdateLedgerMovementStatusRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
+/**
+ * @deprecated Product: {@code /movements} and {@code /wallets/{ownerId}/movements}.
+ * Still served for in-cluster compatibility; do not use for new LedgeRX product work.
+ * @see docs/TECH_DEBT.md TD-API-001
+ */
+@Deprecated(since = "coa-profile", forRemoval = false)
 @RestController
 @RequestMapping("/ledger-accounts/movements")
 @RequiredArgsConstructor

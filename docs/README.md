@@ -40,6 +40,7 @@ Adopt / ops guides under `docs/`. Code of truth is **main** APIs.
 | [HERMES_RUNTIME_RULES_TASK.md](./HERMES_RUNTIME_RULES_TASK.md) | Original brief — **DONE** |
 | [COA_PROFILE.md](./COA_PROFILE.md) | 1-table COA `/coa-profiles` |
 | [TECH_DEBT.md](./TECH_DEBT.md) | Deferred — **API key later**, migrations, legacy API |
+| [API_SURFACE.md](./API_SURFACE.md) | Product vs legacy endpoints |
 
 ## Conventions
 

@@ -16,6 +16,12 @@ import java.util.List;
 import com.altech.ledger.entity.dto.request.CreateRuleExecutionRequestDto;
 import com.altech.ledger.entity.dto.response.GetRuleExecutionResponseDto;
 
+/**
+ * @deprecated Not Digestion Brain. Outcomes: fail queue + review. Prefer {@code /digestion-rules}.
+ * Still served for in-cluster compatibility; do not use for new LedgeRX product work.
+ * @see docs/TECH_DEBT.md TD-API-001
+ */
+@Deprecated(since = "coa-profile", forRemoval = false)
 @RestController
 @RequestMapping("/rule-executions")
 @RequiredArgsConstructor

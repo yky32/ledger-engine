@@ -15,6 +15,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * @deprecated Legacy {@code /accounts} catalog. Prefer wallet onboard + coa profiles.
+ * Still served for in-cluster compatibility; do not use for new LedgeRX product work.
+ * @see docs/TECH_DEBT.md TD-API-001
+ */
+@Deprecated(since = "coa-profile", forRemoval = false)
 @RestController
 @RequiredArgsConstructor
 public class LedgerEndpoint {
