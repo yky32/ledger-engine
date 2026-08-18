@@ -62,6 +62,7 @@ Admin：`/coa` → `/ingest-policies` → `/digestion-rules` → `/simulator` �
 | **[START_HERE.md](./START_HERE.md)** | 你而家睇緊 |
 | **[BUSINESS_SHOOT_EXAMPLE.md](./BUSINESS_SHOOT_EXAMPLE.md)** | 射單：Ingest→Digest→Book + 開 COA · curl · checklist |
 | **[SYSTEM_BUSINESS_FLOW.md](./SYSTEM_BUSINESS_FLOW.md)** | 產品全景 · actor · 配置邊界 |
+| **[decks/LedgeRX-Product-Overview.pptx](./decks/LedgeRX-Product-Overview.pptx)** | 產品簡報 Mission/Integration/Capabilities/Arch |
 
 ### B. 配置深讀（要改規則先開）
 
