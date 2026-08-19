@@ -66,6 +66,8 @@ Admin：`/coa` → `/ingest-policies` → `/digestion-rules` → `/simulator` �
 | **[decks/LedgeRX-UAFinance-Full-Briefing.pptx](./decks/LedgeRX-UAFinance-Full-Briefing.pptx)** | **UAF full deck** product+SDK+landscape+events |
 | **[decks/LedgeRX-UAFinance-Landscape-Apply.pptx](./decks/LedgeRX-UAFinance-Landscape-Apply.pptx)** | (same content / alias) |
 | **[UAF_EVENT_MAPPING_SKELETON.md](./UAF_EVENT_MAPPING_SKELETON.md)** | CC~21 + Loan event → Brain skeleton |
+| **[decks/LedgeRX-UAF-Earn-Process-Burn-Sequence.pptx](./decks/LedgeRX-UAF-Earn-Process-Burn-Sequence.pptx)** | SA-style earn→process→burn sequence demo |
+| **[decks/uaf-earn-process-burn-sequence.html](./decks/uaf-earn-process-burn-sequence.html)** | Interactive / printable sequence HTML |
 
 ### B. 配置深讀（要改規則先開）
 
