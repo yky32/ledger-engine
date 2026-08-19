@@ -63,7 +63,7 @@ Admin：`/coa` → `/ingest-policies` → `/digestion-rules` → `/simulator` �
 | **[BUSINESS_SHOOT_EXAMPLE.md](./BUSINESS_SHOOT_EXAMPLE.md)** | 射單：Ingest→Digest→Book + 開 COA · curl · checklist |
 | **[SYSTEM_BUSINESS_FLOW.md](./SYSTEM_BUSINESS_FLOW.md)** | 產品全景 · actor · 配置邊界 |
 | **[decks/LedgeRX-Product-Overview.pptx](./decks/LedgeRX-Product-Overview.pptx)** | C-level briefing |
-| **[decks/LedgeRX-UAFinance-Full-Briefing.pptx](./decks/LedgeRX-UAFinance-Full-Briefing.pptx)** | **UAF full deck** product+SDK+landscape+events |
+| **[decks/LedgeRX-UAFinance-Full-Briefing.pptx](./decks/LedgeRX-UAFinance-Full-Briefing.pptx)** | **Complete** product+arch+landscape+earn/burn+appendix |
 | **[decks/LedgeRX-UAFinance-Landscape-Apply.pptx](./decks/LedgeRX-UAFinance-Landscape-Apply.pptx)** | (same content / alias) |
 | **[UAF_EVENT_MAPPING_SKELETON.md](./UAF_EVENT_MAPPING_SKELETON.md)** | CC~21 + Loan event → Brain skeleton |
 | **[decks/LedgeRX-UAF-Earn-Process-Burn-Sequence.pptx](./decks/LedgeRX-UAF-Earn-Process-Burn-Sequence.pptx)** | SA-style earn→process→burn sequence demo |
