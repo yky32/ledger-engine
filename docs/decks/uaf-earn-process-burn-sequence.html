@@ -3,23 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>LedgeRX × UAF — Earn · Process · Burn Sequence</title>
+<title>LedgeRX × UAF — Earn · Process · Burn (readable)</title>
 <style>
   :root {
-    --bg: #070b14;
-    --panel: #0d1424;
-    --grid: rgba(56, 189, 248, 0.06);
-    --text: #e8eef9;
-    --muted: #8b9bb8;
-    --line: rgba(148, 163, 184, 0.35);
-    --cust: #38bdf8;
-    --pos: #34d399;
-    --xapi: #fbbf24;
-    --sdk: #a78bfa;
-    --door: #2dd4bf;
-    --brain: #f472b6;
-    --books: #fb923c;
-    --out: #f87171;
+    --bg: #0b1220;
+    --card: #121a2b;
+    --line: #1e293b;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --dim: #64748b;
   }
   * { box-sizing: border-box; }
   body {
@@ -27,483 +19,538 @@
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
     background: var(--bg);
     color: var(--text);
-    min-height: 100vh;
-    padding: 28px 24px 40px;
+    padding: 32px 40px 48px;
   }
-  .wrap { max-width: 1280px; margin: 0 auto; }
-  h1 {
-    margin: 0 0 6px;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-  .sub {
-    color: var(--muted);
+  .page { max-width: 1100px; margin: 0 auto; }
+
+  /* header */
+  .kicker {
     font-size: 13px;
-    margin-bottom: 22px;
-    line-height: 1.5;
-  }
-  .sub code {
-    background: #121a2b;
-    padding: 2px 7px;
-    border-radius: 6px;
-    color: #7dd3fc;
-    font-size: 12px;
-  }
-  .stage {
-    background:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-      var(--panel);
-    background-size: 28px 28px, 28px 28px, auto;
-    border: 1px solid rgba(148, 163, 184, 0.15);
-    border-radius: 18px;
-    padding: 22px 18px 18px;
-    overflow-x: auto;
-  }
-  .actors {
-    display: grid;
-    grid-template-columns: repeat(8, minmax(110px, 1fr));
-    gap: 8px;
-    min-width: 1100px;
-    margin-bottom: 8px;
-    padding: 0 8px;
-  }
-  .actor {
-    text-align: center;
-    border: 1.5px solid;
-    border-radius: 12px;
-    padding: 10px 6px;
-    font-size: 12px;
     font-weight: 700;
-    background: rgba(15, 23, 42, 0.85);
+    letter-spacing: 0.12em;
+    color: #2dd4bf;
+    margin-bottom: 8px;
   }
-  .actor small {
-    display: block;
-    font-weight: 500;
+  h1 {
+    margin: 0 0 10px;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .lede {
+    font-size: 16px;
+    line-height: 1.55;
     color: var(--muted);
-    font-size: 10px;
-    margin-top: 3px;
+    max-width: 920px;
+    margin-bottom: 28px;
   }
-  .a-cust { border-color: var(--cust); color: var(--cust); }
-  .a-pos { border-color: var(--pos); color: var(--pos); }
-  .a-xapi { border-color: var(--xapi); color: var(--xapi); }
-  .a-sdk { border-color: var(--sdk); color: var(--sdk); }
-  .a-door { border-color: var(--door); color: var(--door); }
-  .a-brain { border-color: var(--brain); color: var(--brain); }
-  .a-books { border-color: var(--books); color: var(--books); }
-  .a-out { border-color: var(--out); color: var(--out); }
+  .lede b { color: #fde68a; font-weight: 700; }
+  .lede em { color: #e2e8f0; font-style: normal; font-weight: 600; }
 
-  .lanes {
-    position: relative;
-    min-width: 1100px;
+  /* story strip */
+  .story {
     display: grid;
-    grid-template-columns: repeat(8, minmax(110px, 1fr));
-    gap: 8px;
-    padding: 0 8px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 32px;
   }
-  .lane {
-    position: relative;
-    border-left: 1px dashed rgba(148, 163, 184, 0.22);
-    min-height: 100%;
+  .story div {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
   }
-  .lane:first-child { border-left-color: transparent; }
-
-  .phases { min-width: 1100px; margin-top: -0px; }
-  .phase {
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: 14px;
-    margin: 14px 0;
-    padding: 14px 12px 16px;
-    position: relative;
-  }
-  .phase.p1 { background: rgba(14, 165, 233, 0.06); border-color: rgba(56, 189, 248, 0.25); }
-  .phase.p2 { background: rgba(45, 212, 191, 0.05); border-color: rgba(45, 212, 191, 0.22); }
-  .phase.p3 { background: rgba(251, 146, 60, 0.06); border-color: rgba(251, 146, 60, 0.25); }
-  .phase.p4 { background: rgba(248, 113, 113, 0.05); border-color: rgba(248, 113, 113, 0.22); }
-  .phase-title {
+  .story .n {
     font-size: 12px;
+    font-weight: 800;
+    color: #2dd4bf;
+    margin-bottom: 6px;
+  }
+  .story .t {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .story .d {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+
+  /* phase */
+  .phase {
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .phase-hd {
+    padding: 14px 20px;
+    font-size: 14px;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin: 0 0 12px 4px;
+    border-bottom: 1px solid var(--line);
   }
-  .p1 .phase-title { color: #7dd3fc; }
-  .p2 .phase-title { color: #5eead4; }
-  .p3 .phase-title { color: #fdba74; }
-  .p4 .phase-title { color: #fca5a5; }
+  .p1 .phase-hd { background: rgba(56,189,248,.12); color: #7dd3fc; }
+  .p2 .phase-hd { background: rgba(45,212,191,.12); color: #5eead4; }
+  .p3 .phase-hd { background: rgba(251,146,60,.12); color: #fdba74; }
+  .p4 .phase-hd { background: rgba(248,113,113,.12); color: #fca5a5; }
 
-  .row {
+  .steps { padding: 8px 8px 12px; }
+
+  .step {
     display: grid;
-    grid-template-columns: 36px 1fr;
-    gap: 8px;
+    grid-template-columns: 56px 200px 1fr;
+    gap: 14px;
     align-items: start;
-    margin: 10px 0;
-    min-height: 36px;
+    padding: 16px 14px;
+    border-radius: 12px;
+    margin: 6px 8px;
   }
-  .num {
-    width: 28px;
-    height: 28px;
+  .step:hover { background: rgba(255,255,255,0.03); }
+
+  .badge {
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0b1220;
+    flex-shrink: 0;
+  }
+  .b1 { background: #38bdf8; }
+  .b2 { background: #34d399; }
+  .b3 { background: #fbbf24; }
+  .b4 { background: #a78bfa; }
+  .b5 { background: #2dd4bf; }
+  .b6 { background: #f472b6; }
+  .b7 { background: #fb923c; }
+  .b8 { background: #f97316; }
+  .b9 { background: #94a3b8; }
+  .b10 { background: #38bdf8; }
+  .b11 { background: #f87171; }
+  .b12 { background: #fca5a5; }
+
+  .who {
+    padding-top: 4px;
+  }
+  .who .from {
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 2px;
+  }
+  .who .to {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .who .to span {
+    color: #e2e8f0;
+    font-weight: 600;
+  }
+
+  .what { padding-top: 2px; }
+  .what .title {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 6px;
+  }
+  .what .detail {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .what .detail code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    background: #0b1220;
+    border: 1px solid #243044;
+    color: #cbd5e1;
+    padding: 1px 6px;
+    border-radius: 5px;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .tag-req { background: rgba(56,189,248,.15); color: #7dd3fc; }
+  .tag-sys { background: rgba(167,139,250,.15); color: #c4b5fd; }
+  .tag-calc { background: rgba(244,114,182,.18); color: #f9a8d4; }
+  .tag-ok { background: rgba(52,211,153,.15); color: #6ee7b7; }
+  .tag-burn { background: rgba(248,113,113,.15); color: #fca5a5; }
+
+  /* calc callout — large & isolated */
+  .calc {
+    margin: 10px 22px 16px 78px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(244,114,182,.14), rgba(15,23,42,.9));
+    border: 1px solid rgba(244,114,182,.4);
+  }
+  .calc .lab {
     font-size: 12px;
     font-weight: 800;
-    color: #041016;
-    flex-shrink: 0;
-    margin-top: 2px;
+    letter-spacing: 0.08em;
+    color: #f9a8d4;
+    text-transform: uppercase;
+    margin-bottom: 10px;
   }
-  .msg {
-    position: relative;
-    padding: 4px 0 2px;
+  .calc .eq {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fde68a;
+    margin: 8px 0 12px;
+    letter-spacing: 0.01em;
   }
-  .arrow-line {
+  .calc .rows {
     display: grid;
-    grid-template-columns: repeat(8, minmax(110px, 1fr));
-    gap: 8px;
-    align-items: center;
-    min-height: 28px;
+    grid-template-columns: 140px 1fr;
+    gap: 8px 16px;
+    font-size: 15px;
+    line-height: 1.45;
   }
-  .seg {
-    height: 2px;
-    background: transparent;
-    position: relative;
-  }
-  .seg.on { background: currentColor; opacity: 0.85; }
-  .seg.start { border-radius: 2px 0 0 2px; }
-  .seg.end::after {
-    content: "";
-    position: absolute;
-    right: -1px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 6px solid transparent;
-    border-left-color: currentColor;
-  }
-  .seg.back::before {
-    content: "";
-    position: absolute;
-    left: -1px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 6px solid transparent;
-    border-right-color: currentColor;
-  }
-  .label {
-    font-size: 11.5px;
-    color: var(--text);
-    margin: 2px 0 0;
-    line-height: 1.35;
-  }
-  .label .dim { color: var(--muted); }
-  .label .hl { color: #fde68a; font-weight: 600; }
-  .dashed .seg.on {
-    background: repeating-linear-gradient(
-      90deg,
-      currentColor 0 6px,
-      transparent 6px 10px
-    );
-    height: 2px;
-  }
-  .c-cust { color: var(--cust); }
-  .c-pos { color: var(--pos); }
-  .c-xapi { color: var(--xapi); }
-  .c-sdk { color: var(--sdk); }
-  .c-door { color: var(--door); }
-  .c-brain { color: var(--brain); }
-  .c-books { color: var(--books); }
-  .c-out { color: var(--out); }
+  .calc .rows .k { color: var(--muted); font-weight: 600; }
+  .calc .rows .v { color: var(--text); }
+  .calc .rows .v b { color: #fde68a; }
 
-  .calc {
-    margin: 8px 40px 4px;
-    padding: 12px 14px;
+  /* books box */
+  .books {
+    margin: 4px 22px 12px 78px;
+    padding: 14px 18px;
     border-radius: 12px;
-    background: rgba(244, 114, 182, 0.1);
-    border: 1px solid rgba(244, 114, 182, 0.35);
-    font-size: 12.5px;
-    line-height: 1.55;
+    background: rgba(251,146,60,.1);
+    border: 1px solid rgba(251,146,60,.35);
+    font-size: 15px;
+    line-height: 1.5;
   }
-  .calc strong { color: #f9a8d4; }
-  .calc .result { color: #fde68a; font-weight: 700; font-size: 14px; margin-top: 6px; }
+  .books b { color: #fdba74; }
 
-  .footer-cards {
+  /* footer trio */
+  .foot {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-top: 18px;
-    min-width: 1100px;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-top: 8px;
   }
-  .fc {
-    background: #0d1424;
-    border: 1px solid rgba(148, 163, 184, 0.18);
+  .foot .box {
+    background: var(--card);
+    border: 1px solid var(--line);
     border-radius: 14px;
-    padding: 14px 16px;
+    padding: 18px 18px 16px;
   }
-  .fc h3 {
-    margin: 0 0 8px;
-    font-size: 12px;
-    letter-spacing: 0.05em;
+  .foot h3 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #7dd3fc;
   }
-  .fc ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; line-height: 1.55; }
-  .fc li { margin: 3px 0; }
-  .fc b { color: var(--text); font-weight: 600; }
-
-  .legend {
-    margin-top: 14px;
+  .foot ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 14px;
+    line-height: 1.6;
     color: var(--muted);
-    font-size: 11px;
+  }
+  .foot li b { color: var(--text); }
+
+  .note {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--dim);
+    text-align: center;
+  }
+
+  @media print {
+    body { padding: 16px; }
+    .step:hover { background: transparent; }
   }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>● LedgeRX × UAF — Earn · Process · Burn Sequence</h1>
-    <div class="sub">
-      Demo case: <b style="color:#e2e8f0">UA Finance CC customer</b> pays <b style="color:#fde68a">HKD 500</b> at grocery (MCC 5411) →
-      real-time LP earn → later redeem / burn.<br />
-      Base path: <code>e6 / POS → cc-xapi → Java SDK → LedgeRX (Door · Brain · Books)</code>
-      · Brain rule example: <code>CC_EARN_MCC_5411</code> · <code>RATE 0.01</code> → <b style="color:#fde68a">5 LP</b>
-    </div>
+  <div class="page">
+    <div class="kicker">LEDGERX × UA FINANCE · SEQUENCE DEMO</div>
+    <h1>Earn · Process · Burn</h1>
+    <p class="lede">
+      One customer story, left → right in time.<br />
+      <em>CC member</em> pays <b>HKD 500</b> at grocery (<b>MCC 5411</b>)
+      → Brain rule <b>1%</b> → earns <b>5 LP</b>
+      → later redeems <b>5 LP</b> for e-coupon.
+    </p>
 
-    <div class="stage">
-      <div class="actors">
-        <div class="actor a-cust">Customer<small>UAF member</small></div>
-        <div class="actor a-pos">Channel<small>e6 / POS</small></div>
-        <div class="actor a-xapi">cc-xapi<small>Existing</small></div>
-        <div class="actor a-sdk">SDK v1<small>Internal IT</small></div>
-        <div class="actor a-door">Door<small>Ingest</small></div>
-        <div class="actor a-brain">Brain<small>Rules + calc</small></div>
-        <div class="actor a-books">Books<small>DE posting</small></div>
-        <div class="actor a-out">Out<small>Wallet / Coupon</small></div>
+    <div class="story">
+      <div>
+        <div class="n">STEP A</div>
+        <div class="t">Pay</div>
+        <div class="d">HKD 500<br/>grocery</div>
       </div>
-
-      <div class="phases">
-        <!-- PHASE 1 -->
-        <div class="phase p1">
-          <div class="phase-title">1 · Transaction come (channel → existing edge)</div>
-
-          <div class="row">
-            <div class="num" style="background:var(--cust)">1</div>
-            <div class="msg c-cust">
-              <div class="arrow-line">
-                <div class="seg on start"></div><div class="seg on end"></div>
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div>
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div>
-              </div>
-              <div class="label">Pay merchant <span class="hl">HKD 500</span> · grocery · <span class="dim">MCC 5411 · ownerId=01A… · eventId=txn-88</span></div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="num" style="background:var(--pos)">2</div>
-            <div class="msg c-pos">
-              <div class="arrow-line">
-                <div class="seg"></div>
-                <div class="seg on start"></div><div class="seg on end"></div>
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div>
-                <div class="seg"></div><div class="seg"></div>
-              </div>
-              <div class="label">Emit CC event (~one of 21) → <b>cc-xapi</b> <span class="dim">normalize amount / mcc / customer</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PHASE 2 EARN PROCESS -->
-        <div class="phase p2">
-          <div class="phase-title">2 · Earn process (SDK → Door → Brain calc → Books)</div>
-
-          <div class="row">
-            <div class="num" style="background:var(--xapi)">3</div>
-            <div class="msg c-xapi">
-              <div class="arrow-line">
-                <div class="seg"></div><div class="seg"></div>
-                <div class="seg on start"></div><div class="seg on end"></div>
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
-              </div>
-              <div class="label"><b>SDK.ingestEvent()</b> / dry-run first optional
-                <span class="dim">→ TransactionalEvent { eventType:PURCHASE, amount:500, currency:HKD, metadata.mcc:5411, coaProfileCode:CC }</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="num" style="background:var(--sdk)">4</div>
-            <div class="msg c-sdk">
-              <div class="arrow-line">
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div>
-                <div class="seg on start"></div><div class="seg on end"></div>
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div>
-              </div>
-              <div class="label"><b>Door</b> — ingest_policy enabled? auto-wallet if first time?
-                <span class="dim">NO match on eligibility here (Door ≠ Brain)</span></div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="num" style="background:var(--door)">5</div>
-            <div class="msg c-door">
-              <div class="arrow-line">
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
-                <div class="seg on start"></div><div class="seg on end"></div>
-                <div class="seg"></div><div class="seg"></div>
-              </div>
-              <div class="label"><b>Brain.evaluate</b> — eventType · minAmount · currency · <b>MCC 5411</b> · age · priority</div>
-            </div>
-          </div>
-
-          <div class="calc">
-            <div><strong>LP calculation (example rule <code style="color:#f9a8d4">CC_EARN_MCC_5411</code>)</strong></div>
-            <div>Match: <code style="color:#cbd5e1">PURCHASE</code> + <code style="color:#cbd5e1">currency∈{HKD}</code> + <code style="color:#cbd5e1">mcc∈{5411}</code> + amount ≥ min</div>
-            <div>Formula: <code style="color:#cbd5e1">RATE 0.01</code> → points = <b>500 × 0.01</b></div>
-            <div class="result">⇒ 5 LP · matchedRuleCode=CC_EARN_MCC_5411 · processType=EARN · eligibilityTrace[]</div>
-          </div>
-
-          <div class="row">
-            <div class="num" style="background:var(--brain)">6</div>
-            <div class="msg c-brain">
-              <div class="arrow-line">
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
-                <div class="seg on start"></div><div class="seg on end"></div>
-                <div class="seg"></div>
-              </div>
-              <div class="label"><b>Books — EARN post (double-entry)</b>
-                <span class="dim">DR PROGRAM pool LP 5 · CR member LP account 5 · movement + 2 legs · idempotent eventId</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="row dashed">
-            <div class="num" style="background:var(--books)">7</div>
-            <div class="msg c-books">
-              <div class="arrow-line">
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div>
-                <div class="seg on end back" style="grid-column: 4 / 8"></div>
-                <div class="seg"></div>
-              </div>
-              <div class="label">Response to SDK / xapi:
-                <span class="hl">status=EARNED · points=5 · matchedRuleCode · wallet balances</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PHASE 3 RESULT -->
-        <div class="phase p3">
-          <div class="phase-title">3 · Reflect result (member LP stack)</div>
-
-          <div class="row">
-            <div class="num" style="background:var(--books)">8</div>
-            <div class="msg c-books">
-              <div class="arrow-line">
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
-                <div class="seg on start"></div><div class="seg on end"></div>
-              </div>
-              <div class="label">Member wallet LP <span class="hl">+5 available</span>
-                <span class="dim">· GET /wallets/{ownerId} · movements · ledger-entries by eventId</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="row dashed">
-            <div class="num" style="background:var(--out)">9</div>
-            <div class="msg c-out">
-              <div class="arrow-line">
-                <div class="seg on end back" style="grid-column: 1 / 8"></div>
-                <div class="seg"></div>
-              </div>
-              <div class="label">Optional notify / app show “You earned <span class="hl">5 LP</span>”
-                <span class="dim">· LedgeRX is SoR; app only reads</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PHASE 4 BURN -->
-        <div class="phase p4">
-          <div class="phase-title">4 · Later burn / redeem (reward redemption)</div>
-
-          <div class="row">
-            <div class="num" style="background:var(--cust)">10</div>
-            <div class="msg c-cust">
-              <div class="arrow-line">
-                <div class="seg on start"></div>
-                <div class="seg on"></div><div class="seg on end" style="grid-column: 3"></div>
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
-              </div>
-              <div class="label">Redeem e-coupon worth <span class="hl">5 LP</span>
-                <span class="dim">→ coupon adapter / app → xapi or direct SDK</span></div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="num" style="background:var(--sdk)">11</div>
-            <div class="msg c-sdk">
-              <div class="arrow-line">
-                <div class="seg"></div><div class="seg"></div>
-                <div class="seg on start"></div>
-                <div class="seg on"></div><div class="seg on"></div>
-                <div class="seg on" style="grid-column: 6"></div>
-                <div class="seg on end" style="grid-column: 7"></div>
-                <div class="seg"></div>
-              </div>
-              <div class="label"><b>BURN path</b> — eventType=REDEEM · Brain rule <code style="color:#fdba74">CC_BURN_REDEEM</code>
-                · formula AMT=5 → Books: <span class="dim">DR member LP 5 · CR PROGRAM LP 5</span>
-                · then Out: E-Coupon fulfil</div>
-            </div>
-          </div>
-
-          <div class="row dashed">
-            <div class="num" style="background:var(--out)">12</div>
-            <div class="msg c-out">
-              <div class="arrow-line">
-                <div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div><div class="seg"></div>
-                <div class="seg on start"></div><div class="seg on end"></div>
-              </div>
-              <div class="label">LP stack <span class="hl">−5</span> · coupon issued
-                <span class="dim">· ledger remains audit source of truth</span></div>
-            </div>
-          </div>
-        </div>
+      <div>
+        <div class="n">STEP B</div>
+        <div class="t">Ingest</div>
+        <div class="d">cc-xapi<br/>+ SDK</div>
       </div>
-
-      <div class="footer-cards">
-        <div class="fc">
-          <h3>After earn</h3>
-          <ul>
-            <li><b>status</b> = EARNED</li>
-            <li><b>points</b> = 5 LP</li>
-            <li><b>matchedRule</b> = CC_EARN_MCC_5411</li>
-            <li><b>legs</b> = 2 (PROGRAM ↔ member)</li>
-            <li>idempotent on <b>eventId</b></li>
-          </ul>
-        </div>
-        <div class="fc">
-          <h3>Calc cheat-sheet</h3>
-          <ul>
-            <li><b>RATE</b> points = amount × rate</li>
-            <li><b>FIXED</b> points = constant</li>
-            <li><b>LINEAR</b> rate×amount + fixed</li>
-            <li>First full Brain match wins</li>
-            <li>Skip → fail queue / trace (no post)</li>
-          </ul>
-        </div>
-        <div class="fc">
-          <h3>UAF mapping</h3>
-          <ul>
-            <li><b>In</b> = e6 / POS events</li>
-            <li><b>Existing</b> = cc-xapi</li>
-            <li><b>New</b> = LedgeRX + SDK</li>
-            <li><b>Out</b> = app / E-Coupon / Loan cores</li>
-            <li>CC vs Loan = <b>coaProfile</b> + ruleset</li>
-          </ul>
-        </div>
+      <div>
+        <div class="n">STEP C</div>
+        <div class="t">Calculate</div>
+        <div class="d">Brain<br/>500 × 1%</div>
       </div>
-      <div class="legend">
-        Style aligned to SA V2 sequence boards · Demo numbers illustrative · Product: LedgeRX (ledger-engine) · Not three ledger microservices.
+      <div>
+        <div class="n">STEP D</div>
+        <div class="t">Earn</div>
+        <div class="d">Books DE<br/>+5 LP</div>
+      </div>
+      <div>
+        <div class="n">STEP E</div>
+        <div class="t">Burn</div>
+        <div class="d">Redeem<br/>−5 LP</div>
       </div>
     </div>
+
+    <!-- PHASE 1 -->
+    <section class="phase p1">
+      <div class="phase-hd">1 · Transaction comes in</div>
+      <div class="steps">
+        <div class="step">
+          <div class="badge b1">1</div>
+          <div class="who">
+            <div class="from">Customer</div>
+            <div class="to">→ <span>Channel (e6 / POS)</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-req">Pay</span> Pays merchant HKD 500</div>
+            <div class="detail">Grocery · MCC <code>5411</code> · member <code>ownerId=01A…</code> · unique <code>eventId=txn-88</code></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="badge b2">2</div>
+          <div class="who">
+            <div class="from">Channel</div>
+            <div class="to">→ <span>cc-xapi (existing)</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-sys">Edge</span> Emit one of ~21 CC events</div>
+            <div class="detail">cc-xapi normalizes amount, currency, MCC, customer id — does <b style="color:#e2e8f0">not</b> calculate LP.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 2 -->
+    <section class="phase p2">
+      <div class="phase-hd">2 · Earn process — SDK → Door → Brain → Books</div>
+      <div class="steps">
+        <div class="step">
+          <div class="badge b3">3</div>
+          <div class="who">
+            <div class="from">cc-xapi</div>
+            <div class="to">→ <span>Java SDK</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-sys">Integrate</span> <code>SDK.ingestEvent()</code> (or dry-run first)</div>
+            <div class="detail">
+              Builds <code>TransactionalEvent</code>:<br/>
+              <code>PURCHASE</code> · amount <code>500</code> · <code>HKD</code> · mcc <code>5411</code> · coaProfile <code>CC</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="badge b4">4</div>
+          <div class="who">
+            <div class="from">SDK</div>
+            <div class="to">→ <span>Door</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-sys">Door</span> Accept traffic? Need auto-wallet?</div>
+            <div class="detail">Checks ingest policy only. <b style="color:#e2e8f0">No LP math here.</b> Eligibility lives in Brain.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="badge b5">5</div>
+          <div class="who">
+            <div class="from">Door</div>
+            <div class="to">→ <span>Brain</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-calc">Brain</span> Match rule + calculate points</div>
+            <div class="detail">Filters: eventType · min amount · currency · <b style="color:#e2e8f0">MCC</b> · age · priority order</div>
+          </div>
+        </div>
+
+        <!-- BIG CALC -->
+        <div class="calc">
+          <div class="lab">LP calculation (this demo)</div>
+          <div class="eq">500 HKD × 1% = 5 LP</div>
+          <div class="rows">
+            <div class="k">Matched rule</div>
+            <div class="v"><b>CC_EARN_MCC_5411</b></div>
+            <div class="k">Why it matched</div>
+            <div class="v">PURCHASE + HKD + MCC 5411 + amount ≥ min</div>
+            <div class="k">Formula</div>
+            <div class="v"><code style="color:#f9a8d4">RATE 0.01</code> → points = amount × rate</div>
+            <div class="k">Result</div>
+            <div class="v"><b>5 LP</b> · processType = EARN · eligibilityTrace filled</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="badge b6">6</div>
+          <div class="who">
+            <div class="from">Brain</div>
+            <div class="to">→ <span>Books</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-ok">Books</span> Post double-entry earn</div>
+            <div class="detail">Creates movement + 2 legs. Idempotent on <code>eventId</code>.</div>
+          </div>
+        </div>
+
+        <div class="books">
+          <b>Double-entry (earn 5 LP)</b><br/>
+          Debit&nbsp;&nbsp; PROGRAM pool LP &nbsp;&nbsp; +5<br/>
+          Credit member LP account &nbsp;&nbsp; +5<br/>
+          → member spendable balance <b>+5 LP</b>
+        </div>
+
+        <div class="step">
+          <div class="badge b7">7</div>
+          <div class="who">
+            <div class="from">Books</div>
+            <div class="to">→ <span>SDK / xapi</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-ok">Response</span> Earn confirmed</div>
+            <div class="detail">
+              <code>status=EARNED</code> · <code>points=5</code> · <code>matchedRuleCode=CC_EARN_MCC_5411</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 3 -->
+    <section class="phase p3">
+      <div class="phase-hd">3 · Member sees result</div>
+      <div class="steps">
+        <div class="step">
+          <div class="badge b8">8</div>
+          <div class="who">
+            <div class="from">Books</div>
+            <div class="to">→ <span>Wallet (SoR)</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-ok">Balance</span> LP stack updated</div>
+            <div class="detail">
+              <code>GET /wallets/{ownerId}</code> → available <b style="color:#fde68a">+5 LP</b><br/>
+              Also: movements history · ledger-entries by eventId
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="badge b9">9</div>
+          <div class="who">
+            <div class="from">App / notify</div>
+            <div class="to">→ <span>Customer</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-req">UX</span> Optional “You earned 5 LP”</div>
+            <div class="detail">App only <b style="color:#e2e8f0">reads</b> LedgeRX. LedgeRX remains system of record.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 4 -->
+    <section class="phase p4">
+      <div class="phase-hd">4 · Later — burn / redeem</div>
+      <div class="steps">
+        <div class="step">
+          <div class="badge b10">10</div>
+          <div class="who">
+            <div class="from">Customer</div>
+            <div class="to">→ <span>App / coupon adapter</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-burn">Redeem</span> Wants e-coupon worth 5 LP</div>
+            <div class="detail">Outbound system starts redemption; ledger must burn points first (or hold).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="badge b11">11</div>
+          <div class="who">
+            <div class="from">SDK</div>
+            <div class="to">→ <span>Brain → Books</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-burn">Burn</span> <code>eventType=REDEEM</code> · rule <code>CC_BURN_REDEEM</code></div>
+            <div class="detail">
+              Formula <code>AMT = 5</code><br/>
+              Books: Debit member LP 5 · Credit PROGRAM LP 5
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="badge b12">12</div>
+          <div class="who">
+            <div class="from">Books</div>
+            <div class="to">→ <span>E-Coupon out</span></div>
+          </div>
+          <div class="what">
+            <div class="title"><span class="tag tag-burn">Done</span> LP −5 · coupon issued</div>
+            <div class="detail">Ledger keeps audit trail. Coupon / stock systems fulfil the reward.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="foot">
+      <div class="box">
+        <h3>After earn</h3>
+        <ul>
+          <li><b>status</b> = EARNED</li>
+          <li><b>points</b> = 5 LP</li>
+          <li><b>rule</b> = CC_EARN_MCC_5411</li>
+          <li><b>legs</b> = 2 (balanced)</li>
+          <li>Safe retry via <b>eventId</b></li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>How LP is calculated</h3>
+        <ul>
+          <li><b>RATE</b> → amount × rate</li>
+          <li><b>FIXED</b> → constant points</li>
+          <li><b>LINEAR</b> → rate×amt + fixed</li>
+          <li>First full Brain match wins</li>
+          <li>No match → skip (no post)</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>UAF landscape</h3>
+        <ul>
+          <li><b>In</b> = e6 / POS</li>
+          <li><b>Existing</b> = cc-xapi</li>
+          <li><b>New</b> = LedgeRX + SDK</li>
+          <li><b>Out</b> = app / coupon</li>
+          <li>CC vs Loan = <b>coaProfile</b></li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="note">
+      Readable layout for executive / IT walkthrough · Demo numbers illustrative · LedgeRX = one domain service (not three ledgers)
+    </p>
   </div>
 </body>
 </html>
