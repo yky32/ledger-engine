@@ -337,7 +337,17 @@ Phase-1 engine DE still uses **PROGRAM pool**; labels map to Finance COA outside
 
 ---
 
-## 11. Webhook
+## 11. Use-case catalog (for SDK)
+
+Ops configures Brain + COA in Admin. Upstream discovers:
+
+`GET /integrations/use-cases?enabledOnly=true`
+
+Each row: `code` (eventType), `amountMode`, `formulaSummary`, `coaProfileCode`, …
+
+SDK: `client.catalog().listUseCases()` → `client.useCases().invoke(code, …)`.
+
+## 11b. Webhook
 
 Upstream **SDK** (`ledger-engine-sdk`): call `client.useCases().likeFacebookPage(...)` etc.  
 Wire contract: SDK repo `docs/EXPECTED_CONTRACT.md` — do not hand-build JSON.
