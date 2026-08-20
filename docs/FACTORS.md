@@ -1,4 +1,4 @@
-# Factors — Door entry & Brain when (P1/P2)
+# Factors — Door entry & Brain when
 
 > **Docs entry:** [START_HERE.md](./START_HERE.md)
 
@@ -9,7 +9,7 @@ Common **factor** predicates apply to:
 
 Scoring never runs on the Door.
 
-## Shape
+## Leaf shape
 
 ```json
 { "field": "currency", "op": "in", "value": ["HKD", "USD"] }
@@ -18,6 +18,8 @@ Scoring never runs on the Door.
 { "field": "mcc", "op": "nin", "value": ["6010"] }
 { "field": "metadata.channel", "op": "eq", "value": "POS" }
 ```
+
+Optional `"id"` on a leaf helps `atLeast` / group failure messages.
 
 ### Fields
 
@@ -34,62 +36,120 @@ Scoring never runs on the Door.
 
 `eq` · `neq` · `in` · `nin` · `gt` · `gte` · `lt` · `lte` · `between` · `exists`
 
-`between` value: `{ "min": …, "max": … }` or `[min, max]`.
+---
+
+## FactorSet — boolean composition (UAF)
+
+Plain **array** = **AND all** (compat).
+
+Object form supports the three UAF patterns:
+
+### 1) Any one of N (`match: any`)
+
+```json
+{
+  "match": "any",
+  "factors": [ F1, F2, F3, F4, F5 ]
+}
+```
+
+### 2) At least K of N (`match: atLeast`)
+
+```json
+{
+  "match": "atLeast",
+  "count": 2,
+  "factors": [ F1, F2, F3, F4, F5 ]
+}
+```
+
+Aliases: `min` / `minMatch` / `atLeast` for count.
+
+### 3) Specific combinations (`match: anyGroup`)
+
+**(F1∧F2) ∨ (F3∧F4)** — e.g. ccy+mcc **or** amount band:
+
+```json
+{
+  "match": "anyGroup",
+  "groups": [
+    { "id": "G12", "factors": [ F1, F2 ] },
+    { "id": "G34", "factors": [ F3, F4 ] }
+  ]
+}
+```
+
+Each group defaults to **AND**. Nested sets allowed (group can set `"match":"any"` etc.).
+
+`allGroups` = every group must pass.
+
+### Nested
+
+Children of a set may be leaves **or** nested FactorSets.
+
+---
 
 ## Door — `PUT /ingest-policies`
 
 ```json
 {
   "isEnabled": true,
-  "entryFactors": [
-    { "field": "currency", "op": "in", "value": ["HKD", "USD"] },
-    { "field": "amount", "op": "gt", "value": 0 }
-  ]
+  "entryFactors": {
+    "match": "any",
+    "factors": [
+      { "field": "currency", "op": "in", "value": ["HKD", "USD"] },
+      { "field": "metadata.channel", "op": "eq", "value": "POS" }
+    ]
+  }
 }
 ```
 
 - Empty / null → only `isEnabled`
-- Fail → status skip · reason `NOT_ENTERED` · trace rule `_DOOR_`
+- Fail → `NOT_ENTERED` · trace `_DOOR_` · failStep often `SET`
 
 ## Brain — digestion rule
 
-Legacy still work (compiled at runtime):
+Legacy still compile to leaves at runtime:
 
 - `minAmount` → `amount gte`
 - `eligibleCurrencies` → `currency in`
 - `eligibleMccs` → `mcc in`
 - `maxAgeDays` → `ageDays lte`
 
-Plus explicit:
+Plus `whenFactors` array **or** FactorSet. Legacy **AND** explicit set.
 
 ```json
 {
-  "code": "GROCERY_2X",
+  "code": "UAF_COMBO_EARN",
   "eventType": "PURCHASE",
-  "operation": "EARN",
-  "whenFactors": [
-    { "field": "mcc", "op": "in", "value": ["5411"] },
-    { "field": "amount", "op": "between", "value": { "min": 100, "max": 999999 } }
-  ],
+  "whenFactors": {
+    "match": "anyGroup",
+    "groups": [
+      { "id": "retail", "factors": [
+          { "field": "mcc", "op": "in", "value": ["5411","5812"] },
+          { "field": "currency", "op": "eq", "value": "HKD" }
+      ]},
+      { "id": "bigTicket", "factors": [
+          { "field": "amount", "op": "gte", "value": 5000 }
+      ]}
+    ]
+  },
   "formula": { "type": "RATE", "rate": 0.01, "multiplier": 2 }
 }
 ```
 
-Legacy columns **AND** `whenFactors` (all must pass).
-
 ## Equation multiplier
 
-Optional on formula: `"multiplier": 2` (alias `mult`) → base points × multiplier.
+`"multiplier": 2` on formula → base points × mult.
 
 ## Flow
 
 ```text
-Event → Door isEnabled → entryFactors → entered?
-      → Brain rules (priority) → whenFactors (+legacy) → formula(+mult) → Books
+Event → Door isEnabled → entryFactors (leaf|set) → entered?
+      → Brain → whenFactors (+legacy AND) → formula(+mult) → Books
 ```
 
 ## Code
 
-- `usecase/factor/FactorMatcher.java`
-- `usecase/factor/FactorSpec.java`
-- DigestionRule.whenFactors · IngestPolicy.entryFactors (JSONB)
+- `FactorMatcher` · `FactorSpec`
+- PO: `entryFactors` / `whenFactors` JSONB **Object** (array or set)

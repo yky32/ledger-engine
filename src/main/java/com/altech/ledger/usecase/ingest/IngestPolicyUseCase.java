@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 /**
@@ -58,7 +59,14 @@ public class IngestPolicyUseCase {
             p.setAutoWalletCoaProfileCode(code.isEmpty() ? null : code.toUpperCase(Locale.ROOT));
         }
         if (req.entryFactors() != null) {
-            p.setEntryFactors(req.entryFactors().isEmpty() ? null : List.copyOf(req.entryFactors()));
+            Object ef = req.entryFactors();
+            if (ef instanceof java.util.Collection<?> c && c.isEmpty()) {
+                p.setEntryFactors(null);
+            } else if (ef instanceof Map<?, ?> m && m.isEmpty()) {
+                p.setEntryFactors(null);
+            } else {
+                p.setEntryFactors(ef);
+            }
         }
         return toDto(ingestPolicyRepository.save(p));
     }

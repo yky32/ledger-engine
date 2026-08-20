@@ -2,8 +2,6 @@ package com.altech.ledger.entity.dto.request;
 
 import jakarta.validation.constraints.Size;
 
-import java.util.List;
-import java.util.Map;
 
 /** Partial update — null keeps existing. */
 public record UpdateIngestPolicyRequestDto(
@@ -16,8 +14,8 @@ public record UpdateIngestPolicyRequestDto(
     /** Product-stream COA for lazy onboard; blank clears to DEFAULT behaviour. */
     @Size(max = 40) String autoWalletCoaProfileCode,
     /**
-     * Entry factors — empty list clears. Null = leave unchanged.
-     * All must match or event is NOT ENTERED (skipped before Brain).
+     * Entry factors — empty list/object clears. Null = leave unchanged.
+     * Array (AND) or FactorSet (any / atLeast / anyGroup).
      */
-    List<Map<String, Object>> entryFactors
+    Object entryFactors
 ) {}

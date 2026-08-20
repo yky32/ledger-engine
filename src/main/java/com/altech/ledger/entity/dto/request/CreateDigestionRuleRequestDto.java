@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Create digestion rule.
@@ -27,6 +26,6 @@ public record CreateDigestionRuleRequestDto(
     @Size(max = 16) String pointCurrency,
     @NotNull Object formula,
     @Size(max = 40) String processType,
-    /** Explicit when-factors JSON array; ANDed with legacy columns. */
-    List<Map<String, Object>> whenFactors
+    /** Explicit when-factors: JSON array (AND) or FactorSet object. */
+    Object whenFactors
 ) {}

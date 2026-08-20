@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
@@ -69,7 +70,14 @@ public class DigestionRuleUseCase {
         }
         r.setProcessType(req.processType());
         if (req.whenFactors() != null) {
-            r.setWhenFactors(req.whenFactors().isEmpty() ? null : List.copyOf(req.whenFactors()));
+            Object wf = req.whenFactors();
+            if (wf instanceof java.util.Collection<?> c && c.isEmpty()) {
+                r.setWhenFactors(null);
+            } else if (wf instanceof Map<?, ?> m && m.isEmpty()) {
+                r.setWhenFactors(null);
+            } else {
+                r.setWhenFactors(wf);
+            }
         }
         r.setIsActive(true);
         return toDto(digestionRuleRepository.save(r));
@@ -119,7 +127,14 @@ public class DigestionRuleUseCase {
             r.setProcessType(req.processType().isBlank() ? null : req.processType());
         }
         if (req.whenFactors() != null) {
-            r.setWhenFactors(req.whenFactors().isEmpty() ? null : List.copyOf(req.whenFactors()));
+            Object wf = req.whenFactors();
+            if (wf instanceof java.util.Collection<?> c && c.isEmpty()) {
+                r.setWhenFactors(null);
+            } else if (wf instanceof Map<?, ?> m && m.isEmpty()) {
+                r.setWhenFactors(null);
+            } else {
+                r.setWhenFactors(wf);
+            }
         }
         return toDto(digestionRuleRepository.save(r));
     }
