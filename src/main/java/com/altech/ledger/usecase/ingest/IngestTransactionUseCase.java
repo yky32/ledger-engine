@@ -21,6 +21,7 @@ import com.altech.ledger.usecase.factor.FactorMatcher;
 import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
 import com.altech.ledger.usecase.ledger.ApplyPostingRecipeUseCase;
 import com.altech.ledger.usecase.ledger.PostingRecipeCatalog;
+import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.entity.dto.posting.PostingCommand;
 import com.altech.ledger.entity.dto.posting.PostingRecipe;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +51,7 @@ public class IngestTransactionUseCase {
     private final ApplyPostingUseCase applyPostingUseCase;
     private final ApplyPostingRecipeUseCase applyPostingRecipeUseCase;
     private final PostingRecipeCatalog postingRecipeCatalog;
+    private final CoaProfileUseCase coaProfileUseCase;
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
     private final ObjectMapper objectMapper;
 
@@ -164,15 +166,24 @@ public class IngestTransactionUseCase {
         String movementKey = "loyalty-" + rule.operation().name().toLowerCase() + "-" + event.eventId();
         String recipeKeyBase = "loyalty-recipe-" + event.eventId();
 
-        Optional<PostingRecipe> recipe = postingRecipeCatalog.find(event.eventType());
-        if (recipe.isEmpty() && event.metadata() != null) {
-            Object uc = event.metadata().get("useCase");
+        String txnCode = event.eventType();
+        if (event.metadata() != null) {
+            String uc = event.metadata().get("useCase");
             if (uc == null) {
                 uc = event.metadata().get("use_case");
             }
-            if (uc != null) {
-                recipe = postingRecipeCatalog.find(String.valueOf(uc));
+            if (uc != null && !uc.isBlank()) {
+                txnCode = uc;
             }
+        }
+        Optional<PostingRecipe> recipe = postingRecipeCatalog.find(txnCode);
+        if (recipe.isEmpty()) {
+            recipe = postingRecipeCatalog.find(event.eventType());
+        }
+        // Operator COA binding: coa_profile.transactionCode → profile (segments / currency)
+        var coaByTxn = coaProfileUseCase.findByTransactionCode(txnCode);
+        if (coaByTxn.isEmpty()) {
+            coaByTxn = coaProfileUseCase.findByTransactionCode(event.eventType());
         }
 
         // Idempotency: plain earn/burn key OR first recipe step
@@ -202,7 +213,7 @@ public class IngestTransactionUseCase {
                     recipe.get(),
                     rule.points(),
                     recipeKeyBase,
-                    desc + " recipe=" + recipe.get().code()
+                    desc + " recipe=" + recipe.get().code()+ (coaByTxn.map(c -> " coa=" + c.getCode()).orElse(""))
                 );
                 applied = run.last();
             } else {
