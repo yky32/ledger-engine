@@ -19,7 +19,10 @@ import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.factor.FactorMatcher;
 import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
+import com.altech.ledger.usecase.ledger.ApplyPostingRecipeUseCase;
+import com.altech.ledger.usecase.ledger.PostingRecipeCatalog;
 import com.altech.ledger.entity.dto.posting.PostingCommand;
+import com.altech.ledger.entity.dto.posting.PostingRecipe;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +48,8 @@ public class IngestTransactionUseCase {
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final ApplyPostingUseCase applyPostingUseCase;
+    private final ApplyPostingRecipeUseCase applyPostingRecipeUseCase;
+    private final PostingRecipeCatalog postingRecipeCatalog;
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
     private final ObjectMapper objectMapper;
 
@@ -157,8 +162,24 @@ public class IngestTransactionUseCase {
             case BURN -> OrderType.BURN;
         };
         String movementKey = "loyalty-" + rule.operation().name().toLowerCase() + "-" + event.eventId();
+        String recipeKeyBase = "loyalty-recipe-" + event.eventId();
 
+        Optional<PostingRecipe> recipe = postingRecipeCatalog.find(event.eventType());
+        if (recipe.isEmpty() && event.metadata() != null) {
+            Object uc = event.metadata().get("useCase");
+            if (uc == null) {
+                uc = event.metadata().get("use_case");
+            }
+            if (uc != null) {
+                recipe = postingRecipeCatalog.find(String.valueOf(uc));
+            }
+        }
+
+        // Idempotency: plain earn/burn key OR first recipe step
         Optional<LedgerMovement> existing = ledgerMovementRepository.findByMovementKey(movementKey);
+        if (existing.isEmpty()) {
+            existing = ledgerMovementRepository.findByMovementKey(recipeKeyBase + "-credit_reward-1");
+        }
         if (existing.isPresent()) {
             LedgerMovement m = existing.get();
             UUID id = m.getId() == null ? null
@@ -172,10 +193,24 @@ public class IngestTransactionUseCase {
             String desc = rule.operation() + " from " + event.eventType() + " (" + rule.formula() + ")"
                 + " rule=" + matchedCode
                 + (resolved.provisioned() ? " [wallet-auto]" : "");
-            PostingCommand cmd = orderType == OrderType.BURN
-                ? PostingCommand.burn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc)
-                : PostingCommand.earn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc);
-            GetLedgerMovementResponseDto applied = applyPostingUseCase.execute(cmd);
+
+            GetLedgerMovementResponseDto applied;
+            if (recipe.isPresent() && rule.operation() != TransactionRuleEngine.Operation.BURN) {
+                // Use-case recipe path (CC_TXN_*, LOAN_DD_*)
+                var run = applyPostingRecipeUseCase.execute(
+                    wallet.getId(),
+                    recipe.get(),
+                    rule.points(),
+                    recipeKeyBase,
+                    desc + " recipe=" + recipe.get().code()
+                );
+                applied = run.last();
+            } else {
+                PostingCommand cmd = orderType == OrderType.BURN
+                    ? PostingCommand.burn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc)
+                    : PostingCommand.earn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc);
+                applied = applyPostingUseCase.execute(cmd);
+            }
 
             UUID txnId = applied.id() == null ? null
                 : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());
