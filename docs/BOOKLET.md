@@ -339,6 +339,11 @@ Phase-1 engine DE still uses **PROGRAM pool**; labels map to Finance COA outside
 
 ## 11. Webhook
 
+Upstream **SDK** (`ledger-engine-sdk`): call `client.useCases().likeFacebookPage(...)` etc.  
+Wire contract: SDK repo `docs/EXPECTED_CONTRACT.md` — do not hand-build JSON.
+
+## 11b. Webhook (HTTP detail)
+
 ```http
 POST /integrations/webhooks/transactions
 POST /integrations/webhooks/transactions/dry-run
