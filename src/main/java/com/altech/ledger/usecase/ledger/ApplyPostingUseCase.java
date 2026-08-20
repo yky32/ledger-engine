@@ -6,7 +6,6 @@ import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
 import com.altech.ledger.entity.dto.request.CreateLedgerInWalletTransferRequestDto;
 import com.altech.ledger.entity.dto.request.CreateLedgerWithdrawalRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
-import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.enu.PostingIntent;
 import com.altech.ledger.exception.response.MovementErrorResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,19 +13,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Central posting facade — reusable entry for all balance-affecting intents.
+ * Central apply-posting use case — reusable entry for all balance-affecting intents.
  * <p>
- * Product APIs (deposit/withdraw/transfer) and loyalty (earn/burn) and hold/release
- * all go through {@link #post(PostingCommand)}. Accounting differences stay in
- * {@link PostingIntent} → {@link OrderType} → execution rules (PROGRAM DE for earn/burn).
+ * Product APIs (deposit/withdraw/transfer), loyalty (earn/burn), and hold/release
+ * all go through {@link #execute(PostingCommand)}. Accounting differences stay in
+ * {@link PostingIntent} → OrderType → execution rules (PROGRAM DE for earn/burn).
+ * <p>
+ * Shared application capability (multi-caller) — not a product HTTP verb by itself.
  */
 @Component
 @RequiredArgsConstructor
-public class PostingService {
+public class ApplyPostingUseCase {
     private final LedgerMovementShooter ledgerMovementShooter;
 
     @Transactional
-    public GetLedgerMovementResponseDto post(PostingCommand cmd) {
+    public GetLedgerMovementResponseDto execute(PostingCommand cmd) {
         if (cmd == null) {
             throw new BizException(MovementErrorResponse.MOV0400, "PostingCommand required");
         }
@@ -106,7 +107,7 @@ public class PostingService {
         String movementKey,
         String description
     ) {
-        return post(PostingCommand.earn(walletId, amount, currency, movementKey, description));
+        return execute(PostingCommand.earn(walletId, amount, currency, movementKey, description));
     }
 
     /** Convenience — loyalty burn (PROGRAM DE). */
@@ -118,6 +119,6 @@ public class PostingService {
         String movementKey,
         String description
     ) {
-        return post(PostingCommand.burn(walletId, amount, currency, movementKey, description));
+        return execute(PostingCommand.burn(walletId, amount, currency, movementKey, description));
     }
 }

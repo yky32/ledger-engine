@@ -7,25 +7,25 @@ import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.usecase.CommonUseCase;
-import com.altech.ledger.usecase.ledger.PostingService;
+import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Product withdrawal — debits member book for currency (single-sided).
- * Posts via central {@link PostingService} (not loyalty BURN / PROGRAM DE).
+ * Posts via central {@link ApplyPostingUseCase} (not loyalty BURN / PROGRAM DE).
  */
 @Component
 @RequiredArgsConstructor
 public class CreateWithdrawalUseCase {
     private final CommonUseCase commonUseCase;
-    private final PostingService postingService;
+    private final ApplyPostingUseCase applyPostingUseCase;
 
     @Transactional
     public MovementResponse execute(WithdrawalRequest request) {
         Wallet wallet = commonUseCase.requireActiveWallet(request.ownerId(), request.currency());
-        GetLedgerMovementResponseDto r = postingService.post(PostingCommand.withdrawal(
+        GetLedgerMovementResponseDto r = applyPostingUseCase.execute(PostingCommand.withdrawal(
             wallet.getId(),
             request.amount(),
             request.currency(),

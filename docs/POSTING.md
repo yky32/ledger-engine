@@ -14,7 +14,7 @@ Product / Ingest / Hold
   PostingCommand + PostingIntent
         │
         ▼
-  PostingService.post(...)
+  ApplyPostingUseCase.execute(...)
         │
         ▼
   LedgerMovementShooter (create movement + execute)
@@ -34,7 +34,7 @@ Product / Ingest / Hold
 |------|------|
 | `PostingIntent` | DEPOSIT · WITHDRAWAL · IN_WALLET_TRANSFER · EARN · BURN · HOLD · RELEASE |
 | `PostingCommand` | amount · currency · walletId · movementKey · factories |
-| `PostingService#post` | **Only** balance-write entry new code should call |
+| `ApplyPostingUseCase#execute` | **Only** balance-write entry new code should call |
 
 ### Factories
 
@@ -47,9 +47,9 @@ PostingCommand.burn(...);   // PROGRAM DE
 PostingCommand.hold(...);
 PostingCommand.release(...);
 
-postingService.post(cmd);
+applyPostingUseCase.execute(cmd);
 // or
-postingService.earn(walletId, points, LP, key, desc);
+applyPostingUseCase.earn(walletId, points, LP, key, desc);
 ```
 
 ## Callers (wired)
@@ -69,7 +69,7 @@ postingService.earn(walletId, points, LP, key, desc);
 |----|-----|
 | Earn via deposit API | No PROGRAM legs — false mint |
 | Burn via withdrawal API | No PROGRAM reclaim |
-| New balance code bypassing `PostingService` | Drift |
+| New balance code bypassing `ApplyPostingUseCase` | Drift |
 
 ## Related
 

@@ -7,7 +7,7 @@ import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.usecase.CommonUseCase;
-import com.altech.ledger.usecase.ledger.PostingService;
+import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,13 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CreateInWalletTransferUseCase {
     private final CommonUseCase commonUseCase;
-    private final PostingService postingService;
+    private final ApplyPostingUseCase applyPostingUseCase;
 
     @Transactional
     public MovementResponse execute(InWalletTransferRequest request) {
         Wallet from = commonUseCase.requireActiveWallet(request.fromOwnerId(), request.currency());
         Wallet to = commonUseCase.requireActiveWallet(request.toOwnerId(), request.currency());
-        GetLedgerMovementResponseDto r = postingService.post(PostingCommand.inWalletTransfer(
+        GetLedgerMovementResponseDto r = applyPostingUseCase.execute(PostingCommand.inWalletTransfer(
             from.getId(),
             to.getId(),
             request.amount(),

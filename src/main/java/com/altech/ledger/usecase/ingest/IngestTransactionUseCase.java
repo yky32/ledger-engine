@@ -18,7 +18,7 @@ import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.factor.FactorMatcher;
-import com.altech.ledger.usecase.ledger.PostingService;
+import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
 import com.altech.ledger.entity.dto.posting.PostingCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class IngestTransactionUseCase {
     private final EnsureWalletForIngestUseCase ensureWalletForIngestUseCase;
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
-    private final PostingService postingService;
+    private final ApplyPostingUseCase applyPostingUseCase;
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
     private final ObjectMapper objectMapper;
 
@@ -175,7 +175,7 @@ public class IngestTransactionUseCase {
             PostingCommand cmd = orderType == OrderType.BURN
                 ? PostingCommand.burn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc)
                 : PostingCommand.earn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc);
-            GetLedgerMovementResponseDto applied = postingService.post(cmd);
+            GetLedgerMovementResponseDto applied = applyPostingUseCase.execute(cmd);
 
             UUID txnId = applied.id() == null ? null
                 : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());

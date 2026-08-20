@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 /**
  * Central posting command — one shape for money rails + loyalty + hold.
- * Prefer {@link com.altech.ledger.usecase.ledger.PostingService#post} over ad-hoc shooter calls.
+ * Prefer {@link com.altech.ledger.usecase.ledger.ApplyPostingUseCase#execute} over ad-hoc shooter calls.
  */
 public record PostingCommand(
     PostingIntent intent,

@@ -8,7 +8,7 @@ import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.WalletErrorResponse;
 import com.altech.ledger.repository.WalletRepository;
-import com.altech.ledger.usecase.ledger.PostingService;
+import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class HoldReleaseUseCase {
     private final WalletRepository walletRepository;
-    private final PostingService postingService;
+    private final ApplyPostingUseCase applyPostingUseCase;
 
     @Transactional
     public GetLedgerMovementResponseDto hold(CreateHoldReleaseRequestDto req) {
@@ -37,6 +37,6 @@ public class HoldReleaseUseCase {
         PostingCommand cmd = type == OrderType.HOLD
             ? PostingCommand.hold(w.getId(), req.amount(), req.currency(), req.movementKey(), desc)
             : PostingCommand.release(w.getId(), req.amount(), req.currency(), req.movementKey(), desc);
-        return postingService.post(cmd);
+        return applyPostingUseCase.execute(cmd);
     }
 }
