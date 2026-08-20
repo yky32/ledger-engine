@@ -1,10 +1,10 @@
-# docs/
+# Docs
 
-| File | |
+→ **[BOOKLET.md](./BOOKLET.md)** only.
+
+| Path | |
 |------|--|
-| **[BOOKLET.md](./BOOKLET.md)** | **Single source of truth** — product + engineering |
-| [START_HERE.md](./START_HERE.md) | One-line entry → booklet |
-| [decks/](./decks/) | PPT / sequence assets |
-| [archive/](./archive/) | Unrelated historical notes only |
+| `BOOKLET.md` | Full product + engineering handbook |
+| `decks/` | PPT / PNG assets (see booklet §15) |
 
-Do not add new top-level topic `.md` files — extend **BOOKLET.md** sections instead.
+`START_HERE.md` redirects here for old links.
