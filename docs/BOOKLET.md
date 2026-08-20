@@ -376,7 +376,49 @@ Payload: `movementId`, `ownerId`, `orderType`, `amount`, `currency`, `accounts[]
 
 Also: `ledger.movement.done`. Inbound execute: `initiated` / `balance-update`.
 
-## 13. UA use-case recipes
+## 13. Non-financial engagement (e.g. like FB page)
+
+Not a spend / payment. Upstream still sends a **webhook event**; Brain uses **FIXED** points.
+
+| | |
+|--|--|
+| `eventType` | e.g. `LIKE_FB_PAGE` |
+| formula | `{ "type": "FIXED", "value": 5 }` → **5 LP** |
+| `amount` | `0` allowed (`@PositiveOrZero`; FIXED is not spend-based) |
+| `currency` | any valid (e.g. HKD) — points currency from rule / recipe = LP |
+| COA | optional `code=LIKE_FB_PAGE` |
+| recipe | `LIKE_FB_PAGE` → CREDIT_REWARD LP |
+
+```json
+// Digestion rule
+{
+  "code": "LIKE_FB_PAGE",
+  "eventType": "LIKE_FB_PAGE",
+  "operation": "EARN",
+  "isEnabled": true,
+  "priority": 10,
+  "minAmount": 0,
+  "formula": { "type": "FIXED", "value": 5 },
+  "pointCurrency": "LP"
+}
+```
+
+```json
+// Upstream webhook
+{
+  "eventId": "like-001",
+  "ownerId": "01A1",
+  "eventType": "LIKE_FB_PAGE",
+  "amount": 0,
+  "currency": "HKD",
+  "occurredAt": "2026-08-20T12:00:00Z",
+  "metadata": { "channel": "facebook", "pageId": "ua-finance" }
+}
+```
+
+Door open + auto-wallet → **+5 LP** on member book (PROGRAM DE).
+
+## 14. UA use-case recipes
 
 Sheet use cases → **recipe codes** → **atoms** → posting.
 
@@ -421,7 +463,7 @@ Unknown types (e.g. `PURCHASE`) → classic EARN/BURN only.
 
 # D · Ops
 
-## 14. Local bootstrap
+## 15. Local bootstrap
 
 ```bash
 # Postgres :5433 / DB ledger-engine
@@ -436,7 +478,7 @@ Admin: `LEDGER_ENGINE_URL=http://localhost:8080`
 
 ---
 
-## 15. Admin
+## 16. Admin
 
 | Screen | |
 |--------|--|
@@ -447,7 +489,7 @@ Admin: `LEDGER_ENGINE_URL=http://localhost:8080`
 
 ---
 
-## 16. Decks
+## 17. Decks
 
 Under `docs/decks/` (assets only — not a second handbook):
 
@@ -461,7 +503,7 @@ Other pptx may be aliases / older cuts of the same story.
 
 ---
 
-## 17. Freeze & debt
+## 18. Freeze & debt
 
 ### Feature freeze (core)
 
