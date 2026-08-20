@@ -4,22 +4,22 @@ import com.altech.ledger.entity.dto.ingest.EligibilityTraceEntry;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.po.digestion.DigestionRule;
 import com.altech.ledger.repository.DigestionRuleRepository;
+import com.altech.ledger.usecase.factor.FactorMatcher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Matches inbound events to runtime {@link DigestionRule} rows (DB only).
  * Trust pack B: builds {@link EligibilityTraceEntry} for each candidate (same eventType).
+ * <p>
+ * Eligibility = legacy columns compiled to factors + explicit {@code whenFactors} via {@link FactorMatcher}.
  */
 @Component
 @RequiredArgsConstructor
@@ -27,6 +27,7 @@ public class TransactionRuleEngine {
     public enum Operation { EARN, BURN, PROCESS }
 
     private final DigestionRuleRepository digestionRuleRepository;
+    private final FactorMatcher factorMatcher;
 
     public EvaluationOutcome evaluate(TransactionalEvent event) {
         String lastReasonCode = "NO_RULE";
@@ -38,7 +39,6 @@ public class TransactionRuleEngine {
             if (rule.getEventType() == null
                 || event.eventType() == null
                 || !rule.getEventType().equalsIgnoreCase(event.eventType())) {
-                // different product event — not a candidate
                 continue;
             }
 
@@ -66,59 +66,13 @@ public class TransactionRuleEngine {
                 }
             }
 
-            BigDecimal min = rule.getMinAmount() == null ? BigDecimal.ZERO : rule.getMinAmount();
-            if (event.amount() != null && event.amount().compareTo(min) < 0) {
-                lastReasonCode = "MIN_AMOUNT";
-                lastReason = "amount below minAmount " + min;
-                trace.add(fail(code, pri, "MIN_AMOUNT", lastReason));
+            List<Map<String, Object>> when = factorMatcher.effectiveWhenFactors(rule);
+            FactorMatcher.MatchResult mr = factorMatcher.matchAll(event, when);
+            if (!mr.matched()) {
+                lastReasonCode = mr.failStep() == null ? "FACTOR" : mr.failStep();
+                lastReason = mr.detail() == null ? "whenFactors not matched" : mr.detail();
+                trace.add(fail(code, pri, lastReasonCode, lastReason));
                 continue;
-            }
-
-            List<String> eligible = DigestionRuleUseCase.splitCodes(rule.getEligibleCurrencies());
-            if (!eligible.isEmpty()) {
-                Set<String> allowed = new HashSet<>(eligible);
-                String ccy = event.currency() == null ? null : event.currency().getIsoCode().toUpperCase(Locale.ROOT);
-                if (ccy == null || !allowed.contains(ccy)) {
-                    lastReasonCode = "CURRENCY";
-                    lastReason = "currency " + ccy + " not in eligible list " + allowed;
-                    trace.add(fail(code, pri, "CURRENCY", lastReason));
-                    continue;
-                }
-            }
-
-            List<String> mccs = DigestionRuleUseCase.splitCodes(rule.getEligibleMccs());
-            if (!mccs.isEmpty()) {
-                String eventMcc = extractMcc(event);
-                Set<String> allowedMcc = new HashSet<>(mccs);
-                if (eventMcc == null || eventMcc.isBlank() || !allowedMcc.contains(eventMcc)) {
-                    lastReasonCode = "MCC";
-                    lastReason = "mcc " + eventMcc + " not in eligible list " + allowedMcc
-                        + " (send metadata.mcc / mccCode / merchantCategoryCode)";
-                    trace.add(fail(code, pri, "MCC", lastReason));
-                    continue;
-                }
-            }
-
-            if (rule.getMaxAgeDays() != null) {
-                if (event.occurredAt() == null) {
-                    lastReasonCode = "AGE";
-                    lastReason = "occurredAt required when maxAgeDays=" + rule.getMaxAgeDays();
-                    trace.add(fail(code, pri, "AGE", lastReason));
-                    continue;
-                }
-                long maxSeconds = rule.getMaxAgeDays().longValue() * 24L * 3600L;
-                long ageSeconds = Duration.between(event.occurredAt(), Instant.now()).getSeconds();
-                if (ageSeconds < -86400) {
-                    lastReasonCode = "AGE";
-                    lastReason = "occurredAt is too far in the future";
-                    trace.add(fail(code, pri, "AGE", lastReason));
-                    continue;
-                } else if (ageSeconds > maxSeconds) {
-                    lastReasonCode = "AGE";
-                    lastReason = "occurredAt older than " + rule.getMaxAgeDays() + " days";
-                    trace.add(fail(code, pri, "AGE", lastReason));
-                    continue;
-                }
             }
 
             BigDecimal points;
@@ -155,19 +109,6 @@ public class TransactionRuleEngine {
 
     private static EligibilityTraceEntry fail(String code, Integer pri, String step, String detail) {
         return new EligibilityTraceEntry(code, pri, false, step, detail);
-    }
-
-    static String extractMcc(TransactionalEvent event) {
-        if (event == null || event.metadata() == null || event.metadata().isEmpty()) {
-            return null;
-        }
-        for (String key : List.of("mcc", "mccCode", "merchantCategoryCode", "MCC")) {
-            String v = event.metadata().get(key);
-            if (v != null && !v.isBlank()) {
-                return v.trim().toUpperCase(Locale.ROOT);
-            }
-        }
-        return null;
     }
 
     public record RuleDecision(

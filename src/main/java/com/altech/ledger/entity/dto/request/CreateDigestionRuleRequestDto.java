@@ -6,12 +6,12 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Create digestion rule.
- * <p>
- * Eligibility filters + scoring formula live on the same row:
- * eventType, minAmount, eligibleCurrencies, eligibleMccs, maxAgeDays → then {@code formula}.
+ * Legacy filters (minAmount, currencies, mccs, maxAgeDays) still accepted and compiled to factors.
+ * Prefer {@code whenFactors} for rich ops (between, nin, gt, …).
  */
 public record CreateDigestionRuleRequestDto(
     @NotBlank @Size(max = 80) String code,
@@ -22,10 +22,11 @@ public record CreateDigestionRuleRequestDto(
     Integer priority,
     BigDecimal minAmount,
     List<@Size(max = 16) String> eligibleCurrencies,
-    /** MCC allow-list; empty/null = any. */
     List<@Size(max = 16) String> eligibleMccs,
     Integer maxAgeDays,
     @Size(max = 16) String pointCurrency,
     @NotNull Object formula,
-    @Size(max = 40) String processType
+    @Size(max = 40) String processType,
+    /** Explicit when-factors JSON array; ANDed with legacy columns. */
+    List<Map<String, Object>> whenFactors
 ) {}

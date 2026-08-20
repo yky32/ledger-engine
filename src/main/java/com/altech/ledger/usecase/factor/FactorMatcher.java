@@ -1,0 +1,392 @@
+package com.altech.ledger.usecase.factor;
+
+import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
+import com.altech.ledger.entity.po.digestion.DigestionRule;
+import com.altech.ledger.usecase.digestion.DigestionRuleUseCase;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Common factor matcher for Door (entry) and Brain (when / equation selection).
+ * <p>
+ * Ops: eq, neq, in, nin, gt, gte, lt, lte, between, exists.
+ * Fields: currency, mcc, amount, ageDays, eventType, metadata.*
+ */
+@Component
+public class FactorMatcher {
+
+    public record MatchResult(boolean matched, String failField, String failOp, String detail) {
+        public static MatchResult ok() {
+            return new MatchResult(true, null, null, null);
+        }
+
+        public static MatchResult fail(String field, String op, String detail) {
+            return new MatchResult(false, field, op, detail);
+        }
+
+        /** failStep token for eligibilityTrace */
+        public String failStep() {
+            if (matched) {
+                return null;
+            }
+            if (failField == null) {
+                return "FACTOR";
+            }
+            String fl = failField.toLowerCase(Locale.ROOT);
+            if (fl.equals("currency") || fl.equals("ccy")) {
+                return "CURRENCY";
+            }
+            if (fl.equals("mcc")) {
+                return "MCC";
+            }
+            if (fl.equals("amount") || fl.equals("amt")) {
+                return "AMOUNT";
+            }
+            if (fl.equals("agedays") || fl.equals("age_days") || fl.equals("age")) {
+                return "AGE";
+            }
+            if (fl.equals("eventtype") || fl.equals("event_type") || fl.equals("type")) {
+                return "EVENT_TYPE";
+            }
+            if (fl.startsWith("metadata.") || fl.startsWith("meta.")) {
+                return "META";
+            }
+            return failField.toUpperCase(Locale.ROOT);
+        }
+    }
+
+    /**
+     * AND across factors. Empty / null list → match.
+     */
+    public MatchResult matchAll(TransactionalEvent event, List<Map<String, Object>> factors) {
+        if (factors == null || factors.isEmpty()) {
+            return MatchResult.ok();
+        }
+        for (Map<String, Object> f : factors) {
+            if (f == null || f.isEmpty()) {
+                continue;
+            }
+            MatchResult one = matchOne(event, f);
+            if (!one.matched()) {
+                return one;
+            }
+        }
+        return MatchResult.ok();
+    }
+
+    public MatchResult matchOne(TransactionalEvent event, Map<String, Object> factor) {
+        String field = FactorSpec.fieldOf(factor);
+        String op = FactorSpec.opOf(factor);
+        Object expected = FactorSpec.valueOf(factor);
+        if (field == null || field.isBlank()) {
+            return MatchResult.fail("factor", op, "factor.field required");
+        }
+        String f = field.trim();
+        String fl = f.toLowerCase(Locale.ROOT);
+
+        try {
+            if ("exists".equals(op)) {
+                Object actual = resolve(event, f);
+                boolean want = expected == null || asBool(expected, true);
+                boolean has = actual != null && !(actual instanceof String s && s.isBlank());
+                if (has == want) {
+                    return MatchResult.ok();
+                }
+                return MatchResult.fail(f, op, "exists=" + has + " want=" + want);
+            }
+
+            Object actual = resolve(event, f);
+            return switch (op) {
+                case "eq", "=", "==" -> eq(f, op, actual, expected);
+                case "neq", "ne", "!=", "<>" -> {
+                    MatchResult eq = eq(f, "eq", actual, expected);
+                    yield eq.matched()
+                        ? MatchResult.fail(f, op, "value equals " + expected)
+                        : MatchResult.ok();
+                }
+                case "in" -> in(f, op, actual, expected, true);
+                case "nin", "not_in", "notin" -> in(f, op, actual, expected, false);
+                case "gt", ">" -> cmp(f, op, actual, expected, 1, false);
+                case "gte", "ge", ">=" -> cmp(f, op, actual, expected, 1, true);
+                case "lt", "<" -> cmp(f, op, actual, expected, -1, false);
+                case "lte", "le", "<=" -> cmp(f, op, actual, expected, -1, true);
+                case "between" -> between(f, op, actual, expected);
+                default -> MatchResult.fail(f, op, "unsupported op: " + op);
+            };
+        } catch (RuntimeException ex) {
+            return MatchResult.fail(f, op, ex.getMessage() == null ? "factor error" : ex.getMessage());
+        }
+    }
+
+    /**
+     * Compile legacy Brain columns into factor list (always applied with whenFactors).
+     */
+    public List<Map<String, Object>> legacyWhenFactors(DigestionRule rule) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        if (rule == null) {
+            return out;
+        }
+        if (rule.getMinAmount() != null && rule.getMinAmount().signum() > 0) {
+            out.add(factor("amount", "gte", rule.getMinAmount()));
+        }
+        List<String> ccys = DigestionRuleUseCase.splitCodes(rule.getEligibleCurrencies());
+        if (!ccys.isEmpty()) {
+            out.add(factor("currency", "in", ccys));
+        }
+        List<String> mccs = DigestionRuleUseCase.splitCodes(rule.getEligibleMccs());
+        if (!mccs.isEmpty()) {
+            out.add(factor("mcc", "in", mccs));
+        }
+        if (rule.getMaxAgeDays() != null) {
+            out.add(factor("ageDays", "lte", rule.getMaxAgeDays()));
+        }
+        return out;
+    }
+
+    /** Effective Brain gates: legacy compiled + explicit whenFactors. */
+    public List<Map<String, Object>> effectiveWhenFactors(DigestionRule rule) {
+        List<Map<String, Object>> out = new ArrayList<>(legacyWhenFactors(rule));
+        if (rule != null && rule.getWhenFactors() != null) {
+            out.addAll(FactorSpec.asFactorList(rule.getWhenFactors()));
+        }
+        return out;
+    }
+
+    public Object resolve(TransactionalEvent event, String field) {
+        if (event == null || field == null) {
+            return null;
+        }
+        String f = field.trim();
+        String fl = f.toLowerCase(Locale.ROOT);
+        if (fl.startsWith("metadata.") || fl.startsWith("meta.")) {
+            int dot = f.indexOf('.');
+            String key = f.substring(dot + 1);
+            return meta(event, key);
+        }
+        return switch (fl) {
+            case "currency", "ccy" -> event.currency() == null ? null
+                : event.currency().getIsoCode().toUpperCase(Locale.ROOT);
+            case "mcc" -> extractMcc(event);
+            case "amount", "amt" -> event.amount();
+            case "agedays", "age_days", "age" -> ageDays(event);
+            case "eventtype", "event_type", "type" -> event.eventType() == null ? null
+                : event.eventType().toUpperCase(Locale.ROOT);
+            case "ownerid", "owner_id" -> event.ownerId();
+            case "eventid", "event_id" -> event.eventId();
+            default -> meta(event, f);
+        };
+    }
+
+    private static Map<String, Object> factor(String field, String op, Object value) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("field", field);
+        m.put("op", op);
+        m.put("value", value);
+        return m;
+    }
+
+    private MatchResult eq(String field, String op, Object actual, Object expected) {
+        if (actual == null && expected == null) {
+            return MatchResult.ok();
+        }
+        if (actual == null || expected == null) {
+            return MatchResult.fail(field, op, "actual=" + actual + " expected=" + expected);
+        }
+        if (actual instanceof BigDecimal || expected instanceof Number || expected instanceof BigDecimal) {
+            BigDecimal a = toDecimal(actual);
+            BigDecimal e = toDecimal(expected);
+            if (a != null && e != null && a.compareTo(e) == 0) {
+                return MatchResult.ok();
+            }
+            return MatchResult.fail(field, op, "actual=" + actual + " expected=" + expected);
+        }
+        String a = normStr(actual);
+        String e = normStr(expected);
+        if (a.equals(e)) {
+            return MatchResult.ok();
+        }
+        return MatchResult.fail(field, op, "actual=" + a + " expected=" + e);
+    }
+
+    private MatchResult in(String field, String op, Object actual, Object expected, boolean mustContain) {
+        Set<String> set = toStringSet(expected);
+        if (set.isEmpty()) {
+            return MatchResult.fail(field, op, "empty list");
+        }
+        if (actual == null) {
+            return MatchResult.fail(field, op, "actual is null; allowed=" + set);
+        }
+        String a = normStr(actual);
+        boolean hit = set.contains(a);
+        if (mustContain == hit) {
+            return MatchResult.ok();
+        }
+        return MatchResult.fail(field, op,
+            mustContain
+                ? ("actual=" + a + " not in " + set)
+                : ("actual=" + a + " is in denied list " + set));
+    }
+
+    private MatchResult cmp(String field, String op, Object actual, Object expected, int wantSign, boolean eqOk) {
+        BigDecimal a = toDecimal(actual);
+        BigDecimal e = toDecimal(expected);
+        if (a == null) {
+            return MatchResult.fail(field, op, "actual not numeric: " + actual);
+        }
+        if (e == null) {
+            return MatchResult.fail(field, op, "expected not numeric: " + expected);
+        }
+        int c = a.compareTo(e);
+        boolean ok = c == wantSign || (eqOk && c == 0);
+        if (ok) {
+            return MatchResult.ok();
+        }
+        return MatchResult.fail(field, op, "actual=" + a + " op=" + op + " expected=" + e);
+    }
+
+    @SuppressWarnings("unchecked")
+    private MatchResult between(String field, String op, Object actual, Object expected) {
+        BigDecimal a = toDecimal(actual);
+        if (a == null) {
+            return MatchResult.fail(field, op, "actual not numeric: " + actual);
+        }
+        BigDecimal min = null;
+        BigDecimal max = null;
+        if (expected instanceof Map<?, ?> map) {
+            min = toDecimal(map.get("min") != null ? map.get("min") : map.get("from"));
+            max = toDecimal(map.get("max") != null ? map.get("max") : map.get("to"));
+        } else if (expected instanceof Collection<?> col) {
+            List<?> list = new ArrayList<>(col);
+            if (list.size() >= 1) {
+                min = toDecimal(list.get(0));
+            }
+            if (list.size() >= 2) {
+                max = toDecimal(list.get(1));
+            }
+        } else if (expected instanceof String s && s.contains(",")) {
+            String[] p = s.split(",", 2);
+            min = toDecimal(p[0]);
+            max = toDecimal(p[1]);
+        }
+        if (min == null && max == null) {
+            return MatchResult.fail(field, op, "between needs min/max");
+        }
+        if (min != null && a.compareTo(min) < 0) {
+            return MatchResult.fail(field, op, "actual=" + a + " < min " + min);
+        }
+        if (max != null && a.compareTo(max) > 0) {
+            return MatchResult.fail(field, op, "actual=" + a + " > max " + max);
+        }
+        return MatchResult.ok();
+    }
+
+    private static BigDecimal ageDays(TransactionalEvent event) {
+        if (event.occurredAt() == null) {
+            return null;
+        }
+        long seconds = Duration.between(event.occurredAt(), Instant.now()).getSeconds();
+        // fractional days as decimal days
+        return BigDecimal.valueOf(seconds).divide(BigDecimal.valueOf(86400L), 6, java.math.RoundingMode.HALF_UP);
+    }
+
+    private static String extractMcc(TransactionalEvent event) {
+        if (event == null || event.metadata() == null) {
+            return null;
+        }
+        for (String key : List.of("mcc", "mccCode", "merchantCategoryCode", "MCC")) {
+            String v = event.metadata().get(key);
+            if (v != null && !v.isBlank()) {
+                return v.trim().toUpperCase(Locale.ROOT);
+            }
+        }
+        return null;
+    }
+
+    private static String meta(TransactionalEvent event, String key) {
+        if (event == null || event.metadata() == null || key == null) {
+            return null;
+        }
+        String v = event.metadata().get(key);
+        if (v != null) {
+            return v;
+        }
+        // case-insensitive key
+        for (var e : event.metadata().entrySet()) {
+            if (e.getKey() != null && e.getKey().equalsIgnoreCase(key)) {
+                return e.getValue();
+            }
+        }
+        return null;
+    }
+
+    private static String normStr(Object o) {
+        return String.valueOf(o).trim().toUpperCase(Locale.ROOT);
+    }
+
+    private static Set<String> toStringSet(Object expected) {
+        if (expected == null) {
+            return Set.of();
+        }
+        if (expected instanceof Collection<?> col) {
+            return col.stream()
+                .filter(x -> x != null && !String.valueOf(x).isBlank())
+                .map(FactorMatcher::normStr)
+                .collect(Collectors.toSet());
+        }
+        if (expected instanceof String s) {
+            if (s.contains(",")) {
+                return DigestionRuleUseCase.splitCodes(s).stream().collect(Collectors.toSet());
+            }
+            return Set.of(normStr(s));
+        }
+        return Set.of(normStr(expected));
+    }
+
+    private static BigDecimal toDecimal(Object o) {
+        if (o == null) {
+            return null;
+        }
+        if (o instanceof BigDecimal bd) {
+            return bd;
+        }
+        if (o instanceof Integer i) {
+            return BigDecimal.valueOf(i.longValue());
+        }
+        if (o instanceof Long l) {
+            return BigDecimal.valueOf(l);
+        }
+        if (o instanceof Number n) {
+            return new BigDecimal(n.toString());
+        }
+        String s = String.valueOf(o).trim();
+        if (s.isEmpty() || "null".equalsIgnoreCase(s)) {
+            return null;
+        }
+        return new BigDecimal(s);
+    }
+
+    private static boolean asBool(Object o, boolean dflt) {
+        if (o == null) {
+            return dflt;
+        }
+        if (o instanceof Boolean b) {
+            return b;
+        }
+        String s = String.valueOf(o).trim().toLowerCase(Locale.ROOT);
+        if (s.isEmpty()) {
+            return dflt;
+        }
+        return s.equals("1") || s.equals("true") || s.equals("yes") || s.equals("y");
+    }
+}

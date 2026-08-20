@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -22,6 +24,8 @@ public class GetIngestPolicyResponseDto {
     private String autoWalletAssociatedFrom;
     private String autoWalletNamePrefix;
     private String autoWalletCoaProfileCode;
+    /** Door entry factors (docs/FACTORS.md). Empty = only isEnabled. */
+    private List<Map<String, Object>> entryFactors;
     private Instant createDt;
     private Instant updateDt;
 }

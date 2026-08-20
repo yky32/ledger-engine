@@ -68,6 +68,9 @@ public class DigestionRuleUseCase {
             throw new BizException(DigestionErrorResponse.DIG0400, ex.getMessage());
         }
         r.setProcessType(req.processType());
+        if (req.whenFactors() != null) {
+            r.setWhenFactors(req.whenFactors().isEmpty() ? null : List.copyOf(req.whenFactors()));
+        }
         r.setIsActive(true);
         return toDto(digestionRuleRepository.save(r));
     }
@@ -114,6 +117,9 @@ public class DigestionRuleUseCase {
         }
         if (req.processType() != null) {
             r.setProcessType(req.processType().isBlank() ? null : req.processType());
+        }
+        if (req.whenFactors() != null) {
+            r.setWhenFactors(req.whenFactors().isEmpty() ? null : List.copyOf(req.whenFactors()));
         }
         return toDto(digestionRuleRepository.save(r));
     }
@@ -179,6 +185,7 @@ public class DigestionRuleUseCase {
             .pointCurrency(r.getPointCurrency())
             .formula(r.getFormula())
             .processType(r.getProcessType())
+            .whenFactors(r.getWhenFactors())
             .createDt(r.getCreateDt())
             .updateDt(r.getUpdateDt())
             .build();

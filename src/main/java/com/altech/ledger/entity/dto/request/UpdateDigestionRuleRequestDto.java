@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /** Partial update — null fields keep existing values. */
 public record UpdateDigestionRuleRequestDto(
@@ -18,5 +19,7 @@ public record UpdateDigestionRuleRequestDto(
     Integer maxAgeDays,
     @Size(max = 16) String pointCurrency,
     Object formula,
-    @Size(max = 40) String processType
+    @Size(max = 40) String processType,
+    /** Pass empty list to clear whenFactors. */
+    List<Map<String, Object>> whenFactors
 ) {}
