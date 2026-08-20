@@ -1,7 +1,7 @@
 # LedgeRX
 
 **Product:** **LedgeRX** · **Engine module:** `ledger-engine` `1.0.0`  
-Brand note: [docs/BRAND.md](docs/BRAND.md).
+Brand note: [docs/BOOKLET.md](docs/BOOKLET.md).
 
 Standalone wallet + ledger core for loyalty & programme books.  
 Optional client: [ledger-engine-sdk](https://github.com/yky32/ledger-engine-sdk) (manual JAR delivery; see [DELIVERY](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md)).
