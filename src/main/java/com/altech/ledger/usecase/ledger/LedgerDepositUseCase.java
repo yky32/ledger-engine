@@ -15,18 +15,18 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Deposit execution via central {@link PostingService}.
+ * Deposit execution via central {@link ApplyPostingUseCase}.
  */
 @Component
 @RequiredArgsConstructor
 public class LedgerDepositUseCase {
-    private final PostingService postingService;
+    private final ApplyPostingUseCase applyPostingUseCase;
     private final WalletService walletService;
 
     @Transactional
     public GetLedgerMovementResponseDto execute(CreateLedgerDepositRequestDto dto) {
         var wallet = walletService.resolve(dto.resolvedTargetWalletId());
-        return postingService.post(PostingCommand.deposit(
+        return applyPostingUseCase.execute(PostingCommand.deposit(
             wallet.getId(),
             dto.amount(),
             dto.currency(),
@@ -58,7 +58,7 @@ public class LedgerDepositUseCase {
         BigDecimal amount = new BigDecimal(amountStr == null ? "0" : amountStr);
         String movementKey = _first(payload, "movementKey", "eventId", "txnId", "id");
         var wallet = walletService.resolve(walletId);
-        return postingService.post(PostingCommand.deposit(
+        return applyPostingUseCase.execute(PostingCommand.deposit(
             wallet.getId(), amount, currency, movementKey, "webhook deposit", LedgerMovementMode.AUTO));
     }
 

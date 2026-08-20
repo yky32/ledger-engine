@@ -17,12 +17,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Facade for movement pipeline callers; balance writes go through {@link PostingService}.
+ * Facade for movement pipeline callers; balance writes go through {@link ApplyPostingUseCase}.
  */
 @Component
 @RequiredArgsConstructor
 public class LedgerMovementPipelineUseCase {
-    private final PostingService postingService;
+    private final ApplyPostingUseCase applyPostingUseCase;
     private final WalletService walletService;
     private final LedgerMovementQueryUseCase ledgerMovementQueryUseCase;
     private final LedgerMovementOperationUseCase ledgerMovementOperationUseCase;
@@ -36,7 +36,7 @@ public class LedgerMovementPipelineUseCase {
     @Transactional
     public GetLedgerMovementResponseDto withdraw(CreateLedgerWithdrawalRequestDto req) {
         var wallet = walletService.resolve(req.resolvedOriginatorWalletId());
-        return postingService.post(new PostingCommand(
+        return applyPostingUseCase.execute(new PostingCommand(
             PostingIntent.WITHDRAWAL,
             wallet.getId(),
             req.amount(),
@@ -53,7 +53,7 @@ public class LedgerMovementPipelineUseCase {
     public GetLedgerMovementResponseDto inWalletTransfer(CreateLedgerInWalletTransferRequestDto req) {
         var from = walletService.resolve(req.fromWalletId());
         var to = walletService.resolve(req.toWalletId());
-        return postingService.post(PostingCommand.inWalletTransfer(
+        return applyPostingUseCase.execute(PostingCommand.inWalletTransfer(
             from.getId(),
             to.getId(),
             req.amount(),

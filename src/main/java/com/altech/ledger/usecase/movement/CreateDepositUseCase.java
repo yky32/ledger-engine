@@ -7,25 +7,25 @@ import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.usecase.CommonUseCase;
-import com.altech.ledger.usecase.ledger.PostingService;
+import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Product deposit — credits member book for currency (single-sided).
- * Posts via central {@link PostingService} (not loyalty EARN / PROGRAM DE).
+ * Posts via central {@link ApplyPostingUseCase} (not loyalty EARN / PROGRAM DE).
  */
 @Component
 @RequiredArgsConstructor
 public class CreateDepositUseCase {
     private final CommonUseCase commonUseCase;
-    private final PostingService postingService;
+    private final ApplyPostingUseCase applyPostingUseCase;
 
     @Transactional
     public MovementResponse execute(DepositRequest request) {
         Wallet wallet = commonUseCase.requireActiveWallet(request.ownerId(), request.currency());
-        GetLedgerMovementResponseDto r = postingService.post(PostingCommand.deposit(
+        GetLedgerMovementResponseDto r = applyPostingUseCase.execute(PostingCommand.deposit(
             wallet.getId(),
             request.amount(),
             request.currency(),
