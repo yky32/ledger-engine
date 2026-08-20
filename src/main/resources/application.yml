@@ -59,6 +59,8 @@ ledger:
       initiated-topic: ${LEDGER_MOVEMENT_INITIATED_TOPIC:ledger.movement.initiated}
       done-topic: ${LEDGER_MOVEMENT_DONE_TOPIC:ledger.movement.done}
       balance-update-topic: ${LEDGER_MOVEMENT_BALANCE_TOPIC:ledger.movement.balance-update}
+      # Outbound after balances applied
+      balance-updated-topic: ${LEDGER_BALANCE_UPDATED_TOPIC:ledger.balance.updated}
       wallet-created-topic: ${LEDGER_WALLET_CREATED_TOPIC:ledger.wallet.created}
       group-id: ${LEDGER_MOVEMENT_KAFKA_GROUP:ledger-engine-movement}
   integration:

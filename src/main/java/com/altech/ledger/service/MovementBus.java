@@ -1,6 +1,7 @@
 package com.altech.ledger.service;
 
 import com.altech.ledger.config.MovementKafkaProperties;
+import com.altech.ledger.entity.dto.event.BalanceUpdatedEvent;
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
@@ -56,8 +57,39 @@ public class MovementBus {
             event.setStatus(LedgerMovementStatus.SETTLED);
             kafkaTemplate.getObject().send(movementKafkaProperties.getDoneTopic(),
                 String.valueOf(movement.getId()), objectMapper.writeValueAsString(event));
+            log.info("Published MOVEMENT_DONE id={} topic={}",
+                movement.getId(), movementKafkaProperties.getDoneTopic());
         } catch (Exception ex) {
             log.warn("Kafka DONE publish failed: {}", ex.getMessage());
+        }
+    }
+
+    /**
+     * Fire after account balances are updated. Downstream CRM/notify/points UI subscribe here.
+     */
+    public void publishBalanceUpdated(BalanceUpdatedEvent event) {
+        if (event == null) {
+            return;
+        }
+        if (!movementKafkaProperties.isEnabled() || kafkaTemplate.getIfAvailable() == null) {
+            log.debug("Kafka balance-updated skipped (disabled) movementId={}", event.getMovementId());
+            return;
+        }
+        try {
+            if (event.getEventName() == null || event.getEventName().isBlank()) {
+                event.setEventName("LEDGER_BALANCE_UPDATED");
+            }
+            String key = event.getWalletId() != null
+                ? String.valueOf(event.getWalletId())
+                : String.valueOf(event.getMovementId());
+            String json = objectMapper.writeValueAsString(event);
+            kafkaTemplate.getObject().send(
+                movementKafkaProperties.getBalanceUpdatedTopic(), key, json);
+            log.info("Published BALANCE_UPDATED movementId={} walletId={} ownerId={} topic={}",
+                event.getMovementId(), event.getWalletId(), event.getOwnerId(),
+                movementKafkaProperties.getBalanceUpdatedTopic());
+        } catch (Exception ex) {
+            log.warn("Kafka BALANCE_UPDATED publish failed: {}", ex.getMessage());
         }
     }
 
