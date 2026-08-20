@@ -1,37 +1,7 @@
-# Hold / Release
+# Moved
 
-> **Docs entry:** [START_HERE.md](./START_HERE.md) — 唔好從本檔開始亂跳。
+**This page is merged into the single booklet.**
 
-Lock **available** balance without changing **ledger**.
+→ **[BOOKLET.md](./BOOKLET.md)**
 
-```text
-HOLD 3 LP   → available -= 3, ledger unchanged
-RELEASE 3   → available += 3 (cannot exceed ledger)
-```
-
-## API
-
-```bash
-curl -sS -X POST 'http://localhost:8080/wallets/holds' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "ownerId": "01A12345678",
-    "currency": "LP",
-    "amount": 3,
-    "movementKey": "hold-order-1"
-  }'
-
-curl -sS -X POST 'http://localhost:8080/wallets/releases' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "ownerId": "01A12345678",
-    "currency": "LP",
-    "amount": 3,
-    "movementKey": "rel-order-1"
-  }'
-```
-
-Idempotent by `movementKey`. Order types: `HOLD` / `RELEASE`.
-
-Entry rows mark `affectsLedger=false` so as-of **ledger** rebuild ignores holds; available still moves.  
-See [HISTORY_ASOF_REPLAY.md](./HISTORY_ASOF_REPLAY.md) · [DOUBLE_ENTRY_EARN.md](./DOUBLE_ENTRY_EARN.md).
+Historical copy: [archive/pre-booklet/HOLD_RELEASE.md](./archive/pre-booklet/HOLD_RELEASE.md)
