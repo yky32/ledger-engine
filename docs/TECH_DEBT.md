@@ -76,3 +76,4 @@ Status: `open` | `doing` | `done` | `wontfix`
 2. Starting work → set `doing`, open PR, link this ID in PR body.  
 3. Done → `done` + date/PR.  
 4. **Do not** implement TD-SEC-001 until Wayne prioritizes it; network boundary is enough for current phase.
+- Removed `LedgerMovementOrderTypeConstraintMigrator` — rely on enum column + Flyway later if CHECK needed.
