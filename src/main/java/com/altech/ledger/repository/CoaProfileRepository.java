@@ -12,6 +12,10 @@ public interface CoaProfileRepository extends JpaRepository<CoaProfile, Long> {
 
     boolean existsByCode(String code);
 
+    Optional<CoaProfile> findByTransactionCode(String transactionCode);
+
+    boolean existsByTransactionCode(String transactionCode);
+
     @Query("select p from CoaProfile p where p.isActive = true and p.isEnabled = true and p.isDefault = true order by p.id asc")
     List<CoaProfile> findEnabledDefaults();
 

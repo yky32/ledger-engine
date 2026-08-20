@@ -15,9 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
- * Flat COA profile (no JSONB). Lazy-seed DEFAULT = legacy CoaCodes values.
+ * Flat COA profile. Operator binds {@code transactionCode} (eventType) → this profile.
  */
 @Component
 @RequiredArgsConstructor
@@ -43,7 +44,30 @@ public class CoaProfileUseCase {
             .orElseThrow(() -> new BizException(CoaErrorResponse.COA0404, "code=" + code));
     }
 
-    /** Segments for any member book (settlement or LP) — same entity/type/sub/buffer. */
+    /**
+     * Resolve COA by business transaction / eventType code.
+     * Empty if no profile bound to that code.
+     */
+    @Transactional(readOnly = true)
+    public Optional<CoaProfile> findByTransactionCode(String transactionCode) {
+        if (transactionCode == null || transactionCode.isBlank()) {
+            return Optional.empty();
+        }
+        String t = _normTxn(transactionCode);
+        if (t == null) {
+            return Optional.empty();
+        }
+        return coaProfileRepository.findByTransactionCode(t)
+            .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()));
+    }
+
+    @Transactional(readOnly = true)
+    public GetCoaProfileResponseDto getByTransactionCode(String transactionCode) {
+        return toDto(findByTransactionCode(transactionCode)
+            .orElseThrow(() -> new BizException(CoaErrorResponse.COA0404,
+                "transactionCode=" + transactionCode)));
+    }
+
     @Transactional
     public Segments segments(String profileCode) {
         CoaProfile p = requireByCodeOrDefault(profileCode);
@@ -79,9 +103,6 @@ public class CoaProfileUseCase {
         return toDto(requireDefault());
     }
 
-    /**
-     * Idempotent ensure by code (create if missing). Idempotent ensure by code.
-     */
     @Transactional
     public GetCoaProfileResponseDto ensureProfile(
         String code,
@@ -92,7 +113,6 @@ public class CoaProfileUseCase {
         String c = code.trim().toUpperCase(Locale.ROOT);
         return coaProfileRepository.findByCode(c)
             .map(existing -> {
-                // keep existing segments; only refresh name if blank
                 if ((existing.getName() == null || existing.getName().isBlank()) && name != null) {
                     existing.setName(name);
                     return toDto(coaProfileRepository.save(existing));
@@ -100,7 +120,7 @@ public class CoaProfileUseCase {
                 return toDto(existing);
             })
             .orElseGet(() -> create(new CreateCoaProfileRequestDto(
-                c, name, isDefault, true, entity, null, null, null, "LP", true)));
+                c, name, null, isDefault, true, entity, null, null, null, "LP", true)));
     }
 
     @Transactional
@@ -109,17 +129,23 @@ public class CoaProfileUseCase {
         if (coaProfileRepository.existsByCode(code)) {
             throw new BizException(CoaErrorResponse.COA0409, "code=" + code);
         }
-        CoaProfile p = new CoaProfile();
-        p.setCode(code);
-        p.setName(blankTo(req.name(), code));
-        p.setIsDefault(Boolean.TRUE.equals(req.isDefault()));
-        p.setIsEnabled(req.isEnabled() == null || req.isEnabled());
-        p.setEntity(blankTo(req.entity(), CoaCodes.ENTITY));
-        p.setType(blankTo(req.type(), CoaCodes.typeCodeLiability()));
-        p.setSubType(blankTo(req.subType(), CoaCodes.SUB_TYPE));
-        p.setBuffer(blankTo(req.buffer(), CoaCodes.BUFFER));
-        p.setLpCurrency(blankTo(req.lpCurrency(), "LP"));
-        p.setPoolAllowNegative(req.poolAllowNegative() == null || req.poolAllowNegative());
+        String txn = _normTxn(req.transactionCode());
+        if (txn != null && coaProfileRepository.existsByTransactionCode(txn)) {
+            throw new BizException(CoaErrorResponse.COA0409, "transactionCode=" + txn);
+        }
+        CoaProfile p = CoaProfile.builder()
+            .code(code)
+            .name(blankTo(req.name(), code))
+            .transactionCode(txn)
+            .isDefault(Boolean.TRUE.equals(req.isDefault()))
+            .isEnabled(req.isEnabled() == null || req.isEnabled())
+            .entity(blankTo(req.entity(), CoaCodes.ENTITY))
+            .type(blankTo(req.type(), CoaCodes.typeCodeLiability()))
+            .subType(blankTo(req.subType(), CoaCodes.SUB_TYPE))
+            .buffer(blankTo(req.buffer(), CoaCodes.BUFFER))
+            .currency(blankTo(req.currency(), "LP"))
+            .poolAllowNegative(req.poolAllowNegative() == null || req.poolAllowNegative())
+            .build();
         p.setIsActive(true);
         if (Boolean.TRUE.equals(p.getIsDefault())) {
             _clearOtherDefaults(null);
@@ -132,6 +158,17 @@ public class CoaProfileUseCase {
         CoaProfile p = _require(id);
         if (req.name() != null) {
             p.setName(req.name().isBlank() ? p.getCode() : req.name().trim());
+        }
+        if (req.transactionCode() != null) {
+            String txn = _normTxn(req.transactionCode());
+            if (txn != null) {
+                coaProfileRepository.findByTransactionCode(txn).ifPresent(other -> {
+                    if (!other.getId().equals(p.getId())) {
+                        throw new BizException(CoaErrorResponse.COA0409, "transactionCode=" + txn);
+                    }
+                });
+            }
+            p.setTransactionCode(txn);
         }
         if (req.isEnabled() != null) {
             p.setIsEnabled(req.isEnabled());
@@ -148,8 +185,8 @@ public class CoaProfileUseCase {
         if (req.buffer() != null && !req.buffer().isBlank()) {
             p.setBuffer(req.buffer().trim());
         }
-        if (req.lpCurrency() != null && !req.lpCurrency().isBlank()) {
-            p.setLpCurrency(req.lpCurrency().trim().toUpperCase(Locale.ROOT));
+        if (req.currency() != null && !req.currency().isBlank()) {
+            p.setCurrency(req.currency().trim().toUpperCase(Locale.ROOT));
         }
         if (req.poolAllowNegative() != null) {
             p.setPoolAllowNegative(req.poolAllowNegative());
@@ -169,17 +206,18 @@ public class CoaProfileUseCase {
     }
 
     private CoaProfile _seedDefault() {
-        CoaProfile p = new CoaProfile();
-        p.setCode("DEFAULT");
-        p.setName("Default COA (legacy CoaCodes)");
-        p.setIsDefault(true);
-        p.setIsEnabled(true);
-        p.setEntity(CoaCodes.ENTITY);
-        p.setType(CoaCodes.typeCodeLiability());
-        p.setSubType(CoaCodes.SUB_TYPE);
-        p.setBuffer(CoaCodes.BUFFER);
-        p.setLpCurrency("LP");
-        p.setPoolAllowNegative(true);
+        CoaProfile p = CoaProfile.builder()
+            .code("DEFAULT")
+            .name("Default COA (legacy CoaCodes)")
+            .isDefault(true)
+            .isEnabled(true)
+            .entity(CoaCodes.ENTITY)
+            .type(CoaCodes.typeCodeLiability())
+            .subType(CoaCodes.SUB_TYPE)
+            .buffer(CoaCodes.BUFFER)
+            .currency("LP")
+            .poolAllowNegative(true)
+            .build();
         p.setIsActive(true);
         return coaProfileRepository.save(p);
     }
@@ -202,18 +240,27 @@ public class CoaProfileUseCase {
         return v == null || v.isBlank() ? d : v.trim();
     }
 
+    private static String _normTxn(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String t = raw.trim().toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+        return t.isEmpty() ? null : t;
+    }
+
     private GetCoaProfileResponseDto toDto(CoaProfile p) {
         return GetCoaProfileResponseDto.builder()
             .id(p.getId())
             .code(p.getCode())
             .name(p.getName())
+            .transactionCode(p.getTransactionCode())
             .isDefault(p.getIsDefault())
             .isEnabled(p.getIsEnabled())
             .entity(p.getEntity())
             .type(p.getType())
             .subType(p.getSubType())
             .buffer(p.getBuffer())
-            .lpCurrency(p.getLpCurrency())
+            .currency(p.getCurrency())
             .poolAllowNegative(p.getPoolAllowNegative())
             .createDt(p.getCreateDt())
             .updateDt(p.getUpdateDt())

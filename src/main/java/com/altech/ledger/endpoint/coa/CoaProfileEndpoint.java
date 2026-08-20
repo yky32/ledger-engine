@@ -40,6 +40,12 @@ public class CoaProfileEndpoint {
         return R.success(coaProfileUseCase.getByCode(code));
     }
 
+    /** Resolve COA by business transaction / eventType code. */
+    @GetMapping(params = "transactionCode")
+    public Result<GetCoaProfileResponseDto> getByTransactionCode(@RequestParam String transactionCode) {
+        return R.success(coaProfileUseCase.getByTransactionCode(transactionCode));
+    }
+
     @GetMapping("/{id}")
     public Result<GetCoaProfileResponseDto> get(@PathVariable Long id) {
         return R.success(coaProfileUseCase.get(id));

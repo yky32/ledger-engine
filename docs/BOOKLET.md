@@ -262,7 +262,40 @@ POST /wallets/releases
 
 Finance may use Entity / AccountType / SubType / full numbers (**inner gem**).
 
-**Product does not take COA on every txn.**
+### Operator mapping (no extra table)
+
+Bind **one transaction / eventType** per profile row:
+
+| Column | |
+|--------|--|
+| `code` | Profile id e.g. `UA_CC_LP` |
+| **`transactionCode`** | Unique e.g. `CC_TXN_LP` (= webhook eventType) |
+| `currency` | Points book currency (default LP) |
+| entity/type/subType/buffer | fullNumber segments |
+
+```text
+eventType CC_TXN_LP
+    → GET /coa-profiles?transactionCode=CC_TXN_LP
+    → CoaProfile (segments + currency)
+    → PostingRecipeCatalog (same code) for atoms
+```
+
+Create example:
+
+```json
+{
+  "code": "UA_CC_TXN_LP",
+  "name": "CC spend → LP",
+  "transactionCode": "CC_TXN_LP",
+  "entity": "01",
+  "type": "20",
+  "subType": "00",
+  "buffer": "00",
+  "currency": "LP"
+}
+```
+
+**Product does not take COA segments on every txn** — only `eventType`.
 
 | Layer | Example |
 |-------|---------|

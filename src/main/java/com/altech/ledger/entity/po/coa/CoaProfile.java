@@ -10,6 +10,8 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,15 +19,18 @@ import org.hibernate.annotations.GenericGenerator;
 
 /**
  * One row = one client COA profile. Flat columns only (no JSONB).
- * All member books share the same segment codes; currency comes from settlement / LP.
+ * Segment defaults via {@link Builder.Default}; normalize on persist.
  */
 @Entity
 @Table(uniqueConstraints = {
-    @UniqueConstraint(name = "uk_coa_profile_code", columnNames = "code")
+    @UniqueConstraint(name = "uk_coa_profile_code", columnNames = "code"),
+    @UniqueConstraint(name = "uk_coa_profile_transaction_code", columnNames = "transaction_code")
 })
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CoaProfile extends AuditEntityWithIsActive {
 
     @Id
@@ -40,41 +45,64 @@ public class CoaProfile extends AuditEntityWithIsActive {
     @Column
     private String name;
 
-    @Column(nullable = false)
-    private Boolean isDefault;
+    /**
+     * Business transaction / eventType code bound to this COA (e.g. CC_TXN_LP).
+     * Unique when set — operator maps txn → profile without a separate table.
+     * Null = profile used only by explicit coaProfileCode (onboard / default).
+     */
+    @Column
+    private String transactionCode;
 
+    @Builder.Default
     @Column(nullable = false)
-    private Boolean isEnabled;
+    private Boolean isDefault = Boolean.FALSE;
 
-    /** COA entity segment, e.g. 10 or 01 (Bank A). */
+    @Builder.Default
     @Column(nullable = false)
-    private String entity;
+    private Boolean isEnabled = Boolean.TRUE;
 
-    /** Account type segment, e.g. 20 LIABILITY / 99 Custodian. */
+    /** COA entity segment, e.g. 10 or 01. */
+    @Builder.Default
     @Column(nullable = false)
-    private String type;
+    private String entity = "10";
 
-    /** Sub-type segment, e.g. 00 or 21 Fees. */
+    /** Account type segment, e.g. 20 LIABILITY. */
+    @Builder.Default
     @Column(nullable = false)
-    private String subType;
+    private String type = "20";
 
-    /** Buffer segment, e.g. 00. */
+    /** Sub-type segment. */
+    @Builder.Default
     @Column(nullable = false)
-    private String buffer;
+    private String subType = "00";
 
-    /** Points currency code for LP books (default LP). */
+    /** Buffer segment. */
+    @Builder.Default
     @Column(nullable = false)
-    private String lpCurrency;
+    private String buffer = "00";
+
+    /**
+     * Points / loyalty currency for LP books under this profile.
+     * Column name {@code currency} (was lp_currency).
+     */
+    @Builder.Default
+    @Column(name = "currency", nullable = false)
+    private String currency = "LP";
 
     /** PROGRAM pool accounts may go negative. */
+    @Builder.Default
     @Column(nullable = false)
-    private Boolean poolAllowNegative;
+    private Boolean poolAllowNegative = Boolean.TRUE;
 
     @PrePersist
     @PreUpdate
-    void applyDefaults() {
+    void normalize() {
         if (code != null) {
             code = code.trim().toUpperCase();
+        }
+        if (transactionCode != null) {
+            String t = transactionCode.trim().toUpperCase();
+            transactionCode = t.isEmpty() ? null : t;
         }
         if (isDefault == null) {
             isDefault = Boolean.FALSE;
@@ -94,10 +122,10 @@ public class CoaProfile extends AuditEntityWithIsActive {
         if (buffer == null || buffer.isBlank()) {
             buffer = "00";
         }
-        if (lpCurrency == null || lpCurrency.isBlank()) {
-            lpCurrency = "LP";
+        if (currency == null || currency.isBlank()) {
+            currency = "LP";
         } else {
-            lpCurrency = lpCurrency.trim().toUpperCase();
+            currency = currency.trim().toUpperCase();
         }
         if (poolAllowNegative == null) {
             poolAllowNegative = Boolean.TRUE;
