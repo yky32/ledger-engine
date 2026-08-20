@@ -34,7 +34,8 @@ COA = **開簿科目段**（內部），**唔**決定賺幾多分。
 | **Upstream 接 API** | ① 本頁 → ② [CLIENT_EARN_WEBHOOK](./CLIENT_EARN_WEBHOOK.md) → ③ [API_SURFACE](./API_SURFACE.md) |
 | **開戶 / CRM** | [CLIENT_WALLET_ONBOARDING](./CLIENT_WALLET_ONBOARDING.md) |
 | **改 Door / Brain / COA** | [INGEST_VS_DIGESTION](./INGEST_VS_DIGESTION.md) → 各 config 深檔 |
-| **工程 / debt** | [TECH_DEBT](./TECH_DEBT.md) · [archive/](./archive/) |
+| **工程 / debt** | [TECH_DEBT](./TECH_DEBT.md
+- [FACTORS.md](./FACTORS.md) — Door entryFactors + Brain whenFactors (P1/P2)) · [archive/](./archive/) |
 
 ---
 

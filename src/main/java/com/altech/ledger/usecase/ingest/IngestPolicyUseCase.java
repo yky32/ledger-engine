@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -56,6 +57,9 @@ public class IngestPolicyUseCase {
             String code = req.autoWalletCoaProfileCode().trim();
             p.setAutoWalletCoaProfileCode(code.isEmpty() ? null : code.toUpperCase(Locale.ROOT));
         }
+        if (req.entryFactors() != null) {
+            p.setEntryFactors(req.entryFactors().isEmpty() ? null : List.copyOf(req.entryFactors()));
+        }
         return toDto(ingestPolicyRepository.save(p));
     }
 
@@ -93,6 +97,7 @@ public class IngestPolicyUseCase {
             .autoWalletAssociatedFrom(p.getAutoWalletAssociatedFrom())
             .autoWalletNamePrefix(p.getAutoWalletNamePrefix())
             .autoWalletCoaProfileCode(p.getAutoWalletCoaProfileCode())
+            .entryFactors(p.getEntryFactors())
             .createDt(p.getCreateDt())
             .updateDt(p.getUpdateDt())
             .build();

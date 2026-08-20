@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -25,13 +26,14 @@ public class GetDigestionRuleResponseDto {
     private Integer priority;
     private BigDecimal minAmount;
     private List<String> eligibleCurrencies;
-    /** MCC allow-list; empty = any MCC. */
     private List<String> eligibleMccs;
     private Integer maxAgeDays;
     private String pointCurrency;
-    /** JSON config object, e.g. {@code {"type":"RATE","rate":0.01}}. */
+    /** JSON config object, e.g. {@code {"type":"RATE","rate":0.01,"multiplier":2}}. */
     private Object formula;
     private String processType;
+    /** Explicit when-factors (see docs/FACTORS.md). */
+    private List<Map<String, Object>> whenFactors;
     private Instant createDt;
     private Instant updateDt;
 }

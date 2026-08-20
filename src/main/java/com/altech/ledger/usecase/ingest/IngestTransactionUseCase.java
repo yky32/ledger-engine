@@ -17,6 +17,8 @@ import com.altech.ledger.repository.FailedTransactionIngestRepository;
 import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
+import com.altech.ledger.usecase.factor.FactorMatcher;
+import com.altech.ledger.usecase.factor.FactorSpec;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ import java.util.UUID;
 public class IngestTransactionUseCase {
     private final IngestPolicyUseCase ingestPolicyUseCase;
     private final TransactionRuleEngine transactionRuleEngine;
+    private final FactorMatcher factorMatcher;
     private final EnsureWalletForIngestUseCase ensureWalletForIngestUseCase;
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
@@ -61,8 +64,17 @@ public class IngestTransactionUseCase {
      */
     @Transactional(readOnly = true)
     public IngestionResult dryRun(TransactionalEvent event) {
-        if (!Boolean.TRUE.equals(ingestPolicyUseCase.requireEffective().getIsEnabled())) {
+        var policy = ingestPolicyUseCase.requireEffective();
+        if (!Boolean.TRUE.equals(policy.getIsEnabled())) {
             return IngestionResult.previewSkipped(event.eventId(), "Integration disabled", List.of());
+        }
+        FactorMatcher.MatchResult entry = factorMatcher.matchAll(
+            event, FactorSpec.asFactorList(policy.getEntryFactors()));
+        if (!entry.matched()) {
+            String reason = entry.detail() == null ? "entryFactors rejected" : entry.detail();
+            return IngestionResult.previewSkipped(event.eventId(), "NOT_ENTERED: " + reason, List.of(
+                new EligibilityTraceEntry("_DOOR_", null, false,
+                    entry.failStep() == null ? "ENTRY" : entry.failStep(), reason)));
         }
         TransactionRuleEngine.EvaluationOutcome outcome = transactionRuleEngine.evaluate(event);
         if (!outcome.matched()) {
@@ -81,8 +93,19 @@ public class IngestTransactionUseCase {
 
     @Transactional
     public IngestionResult execute(TransactionalEvent event) {
-        if (!Boolean.TRUE.equals(ingestPolicyUseCase.requireEffective().getIsEnabled())) {
+        var policy = ingestPolicyUseCase.requireEffective();
+        if (!Boolean.TRUE.equals(policy.getIsEnabled())) {
             return _fail(event, "DISABLED", "Integration disabled", List.of());
+        }
+
+        FactorMatcher.MatchResult entry = factorMatcher.matchAll(
+            event, FactorSpec.asFactorList(policy.getEntryFactors()));
+        if (!entry.matched()) {
+            String reason = entry.detail() == null ? "entryFactors rejected" : entry.detail();
+            List<EligibilityTraceEntry> doorTrace = List.of(
+                new EligibilityTraceEntry("_DOOR_", null, false,
+                    entry.failStep() == null ? "ENTRY" : entry.failStep(), reason));
+            return _fail(event, "NOT_ENTERED", reason, doorTrace);
         }
 
         TransactionRuleEngine.EvaluationOutcome outcome = transactionRuleEngine.evaluate(event);

@@ -4,6 +4,7 @@ import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.po.digestion.DigestionRule;
 import com.altech.ledger.repository.DigestionRuleRepository;
+import com.altech.ledger.usecase.factor.FactorMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +28,7 @@ class TransactionRuleEngineTest {
 
     @BeforeEach
     void setUp() {
-        engine = new TransactionRuleEngine(repo);
+        engine = new TransactionRuleEngine(repo, new FactorMatcher());
         DigestionRule purchase = new DigestionRule();
         purchase.setCode("PURCHASE_T");
         purchase.setEventType("PURCHASE");

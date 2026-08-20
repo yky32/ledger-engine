@@ -2,6 +2,7 @@ package com.altech.ledger.entity.po.ingest;
 
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,6 +12,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
+
+import java.util.List;
+import java.util.Map;
 
 /** Ingest policy — webhook door. */
 @Entity
@@ -49,6 +54,14 @@ public class IngestPolicy extends AuditEntityWithIsActive {
      */
     @Column
     private String autoWalletCoaProfileCode;
+
+    /**
+     * Entry factors (JSONB array). All must match or event is NOT ENTERED.
+     * Empty/null = only isEnabled gate. See docs/FACTORS.md.
+     */
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb")
+    private List<Map<String, Object>> entryFactors;
 
     @PrePersist
     void applyDefaults() {

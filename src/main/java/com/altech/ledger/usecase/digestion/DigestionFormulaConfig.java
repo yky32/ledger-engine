@@ -95,13 +95,19 @@ public final class DigestionFormulaConfig {
         }
         type = type.trim().toUpperCase(Locale.ROOT);
         return switch (type) {
-            case TYPE_AMOUNT, "AMT" -> ofAmount();
+            case TYPE_AMOUNT, "AMT" -> {
+                Map<String, Object> m = ofAmount();
+                copyMultiplier(in, m);
+                yield m;
+            }
             case TYPE_RATE, "PERCENT", "PCT" -> {
                 BigDecimal rate = decimal(in.get("rate"));
                 if (rate == null) {
                     throw new IllegalArgumentException("formula.rate required for type RATE");
                 }
-                yield ofRate(rate);
+                Map<String, Object> m = ofRate(rate);
+                copyMultiplier(in, m);
+                yield m;
             }
             case TYPE_FIXED, "CONST", "CONSTANT" -> {
                 BigDecimal v = decimal(in.get("value"));
@@ -111,10 +117,15 @@ public final class DigestionFormulaConfig {
                 if (v == null) {
                     throw new IllegalArgumentException("formula.value required for type FIXED");
                 }
-                yield ofFixed(v);
+                Map<String, Object> m = ofFixed(v);
+                copyMultiplier(in, m);
+                yield m;
             }
-            case TYPE_LINEAR, "MUL_ADD", "RATE_FIXED" ->
-                ofLinear(decimal(in.get("rate")), decimal(first(in, "fixed", "value")));
+            case TYPE_LINEAR, "MUL_ADD", "RATE_FIXED" -> {
+                Map<String, Object> m = ofLinear(decimal(in.get("rate")), decimal(first(in, "fixed", "value")));
+                copyMultiplier(in, m);
+                yield m;
+            }
             default -> throw new IllegalArgumentException("Unsupported formula.type: " + type);
         };
     }
@@ -123,7 +134,7 @@ public final class DigestionFormulaConfig {
         Map<String, Object> cfg = normalize(formula);
         String type = String.valueOf(cfg.get("type"));
         BigDecimal amt = amount == null ? BigDecimal.ZERO : amount;
-        return switch (type) {
+        BigDecimal base = switch (type) {
             case TYPE_AMOUNT -> scale(amt);
             case TYPE_RATE -> scale(amt.multiply(require(decimal(cfg.get("rate")), "rate")));
             case TYPE_FIXED -> scale(require(decimal(cfg.get("value")), "value"));
@@ -140,6 +151,14 @@ public final class DigestionFormulaConfig {
             }
             default -> throw new IllegalArgumentException("Unsupported formula.type: " + type);
         };
+        BigDecimal mult = decimal(cfg.get("multiplier"));
+        if (mult == null) {
+            mult = decimal(cfg.get("mult"));
+        }
+        if (mult != null && mult.compareTo(BigDecimal.ONE) != 0) {
+            return scale(base.multiply(mult));
+        }
+        return base;
     }
 
     public static boolean isSpendBased(Object formula) {
@@ -223,5 +242,15 @@ public final class DigestionFormulaConfig {
             return m.get(a);
         }
         return m.get(b);
+    }
+
+    private static void copyMultiplier(Map<String, Object> in, Map<String, Object> out) {
+        BigDecimal mult = decimal(in.get("multiplier"));
+        if (mult == null) {
+            mult = decimal(in.get("mult"));
+        }
+        if (mult != null) {
+            out.put("multiplier", mult);
+        }
     }
 }
