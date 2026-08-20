@@ -6,6 +6,7 @@ import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 
 import com.altech.ledger.entity.dto.BalanceExecutionResultCommand;
+import com.altech.ledger.entity.dto.event.BalanceUpdatedEvent;
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
 import com.altech.ledger.entity.enu.BalanceOperation;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
@@ -103,6 +105,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             ledgerMovementRepository.save(movement);
             createLedgerEntries(movement, command);
             movementBus.publishDone(movement);
+            movementBus.publishBalanceUpdated(buildBalanceUpdatedEvent(movement, command));
             notification(MovementBus.toEvent(movement));
         } catch (RuntimeException ex) {
             log.error("movement execution failed id={}", movement.getId(), ex);
@@ -235,6 +238,47 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             entry.setAffectsAvailable(true);
             ledgerEntryRepository.save(entry);
         }
+    }
+
+    private BalanceUpdatedEvent buildBalanceUpdatedEvent(
+        LedgerMovement movement,
+        BalanceExecutionResultCommand command
+    ) {
+        String ownerId = null;
+        if (movement.getWalletId() != null) {
+            ownerId = walletRepository.findById(movement.getWalletId())
+                .map(Wallet::getOwnerId)
+                .orElse(null);
+        }
+        List<BalanceUpdatedEvent.AccountBalanceSnapshot> snaps = new ArrayList<>();
+        if (command != null && command.getDetails() != null) {
+            for (BalanceExecutionResultCommand.CommandDetail d : command.getDetails()) {
+                if (d.getAccount() == null || d.getAccount().getId() == null) {
+                    continue;
+                }
+                Account a = accountRepository.findById(d.getAccount().getId()).orElse(d.getAccount());
+                snaps.add(BalanceUpdatedEvent.AccountBalanceSnapshot.builder()
+                    .accountId(a.getId())
+                    .fullNumber(a.getFullNumber())
+                    .currency(a.getCurrency())
+                    .ledgerBalance(a.getLedgerBalance())
+                    .availableBalance(a.getAvailableBalance())
+                    .allowNegative(a.isAllowNegative())
+                    .build());
+            }
+        }
+        return BalanceUpdatedEvent.builder()
+            .eventName("LEDGER_BALANCE_UPDATED")
+            .movementId(movement.getId())
+            .movementKey(movement.getMovementKey())
+            .walletId(movement.getWalletId())
+            .ownerId(ownerId)
+            .orderType(movement.getOrderType())
+            .amount(movement.getAmount())
+            .currency(movement.getCurrency())
+            .description(movement.getMetadata())
+            .accounts(snaps)
+            .build();
     }
 
     private Account resolveAccount(String idOrWalletRef, Currency currency) {

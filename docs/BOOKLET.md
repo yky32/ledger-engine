@@ -362,7 +362,21 @@ Idempotency: `loyalty-*` / `loyalty-recipe-{eventId}-…` movement keys.
 
 ---
 
-## 12. UA use-case recipes
+## 12. Kafka balance updated
+
+After each **SETTLED** movement (balances applied), when `LEDGER_MOVEMENT_KAFKA_ENABLED=true`:
+
+| | |
+|--|--|
+| Topic | `ledger.balance.updated` (`LEDGER_BALANCE_UPDATED_TOPIC`) |
+| Key | walletId |
+| eventName | `LEDGER_BALANCE_UPDATED` |
+
+Payload: `movementId`, `ownerId`, `orderType`, `amount`, `currency`, `accounts[]` (ledger + available snapshots).
+
+Also: `ledger.movement.done`. Inbound execute: `initiated` / `balance-update`.
+
+## 13. UA use-case recipes
 
 Sheet use cases → **recipe codes** → **atoms** → posting.
 
@@ -407,7 +421,7 @@ Unknown types (e.g. `PURCHASE`) → classic EARN/BURN only.
 
 # D · Ops
 
-## 13. Local bootstrap
+## 14. Local bootstrap
 
 ```bash
 # Postgres :5433 / DB ledger-engine
@@ -422,7 +436,7 @@ Admin: `LEDGER_ENGINE_URL=http://localhost:8080`
 
 ---
 
-## 14. Admin
+## 15. Admin
 
 | Screen | |
 |--------|--|
@@ -433,7 +447,7 @@ Admin: `LEDGER_ENGINE_URL=http://localhost:8080`
 
 ---
 
-## 15. Decks
+## 16. Decks
 
 Under `docs/decks/` (assets only — not a second handbook):
 
@@ -447,7 +461,7 @@ Other pptx may be aliases / older cuts of the same story.
 
 ---
 
-## 16. Freeze & debt
+## 17. Freeze & debt
 
 ### Feature freeze (core)
 
