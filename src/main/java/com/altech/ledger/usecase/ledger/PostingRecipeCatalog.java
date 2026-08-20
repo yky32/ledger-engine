@@ -60,6 +60,12 @@ public class PostingRecipeCatalog {
             List.of(PostingAtom.CREDIT_REWARD, PostingAtom.CONVERT_HKD_TO_LP, PostingAtom.CASHBACK),
             Currency.HKD);
 
+        // —— Non-financial engagement (Brain FIXED points; amount may be 0) ——
+        put("LIKE_FB_PAGE", "UA_ENGAGE", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
+        put("SOCIAL_LIKE", "UA_ENGAGE", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
+        put("FOLLOW_IG", "UA_ENGAGE", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
+        put("WATCH_VIDEO", "UA_ENGAGE", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
+
         // aliases from sheet wording
         alias("LOAD_DD_HKD", "LOAN_DD_HKD");
         alias("LOAD_DD_LP", "LOAN_DD_LP");
