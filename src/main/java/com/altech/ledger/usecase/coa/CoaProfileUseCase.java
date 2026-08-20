@@ -45,8 +45,8 @@ public class CoaProfileUseCase {
     }
 
     /**
-     * Resolve COA by business transaction / eventType code.
-     * Empty if no profile bound to that code.
+     * Resolve COA by business eventType / transaction code.
+     * Looks up {@code transactionCode}, then falls back to {@code code} (same-field assumption).
      */
     @Transactional(readOnly = true)
     public Optional<CoaProfile> findByTransactionCode(String transactionCode) {
@@ -57,7 +57,12 @@ public class CoaProfileUseCase {
         if (t == null) {
             return Optional.empty();
         }
-        return coaProfileRepository.findByTransactionCode(t)
+        Optional<CoaProfile> byTxn = coaProfileRepository.findByTransactionCode(t)
+            .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()));
+        if (byTxn.isPresent()) {
+            return byTxn;
+        }
+        return coaProfileRepository.findByCode(t)
             .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()));
     }
 
@@ -129,8 +134,12 @@ public class CoaProfileUseCase {
         if (coaProfileRepository.existsByCode(code)) {
             throw new BizException(CoaErrorResponse.COA0409, "code=" + code);
         }
+        // Default: transactionCode == code (unless operator overrides)
         String txn = _normTxn(req.transactionCode());
-        if (txn != null && coaProfileRepository.existsByTransactionCode(txn)) {
+        if (txn == null) {
+            txn = code;
+        }
+        if (coaProfileRepository.existsByTransactionCode(txn)) {
             throw new BizException(CoaErrorResponse.COA0409, "transactionCode=" + txn);
         }
         CoaProfile p = CoaProfile.builder()
@@ -160,15 +169,18 @@ public class CoaProfileUseCase {
             p.setName(req.name().isBlank() ? p.getCode() : req.name().trim());
         }
         if (req.transactionCode() != null) {
+            // empty string → fall back to same as code (default assumption)
             String txn = _normTxn(req.transactionCode());
-            if (txn != null) {
-                coaProfileRepository.findByTransactionCode(txn).ifPresent(other -> {
-                    if (!other.getId().equals(p.getId())) {
-                        throw new BizException(CoaErrorResponse.COA0409, "transactionCode=" + txn);
-                    }
-                });
+            if (txn == null) {
+                txn = p.getCode();
             }
-            p.setTransactionCode(txn);
+            final String txnFinal = txn;
+            coaProfileRepository.findByTransactionCode(txnFinal).ifPresent(other -> {
+                if (!other.getId().equals(p.getId())) {
+                    throw new BizException(CoaErrorResponse.COA0409, "transactionCode=" + txnFinal);
+                }
+            });
+            p.setTransactionCode(txnFinal);
         }
         if (req.isEnabled() != null) {
             p.setIsEnabled(req.isEnabled());

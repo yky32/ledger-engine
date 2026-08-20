@@ -264,38 +264,36 @@ Finance may use Entity / AccountType / SubType / full numbers (**inner gem**).
 
 ### Operator mapping (no extra table)
 
-Bind **one transaction / eventType** per profile row:
+**Default: `code` ≡ `transactionCode` ≡ webhook `eventType`.**  
+Only set `transactionCode` differently if you need to extend later.
 
 | Column | |
 |--------|--|
-| `code` | Profile id e.g. `UA_CC_LP` |
-| **`transactionCode`** | Unique e.g. `CC_TXN_LP` (= webhook eventType) |
-| `currency` | Points book currency (default LP) |
+| **`code`** | Profile id **and** (by default) eventType, e.g. `CC_TXN_LP` |
+| `transactionCode` | Optional override; blank → same as `code` |
+| `currency` | Points book (default LP) |
 | entity/type/subType/buffer | fullNumber segments |
 
 ```text
 eventType CC_TXN_LP
-    → GET /coa-profiles?transactionCode=CC_TXN_LP
-    → CoaProfile (segments + currency)
-    → PostingRecipeCatalog (same code) for atoms
+    → coa_profile.code OR transaction_code = CC_TXN_LP
+    → segments + currency
+    → PostingRecipeCatalog(CC_TXN_LP)
 ```
 
-Create example:
+Create (simplest — one field):
 
 ```json
 {
-  "code": "UA_CC_TXN_LP",
+  "code": "CC_TXN_LP",
   "name": "CC spend → LP",
-  "transactionCode": "CC_TXN_LP",
   "entity": "01",
   "type": "20",
-  "subType": "00",
-  "buffer": "00",
   "currency": "LP"
 }
 ```
 
-**Product does not take COA segments on every txn** — only `eventType`.
+**Product does not take COA segments on every txn** — only `eventType` (= code).
 
 | Layer | Example |
 |-------|---------|
