@@ -164,8 +164,12 @@ public final class FactorSpec {
         String m = String.valueOf(v).trim().toLowerCase(Locale.ROOT);
         return switch (m) {
             case "and", "all", "allof", "every" -> "all";
-            case "or", "any", "anyof", "one", "oneof" -> "any";
+            case "or", "any", "anyof", "one", "oneof_any" -> "any";
             case "atleast", "at_least", "n_of", "nof", "count", "min", "minmatch" -> "atLeast";
+            case "exactly", "exact", "exactly_n" -> "exactly";
+            case "atmost", "at_most", "max" -> "atMost";
+            case "not", "none", "nor" -> "not";
+            case "oneof", "xor", "exclusive" -> "oneOf";
             case "anygroup", "any_group", "groups_or", "or_groups" -> "anyGroup";
             case "allgroup", "all_groups", "groups_and", "and_groups" -> "allGroups";
             default -> m;

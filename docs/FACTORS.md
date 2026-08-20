@@ -44,6 +44,27 @@ Plain **array** = **AND all** (compat).
 
 Object form supports the three UAF patterns:
 
+### Boolean modes (full)
+
+| match | |
+|-------|--|
+| all | AND |
+| any | OR |
+| atLeast + count | ≥ N |
+| exactly + count | = N |
+| atMost + count | ≤ N |
+| not | none match |
+| oneOf | exactly one child |
+| anyGroup / allGroups | group OR/AND |
+
+### Explain path
+
+`eligibilityTrace[].matchedPath` + detail `path=G12 > F1`.
+
+### Equation extras
+
+`cap` · `floor` · `multiplier` · `TIERED_RATE` · `TABLE` (by metadata) — see FACTORS_ROADMAP.md.
+
 ### 1) Any one of N (`match: any`)
 
 ```json

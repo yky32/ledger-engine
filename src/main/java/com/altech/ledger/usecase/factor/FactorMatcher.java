@@ -26,13 +26,43 @@ import java.util.stream.Collectors;
 @Component
 public class FactorMatcher {
 
-    public record MatchResult(boolean matched, String failField, String failOp, String detail) {
+    public record MatchResult(
+        boolean matched,
+        String failField,
+        String failOp,
+        String detail,
+        List<String> path
+    ) {
         public static MatchResult ok() {
-            return new MatchResult(true, null, null, null);
+            return ok(List.of());
+        }
+
+        public static MatchResult ok(List<String> path) {
+            return new MatchResult(true, null, null, null,
+                path == null ? List.of() : List.copyOf(path));
         }
 
         public static MatchResult fail(String field, String op, String detail) {
-            return new MatchResult(false, field, op, detail);
+            return new MatchResult(false, field, op, detail, List.of());
+        }
+
+        public MatchResult prefix(String segment) {
+            if (segment == null || segment.isBlank()) {
+                return this;
+            }
+            List<String> p = new ArrayList<>();
+            p.add(segment);
+            if (path != null) {
+                p.addAll(path);
+            }
+            return new MatchResult(matched, failField, failOp, detail, List.copyOf(p));
+        }
+
+        public String pathJoined() {
+            if (path == null || path.isEmpty()) {
+                return null;
+            }
+            return String.join(" > ", path);
         }
 
         /** failStep token for eligibilityTrace */
@@ -117,25 +147,30 @@ public class FactorMatcher {
         String mode = FactorSpec.matchModeOf(set);
         List<Object> children = FactorSpec.childrenOf(set);
         List<Object> groups = FactorSpec.groupsOf(set);
+        String setId = FactorSpec.idOf(set);
 
         return switch (mode) {
             case "all" -> {
                 List<Object> nodes = !children.isEmpty() ? children : groups;
+                List<String> pathAcc = new ArrayList<>();
                 for (Object c : nodes) {
                     if (!(c instanceof Map<?, ?>)) {
                         continue;
                     }
                     MatchResult r = matchNode(event, (Map<String, Object>) c);
                     if (!r.matched()) {
-                        yield r;
+                        yield setId == null ? r : r.prefix(setId);
+                    }
+                    if (r.path() != null) {
+                        pathAcc.addAll(r.path());
                     }
                 }
-                yield MatchResult.ok();
+                yield setId == null ? MatchResult.ok(pathAcc) : MatchResult.ok(pathAcc).prefix(setId);
             }
             case "any" -> {
                 List<Object> nodes = !children.isEmpty() ? children : groups;
                 if (nodes.isEmpty()) {
-                    yield MatchResult.ok();
+                    yield MatchResult.ok(setId == null ? List.of() : List.of(setId));
                 }
                 List<String> fails = new ArrayList<>();
                 for (Object c : nodes) {
@@ -144,25 +179,77 @@ public class FactorMatcher {
                     }
                     MatchResult r = matchNode(event, (Map<String, Object>) c);
                     if (r.matched()) {
-                        yield MatchResult.ok();
+                        yield setId == null ? r : r.prefix(setId);
                     }
                     fails.add(r.detail() == null ? r.failStep() : r.detail());
                 }
                 yield MatchResult.fail("SET", "any",
                     "none of " + nodes.size() + " factors matched; samples=" + fails.stream().limit(3).toList());
             }
-            case "atLeast" -> {
+            case "not", "none" -> {
                 List<Object> nodes = !children.isEmpty() ? children : groups;
-                int need = FactorSpec.countOf(set, 1);
-                if (need <= 0) {
+                // NOT: none of children may match (if empty → ok)
+                for (Object c : nodes) {
+                    if (!(c instanceof Map<?, ?>)) {
+                        continue;
+                    }
+                    MatchResult r = matchNode(event, (Map<String, Object>) c);
+                    if (r.matched()) {
+                        yield MatchResult.fail("SET", "not",
+                            "NOT failed; child matched " + (r.pathJoined() == null ? r.detail() : r.pathJoined()));
+                    }
+                }
+                yield MatchResult.ok(setId == null ? List.of("NOT") : List.of(setId, "NOT"));
+            }
+            case "atLeast" -> countMode(event, set, children, groups, setId, false, false);
+            case "exactly", "exact" -> countMode(event, set, children, groups, setId, true, false);
+            case "atMost" -> countMode(event, set, children, groups, setId, false, true);
+            case "anyGroup" -> {
+                List<Object> gs = !groups.isEmpty() ? groups : children;
+                if (gs.isEmpty()) {
                     yield MatchResult.ok();
                 }
+                List<String> fails = new ArrayList<>();
+                for (Object g : gs) {
+                    if (!(g instanceof Map<?, ?> gm)) {
+                        continue;
+                    }
+                    MatchResult r = matchGroup(event, (Map<String, Object>) gm);
+                    if (r.matched()) {
+                        yield setId == null ? r : r.prefix(setId);
+                    }
+                    String id = FactorSpec.idOf((Map<String, Object>) gm);
+                    fails.add((id == null ? "?" : id) + ":" + (r.detail() == null ? r.failStep() : r.detail()));
+                }
+                yield MatchResult.fail("SET", "anyGroup",
+                    "no group matched; " + fails.stream().limit(4).toList());
+            }
+            case "allGroups" -> {
+                List<Object> gs = !groups.isEmpty() ? groups : children;
+                List<String> pathAcc = new ArrayList<>();
+                for (Object g : gs) {
+                    if (!(g instanceof Map<?, ?> gm)) {
+                        continue;
+                    }
+                    MatchResult r = matchGroup(event, (Map<String, Object>) gm);
+                    if (!r.matched()) {
+                        yield setId == null ? r : r.prefix(setId);
+                    }
+                    if (r.path() != null) {
+                        pathAcc.addAll(r.path());
+                    }
+                }
+                yield setId == null ? MatchResult.ok(pathAcc) : MatchResult.ok(pathAcc).prefix(setId);
+            }
+            case "oneOf", "xor" -> {
+                // exactly one child/group matches
+                List<Object> nodes = !groups.isEmpty() ? groups : children;
                 if (nodes.isEmpty()) {
-                    yield MatchResult.fail("SET", "atLeast", "no factors; need " + need);
+                    yield MatchResult.ok();
                 }
                 int hit = 0;
+                MatchResult lastHit = null;
                 List<String> hitIds = new ArrayList<>();
-                List<String> miss = new ArrayList<>();
                 int i = 0;
                 for (Object c : nodes) {
                     i++;
@@ -177,51 +264,84 @@ public class FactorMatcher {
                     if (r.matched()) {
                         hit++;
                         hitIds.add(id);
-                    } else {
-                        miss.add(id);
+                        lastHit = r.prefix(id);
                     }
                 }
-                if (hit >= need) {
-                    yield MatchResult.ok();
+                if (hit == 1 && lastHit != null) {
+                    yield setId == null ? lastHit : lastHit.prefix(setId);
                 }
-                yield MatchResult.fail("SET", "atLeast",
-                    "matched " + hit + " of " + nodes.size() + " (need " + need + "); hit=" + hitIds + " miss=" + miss);
-            }
-            case "anyGroup" -> {
-                List<Object> gs = !groups.isEmpty() ? groups : children;
-                if (gs.isEmpty()) {
-                    yield MatchResult.ok();
-                }
-                List<String> fails = new ArrayList<>();
-                for (Object g : gs) {
-                    if (!(g instanceof Map<?, ?> gm)) {
-                        continue;
-                    }
-                    MatchResult r = matchGroup(event, (Map<String, Object>) gm);
-                    if (r.matched()) {
-                        yield MatchResult.ok();
-                    }
-                    String id = FactorSpec.idOf((Map<String, Object>) gm);
-                    fails.add((id == null ? "?" : id) + ":" + (r.detail() == null ? r.failStep() : r.detail()));
-                }
-                yield MatchResult.fail("SET", "anyGroup",
-                    "no group matched; " + fails.stream().limit(4).toList());
-            }
-            case "allGroups" -> {
-                List<Object> gs = !groups.isEmpty() ? groups : children;
-                for (Object g : gs) {
-                    if (!(g instanceof Map<?, ?> gm)) {
-                        continue;
-                    }
-                    MatchResult r = matchGroup(event, (Map<String, Object>) gm);
-                    if (!r.matched()) {
-                        yield r;
-                    }
-                }
-                yield MatchResult.ok();
+                yield MatchResult.fail("SET", "oneOf",
+                    "oneOf needs exactly 1 match; got " + hit + " hit=" + hitIds);
             }
             default -> MatchResult.fail("SET", mode, "unsupported match mode: " + mode);
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    private MatchResult countMode(
+        TransactionalEvent event,
+        Map<String, Object> set,
+        List<Object> children,
+        List<Object> groups,
+        String setId,
+        boolean exactly,
+        boolean atMost
+    ) {
+        List<Object> nodes = !children.isEmpty() ? children : groups;
+        int need = FactorSpec.countOf(set, 1);
+        if (nodes.isEmpty()) {
+            if (exactly) {
+                return need == 0 ? MatchResult.ok() : MatchResult.fail("SET", "exactly", "no factors; need " + need);
+            }
+            if (atMost) {
+                return MatchResult.ok();
+            }
+            return need <= 0 ? MatchResult.ok() : MatchResult.fail("SET", "atLeast", "no factors; need " + need);
+        }
+        int hit = 0;
+        List<String> hitIds = new ArrayList<>();
+        List<String> hitPath = new ArrayList<>();
+        List<String> miss = new ArrayList<>();
+        int i = 0;
+        for (Object c : nodes) {
+            i++;
+            if (!(c instanceof Map<?, ?> m)) {
+                continue;
+            }
+            MatchResult r = matchNode(event, (Map<String, Object>) m);
+            String id = FactorSpec.idOf((Map<String, Object>) m);
+            if (id == null) {
+                id = "#" + i;
+            }
+            if (r.matched()) {
+                hit++;
+                hitIds.add(id);
+                hitPath.add(id);
+                if (r.path() != null) {
+                    hitPath.addAll(r.path());
+                }
+            } else {
+                miss.add(id);
+            }
+        }
+        boolean ok;
+        String modeName;
+        if (exactly) {
+            ok = hit == need;
+            modeName = "exactly";
+        } else if (atMost) {
+            ok = hit <= need;
+            modeName = "atMost";
+        } else {
+            ok = hit >= need;
+            modeName = "atLeast";
+        }
+        if (ok) {
+            MatchResult r = MatchResult.ok(hitPath);
+            return setId == null ? r : r.prefix(setId);
+        }
+        return MatchResult.fail("SET", modeName,
+            modeName + " matched " + hit + " of " + nodes.size() + " (need " + need + "); hit=" + hitIds + " miss=" + miss);
     }
 
     /** Group defaults to AND of its factors (or nested match). */
@@ -258,40 +378,48 @@ public class FactorMatcher {
         String field = FactorSpec.fieldOf(factor);
         String op = FactorSpec.opOf(factor);
         Object expected = FactorSpec.valueOf(factor);
+        String leafId = FactorSpec.idOf(factor);
+        if (leafId == null && field != null) {
+            leafId = field + ":" + op;
+        }
         if (field == null || field.isBlank()) {
             return MatchResult.fail("factor", op, "factor.field required");
         }
         String f = field.trim();
 
         try {
+            MatchResult r;
             if ("exists".equals(op)) {
                 Object actual = resolve(event, f);
                 boolean want = expected == null || asBool(expected, true);
                 boolean has = actual != null && !(actual instanceof String s && s.isBlank());
-                if (has == want) {
-                    return MatchResult.ok();
-                }
-                return MatchResult.fail(f, op, "exists=" + has + " want=" + want);
+                r = has == want
+                    ? MatchResult.ok()
+                    : MatchResult.fail(f, op, "exists=" + has + " want=" + want);
+            } else {
+                Object actual = resolve(event, f);
+                r = switch (op) {
+                    case "eq", "=", "==" -> eq(f, op, actual, expected);
+                    case "neq", "ne", "!=", "<>" -> {
+                        MatchResult eq = eq(f, "eq", actual, expected);
+                        yield eq.matched()
+                            ? MatchResult.fail(f, op, "value equals " + expected)
+                            : MatchResult.ok();
+                    }
+                    case "in" -> in(f, op, actual, expected, true);
+                    case "nin", "not_in", "notin" -> in(f, op, actual, expected, false);
+                    case "gt", ">" -> cmp(f, op, actual, expected, 1, false);
+                    case "gte", "ge", ">=" -> cmp(f, op, actual, expected, 1, true);
+                    case "lt", "<" -> cmp(f, op, actual, expected, -1, false);
+                    case "lte", "le", "<=" -> cmp(f, op, actual, expected, -1, true);
+                    case "between" -> between(f, op, actual, expected);
+                    default -> MatchResult.fail(f, op, "unsupported op: " + op);
+                };
             }
-
-            Object actual = resolve(event, f);
-            return switch (op) {
-                case "eq", "=", "==" -> eq(f, op, actual, expected);
-                case "neq", "ne", "!=", "<>" -> {
-                    MatchResult eq = eq(f, "eq", actual, expected);
-                    yield eq.matched()
-                        ? MatchResult.fail(f, op, "value equals " + expected)
-                        : MatchResult.ok();
-                }
-                case "in" -> in(f, op, actual, expected, true);
-                case "nin", "not_in", "notin" -> in(f, op, actual, expected, false);
-                case "gt", ">" -> cmp(f, op, actual, expected, 1, false);
-                case "gte", "ge", ">=" -> cmp(f, op, actual, expected, 1, true);
-                case "lt", "<" -> cmp(f, op, actual, expected, -1, false);
-                case "lte", "le", "<=" -> cmp(f, op, actual, expected, -1, true);
-                case "between" -> between(f, op, actual, expected);
-                default -> MatchResult.fail(f, op, "unsupported op: " + op);
-            };
+            if (r.matched() && leafId != null) {
+                return r.path() != null && !r.path().isEmpty() ? r : MatchResult.ok(List.of(leafId));
+            }
+            return r;
         } catch (RuntimeException ex) {
             return MatchResult.fail(f, op, ex.getMessage() == null ? "factor error" : ex.getMessage());
         }

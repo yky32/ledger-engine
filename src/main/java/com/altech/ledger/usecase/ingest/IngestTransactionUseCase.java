@@ -71,9 +71,12 @@ public class IngestTransactionUseCase {
             event, policy.getEntryFactors());
         if (!entry.matched()) {
             String reason = entry.detail() == null ? "entryFactors rejected" : entry.detail();
+            if (entry.pathJoined() != null) {
+                reason = reason + " · path=" + entry.pathJoined();
+            }
             return IngestionResult.previewSkipped(event.eventId(), "NOT_ENTERED: " + reason, List.of(
                 new EligibilityTraceEntry("_DOOR_", null, false,
-                    entry.failStep() == null ? "ENTRY" : entry.failStep(), reason)));
+                    entry.failStep() == null ? "ENTRY" : entry.failStep(), reason, entry.path())));
         }
         TransactionRuleEngine.EvaluationOutcome outcome = transactionRuleEngine.evaluate(event);
         if (!outcome.matched()) {
@@ -101,9 +104,12 @@ public class IngestTransactionUseCase {
             event, policy.getEntryFactors());
         if (!entry.matched()) {
             String reason = entry.detail() == null ? "entryFactors rejected" : entry.detail();
+            if (entry.pathJoined() != null) {
+                reason = reason + " · path=" + entry.pathJoined();
+            }
             List<EligibilityTraceEntry> doorTrace = List.of(
                 new EligibilityTraceEntry("_DOOR_", null, false,
-                    entry.failStep() == null ? "ENTRY" : entry.failStep(), reason));
+                    entry.failStep() == null ? "ENTRY" : entry.failStep(), reason, entry.path()));
             return _fail(event, "NOT_ENTERED", reason, doorTrace);
         }
 
