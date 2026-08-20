@@ -4,7 +4,9 @@ import com.altech.core.utils.JSONUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -27,6 +29,8 @@ public final class DigestionFormulaConfig {
     public static final String TYPE_RATE = "RATE";
     public static final String TYPE_FIXED = "FIXED";
     public static final String TYPE_LINEAR = "LINEAR";
+    public static final String TYPE_TIERED_RATE = "TIERED_RATE";
+    public static final String TYPE_TABLE = "TABLE";
 
     private DigestionFormulaConfig() {}
 
@@ -97,7 +101,7 @@ public final class DigestionFormulaConfig {
         return switch (type) {
             case TYPE_AMOUNT, "AMT" -> {
                 Map<String, Object> m = ofAmount();
-                copyMultiplier(in, m);
+                copyExtras(in, m);
                 yield m;
             }
             case TYPE_RATE, "PERCENT", "PCT" -> {
@@ -106,7 +110,7 @@ public final class DigestionFormulaConfig {
                     throw new IllegalArgumentException("formula.rate required for type RATE");
                 }
                 Map<String, Object> m = ofRate(rate);
-                copyMultiplier(in, m);
+                copyExtras(in, m);
                 yield m;
             }
             case TYPE_FIXED, "CONST", "CONSTANT" -> {
@@ -118,12 +122,48 @@ public final class DigestionFormulaConfig {
                     throw new IllegalArgumentException("formula.value required for type FIXED");
                 }
                 Map<String, Object> m = ofFixed(v);
-                copyMultiplier(in, m);
+                copyExtras(in, m);
                 yield m;
             }
             case TYPE_LINEAR, "MUL_ADD", "RATE_FIXED" -> {
                 Map<String, Object> m = ofLinear(decimal(in.get("rate")), decimal(first(in, "fixed", "value")));
-                copyMultiplier(in, m);
+                copyExtras(in, m);
+                yield m;
+            }
+            case TYPE_TIERED_RATE, "TIERED", "BRACKETS" -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("type", TYPE_TIERED_RATE);
+                Object brackets = in.get("brackets");
+                if (brackets == null) {
+                    brackets = in.get("tiers");
+                }
+                if (!(brackets instanceof List<?>) || ((List<?>) brackets).isEmpty()) {
+                    throw new IllegalArgumentException("formula.brackets required for TIERED_RATE");
+                }
+                m.put("brackets", brackets);
+                copyExtras(in, m);
+                yield m;
+            }
+            case TYPE_TABLE, "LOOKUP" -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("type", TYPE_TABLE);
+                Object by = first(in, "by", "key");
+                if (by == null || String.valueOf(by).isBlank()) {
+                    throw new IllegalArgumentException("formula.by required for TABLE");
+                }
+                m.put("by", String.valueOf(by).trim());
+                Object map = in.get("map");
+                if (map == null) {
+                    map = in.get("cases");
+                }
+                if (!(map instanceof Map<?, ?>) || ((Map<?, ?>) map).isEmpty()) {
+                    throw new IllegalArgumentException("formula.map required for TABLE");
+                }
+                m.put("map", map);
+                if (in.get("default") != null) {
+                    m.put("default", in.get("default"));
+                }
+                copyExtras(in, m);
                 yield m;
             }
             default -> throw new IllegalArgumentException("Unsupported formula.type: " + type);
@@ -131,6 +171,11 @@ public final class DigestionFormulaConfig {
     }
 
     public static BigDecimal compute(Object formula, BigDecimal amount) {
+        return compute(formula, amount, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static BigDecimal compute(Object formula, BigDecimal amount, Map<String, String> metadata) {
         Map<String, Object> cfg = normalize(formula);
         String type = String.valueOf(cfg.get("type"));
         BigDecimal amt = amount == null ? BigDecimal.ZERO : amount;
@@ -149,6 +194,12 @@ public final class DigestionFormulaConfig {
                 }
                 yield scale(amt.multiply(rate).add(fixed));
             }
+            case TYPE_TIERED_RATE -> scale(computeTiered(amt, cfg.get("brackets")));
+            case TYPE_TABLE -> {
+                Object nested = resolveTable(cfg, metadata);
+                // avoid infinite table-in-table: compute nested without re-entering TABLE on same cfg
+                yield compute(nested, amount, metadata);
+            }
             default -> throw new IllegalArgumentException("Unsupported formula.type: " + type);
         };
         BigDecimal mult = decimal(cfg.get("multiplier"));
@@ -156,15 +207,130 @@ public final class DigestionFormulaConfig {
             mult = decimal(cfg.get("mult"));
         }
         if (mult != null && mult.compareTo(BigDecimal.ONE) != 0) {
-            return scale(base.multiply(mult));
+            base = scale(base.multiply(mult));
+        }
+        BigDecimal floor = decimal(cfg.get("floor"));
+        BigDecimal cap = decimal(cfg.get("cap"));
+        if (cap == null) {
+            cap = decimal(cfg.get("max"));
+        }
+        if (floor != null && base.compareTo(floor) < 0) {
+            base = scale(floor);
+        }
+        if (cap != null && base.compareTo(cap) > 0) {
+            base = scale(cap);
         }
         return base;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static BigDecimal computeTiered(BigDecimal amount, Object bracketsRaw) {
+        if (!(bracketsRaw instanceof List<?> list) || list.isEmpty()) {
+            throw new IllegalArgumentException("TIERED_RATE brackets empty");
+        }
+        // marginal: sort by upTo ascending (null last = infinity)
+        List<Map<String, Object>> brackets = new ArrayList<>();
+        for (Object o : list) {
+            if (o instanceof Map<?, ?> m) {
+                brackets.add((Map<String, Object>) m);
+            }
+        }
+        brackets.sort((a, b) -> {
+            BigDecimal ua = decimal(first(a, "upTo", "to"));
+            BigDecimal ub = decimal(first(b, "upTo", "to"));
+            if (ua == null && ub == null) {
+                return 0;
+            }
+            if (ua == null) {
+                return 1;
+            }
+            if (ub == null) {
+                return -1;
+            }
+            return ua.compareTo(ub);
+        });
+        BigDecimal remaining = amount == null ? BigDecimal.ZERO : amount;
+        BigDecimal prevUp = BigDecimal.ZERO;
+        BigDecimal points = BigDecimal.ZERO;
+        for (Map<String, Object> b : brackets) {
+            if (remaining.signum() <= 0) {
+                break;
+            }
+            BigDecimal upTo = decimal(first(b, "upTo", "to"));
+            BigDecimal rate = decimal(first(b, "rate", "value"));
+            if (rate == null) {
+                rate = BigDecimal.ZERO;
+            }
+            BigDecimal band;
+            if (upTo == null) {
+                band = remaining;
+            } else {
+                BigDecimal width = upTo.subtract(prevUp);
+                if (width.signum() < 0) {
+                    width = BigDecimal.ZERO;
+                }
+                band = remaining.min(width);
+                prevUp = upTo;
+            }
+            points = points.add(band.multiply(rate));
+            remaining = remaining.subtract(band);
+        }
+        return points;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object resolveTable(Map<String, Object> cfg, Map<String, String> metadata) {
+        String by = String.valueOf(cfg.get("by"));
+        String key = null;
+        if (metadata != null) {
+            if (by.startsWith("metadata.")) {
+                key = metadata.get(by.substring("metadata.".length()));
+            } else {
+                key = metadata.get(by);
+                if (key == null) {
+                    for (var e : metadata.entrySet()) {
+                        if (e.getKey() != null && e.getKey().equalsIgnoreCase(by)) {
+                            key = e.getValue();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        Object mapObj = cfg.get("map");
+        if (!(mapObj instanceof Map<?, ?> map)) {
+            throw new IllegalArgumentException("TABLE map invalid");
+        }
+        Object chosen = null;
+        if (key != null) {
+            chosen = map.get(key);
+            if (chosen == null) {
+                chosen = map.get(key.toUpperCase(Locale.ROOT));
+            }
+            if (chosen == null) {
+                chosen = map.get(key.toLowerCase(Locale.ROOT));
+            }
+        }
+        if (chosen == null) {
+            chosen = cfg.get("default");
+        }
+        if (chosen == null) {
+            chosen = map.get("DEFAULT");
+        }
+        if (chosen == null) {
+            chosen = map.get("*");
+        }
+        if (chosen == null) {
+            throw new IllegalArgumentException("TABLE no case for key=" + key + " by=" + by);
+        }
+        return chosen;
     }
 
     public static boolean isSpendBased(Object formula) {
         try {
             Map<String, Object> cfg = normalize(formula);
-            return !TYPE_FIXED.equals(String.valueOf(cfg.get("type")));
+            String t = String.valueOf(cfg.get("type"));
+            return !TYPE_FIXED.equals(t);
         } catch (RuntimeException ex) {
             return true;
         }
@@ -244,7 +410,7 @@ public final class DigestionFormulaConfig {
         return m.get(b);
     }
 
-    private static void copyMultiplier(Map<String, Object> in, Map<String, Object> out) {
+    private static void copyExtras(Map<String, Object> in, Map<String, Object> out) {
         BigDecimal mult = decimal(in.get("multiplier"));
         if (mult == null) {
             mult = decimal(in.get("mult"));
@@ -252,5 +418,21 @@ public final class DigestionFormulaConfig {
         if (mult != null) {
             out.put("multiplier", mult);
         }
+        BigDecimal floor = decimal(in.get("floor"));
+        if (floor != null) {
+            out.put("floor", floor);
+        }
+        BigDecimal cap = decimal(in.get("cap"));
+        if (cap == null) {
+            cap = decimal(in.get("max"));
+        }
+        if (cap != null) {
+            out.put("cap", cap);
+        }
+    }
+
+    /** @deprecated use {@link #copyExtras} */
+    private static void copyMultiplier(Map<String, Object> in, Map<String, Object> out) {
+        copyExtras(in, out);
     }
 }

@@ -71,13 +71,18 @@ public class TransactionRuleEngine {
             if (!mr.matched()) {
                 lastReasonCode = mr.failStep() == null ? "FACTOR" : mr.failStep();
                 lastReason = mr.detail() == null ? "whenFactors not matched" : mr.detail();
-                trace.add(fail(code, pri, lastReasonCode, lastReason));
+                String path = mr.pathJoined();
+                if (path != null) {
+                    lastReason = lastReason + " · path=" + path;
+                }
+                trace.add(new EligibilityTraceEntry(
+                    code, pri, false, lastReasonCode, lastReason, mr.path()));
                 continue;
             }
 
             BigDecimal points;
             try {
-                points = DigestionFormula.compute(formula, event.amount());
+                points = DigestionFormula.compute(formula, event.amount(), event.metadata());
             } catch (RuntimeException ex) {
                 lastReasonCode = "FORMULA";
                 lastReason = ex.getMessage() == null ? "formula error" : ex.getMessage();
@@ -91,8 +96,12 @@ public class TransactionRuleEngine {
                 continue;
             }
 
+            String pathDetail = "points=" + points.toPlainString();
+            if (mr.pathJoined() != null) {
+                pathDetail = pathDetail + " · path=" + mr.pathJoined();
+            }
             trace.add(new EligibilityTraceEntry(
-                code, pri, true, null, "points=" + points.toPlainString()));
+                code, pri, true, null, pathDetail, mr.path()));
             RuleDecision decision = new RuleDecision(
                 operation,
                 rule.getPointCurrency(),
@@ -149,11 +158,15 @@ public class TransactionRuleEngine {
         private DigestionFormula() {}
 
         public static BigDecimal compute(Object formula, BigDecimal amount) {
-            return DigestionFormulaConfig.compute(formula, amount);
+            return DigestionFormulaConfig.compute(formula, amount, null);
+        }
+
+        public static BigDecimal compute(Object formula, BigDecimal amount, Map<String, String> metadata) {
+            return DigestionFormulaConfig.compute(formula, amount, metadata);
         }
 
         public static BigDecimal compute(String formula, BigDecimal amount) {
-            return DigestionFormulaConfig.compute(formula, amount);
+            return DigestionFormulaConfig.compute(formula, amount, null);
         }
     }
 }
