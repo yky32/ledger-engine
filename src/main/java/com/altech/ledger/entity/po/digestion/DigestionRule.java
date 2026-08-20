@@ -19,7 +19,6 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,12 +88,11 @@ public class DigestionRule extends AuditEntityWithIsActive {
     private Map<String, Object> formula;
 
     /**
-     * Explicit when-factors (JSONB array). ANDed with legacy column filters at evaluate time.
-     * See docs/FACTORS.md.
+     * Explicit when-factors (JSONB). Array (AND) or FactorSet object — see docs/FACTORS.md.
      */
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
-    private List<Map<String, Object>> whenFactors;
+    private Object whenFactors;
 
     @Column
     private String processType;

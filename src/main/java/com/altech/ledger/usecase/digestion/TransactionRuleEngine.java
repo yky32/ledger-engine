@@ -66,8 +66,8 @@ public class TransactionRuleEngine {
                 }
             }
 
-            List<Map<String, Object>> when = factorMatcher.effectiveWhenFactors(rule);
-            FactorMatcher.MatchResult mr = factorMatcher.matchAll(event, when);
+            Object whenSpec = factorMatcher.effectiveWhenFactors(rule);
+            FactorMatcher.MatchResult mr = factorMatcher.matchAll(event, whenSpec);
             if (!mr.matched()) {
                 lastReasonCode = mr.failStep() == null ? "FACTOR" : mr.failStep();
                 lastReason = mr.detail() == null ? "whenFactors not matched" : mr.detail();

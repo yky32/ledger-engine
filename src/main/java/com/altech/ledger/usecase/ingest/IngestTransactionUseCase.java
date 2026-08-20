@@ -18,7 +18,6 @@ import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.factor.FactorMatcher;
-import com.altech.ledger.usecase.factor.FactorSpec;
 import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +68,7 @@ public class IngestTransactionUseCase {
             return IngestionResult.previewSkipped(event.eventId(), "Integration disabled", List.of());
         }
         FactorMatcher.MatchResult entry = factorMatcher.matchAll(
-            event, FactorSpec.asFactorList(policy.getEntryFactors()));
+            event, policy.getEntryFactors());
         if (!entry.matched()) {
             String reason = entry.detail() == null ? "entryFactors rejected" : entry.detail();
             return IngestionResult.previewSkipped(event.eventId(), "NOT_ENTERED: " + reason, List.of(
@@ -99,7 +98,7 @@ public class IngestTransactionUseCase {
         }
 
         FactorMatcher.MatchResult entry = factorMatcher.matchAll(
-            event, FactorSpec.asFactorList(policy.getEntryFactors()));
+            event, policy.getEntryFactors());
         if (!entry.matched()) {
             String reason = entry.detail() == null ? "entryFactors rejected" : entry.detail();
             List<EligibilityTraceEntry> doorTrace = List.of(

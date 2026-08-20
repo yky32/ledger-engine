@@ -62,30 +62,199 @@ public class FactorMatcher {
             if (fl.startsWith("metadata.") || fl.startsWith("meta.")) {
                 return "META";
             }
+            if (fl.equals("set") || fl.startsWith("set")) {
+                return "SET";
+            }
             return failField.toUpperCase(Locale.ROOT);
         }
     }
 
     /**
-     * AND across factors. Empty / null list → match.
+     * Evaluate factor spec: plain list (AND) or FactorSet object.
+     * Empty / null → match.
      */
+    public MatchResult matchAll(TransactionalEvent event, Object factorsOrSet) {
+        return matchSpec(event, factorsOrSet);
+    }
+
+    /** @deprecated use {@link #matchAll(TransactionalEvent, Object)} */
     public MatchResult matchAll(TransactionalEvent event, List<Map<String, Object>> factors) {
-        if (factors == null || factors.isEmpty()) {
+        return matchSpec(event, factors);
+    }
+
+    @SuppressWarnings("unchecked")
+    public MatchResult matchSpec(TransactionalEvent event, Object raw) {
+        Object norm = FactorSpec.normalizeSpec(raw);
+        if (norm == null) {
             return MatchResult.ok();
         }
-        for (Map<String, Object> f : factors) {
-            if (f == null || f.isEmpty()) {
-                continue;
-            }
-            MatchResult one = matchOne(event, f);
-            if (!one.matched()) {
-                return one;
-            }
+        if (norm instanceof Map<?, ?> map) {
+            return matchNode(event, (Map<String, Object>) map);
         }
         return MatchResult.ok();
     }
 
+    @SuppressWarnings("unchecked")
+    public MatchResult matchNode(TransactionalEvent event, Map<String, Object> node) {
+        if (node == null || node.isEmpty()) {
+            return MatchResult.ok();
+        }
+        if (FactorSpec.isSetNode(node)) {
+            return matchSet(event, node);
+        }
+        if (FactorSpec.isLeaf(node)) {
+            return matchLeaf(event, node);
+        }
+        // bare group with only factors nested
+        if (node.containsKey("factors") || node.containsKey("items") || node.containsKey("groups")) {
+            return matchSet(event, node);
+        }
+        return MatchResult.fail("factor", "set", "unrecognized factor node: " + node.keySet());
+    }
+
+    @SuppressWarnings("unchecked")
+    public MatchResult matchSet(TransactionalEvent event, Map<String, Object> set) {
+        String mode = FactorSpec.matchModeOf(set);
+        List<Object> children = FactorSpec.childrenOf(set);
+        List<Object> groups = FactorSpec.groupsOf(set);
+
+        return switch (mode) {
+            case "all" -> {
+                List<Object> nodes = !children.isEmpty() ? children : groups;
+                for (Object c : nodes) {
+                    if (!(c instanceof Map<?, ?>)) {
+                        continue;
+                    }
+                    MatchResult r = matchNode(event, (Map<String, Object>) c);
+                    if (!r.matched()) {
+                        yield r;
+                    }
+                }
+                yield MatchResult.ok();
+            }
+            case "any" -> {
+                List<Object> nodes = !children.isEmpty() ? children : groups;
+                if (nodes.isEmpty()) {
+                    yield MatchResult.ok();
+                }
+                List<String> fails = new ArrayList<>();
+                for (Object c : nodes) {
+                    if (!(c instanceof Map<?, ?>)) {
+                        continue;
+                    }
+                    MatchResult r = matchNode(event, (Map<String, Object>) c);
+                    if (r.matched()) {
+                        yield MatchResult.ok();
+                    }
+                    fails.add(r.detail() == null ? r.failStep() : r.detail());
+                }
+                yield MatchResult.fail("SET", "any",
+                    "none of " + nodes.size() + " factors matched; samples=" + fails.stream().limit(3).toList());
+            }
+            case "atLeast" -> {
+                List<Object> nodes = !children.isEmpty() ? children : groups;
+                int need = FactorSpec.countOf(set, 1);
+                if (need <= 0) {
+                    yield MatchResult.ok();
+                }
+                if (nodes.isEmpty()) {
+                    yield MatchResult.fail("SET", "atLeast", "no factors; need " + need);
+                }
+                int hit = 0;
+                List<String> hitIds = new ArrayList<>();
+                List<String> miss = new ArrayList<>();
+                int i = 0;
+                for (Object c : nodes) {
+                    i++;
+                    if (!(c instanceof Map<?, ?> m)) {
+                        continue;
+                    }
+                    MatchResult r = matchNode(event, (Map<String, Object>) m);
+                    String id = FactorSpec.idOf((Map<String, Object>) m);
+                    if (id == null) {
+                        id = "#" + i;
+                    }
+                    if (r.matched()) {
+                        hit++;
+                        hitIds.add(id);
+                    } else {
+                        miss.add(id);
+                    }
+                }
+                if (hit >= need) {
+                    yield MatchResult.ok();
+                }
+                yield MatchResult.fail("SET", "atLeast",
+                    "matched " + hit + " of " + nodes.size() + " (need " + need + "); hit=" + hitIds + " miss=" + miss);
+            }
+            case "anyGroup" -> {
+                List<Object> gs = !groups.isEmpty() ? groups : children;
+                if (gs.isEmpty()) {
+                    yield MatchResult.ok();
+                }
+                List<String> fails = new ArrayList<>();
+                for (Object g : gs) {
+                    if (!(g instanceof Map<?, ?> gm)) {
+                        continue;
+                    }
+                    MatchResult r = matchGroup(event, (Map<String, Object>) gm);
+                    if (r.matched()) {
+                        yield MatchResult.ok();
+                    }
+                    String id = FactorSpec.idOf((Map<String, Object>) gm);
+                    fails.add((id == null ? "?" : id) + ":" + (r.detail() == null ? r.failStep() : r.detail()));
+                }
+                yield MatchResult.fail("SET", "anyGroup",
+                    "no group matched; " + fails.stream().limit(4).toList());
+            }
+            case "allGroups" -> {
+                List<Object> gs = !groups.isEmpty() ? groups : children;
+                for (Object g : gs) {
+                    if (!(g instanceof Map<?, ?> gm)) {
+                        continue;
+                    }
+                    MatchResult r = matchGroup(event, (Map<String, Object>) gm);
+                    if (!r.matched()) {
+                        yield r;
+                    }
+                }
+                yield MatchResult.ok();
+            }
+            default -> MatchResult.fail("SET", mode, "unsupported match mode: " + mode);
+        };
+    }
+
+    /** Group defaults to AND of its factors (or nested match). */
+    @SuppressWarnings("unchecked")
+    private MatchResult matchGroup(TransactionalEvent event, Map<String, Object> group) {
+        if (group == null) {
+            return MatchResult.ok();
+        }
+        if (FactorSpec.isLeaf(group)) {
+            return matchLeaf(event, group);
+        }
+        // ensure group without match still ANDs children
+        if (!group.containsKey("match") && !group.containsKey("mode") && !group.containsKey("require")) {
+            Map<String, Object> copy = new LinkedHashMap<>(group);
+            copy.putIfAbsent("match", "all");
+            if (!copy.containsKey("factors") && !copy.containsKey("items")
+                && !copy.containsKey("rules") && !copy.containsKey("groups")) {
+                // maybe the group IS a single nested structure already
+                return matchNode(event, copy);
+            }
+            return matchSet(event, copy);
+        }
+        return matchNode(event, group);
+    }
+
     public MatchResult matchOne(TransactionalEvent event, Map<String, Object> factor) {
+        if (factor != null && FactorSpec.isSetNode(factor)) {
+            return matchSet(event, factor);
+        }
+        return matchLeaf(event, factor);
+    }
+
+    public MatchResult matchLeaf(TransactionalEvent event, Map<String, Object> factor) {
         String field = FactorSpec.fieldOf(factor);
         String op = FactorSpec.opOf(factor);
         Object expected = FactorSpec.valueOf(factor);
@@ -93,7 +262,6 @@ public class FactorMatcher {
             return MatchResult.fail("factor", op, "factor.field required");
         }
         String f = field.trim();
-        String fl = f.toLowerCase(Locale.ROOT);
 
         try {
             if ("exists".equals(op)) {
@@ -154,14 +322,38 @@ public class FactorMatcher {
         return out;
     }
 
-    /** Effective Brain gates: legacy compiled + explicit whenFactors. */
-    public List<Map<String, Object>> effectiveWhenFactors(DigestionRule rule) {
-        List<Map<String, Object>> out = new ArrayList<>(legacyWhenFactors(rule));
-        if (rule != null && rule.getWhenFactors() != null) {
-            out.addAll(FactorSpec.asFactorList(rule.getWhenFactors()));
+    /**
+     * Effective Brain gates: legacy AND explicit whenFactors (list or FactorSet).
+     */
+    public Object effectiveWhenFactors(DigestionRule rule) {
+        List<Map<String, Object>> legacy = legacyWhenFactors(rule);
+        Object explicit = rule == null ? null : rule.getWhenFactors();
+        if (legacy.isEmpty()) {
+            return explicit;
         }
-        return out;
+        if (explicit == null || FactorSpec.normalizeSpec(explicit) == null) {
+            return legacy;
+        }
+        // AND: all legacy leaves + entire explicit set as one child
+        Map<String, Object> wrap = new LinkedHashMap<>();
+        wrap.put("match", "all");
+        List<Object> kids = new ArrayList<>(legacy);
+        kids.add(explicit instanceof Map || explicit instanceof List
+            ? FactorSpec.normalizeSpec(explicit)
+            : explicit);
+        wrap.put("factors", kids);
+        return wrap;
     }
+
+    private static Map<String, Object> factor(String field, String op, Object value) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("field", field);
+        m.put("op", op);
+        m.put("value", value);
+        return m;
+    }
+
+    // ---- leaf helpers below (eq/in/cmp/between/resolve) ----
 
     public Object resolve(TransactionalEvent event, String field) {
         if (event == null || field == null) {
@@ -186,14 +378,6 @@ public class FactorMatcher {
             case "eventid", "event_id" -> event.eventId();
             default -> meta(event, f);
         };
-    }
-
-    private static Map<String, Object> factor(String field, String op, Object value) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("field", field);
-        m.put("op", op);
-        m.put("value", value);
-        return m;
     }
 
     private MatchResult eq(String field, String op, Object actual, Object expected) {

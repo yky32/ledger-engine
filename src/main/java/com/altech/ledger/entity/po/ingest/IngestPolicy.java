@@ -14,9 +14,6 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
-import java.util.List;
-import java.util.Map;
-
 /** Ingest policy — webhook door. */
 @Entity
 @Getter
@@ -56,12 +53,12 @@ public class IngestPolicy extends AuditEntityWithIsActive {
     private String autoWalletCoaProfileCode;
 
     /**
-     * Entry factors (JSONB array). All must match or event is NOT ENTERED.
-     * Empty/null = only isEnabled gate. See docs/FACTORS.md.
+     * Entry factors (JSONB). Array (AND) or FactorSet object. Empty/null = only isEnabled.
+     * See docs/FACTORS.md.
      */
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
-    private List<Map<String, Object>> entryFactors;
+    private Object entryFactors;
 
     @PrePersist
     void applyDefaults() {
