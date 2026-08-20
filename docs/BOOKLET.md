@@ -343,6 +343,16 @@ Ops configures Brain + COA in Admin. Upstream discovers:
 
 `GET /integrations/use-cases?enabledOnly=true`
 
+Handshake: `GET /integrations/sdk-info` (engineVersion, minSdkVersion, features).
+
+SDK: `client.verifyEngine()` · `client.catalog().listUseCasesCached()` · `client.useCases().invoke(...)`.
+
+## 11a. Use-case catalog detail
+
+Ops configures Brain + COA in Admin. Upstream discovers:
+
+`GET /integrations/use-cases?enabledOnly=true`
+
 Each row: `code` (eventType), `amountMode`, `formulaSummary`, `coaProfileCode`, …
 
 SDK: `client.catalog().listUseCases()` → `client.useCases().invoke(code, …)`.
