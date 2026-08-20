@@ -36,6 +36,7 @@ COA = **開簿科目段**（內部），**唔**決定賺幾多分。
 | **改 Door / Brain / COA** | [INGEST_VS_DIGESTION](./INGEST_VS_DIGESTION.md) → 各 config 深檔 |
 | **工程 / debt** | [TECH_DEBT](./TECH_DEBT.md
 - [FACTORS.md
+- [POSTING.md](./POSTING.md) — central PostingService / intents
 - [FACTORS_ROADMAP.md](./FACTORS_ROADMAP.md) — A–E shipped + next phases](./FACTORS.md) — Door entryFactors + Brain whenFactors (P1/P2)) · [archive/](./archive/) |
 
 ---

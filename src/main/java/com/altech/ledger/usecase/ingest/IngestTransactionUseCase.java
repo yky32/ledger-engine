@@ -18,7 +18,8 @@ import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.factor.FactorMatcher;
-import com.altech.ledger.usecase.ledger.LedgerMovementShooter;
+import com.altech.ledger.usecase.ledger.PostingService;
+import com.altech.ledger.entity.dto.posting.PostingCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,7 @@ public class IngestTransactionUseCase {
     private final EnsureWalletForIngestUseCase ensureWalletForIngestUseCase;
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
-    private final LedgerMovementShooter ledgerMovementShooter;
+    private final PostingService postingService;
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
     private final ObjectMapper objectMapper;
 
@@ -168,16 +169,13 @@ public class IngestTransactionUseCase {
         }
 
         try {
-            GetLedgerMovementResponseDto applied = ledgerMovementShooter.doEarnBurn(
-                wallet.getId(),
-                orderType,
-                rule.points(),
-                pointCurrency,
-                movementKey,
-                rule.operation() + " from " + event.eventType() + " (" + rule.formula() + ")"
-                    + " rule=" + matchedCode
-                    + (resolved.provisioned() ? " [wallet-auto]" : "")
-            );
+            String desc = rule.operation() + " from " + event.eventType() + " (" + rule.formula() + ")"
+                + " rule=" + matchedCode
+                + (resolved.provisioned() ? " [wallet-auto]" : "");
+            PostingCommand cmd = orderType == OrderType.BURN
+                ? PostingCommand.burn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc)
+                : PostingCommand.earn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc);
+            GetLedgerMovementResponseDto applied = postingService.post(cmd);
 
             UUID txnId = applied.id() == null ? null
                 : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());

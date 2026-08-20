@@ -1,9 +1,11 @@
 package com.altech.ledger.usecase.ledger;
 
 import com.altech.core.constant.enu.Currency;
+import com.altech.ledger.entity.dto.posting.PostingCommand;
 import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
+import com.altech.ledger.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,22 +15,27 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Deposit execution: bank / AUTO movement + optional webhook callback.
+ * Deposit execution via central {@link PostingService}.
  */
 @Component
 @RequiredArgsConstructor
 public class LedgerDepositUseCase {
-    private final LedgerMovementShooter ledgerMovementShooter;
+    private final PostingService postingService;
+    private final WalletService walletService;
 
     @Transactional
     public GetLedgerMovementResponseDto execute(CreateLedgerDepositRequestDto dto) {
-        return ledgerMovementShooter.doDeposit(dto);
+        var wallet = walletService.resolve(dto.resolvedTargetWalletId());
+        return postingService.post(PostingCommand.deposit(
+            wallet.getId(),
+            dto.amount(),
+            dto.currency(),
+            dto.movementKey(),
+            dto.description(),
+            dto.mode() == null ? LedgerMovementMode.AUTO : dto.mode()
+        ));
     }
 
-    /**
-     * Card-style session placeholder (no external payment rail).
-     * Balance is applied when {@link #executeWebhook} (or a normal deposit) is called.
-     */
     public Map<String, String> executeCardSession(Long walletId, String currency, BigDecimal amount,
                                                   Map<String, Object> metadata) {
         String sessionId = "session-" + walletId + "-" + UUID.randomUUID();
@@ -50,9 +57,9 @@ public class LedgerDepositUseCase {
         String amountStr = _first(payload, "amount", "txnAmount", "value");
         BigDecimal amount = new BigDecimal(amountStr == null ? "0" : amountStr);
         String movementKey = _first(payload, "movementKey", "eventId", "txnId", "id");
-        return ledgerMovementShooter.doDeposit(new CreateLedgerDepositRequestDto(
-            walletId, currency, amount, LedgerMovementMode.AUTO, null, movementKey,
-            "webhook deposit", payload));
+        var wallet = walletService.resolve(walletId);
+        return postingService.post(PostingCommand.deposit(
+            wallet.getId(), amount, currency, movementKey, "webhook deposit", LedgerMovementMode.AUTO));
     }
 
     private static String _first(Map<String, Object> map, String... keys) {

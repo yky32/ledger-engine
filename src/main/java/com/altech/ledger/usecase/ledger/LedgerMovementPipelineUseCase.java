@@ -1,24 +1,29 @@
 package com.altech.ledger.usecase.ledger;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import com.altech.ledger.entity.dto.posting.PostingCommand;
 import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
 import com.altech.ledger.entity.dto.request.CreateLedgerInWalletTransferRequestDto;
 import com.altech.ledger.entity.dto.request.CreateLedgerWithdrawalRequestDto;
 import com.altech.ledger.entity.dto.request.UpdateLedgerMovementDocumentsRequestDto;
 import com.altech.ledger.entity.dto.request.UpdateLedgerMovementStatusRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
+import com.altech.ledger.entity.enu.LedgerMovementMode;
+import com.altech.ledger.entity.enu.PostingIntent;
+import com.altech.ledger.service.WalletService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Facade for movement pipeline callers; delegates to Verb / query use cases.
+ * Facade for movement pipeline callers; balance writes go through {@link PostingService}.
  */
 @Component
 @RequiredArgsConstructor
 public class LedgerMovementPipelineUseCase {
-    private final LedgerMovementShooter ledgerMovementShooter;
+    private final PostingService postingService;
+    private final WalletService walletService;
     private final LedgerMovementQueryUseCase ledgerMovementQueryUseCase;
     private final LedgerMovementOperationUseCase ledgerMovementOperationUseCase;
     private final LedgerDepositUseCase ledgerDepositUseCase;
@@ -30,12 +35,33 @@ public class LedgerMovementPipelineUseCase {
 
     @Transactional
     public GetLedgerMovementResponseDto withdraw(CreateLedgerWithdrawalRequestDto req) {
-        return ledgerMovementShooter.doWithdrawal(req);
+        var wallet = walletService.resolve(req.resolvedOriginatorWalletId());
+        return postingService.post(new PostingCommand(
+            PostingIntent.WITHDRAWAL,
+            wallet.getId(),
+            req.amount(),
+            req.currency(),
+            req.movementKey(),
+            req.description(),
+            req.mode() == null ? LedgerMovementMode.AUTO : req.mode(),
+            null,
+            req.targetId()
+        ));
     }
 
     @Transactional
     public GetLedgerMovementResponseDto inWalletTransfer(CreateLedgerInWalletTransferRequestDto req) {
-        return ledgerMovementShooter.doInWalletTransfer(req);
+        var from = walletService.resolve(req.fromWalletId());
+        var to = walletService.resolve(req.toWalletId());
+        return postingService.post(PostingCommand.inWalletTransfer(
+            from.getId(),
+            to.getId(),
+            req.amount(),
+            req.currency(),
+            req.movementKey(),
+            req.description(),
+            req.mode() == null ? LedgerMovementMode.AUTO : req.mode()
+        ));
     }
 
     @Transactional

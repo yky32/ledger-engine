@@ -2,34 +2,36 @@ package com.altech.ledger.usecase.movement;
 
 import com.altech.ledger.entity.dto.movement.MovementDto.DepositRequest;
 import com.altech.ledger.entity.dto.movement.MovementDto.MovementResponse;
+import com.altech.ledger.entity.dto.posting.PostingCommand;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.usecase.CommonUseCase;
-import com.altech.ledger.usecase.ledger.LedgerMovementPipelineUseCase;
+import com.altech.ledger.usecase.ledger.PostingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
-import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
+/**
+ * Product deposit — credits member book for currency (single-sided).
+ * Posts via central {@link PostingService} (not loyalty EARN / PROGRAM DE).
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateDepositUseCase {
     private final CommonUseCase commonUseCase;
-    private final LedgerMovementPipelineUseCase ledgerMovementPipelineUseCase;
+    private final PostingService postingService;
 
     @Transactional
     public MovementResponse execute(DepositRequest request) {
         Wallet wallet = commonUseCase.requireActiveWallet(request.ownerId(), request.currency());
-        GetLedgerMovementResponseDto r = ledgerMovementPipelineUseCase.deposit(new CreateLedgerDepositRequestDto(
-            String.valueOf(wallet.getId()),
-            request.currency(),
+        GetLedgerMovementResponseDto r = postingService.post(PostingCommand.deposit(
+            wallet.getId(),
             request.amount(),
-            request.mode() == null ? LedgerMovementMode.AUTO : request.mode(),
-            request.ownerId(),
+            request.currency(),
             request.movementKey(),
             request.description(),
-            null
+            request.mode() == null ? LedgerMovementMode.AUTO : request.mode()
         ));
         return _toDto(r);
     }
