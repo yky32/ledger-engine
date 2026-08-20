@@ -234,11 +234,11 @@ Customer identity and names live in CRM; ledger only stores **`ownerId`** (and o
 
 ## Docs
 
-**唯一入口 → [docs/START_HERE.md](docs/START_HERE.md)**
+**唯一入口 → [docs/BOOKLET.md](docs/BOOKLET.md)**
 
 | Doc | Purpose |
 |-----|---------|
-| [docs/START_HERE.md](docs/START_HERE.md) | **Start here** — map + happy path |
+| [docs/BOOKLET.md](docs/BOOKLET.md) | **Start here** — map + happy path |
 | [docs/BUSINESS_SHOOT_EXAMPLE.md](docs/BUSINESS_SHOOT_EXAMPLE.md) | 射單 Ingest→Digest→Book + COA |
 | [docs/SYSTEM_BUSINESS_FLOW.md](docs/SYSTEM_BUSINESS_FLOW.md) | Product business flow |
 | [PRODUCT.md](PRODUCT.md) | Product model summary |
