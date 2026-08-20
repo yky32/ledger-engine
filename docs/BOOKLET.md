@@ -29,6 +29,7 @@ Deploy: **in-cluster only** (API key = later tech debt)
 13. [UAF notes](#13-uaf-notes)
 14. [Feature freeze & debt](#14-feature-freeze--tech-debt)
 15. [Decks](#15-decks)
+16. [Use-case recipes (UA mapping)](#16-use-case-recipes-ua-mapping)
 
 ---
 
@@ -444,3 +445,67 @@ curl -sS 'localhost:8080/integrations/ledger-entries?movementId=123'
 ---
 
 *Booklet supersedes the previous multi-file docs split. Historical copies live under `docs/archive/` if needed.*
+
+---
+
+## 16. Use-case recipes (UA mapping)
+
+COA segments are **internal Finance language**. Product / upstream uses **recipe codes** only.
+
+```text
+eventType (or metadata.useCase)
+    → PostingRecipeCatalog
+    → atoms[] → ApplyPostingRecipeUseCase
+    → ApplyPostingUseCase (EARN/BURN legs)
+```
+
+### Codes (CC)
+
+| code | atoms |
+|------|--------|
+| `CC_TXN_HKD` | CREDIT_REWARD @ HKD |
+| `CC_TXN_LP` | CREDIT_REWARD @ LP |
+| `CC_TXN_HKD_REDEEM` | CREDIT + REDEEM |
+| `CC_TXN_HKD_CASHBACK` | CREDIT + CASHBACK |
+| `CC_TXN_LP_REDEEM` | CREDIT + REDEEM @ LP |
+| `CC_TXN_LP_CASHBACK` | CREDIT + CASHBACK @ LP |
+| `CC_TXN_HKD_TO_LP` | CREDIT HKD + CONVERT→LP |
+| `CC_TXN_HKD_LP_REDEEM` | CREDIT + CONVERT + REDEEM |
+| `CC_TXN_HKD_LP_CASHBACK` | CREDIT + CONVERT + CASHBACK |
+
+### Codes (Loan / Load alias)
+
+`LOAN_DD_*` same patterns; `LOAD_DD_*` aliases to loan.
+
+### Atoms
+
+| Atom | Books (phase-1) |
+|------|-----------------|
+| CREDIT_REWARD | EARN (PROGRAM ↔ member) — GL may label pool as Expense |
+| REDEEM / CASHBACK | BURN |
+| CONVERT_HKD_TO_LP | BURN HKD + EARN LP (1:1) |
+
+### Webhook
+
+```json
+{
+  "eventId": "txn-1",
+  "ownerId": "01A1",
+  "eventType": "CC_TXN_LP",
+  "amount": 100,
+  "currency": "HKD",
+  "occurredAt": "2026-08-20T12:00:00Z"
+}
+```
+
+Brain rule `eventType` should match the code (or use broad rule + `metadata.useCase`).  
+Points still come from Brain **formula**; recipe chooses **which books / chain**.
+
+### Wallet map
+
+| Sheet | LedgeRX |
+|-------|---------|
+| W_1 / owner 01A1 | `ownerId=01A1` |
+| W_2 / owner 01A2 | `ownerId=01A2` |
+
+1 ownerId : 1 wallet — aligned.
