@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 public record CreateCoaProfileRequestDto(
     @NotBlank @Size(max = 40) String code,
     @Size(max = 200) String name,
-    /** Optional unique txn/eventType binding, e.g. CC_TXN_LP. */
+    /** Optional. Omit or leave blank → same as {@code code}. Set only to extend (code ≠ eventType). */
     @Size(max = 64) String transactionCode,
     Boolean isDefault,
     Boolean isEnabled,

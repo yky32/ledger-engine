@@ -46,9 +46,9 @@ public class CoaProfile extends AuditEntityWithIsActive {
     private String name;
 
     /**
-     * Business transaction / eventType code bound to this COA (e.g. CC_TXN_LP).
-     * Unique when set — operator maps txn → profile without a separate table.
-     * Null = profile used only by explicit coaProfileCode (onboard / default).
+     * Business transaction / eventType code bound to this COA.
+     * <p><b>Default = same as {@code code}</b> unless operator sets a different value (extension).
+     * Null only when explicitly cleared on non-default edge cases.
      */
     @Column
     private String transactionCode;
@@ -103,6 +103,10 @@ public class CoaProfile extends AuditEntityWithIsActive {
         if (transactionCode != null) {
             String t = transactionCode.trim().toUpperCase();
             transactionCode = t.isEmpty() ? null : t;
+        }
+        // Default assumption: code == transactionCode (eventType) unless extended
+        if (transactionCode == null && code != null && !code.isBlank()) {
+            transactionCode = code;
         }
         if (isDefault == null) {
             isDefault = Boolean.FALSE;
