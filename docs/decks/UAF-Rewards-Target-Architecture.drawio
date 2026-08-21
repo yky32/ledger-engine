@@ -1,0 +1,291 @@
+<mxfile host="app.diagrams.net" agent="Hermes" version="22.1.0" type="device">
+  <diagram id="page1-target" name="1 Target architecture">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" value="UAF Target Architecture — Rewards platform modernization" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=18;fontColor=#18181B;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="720" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="t1b" value="Domain boundaries · Reward System as core capability · no vendor product name" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontColor=#71717A;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="48" width="640" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Principle bar -->
+        <mxCell id="prin" value="Channels → Integration fabric → Reward System → Orchestration / fulfillment" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2F7;strokeColor=#1E3A5F;fontColor=#1E3A5F;fontStyle=1;fontSize=12;align=left;spacingLeft=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="1520" height="32" as="geometry" />
+        </mxCell>
+
+        <!-- ===== A Channel ===== -->
+        <mxCell id="A" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="240" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="Ah" value="A · Channel systems&#xa;Existing UAF estate" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2F7;strokeColor=#D4D4D8;fontColor=#1E3A5F;fontStyle=1;fontSize=12;align=left;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="240" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="A1" value="Credit card systems&#xa;Spend / auth events" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="55" y="210" width="210" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="A2" value="Loan systems&#xa;Drawdown / DD events" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="55" y="280" width="210" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="A3" value="Digital channels&#xa;Yes UA · sim · CRM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="55" y="350" width="210" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="An" value="Systems of record.&#xa;Emit business events only.&#xa;No scoring / ledger math." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=10;fontColor=#71717A;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="55" y="430" width="210" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== B Integration ===== -->
+        <mxCell id="B" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="320" y="140" width="240" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="Bh" value="B · Integration fabric&#xa;How we connect" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2F7;strokeColor=#D4D4D8;fontColor=#1E3A5F;fontStyle=1;fontSize=12;align=left;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="320" y="140" width="240" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="B1" value="REST API&#xa;Use-case invoke · dry-run" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="335" y="210" width="210" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="B2" value="Event bus (Kafka)&#xa;Async delivery" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="335" y="280" width="210" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="B3" value="Batch / file&#xa;Bulk path" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="335" y="350" width="210" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="Bn" value="Stable contract:&#xa;ownerId + use-case code&#xa;Idempotent eventId" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=10;fontColor=#71717A;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="335" y="430" width="210" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== C Reward System ===== -->
+        <mxCell id="C" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF4;strokeColor=#1E3A5F;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="600" y="140" width="420" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="Ch" value="C · Reward System&#xa;New core domain (NEW BUILD)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1E3A5F;strokeColor=#1E3A5F;fontColor=#FFFFFF;fontStyle=1;fontSize=12;align=left;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="600" y="140" width="420" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="C1" value="Customer onboarding&#xa;Wallet · multi-currency" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="620" y="210" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="C2" value="Referrer management&#xa;Referral rules" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="820" y="210" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="C3" value="Posting engine&#xa;Double-entry settle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="620" y="280" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="C4" value="Ledger books&#xa;Balances · movements" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="820" y="280" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="C5" value="Account rules (COA)&#xa;Finance profiles" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="620" y="350" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="C6" value="Points calculation&#xa;Formula engine" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="820" y="350" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="Cpath" value="Runtime: event → admit → calculate → post → books → outbound" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2F7;strokeColor=#1E3A5F;fontColor=#1E3A5F;fontStyle=1;fontSize=11;align=center;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="620" y="430" width="380" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="Cn" value="Ops-owned config (rules, COA, catalog).&#xa;Channels call use-cases — do not re-implement scoring math." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=10;fontColor=#3F3F46;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="620" y="480" width="380" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== D Add-ons ===== -->
+        <mxCell id="D" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="140" width="180" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="Dh" value="D · Platform add-ons&#xa;Evolve later" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2F7;strokeColor=#D4D4D8;fontColor=#1E3A5F;fontStyle=1;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="140" width="180" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="D1" value="Wallet tiering" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=center;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1075" y="220" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="D2" value="Campaign packs" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=center;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1075" y="280" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="D3" value="Future modules" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=center;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1075" y="340" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn" value="Extend without&#xa;forking core" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10;fontColor=#71717A;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1075" y="400" width="150" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== E Fulfillment ===== -->
+        <mxCell id="E" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="140" width="200" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="Eh" value="E · Fulfillment estate&#xa;Existing + CBP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2F7;strokeColor=#D4D4D8;fontColor=#1E3A5F;fontStyle=1;fontSize=11;align=left;spacingLeft=8;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="140" width="200" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="E1" value="E-coupon / CBP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=center;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1295" y="210" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="E2" value="Gift" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=center;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1295" y="270" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="E3" value="Notification" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=center;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1295" y="330" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="E4" value="XAPI / CRM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;align=center;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1295" y="390" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="En" value="Behind hard boundary&#xa;(see page 2)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10;fontColor=#71717A;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1295" y="450" width="170" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Flow arrows A→B→C→D→E -->
+        <mxCell id="eAB" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#52525B;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="A" target="B">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eBC" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#52525B;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="B" target="C">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eCD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#52525B;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="C" target="D">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eDE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#52525B;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="D" target="E">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="foot1" value="UAF platform architecture — channels stay thin · Reward System centralized · fulfillment remains UAF-owned" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#3F3F46;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="690" width="1200" height="24" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="page2-boundary" name="2 Hard boundary RS | CBP">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="t2" value="Hard boundary — Reward System | CBP" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=18;fontColor=#18181B;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="600" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="t2b" value="Whiteboard alignment: App → RS · red line · CBP (CoD · INV · SOT · Analytics)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=12;fontColor=#71717A;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="50" width="700" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- LEFT zone -->
+        <mxCell id="Lzone" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#D4D4D8;verticalAlign=top;dashed=1;dashPattern=8 4;" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="560" height="620" as="geometry" />
+        </mxCell>
+        <mxCell id="Ll" value="LEFT OF LINE · Reward System domain" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=13;fontColor=#1E3A5F;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="55" y="110" width="400" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- App -->
+        <mxCell id="App" value="App&#xa;Yes UA · channels" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="70" y="160" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="Wal" value="Wallet (RP)&#xa;points balance view" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#3F3F46;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="70" y="250" width="140" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- RS -->
+        <mxCell id="RS" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF4;strokeColor=#1E3A5F;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="280" y="150" width="280" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="RSh" value="Reward System (RS)&#xa;NEW DOMAIN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1E3A5F;strokeColor=#1E3A5F;fontColor=#FFFFFF;fontStyle=1;fontSize=13;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="280" y="150" width="280" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="RSb" value="• Wallets / multi-currency books&#xa;• Earn / burn / hold calculation&#xa;• Use-case rules + COA&#xa;• Posting engine&#xa;• Ops-owned catalog" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=12;fontColor=#18181B;fontFamily=Helvetica;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="295" y="210" width="250" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="simcc" value="sim-CC (+ other rails)&#xa;Business events in" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="300" y="350" width="240" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Owns list left bottom -->
+        <mxCell id="Lown" value="RS owns&#xa;• Point balances (wallet/RP)&#xa;• Scoring &amp; posting&#xa;• Idempotent event identity&#xa;&#xa;RS does NOT own&#xa;• Coupon stock&#xa;• Partner rails&#xa;• Notification content" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;align=left;spacingLeft=10;fontSize=11;fontColor=#3F3F46;fontFamily=Helvetica;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="70" y="470" width="470" height="220" as="geometry" />
+        </mxCell>
+
+        <!-- App to RS -->
+        <mxCell id="eAppRS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#1E3A5F;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="App" target="RS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eWalRS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#52525B;strokeWidth=1;endArrow=block;endFill=1;dashed=1;" edge="1" parent="1" source="Wal" target="RS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- RED BOUNDARY -->
+        <mxCell id="redline" value="" style="endArrow=none;html=1;strokeColor=#B91C1C;strokeWidth=4;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="650" y="100" as="sourcePoint" />
+            <mxPoint x="650" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="redlbl" value="HARD BOUNDARY" style="text;html=1;strokeColor=none;fillColor=#FEE2E2;fontColor=#B91C1C;fontStyle=1;fontSize=10;align=center;fontFamily=Helvetica;rotation=-90;" vertex="1" parent="1">
+          <mxGeometry x="615" y="380" width="70" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- Cross-line arrows Redeem / Confirm -->
+        <mxCell id="eRC1" value="Redeem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#B91C1C;strokeWidth=2;endArrow=block;endFill=1;fontColor=#B91C1C;fontStyle=1;fontSize=11;fontFamily=Helvetica;" edge="1" parent="1" source="RS" target="CBP">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eRC2" value="Confirm" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#B91C1C;strokeWidth=2;endArrow=block;endFill=1;fontColor=#B91C1C;fontStyle=1;fontSize=11;fontFamily=Helvetica;exitX=1;exitY=0.65;entryX=0;entryY=0.35;" edge="1" parent="1" source="RS" target="CBP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- RIGHT CBP zone -->
+        <mxCell id="Rzone" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#D4D4D8;verticalAlign=top;dashed=1;dashPattern=8 4;" vertex="1" parent="1">
+          <mxGeometry x="700" y="100" width="820" height="620" as="geometry" />
+        </mxCell>
+        <mxCell id="Rl" value="RIGHT OF LINE · CBP / fulfillment (UAF-owned)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=13;fontColor=#1E3A5F;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="720" y="110" width="500" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- CBP container -->
+        <mxCell id="CBP" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2F7;strokeColor=#1E3A5F;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="740" y="150" width="740" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="CBPh" value="CBP · Centralized Backend Platform&#xa;Coupon domain control plane — UAF builds &amp; owns" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1E3A5F;strokeColor=#1E3A5F;fontColor=#FFFFFF;fontStyle=1;fontSize=13;align=left;spacingLeft=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="740" y="150" width="740" height="48" as="geometry" />
+        </mxCell>
+
+        <mxCell id="CoD" value="CoD&#xa;Coupon partner&#xa;connectivity" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="780" y="230" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="CoDdb" value="DB" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="970" y="235" width="70" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="INV" value="INV&#xa;Coupon inventory&#xa;Stock levels" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="780" y="340" width="160" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Analy" value="Analytics&#xa;Usage / reporting" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="230" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Analydb" value="DB" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#F4F4F5;strokeColor=#D4D4D8;fontColor=#18181B;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="235" width="70" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="SOT" value="SOT · Coupon master (source of truth)&#xa;Catalogue · stock attributes · Cut-in · pin/sim · channel flags" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E3A5F;fontColor=#18181B;fontSize=12;align=left;spacingLeft=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="980" y="340" width="460" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- edges inside CBP -->
+        <mxCell id="eCoDdb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#52525B;endArrow=block;endFill=1;" edge="1" parent="1" source="CoD" target="CoDdb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eAnadb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#52525B;endArrow=block;endFill=1;" edge="1" parent="1" source="Analy" target="Analydb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="CBPn" value="Also UAF-side (not RS): Gift · Notification · XAPI/CRM — after CBP/hub decisions.&#xa;CBP never re-implements points math." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#3F3F46;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="780" y="460" width="660" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Rules footer -->
+        <mxCell id="rules" value="Architecture rules (from whiteboard)&#xa;1) One red line: RS does not hold coupon stock or partner rails.&#xa;2) Cross-line verbs are few: Redeem / Confirm only (not open CRUD into CBP).&#xa;3) CBP = coupon control plane (CoD · INV · SOT · Analytics) — UAF builds and owns." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEF2F7;strokeColor=#1E3A5F;align=left;spacingLeft=14;spacingTop=6;fontSize=12;fontColor=#18181B;fontFamily=Helvetica;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="740" y="580" width="740" height="110" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
