@@ -13,3 +13,5 @@ Presentation assets for LedgeRX / UA Finance.
 | `uaf-earn-process-burn-sequence.png` / `.html` | Sequence visual |
 
 Other `LedgeRX-*.pptx` are older or alternate cuts — prefer Full-Briefing.
+
+| `LedgeRX-System-Architecture-CTO.pptx` | **1-slide CTO architecture (edges)** |
