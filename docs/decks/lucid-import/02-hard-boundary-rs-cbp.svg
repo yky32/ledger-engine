@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <style>
+      .title { font: 700 20px Helvetica, Arial, sans-serif; fill: #18181B; }
+      .sub { font: 400 12px Helvetica, Arial, sans-serif; fill: #71717A; }
+      .h { font: 700 13px Helvetica, Arial, sans-serif; fill: #1E3A5F; }
+      .hw { font: 700 13px Helvetica, Arial, sans-serif; fill: #FFFFFF; }
+      .b { font: 600 12px Helvetica, Arial, sans-serif; fill: #18181B; }
+      .s { font: 400 11px Helvetica, Arial, sans-serif; fill: #52525B; }
+      .n { font: 400 11px Helvetica, Arial, sans-serif; fill: #71717A; }
+      .red { font: 700 11px Helvetica, Arial, sans-serif; fill: #B91C1C; }
+      .rule { font: 400 12px Helvetica, Arial, sans-serif; fill: #18181B; }
+    </style>
+    <marker id="arrN" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1E3A5F"/></marker>
+    <marker id="arrR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#B91C1C"/></marker>
+    <marker id="arrG" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#52525B"/></marker>
+  </defs>
+  <rect width="1600" height="900" fill="#FAFAFA"/>
+  <rect x="0" y="0" width="1600" height="4" fill="#1E3A5F"/>
+
+  <text x="40" y="36" class="title">Hard boundary — Reward System | CBP</text>
+  <text x="40" y="58" class="sub">Whiteboard alignment: App → RS · red line · CBP (CoD · INV · SOT · Analytics)</text>
+
+  <!-- left zone -->
+  <rect x="40" y="90" width="560" height="620" fill="#FAFAFA" stroke="#D4D4D8" stroke-dasharray="8 4"/>
+  <text x="55" y="115" class="h">LEFT OF LINE · Reward System domain</text>
+
+  <rect x="70" y="150" width="140" height="70" fill="#FFF" stroke="#D4D4D8"/>
+  <text x="115" y="180" class="b" text-anchor="middle">App</text>
+  <text x="115" y="200" class="n" text-anchor="middle">Yes UA · channels</text>
+
+  <rect x="70" y="240" width="140" height="56" fill="#F4F4F5" stroke="#D4D4D8"/>
+  <text x="140" y="262" class="b" text-anchor="middle">Wallet (RP)</text>
+  <text x="140" y="280" class="n" text-anchor="middle">points balance view</text>
+
+  <rect x="280" y="140" width="280" height="280" fill="#E8EEF4" stroke="#1E3A5F" stroke-width="2"/>
+  <rect x="280" y="140" width="280" height="48" fill="#1E3A5F"/>
+  <text x="300" y="160" class="hw">Reward System (RS)</text>
+  <text x="300" y="176" class="hw">NEW DOMAIN</text>
+  <text x="300" y="220" class="s">• Wallets / multi-currency books</text>
+  <text x="300" y="240" class="s">• Earn / burn / hold calculation</text>
+  <text x="300" y="260" class="s">• Use-case rules + COA</text>
+  <text x="300" y="280" class="s">• Posting engine</text>
+  <text x="300" y="300" class="s">• Ops-owned catalog</text>
+  <rect x="300" y="330" width="240" height="50" fill="#FFF" stroke="#D4D4D8"/>
+  <text x="420" y="350" class="b" text-anchor="middle">sim-CC (+ other rails)</text>
+  <text x="420" y="368" class="n" text-anchor="middle">Business events in</text>
+
+  <line x1="210" y1="185" x2="275" y2="220" stroke="#1E3A5F" stroke-width="2" marker-end="url(#arrN)"/>
+  <line x1="210" y1="268" x2="275" y2="300" stroke="#52525B" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrG)"/>
+
+  <rect x="70" y="450" width="470" height="230" fill="#FFF" stroke="#D4D4D8"/>
+  <text x="90" y="480" class="b">RS owns</text>
+  <text x="90" y="505" class="s">• Point balances (wallet/RP)</text>
+  <text x="90" y="525" class="s">• Scoring &amp; posting</text>
+  <text x="90" y="545" class="s">• Idempotent event identity</text>
+  <text x="90" y="580" class="b">RS does NOT own</text>
+  <text x="90" y="605" class="s">• Coupon stock</text>
+  <text x="90" y="625" class="s">• Partner rails</text>
+  <text x="90" y="645" class="s">• Notification content</text>
+
+  <!-- RED LINE -->
+  <line x1="650" y1="90" x2="650" y2="720" stroke="#B91C1C" stroke-width="4"/>
+  <rect x="620" y="390" width="60" height="22" fill="#FEE2E2"/>
+  <text x="650" y="405" class="red" text-anchor="middle" font-size="9">BOUNDARY</text>
+
+  <!-- cross arrows -->
+  <line x1="560" y1="220" x2="735" y2="220" stroke="#B91C1C" stroke-width="2" marker-end="url(#arrR)"/>
+  <text x="620" y="210" class="red">Redeem</text>
+  <line x1="560" y1="280" x2="735" y2="280" stroke="#B91C1C" stroke-width="2" marker-end="url(#arrR)"/>
+  <text x="620" y="270" class="red">Confirm</text>
+
+  <!-- right zone -->
+  <rect x="700" y="90" width="840" height="620" fill="#FAFAFA" stroke="#D4D4D8" stroke-dasharray="8 4"/>
+  <text x="720" y="115" class="h">RIGHT OF LINE · CBP / fulfillment (UAF-owned)</text>
+
+  <rect x="740" y="140" width="760" height="400" fill="#EEF2F7" stroke="#1E3A5F" stroke-width="2"/>
+  <rect x="740" y="140" width="760" height="48" fill="#1E3A5F"/>
+  <text x="760" y="160" class="hw">CBP · Centralized Backend Platform</text>
+  <text x="760" y="176" class="hw">Coupon domain control plane — UAF builds &amp; owns</text>
+
+  <rect x="780" y="220" width="170" height="80" fill="#FFF" stroke="#D4D4D8"/>
+  <text x="865" y="250" class="b" text-anchor="middle">CoD</text>
+  <text x="865" y="270" class="n" text-anchor="middle">Coupon partner</text>
+  <text x="865" y="286" class="n" text-anchor="middle">connectivity</text>
+
+  <!-- cylinder CoD DB -->
+  <ellipse cx="1020" cy="235" rx="40" ry="14" fill="#F4F4F5" stroke="#D4D4D8"/>
+  <rect x="980" y="235" width="80" height="50" fill="#F4F4F5" stroke="#D4D4D8"/>
+  <ellipse cx="1020" cy="285" rx="40" ry="14" fill="#F4F4F5" stroke="#D4D4D8"/>
+  <text x="1020" y="268" class="b" text-anchor="middle">DB</text>
+  <line x1="950" y1="260" x2="978" y2="260" stroke="#52525B" stroke-width="1.5" marker-end="url(#arrG)"/>
+
+  <rect x="1100" y="220" width="170" height="80" fill="#FFF" stroke="#D4D4D8"/>
+  <text x="1185" y="250" class="b" text-anchor="middle">Analytics</text>
+  <text x="1185" y="272" class="n" text-anchor="middle">Usage / reporting</text>
+  <ellipse cx="1340" cy="235" rx="40" ry="14" fill="#F4F4F5" stroke="#D4D4D8"/>
+  <rect x="1300" y="235" width="80" height="50" fill="#F4F4F5" stroke="#D4D4D8"/>
+  <ellipse cx="1340" cy="285" rx="40" ry="14" fill="#F4F4F5" stroke="#D4D4D8"/>
+  <text x="1340" y="268" class="b" text-anchor="middle">DB</text>
+  <line x1="1270" y1="260" x2="1298" y2="260" stroke="#52525B" stroke-width="1.5" marker-end="url(#arrG)"/>
+
+  <!-- INV cylinder -->
+  <ellipse cx="865" cy="350" rx="80" ry="18" fill="#FFF" stroke="#D4D4D8"/>
+  <rect x="785" y="350" width="160" height="60" fill="#FFF" stroke="#D4D4D8"/>
+  <ellipse cx="865" cy="410" rx="80" ry="18" fill="#FFF" stroke="#D4D4D8"/>
+  <text x="865" y="380" class="b" text-anchor="middle">INV</text>
+  <text x="865" y="398" class="n" text-anchor="middle">Coupon inventory</text>
+
+  <rect x="980" y="340" width="480" height="90" fill="#FFF" stroke="#1E3A5F"/>
+  <text x="1000" y="370" class="b">SOT · Coupon master (source of truth)</text>
+  <text x="1000" y="395" class="s">Catalogue · stock attributes · Cut-in · pin/sim · channel flags</text>
+
+  <text x="780" y="470" class="n">Also UAF-side (not RS): Gift · Notification · XAPI/CRM — after CBP decisions.</text>
+  <text x="780" y="490" class="n">CBP never re-implements points math.</text>
+
+  <rect x="740" y="570" width="760" height="120" fill="#EEF2F7" stroke="#1E3A5F"/>
+  <text x="760" y="598" class="b">Architecture rules (from whiteboard)</text>
+  <text x="760" y="625" class="rule">1) One red line: RS does not hold coupon stock or partner rails.</text>
+  <text x="760" y="648" class="rule">2) Cross-line verbs are few: Redeem / Confirm only (not open CRUD into CBP).</text>
+  <text x="760" y="671" class="rule">3) CBP = coupon control plane (CoD · INV · SOT · Analytics) — UAF builds and owns.</text>
+</svg>
