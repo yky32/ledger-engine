@@ -43,3 +43,17 @@ If Import draw.io is not on your plan:
 
 Native Lucid cloud docs require login + optional REST API (`LUCID_API_KEY`).  
 If you add a Lucid API token later, we can push a live Lucid document via API.
+
+## From confirmed PPTX (this conversion)
+
+| File | |
+|------|--|
+| `UAF-Rewards-Target-Architecture-from-PPTX.drawio` | **Editable** — import into Lucid (2 pages matching your PPTX) |
+| `UAF-Rewards-PPTX-to-Lucid.zip` | Bundle |
+
+### Lucid steps
+1. lucid.app → Lucidchart → **Import** → **draw.io**
+2. Upload `UAF-Rewards-Target-Architecture-from-PPTX.drawio`
+3. Edit shapes freely
+
+If draw.io import missing on plan: open the `.drawio` in https://app.diagrams.net → Export PNG → Insert image in Lucid.
