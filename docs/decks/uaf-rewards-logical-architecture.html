@@ -92,6 +92,10 @@
         <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.2"/><path d="M8 20h8M12 16v4"/></svg>
         <span>sim</span>
       </div>
+      <div class="cap">
+        <svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M8 16h5"/></svg>
+        <span>Web / QR</span>
+      </div>
       <div class="other">
         <h3>Business use-cases</h3>
         <div class="its">
@@ -125,19 +129,19 @@
     <div class="card exp">
       <div class="svc">REST APIs</div>
       <div class="svc">Event bus APIs</div>
-      <div class="svc">IAM / CSP</div>
+      <div class="svc">IAM Policies</div>
     </div>
 
     <div class="lab l-fmo">Front &amp;<br>Middle Office</div>
     <div class="card orchrow">
       <div class="cap orch">Orchestration</div>
       <div class="bps">
-        <h3>Domain microservices · emit events only</h3>
+        <h3>Credit Card (40+) &amp; Loan (20+) · emit events only</h3>
         <div class="bpsg">
-          <div class="svcw"><div class="svc">CC-ext-sapi</div></div>
+          <div class="svcw"><div class="svc">CC-ext-sapi</div><span class="l2">L2</span></div>
           <div class="svcw"><div class="svc">CC-E6-XAPI</div></div>
           <div class="svcw"><div class="svc">CC-Application</div></div>
-          <div class="svcw"><div class="svc">loan-<br>application</div></div>
+          <div class="svcw"><div class="svc">loan-<br>application</div><span class="l2">L2</span></div>
           <div class="svcw"><div class="svc">loan-<br>repayment</div></div>
         </div>
       </div>
@@ -148,18 +152,18 @@
       <div class="stack">
         <div class="cap">Reward Wallet<span class="db dbr"></span></div>
         <div class="cap">Chart of Accounts<span class="db dbr"></span></div>
-        <div class="cap">Double-entry posting</div>
+        <div class="cap">Double-entry<br>posting engine</div>
         <div class="cap">Points calculation</div>
       </div>
     </div>
     <div class="panel data">
       <h3>Reward services</h3>
       <div class="ds">
-        <div class="svc">Burn<br>Engine</div>
         <div class="svc">Earn<br>Engine</div>
+        <div class="svc">Burn<br>Engine</div>
         <div class="svc">Txn<br>Eligibility</div>
-        <div class="svc">Referrer<br>Mgmt</div>
         <div class="svc">Hold &amp;<br>Release</div>
+        <div class="svc">Referral<br>Posting</div>
         <div class="svc">Balance<br>Inquiry</div>
         <div class="svc c">Idempotency<br>Queue</div>
       </div>
@@ -169,16 +173,17 @@
       <div class="stack">
         <div class="cap">Reconciliation<span class="db dbr"></span></div>
         <div class="cap">Statement<span class="db dbr"></span></div>
-        <div class="cap">Balance adj / reversal</div>
+        <div class="cap">Balance reversal</div>
+        <div class="cap">Balance adjustment</div>
       </div>
     </div>
     <div class="panel ctrl">
       <h3>Controls <span class="l2i">L2</span></h3>
       <div class="stack">
         <div class="cap">Audit trail<span class="db dbr"></span></div>
-        <div class="cap">Idempotency<span class="db dbr"></span></div>
-        <div class="cap">Rule config<span class="db dbr"></span></div>
-        <div class="cap">Eligibility<span class="db dbr"></span></div>
+        <div class="cap">Rule configurator<span class="db dbr"></span></div>
+        <div class="cap">Accounting<br>rules<span class="db dbr"></span></div>
+        <div class="cap">Referrer<br>management<span class="db dbr"></span></div>
         <div class="cap">Wallet<br>tiering<span class="db dbr"></span></div>
         <div class="cap">Ops<br>entitlements<span class="db dbr"></span></div>
       </div>
@@ -189,15 +194,17 @@
     <div class="panel pmm">
       <h3>CRP · Redemption <span class="l2i">L2</span></h3>
       <div class="stack">
-        <div class="cap" style="justify-content:center">Issue / use / list</div>
-        <div class="cap" style="justify-content:center;text-align:center">Validation · Engine<br>Catalog</div>
+        <div class="cap" style="justify-content:center">Request to issue coupon</div>
+        <div class="cap" style="justify-content:center">Request to use coupon</div>
+        <div class="cap" style="justify-content:center">Retrieve redeemable list</div>
       </div>
     </div>
     <div class="panel fin">
       <h3>Coupon inventory</h3>
       <div class="stack">
-        <div class="cap">Stock &amp; codes<span class="db dbr"></span></div>
-        <div class="cap" style="justify-content:center;text-align:center">Low-stock<br>monitoring</div>
+        <div class="cap">Catalog &amp; stock<span class="db dbr"></span></div>
+        <div class="cap" style="justify-content:center">Code generation</div>
+        <div class="cap" style="justify-content:center">Low-stock monitoring</div>
       </div>
     </div>
     <div class="panel doc">
@@ -205,6 +212,7 @@
       <div class="stack">
         <div class="cap">Ownership<span class="db dbr"></span></div>
         <div class="cap">History &amp; search<span class="db dbr"></span></div>
+        <div class="cap" style="justify-content:center">UA coupon provider</div>
       </div>
     </div>
 
@@ -214,13 +222,13 @@
       <div class="panel" style="flex:1;padding:10px 12px 12px">
         <h3>External rails</h3>
         <div class="rails">
-          <div class="pay">e6</div><div class="pay">FPS</div><div class="pay">PPS</div><div class="pay">Bill pay</div>
-          <div class="pay">Circle K</div><div class="pay">7-Eleven</div><div class="pay">Gift</div><div class="pay">Notify</div>
+          <div class="pay">e6</div><div class="pay">FPS</div><div class="pay">PPS</div><div class="pay">Circle K</div>
+          <div class="pay">7-Eleven</div><div class="pay">Gift</div><div class="pay">Notify</div><div class="pay">Repayment</div>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:7px;width:200px">
-        <div class="cap jbox">Internal platform<br>Ops UI · CSP</div>
-        <div class="cap jbox">Persistent layer<br>Wallets · Rewards · CBP<span class="db dbr"></span></div>
+        <div class="cap jbox">Internal platform<br>Next.js · CSP</div>
+        <div class="cap jbox">Persistent layer<br>Wallets · Rewards · CBP<br>Coupon stocks · Coupon wallet<span class="db dbr"></span></div>
       </div>
     </div>
   </div>
