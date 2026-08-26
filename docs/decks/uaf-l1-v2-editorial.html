@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>UAF Rewards L1 — V2 Editorial</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--ink:#111827;--muted:#6b7280;--navy:#111827;--line:#e5e7eb;--hair:#111827;--tint:#f3f4f6;--pink:#fce7ef;--pinkb:#f0a8bf;--green:#059669;--l2:#1d4ed8;--paper:#fafafa}
+  *{box-sizing:border-box}
+  body{margin:0;background:#ececec;font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--ink)}
+  .sheet{width:1480px;margin:20px auto 40px;background:#fff;border:1px solid #e5e7eb;padding:28px 36px 0}
+  h1{font-family:"IBM Plex Serif",Georgia,serif;text-align:left;font-size:34px;margin:0 0 4px;letter-spacing:-.03em}
+  .kicker{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+  .wrap{display:grid;grid-template-columns:130px 1fr 220px;gap:0 20px}
+  .lab{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;padding:12px 16px 12px 0;border-right:1px solid var(--ink);display:flex;align-items:center;justify-content:flex-end;line-height:1.3}
+  .lane{border-bottom:1px solid var(--line);padding:12px 0 14px}
+  .cap{border:1px solid var(--ink);border-radius:2px;padding:8px 12px;font-size:13px;font-weight:600;background:#fff}
+  .inner{background:var(--tint);border:1px solid var(--line);padding:8px 10px;font-size:12px;font-weight:500;text-align:center}
+  .panel{border:1px solid var(--line);padding:10px 12px;background:#fff}
+  .panel h3{margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .hex{background:var(--pink);border:1px solid var(--pinkb);clip-path:polygon(15% 0,85% 0,100% 50%,85% 100%,15% 100%,0 50%);
+    width:118px;height:64px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:600;padding:0 10px}
+  .pay{border:1.5px solid var(--green);padding:6px 8px;font-size:12px;font-weight:600;text-align:center;background:#fff;border-radius:2px}
+  .l2{font-size:9px;font-weight:700;border:1px solid var(--l2);color:var(--l2);padding:1px 4px;margin-left:4px;letter-spacing:.04em}
+  .row{display:flex;gap:8px;align-items:stretch}
+  .col{display:flex;flex-direction:column;gap:6px}
+  .grow{flex:1}
+  .legend{font-size:12px;color:var(--muted);line-height:1.8}
+  .dot{display:inline-block;width:10px;height:10px;border:1px solid var(--ink);margin-right:8px;vertical-align:middle}
+  footer.bar{margin:18px -36px 0;border-top:1px solid var(--ink);padding:12px 36px;display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+  .h-ch{min-height:86px}.h-dmz{min-height:48px}.h-exp{min-height:86px}.h-fmo{min-height:340px}.h-bo{min-height:150px}.h-eco{min-height:140px}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="kicker">Logical architecture · L1</div>
+  <h1>UAF Rewards</h1>
+  <div class="wrap">
+    <div>
+      <div class="lab h-ch">Channels</div>
+      <div class="lab h-dmz">DMZ</div>
+      <div class="lab h-exp">Access</div>
+      <div class="lab h-fmo">Front &amp;<br>Middle</div>
+      <div class="lab h-bo">Fulfillment</div>
+      <div class="lab h-eco">Ecosystem</div>
+    </div>
+    <div>
+      <div class="lane h-ch row" style="align-items:center">
+        <div class="cap">Yes UA</div>
+        <div class="cap">sim</div>
+        <div class="panel grow"><h3>Business use-cases</h3>
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:500">
+            <span>Activation</span><span>Merchant</span><span>App event</span><span>Campaign</span><span>Game</span><span>Offline</span>
+          </div>
+        </div>
+      </div>
+      <div class="lane h-dmz row" style="align-items:center">
+        <div class="cap grow" style="text-align:center">API Gateway · public</div>
+        <div class="cap grow" style="text-align:center">API Gateway · internal / ops</div>
+      </div>
+      <div class="lane h-exp" style="display:flex;justify-content:center;gap:16px;align-items:center">
+        <div class="hex">REST APIs</div><div class="hex">Event bus APIs</div><div class="hex">IAM / CSP</div>
+      </div>
+      <div class="lane h-fmo">
+        <div class="row" style="margin-bottom:8px">
+          <div class="cap" style="width:120px;display:flex;align-items:center;justify-content:center">Orchestration</div>
+          <div class="panel grow"><h3>Domain microservices — emit only</h3>
+            <div class="row" style="justify-content:space-between">
+              <div class="hex">CC-ext-sapi</div><div class="hex">CC-E6-XAPI</div><div class="hex">CC-Application</div>
+              <div class="hex">loan-application</div><div class="hex">loan-repayment</div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="panel" style="width:230px"><h3>Reward System <span class="l2">L2</span></h3>
+            <div class="col"><div class="inner">Reward Wallet</div><div class="inner">Chart of Accounts</div><div class="inner">Double-entry posting</div><div class="inner">Points calculation</div></div>
+          </div>
+          <div class="panel grow"><h3>Reward services</h3>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);justify-items:center;gap:4px">
+              <div></div><div class="hex">Earn Engine</div><div></div>
+              <div class="hex">Burn Engine</div><div class="hex">Txn Eligibility</div><div class="hex">Hold &amp; Release</div>
+              <div class="hex">Referrer Mgmt</div><div class="hex">Balance Inquiry</div><div class="hex">Idempotency Queue</div>
+            </div>
+          </div>
+          <div class="panel" style="width:196px"><h3>Books <span class="l2">L2</span></h3>
+            <div class="col"><div class="inner">Reconciliation</div><div class="inner">Statement</div><div class="inner">Adj / reversal</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="lane h-bo">
+        <div class="row">
+          <div class="panel grow"><h3>CRP · Redemption <span class="l2">L2</span></h3>
+            <div class="col"><div class="inner">Issue / use / list</div><div class="inner">Validation · Engine · Catalog</div></div></div>
+          <div class="panel grow"><h3>Coupon inventory</h3>
+            <div class="col"><div class="inner">Stock &amp; codes</div><div class="inner">Low-stock monitoring</div></div></div>
+          <div class="panel grow"><h3>Customer coupon</h3>
+            <div class="col"><div class="inner">Ownership</div><div class="inner">History &amp; search</div></div></div>
+        </div>
+      </div>
+      <div class="lane h-eco">
+        <div class="row">
+          <div class="panel" style="width:180px"><h3>COD</h3>Partner fulfill</div>
+          <div class="panel grow"><h3>External rails</h3>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+              <div class="pay">e6</div><div class="pay">FPS</div><div class="pay">PPS</div><div class="pay">Bill pay</div>
+              <div class="pay">Circle K</div><div class="pay">7-Eleven</div><div class="pay">Gift</div><div class="pay">Notify</div>
+            </div>
+          </div>
+          <div class="col" style="width:200px">
+            <div class="panel">Ops UI · CSP</div>
+            <div class="panel">Wallets · Rewards · CBP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="legend">
+        <div><span class="dot"></span>Capability</div>
+        <div><span class="dot" style="background:#fce7ef;border-color:#f0a8bf"></span>Service</div>
+        <div><span class="dot" style="border-color:#059669"></span>Rail</div>
+        <div><span class="l2">L2</span> next-level detail</div>
+      </div>
+      <div class="panel" style="margin-top:16px"><h3>Controls <span class="l2">L2</span></h3>
+        <div class="col">
+          <div class="inner">Audit trail</div>
+          <div class="inner">Idempotency</div>
+          <div class="inner">Rule config</div>
+          <div class="inner">Eligibility</div>
+          <div class="inner">Wallet tiering</div>
+          <div class="inner">Ops entitlements</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;border:1px solid var(--ink);min-height:120px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;transform:rotate(180deg);font-weight:700;letter-spacing:.14em;font-size:12px">Event Bus · Kafka</div>
+    </div>
+  </div>
+  <footer class="bar">
+    <span>UAF · Reward System as a domain we stand up</span>
+    <span>V2 · Editorial</span>
+  </footer>
+</div>
+</body>
+</html>
