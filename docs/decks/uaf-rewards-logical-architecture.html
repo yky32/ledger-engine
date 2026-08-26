@@ -3,281 +3,375 @@
 <head>
 <meta charset="UTF-8" />
 <title>UAF Rewards Logical Architecture</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fraunces:opsz,wght@9..144,650;9..144,700&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --page: #d4ecf7;
-    --ink: #17344f;
-    --navy: #1a3d68;
-    --cap: #cfeaf6;
-    --cap-bd: #7fb7d6;
-    --svc: #f4c2d2;
-    --svc-bd: #e395ad;
-    --pay-bd: #2fa36a;
-    --l2: #2d6fe0;
+    --page: #cfeaf6;
+    --sheet: #d7eef8;
+    --ink: #16324f;
+    --navy: #163a62;
+    --cap: #c5e6f5;
+    --cap-bd: #78b4d4;
+    --inner: #e4f4fb;
+    --svc: #f3c4d3;
+    --svc-bd: #e295ad;
+    --pay: #2ea56c;
+    --l2: #2c6fe0;
+    --arr: #3b86b8;
     --card: #ffffff;
-    --line: #b9d6e8;
+    --line: #b4d4e6;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: #c5e0ef; font-family: "DM Sans", system-ui, sans-serif; color: var(--ink); }
+  html, body { margin: 0; background: #bddfeb; }
+  body { font-family: "DM Sans", system-ui, sans-serif; color: var(--ink); }
   .sheet {
-    width: 1480px; margin: 20px auto 40px;
-    background: var(--page); border-radius: 6px;
-    padding: 22px 28px 0 22px;
-    box-shadow: 0 10px 36px rgba(23,52,79,.14);
+    width: 1520px; margin: 16px auto 40px;
+    background: var(--sheet);
+    border-radius: 8px;
+    padding: 18px 26px 0 20px;
+    box-shadow: 0 12px 40px rgba(22,50,79,.13);
   }
   h1 {
-    font-family: "Fraunces", Georgia, serif;
-    text-align: center; font-size: 42px; margin: 6px 0 18px;
-    color: var(--navy); letter-spacing: -.02em;
+    font-family: Fraunces, Georgia, serif;
+    font-size: 46px; font-weight: 700; text-align: center;
+    color: var(--navy); margin: 8px 0 20px; letter-spacing: -.025em;
   }
-  .wrap { display: grid; grid-template-columns: 118px 1fr 228px; gap: 8px 12px; }
-  .labs, .main, .side { display: flex; flex-direction: column; }
+
+  .board {
+    display: grid;
+    grid-template-columns: 108px minmax(0,1fr) 222px;
+    grid-template-rows: auto auto auto auto auto auto;
+    column-gap: 12px;
+    row-gap: 9px;
+    align-items: stretch;
+  }
   .lab {
     display: flex; align-items: center; justify-content: flex-end;
     text-align: right; font-size: 12.5px; font-weight: 700; color: var(--navy);
-    line-height: 1.2; padding-right: 10px; border-right: 3px solid var(--navy);
+    line-height: 1.2; padding-right: 10px;
+    border-right: 3px solid var(--navy);
   }
   .lane {
-    background: var(--card); border: 1.4px solid var(--line);
-    border-radius: 16px; padding: 9px 10px;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 18px;
+    padding: 10px 12px;
   }
+
   .cap {
-    background: var(--cap); border: 1.4px solid var(--cap-bd);
-    border-radius: 14px; padding: 7px 10px; font-size: 12.5px; font-weight: 600;
-    color: var(--navy); text-align: center; line-height: 1.2;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--cap); border: 1.5px solid var(--cap-bd);
+    border-radius: 16px; padding: 8px 12px;
+    font-size: 13px; font-weight: 600; color: var(--navy);
+    text-align: center; line-height: 1.2;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
   }
-  .cap.h { height: 48px; }
   .inner {
-    background: #e7f5fb; border: 1.3px solid var(--cap-bd);
-    border-radius: 12px; padding: 7px 10px; font-size: 12px; font-weight: 600;
-    color: var(--navy); text-align: center; line-height: 1.25;
+    background: var(--inner); border: 1.4px solid var(--cap-bd);
+    border-radius: 14px; padding: 7px 10px;
+    font-size: 12.5px; font-weight: 600; color: var(--navy);
+    text-align: center; line-height: 1.25;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
   }
-  .panel { background: var(--cap); border: 1.4px solid var(--cap-bd); border-radius: 14px; padding: 8px 10px; }
-  .panel h3 { margin: 0 0 8px; text-align: center; font-size: 13px; color: var(--navy); }
+  .panel {
+    background: var(--cap); border: 1.5px solid var(--cap-bd);
+    border-radius: 16px; padding: 8px 10px 10px;
+  }
+  .panel > h3 {
+    margin: 0 0 8px; text-align: center;
+    font-size: 13.5px; font-weight: 700; color: var(--navy);
+  }
+
+  /* regular-ish flat-top hexagon */
   .hex {
-    background: var(--svc); border: 1.4px solid var(--svc-bd);
-    clip-path: polygon(16% 0, 84% 0, 100% 50%, 84% 100%, 16% 100%, 0 50%);
-    display: flex; align-items: center; justify-content: center; text-align: center;
-    font-size: 11.5px; font-weight: 700; color: var(--navy); line-height: 1.15;
-    width: 124px; height: 70px; padding: 0 12px; position: relative;
+    --w: 112px;
+    width: var(--w);
+    height: calc(var(--w) * 0.90);
+    background: var(--svc);
+    border: none;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    box-shadow: inset 0 0 0 1.6px var(--svc-bd);
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 12px; font-weight: 700; color: var(--navy);
+    line-height: 1.15; padding: 0 18px; position: relative;
   }
-  .hex.sm { width: 118px; height: 68px; font-size: 11px; }
+  .hex.sm { --w: 104px; font-size: 11.5px; padding: 0 16px; }
+  .hex .l2 { position: absolute; top: 8px; right: 18px; }
+
   .pay {
-    background: #fff; border: 2px solid var(--pay-bd); border-radius: 10px;
-    padding: 6px 8px; font-size: 12px; font-weight: 600; text-align: center; color: var(--navy);
+    background: #fff; border: 2px solid var(--pay);
+    border-radius: 12px; padding: 7px 8px;
+    font-size: 12.5px; font-weight: 600; text-align: center; color: var(--navy);
   }
   .l2 {
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--l2); color: #fff; font-size: 9px; font-weight: 800;
-    height: 15px; min-width: 20px; padding: 0 3px; border-radius: 3px; margin-left: 3px;
+    height: 15px; min-width: 20px; padding: 0 3px; border-radius: 3px; margin-left: 4px;
   }
-  .l2.abs { position: absolute; top: 5px; right: 14px; margin: 0; }
   .db {
-    display: inline-block; width: 14px; height: 13px; margin-left: 3px; vertical-align: middle;
-    background: #2fa36a; border-radius: 7px 7px 3px 3px;
-    box-shadow: inset 0 3px 0 #fff, inset 0 -3px 0 rgba(255,255,255,.35);
+    width: 14px; height: 13px; flex: 0 0 auto;
   }
-  .ico { width: 28px; height: 28px; border-radius: 8px; background: #fff; border: 1px solid var(--cap-bd);
-    display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: var(--navy); }
+  .ico {
+    width: 30px; height: 30px; border-radius: 8px; background: #fff;
+    border: 1px solid var(--cap-bd);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
   .row { display: flex; gap: 8px; align-items: stretch; }
   .col { display: flex; flex-direction: column; gap: 6px; }
-  .grow { flex: 1; }
+  .grow { flex: 1; min-width: 0; }
+  .center { display: flex; align-items: center; justify-content: center; }
+
   .legend {
-    background: #fff; border: 1.4px solid var(--line); border-radius: 14px; padding: 12px 14px;
-    font-size: 12.5px; font-weight: 600; color: var(--navy);
+    background: #fff; border: 1.5px solid var(--line); border-radius: 16px;
+    padding: 12px 14px 10px; font-size: 12.5px; font-weight: 600; color: var(--navy);
   }
   .leg { display: flex; align-items: center; gap: 10px; margin: 7px 0; }
-  .sw { width: 42px; height: 20px; border-radius: 10px; border: 1.5px solid; flex: 0 0 auto; }
+  .sw { width: 42px; height: 20px; border-radius: 11px; border: 1.6px solid; flex: 0 0 auto; }
   .sw.cap { background: var(--cap); border-color: var(--cap-bd); }
-  .sw.svc { background: var(--svc); border-color: var(--svc-bd); clip-path: polygon(16% 0,84% 0,100% 50%,84% 100%,16% 100%,0 50%); height: 26px; border-radius: 0; }
-  .sw.pay { background: #fff; border-color: var(--pay-bd); }
+  .sw.svc {
+    background: var(--svc); border-color: var(--svc-bd);
+    clip-path: polygon(25% 0, 75% 0, 100% 50, 75% 100, 25% 100, 0 50);
+    height: 28px; width: 36px; border-radius: 0;
+  }
+  .sw.pay { background: #fff; border-color: var(--pay); }
+
+  .honey {
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+    padding: 2px 0 4px;
+  }
+  .honey .r { display: flex; justify-content: center; margin: -6px 0; }
+  .honey .r .hex { margin: 0 3px; }
+
   footer.bar {
-    margin: 16px -28px 0 -22px; background: var(--navy); color: #fff;
+    margin: 16px -26px 0 -20px; background: var(--navy); color: #fff;
     display: flex; justify-content: space-between; padding: 11px 24px; font-size: 13px;
   }
-  .h-ch { height: 92px; } .h-dmz { height: 50px; } .h-exp { height: 92px; }
-  .h-fmo { min-height: 368px; } .h-bo { height: 168px; } .h-eco { height: 156px; }
-  .gap { height: 10px; }
+
+  /* arrows between lanes */
+  .arr-down {
+    width: 100%; height: 0; position: relative; z-index: 2;
+  }
+  .arr-down i {
+    position: absolute; left: var(--x, 50%); top: -7px; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 7px solid transparent; border-right: 7px solid transparent;
+    border-top: 11px solid var(--arr);
+  }
+  .arr-down i::before {
+    content: ""; position: absolute; left: -2px; top: -22px;
+    width: 3px; height: 14px; background: var(--arr);
+  }
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0">
+  <symbol id="cyl" viewBox="0 0 24 22">
+    <ellipse cx="12" cy="5.2" rx="8.5" ry="3.8" fill="#34b36f"/>
+    <path d="M3.5 5.2v11.2c0 2.1 3.8 3.8 8.5 3.8s8.5-1.7 8.5-3.8V5.2" fill="#2ea56c"/>
+    <ellipse cx="12" cy="5.2" rx="8.5" ry="3.8" fill="#43c47c"/>
+  </symbol>
+  <symbol id="phone" viewBox="0 0 24 24" fill="none" stroke="#163a62" stroke-width="1.7">
+    <rect x="7.5" y="3" width="9" height="18" rx="1.8"/>
+    <circle cx="12" cy="18.4" r=".7" fill="#163a62" stroke="none"/>
+  </symbol>
+  <symbol id="monitor" viewBox="0 0 24 24" fill="none" stroke="#163a62" stroke-width="1.7">
+    <rect x="3" y="5" width="18" height="11.5" rx="1.4"/>
+    <path d="M8 20h8M12 16.5V20"/>
+  </symbol>
+</svg>
+
 <div class="sheet">
   <h1>UAF Rewards Logical Architecture</h1>
-  <div class="wrap">
-    <div class="labs">
-      <div class="lab h-ch">Customer<br>Channels</div><div class="gap"></div>
-      <div class="lab h-dmz">DMZ</div><div class="gap"></div>
-      <div class="lab h-exp">Access &amp;<br>Experience</div><div class="gap"></div>
-      <div class="lab h-fmo">Front &amp; Middle Office</div><div class="gap"></div>
-      <div class="lab h-bo">Fulfillment</div><div class="gap"></div>
-      <div class="lab h-eco">Ecosystem<br>Partners</div>
+
+  <div class="board">
+    <!-- ROW 1 channels -->
+    <div class="lab">Customer<br>Channels</div>
+    <div class="lane">
+      <div class="row" style="align-items:center">
+        <div class="cap" style="min-width:148px;height:56px">
+          <span class="ico"><svg width="18" height="18"><use href="#phone"/></svg></span>
+          Yes UA
+        </div>
+        <div class="cap" style="min-width:148px;height:56px">
+          <span class="ico"><svg width="18" height="18"><use href="#monitor"/></svg></span>
+          sim
+        </div>
+        <div class="panel grow">
+          <h3>Business use-cases</h3>
+          <div class="row" style="justify-content:space-around;font-size:12.5px;font-weight:600;text-align:center;padding:0 6px 2px">
+            <span>Card<br>activation</span>
+            <span>Merchant</span>
+            <span>App<br>event</span>
+            <span>Campaign</span>
+            <span>Game</span>
+            <span>Offline</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend" style="grid-row:1 / span 2">
+      <div class="leg"><span class="sw cap"></span> Capability solutions</div>
+      <div class="leg"><span class="sw svc"></span> Services</div>
+      <div class="leg"><span class="sw pay"></span> Partner / coupon rails</div>
+      <div class="leg"><svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg> Datastore</div>
+      <div class="leg"><span class="l2">L2</span> Details in L2 architecture</div>
+      <div class="leg"><span style="color:var(--arr);font-size:16px;line-height:1">↕</span> Main data flow</div>
     </div>
 
-    <div class="main">
-      <!-- CHANNELS -->
-      <div class="lane h-ch row" style="align-items:center">
-        <div class="cap h" style="min-width:150px"><span class="ico">Y</span> Yes UA</div>
-        <div class="cap h" style="min-width:150px"><span class="ico">S</span> sim</div>
-        <div class="panel grow" style="padding:6px 10px 8px">
-          <h3>Business use-cases</h3>
-          <div class="row" style="justify-content:space-around;font-size:12px;font-weight:600;color:var(--navy);text-align:center">
-            <span>Card<br>activation</span><span>Merchant</span><span>App<br>event</span><span>Campaign</span><span>Game</span><span>Offline</span>
+    <!-- ROW 2 DMZ -->
+    <div class="lab">DMZ</div>
+    <div class="lane" style="padding:8px 12px">
+      <div class="arr-down"><i style="--x:22%"></i><i style="--x:62%"></i></div>
+      <div class="row">
+        <div class="cap grow" style="height:32px;border-radius:20px">API Gateway · public</div>
+        <div class="cap grow" style="height:32px;border-radius:20px">API Gateway · internal / ops</div>
+      </div>
+    </div>
+
+    <!-- ROW 3 access -->
+    <div class="lab">Access &amp;<br>Experience</div>
+    <div class="lane center" style="gap:28px;min-height:92px">
+      <div class="arr-down" style="position:absolute;left:0;right:0;top:0"><i style="--x:50%"></i></div>
+      <div class="hex">REST APIs</div>
+      <div class="hex">Event bus<br>APIs</div>
+      <div class="hex">IAM / CSP</div>
+    </div>
+    <div></div>
+
+    <!-- ROW 4 FMO -->
+    <div class="lab">Front &amp; Middle Office</div>
+    <div class="lane">
+      <div class="arr-down"><i style="--x:50%"></i></div>
+      <div class="row" style="align-items:center;margin-bottom:10px">
+        <div class="cap" style="width:124px;min-height:48px">Orchestration</div>
+        <div class="panel grow">
+          <h3>Domain microservices · emit events only</h3>
+          <div class="row" style="justify-content:space-between;padding:0 4px">
+            <div class="hex sm">CC-ext-sapi</div>
+            <div class="hex sm">CC-E6-XAPI</div>
+            <div class="hex sm">CC-Application</div>
+            <div class="hex sm">loan-<br>application</div>
+            <div class="hex sm">loan-<br>repayment</div>
           </div>
         </div>
       </div>
-      <div class="gap"></div>
-
-      <!-- DMZ -->
-      <div class="lane h-dmz" style="display:flex;align-items:center;gap:10px">
-        <div class="cap" style="flex:1;height:30px;border-radius:18px">API Gateway · public</div>
-        <div class="cap" style="flex:1;height:30px;border-radius:18px">API Gateway · internal / ops</div>
-      </div>
-      <div class="gap"></div>
-
-      <!-- ACCESS -->
-      <div class="lane h-exp" style="display:flex;align-items:center;justify-content:center;gap:18px">
-        <div class="hex">REST APIs</div>
-        <div class="hex">Event bus<br>APIs</div>
-        <div class="hex">IAM / CSP</div>
-      </div>
-      <div class="gap"></div>
-
-      <!-- FMO -->
-      <div class="lane h-fmo">
-        <div class="row" style="align-items:center;margin-bottom:8px">
-          <div class="cap" style="width:128px;height:42px">Existing<br>estate</div>
-          <div class="panel grow">
-            <h3>Domain microservices · emit events only</h3>
-            <div class="row" style="justify-content:space-between">
-              <div class="hex sm">CC-ext-sapi</div>
-              <div class="hex sm">CC-E6-XAPI</div>
-              <div class="hex sm">CC-Application</div>
-              <div class="hex sm">loan-<br>application</div>
-              <div class="hex sm">loan-<br>repayment</div>
-            </div>
+      <div class="row">
+        <div class="panel" style="width:220px">
+          <h3>Reward System <span class="l2">L2</span></h3>
+          <div class="col">
+            <div class="inner">Reward Wallet <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+            <div class="inner">Chart of Accounts <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+            <div class="inner">Double-entry posting</div>
+            <div class="inner">Points calculation</div>
           </div>
         </div>
-        <div class="row">
-          <div class="panel" style="width:232px">
-            <h3>Reward System <span class="l2">L2</span></h3>
-            <div class="col">
-              <div class="inner">Reward Wallet <span class="db"></span></div>
-              <div class="inner">Chart of Accounts <span class="db"></span></div>
-              <div class="inner">Double-entry posting</div>
-              <div class="inner">Points calculation</div>
-            </div>
-          </div>
-          <div class="panel grow">
-            <h3>Reward services</h3>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);justify-items:center;gap:4px 0">
-              <div></div><div class="hex sm">Earn<br>Engine</div><div></div>
+        <div class="panel grow">
+          <h3>Reward services</h3>
+          <div class="honey">
+            <div class="r"><div class="hex sm">Earn<br>Engine</div></div>
+            <div class="r">
               <div class="hex sm">Burn<br>Engine</div>
               <div class="hex sm">Txn<br>Eligibility</div>
-              <div class="hex sm">Hold &amp;<br>Release</div>
+            </div>
+            <div class="r"><div class="hex sm">Hold &amp;<br>Release</div></div>
+            <div class="r">
               <div class="hex sm">Referrer<br>Mgmt</div>
               <div class="hex sm">Balance<br>Inquiry</div>
-              <div class="hex sm">Idempotency<br>Queue</div>
             </div>
-          </div>
-          <div class="panel" style="width:200px">
-            <h3>Books &amp; statements <span class="l2">L2</span></h3>
-            <div class="col">
-              <div class="inner">Reconciliation <span class="db"></span></div>
-              <div class="inner">Statement <span class="db"></span></div>
-              <div class="inner">Balance adj / reversal</div>
-            </div>
+            <div class="r"><div class="hex sm">Idempotency<br>Queue</div></div>
           </div>
         </div>
-      </div>
-      <div class="gap"></div>
-
-      <!-- FULFILL = CRP -->
-      <div class="lane h-bo">
-        <div class="row">
-          <div class="panel grow">
-            <h3>CRP · Centralized Redemption <span class="l2">L2</span></h3>
-            <div class="col">
-              <div class="inner">Issue / use / redeemable-list</div>
-              <div class="inner">Validation · Engine · Catalog</div>
-            </div>
-          </div>
-          <div class="panel grow">
-            <h3>Coupon inventory</h3>
-            <div class="col">
-              <div class="inner">Stock &amp; codes <span class="db"></span></div>
-              <div class="inner">Low-stock monitoring <span class="db"></span></div>
-            </div>
-          </div>
-          <div class="panel grow">
-            <h3>Customer coupon</h3>
-            <div class="col">
-              <div class="inner">Ownership <span class="db"></span></div>
-              <div class="inner">History &amp; search <span class="db"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="gap"></div>
-
-      <!-- ECO -->
-      <div class="lane h-eco">
-        <div class="row">
-          <div class="panel" style="width:200px">
-            <h3>COD<br>partner fulfill <span class="db"></span></h3>
-          </div>
-          <div class="panel grow">
-            <h3>External rails</h3>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
-              <div class="pay">e6</div>
-              <div class="pay">FPS</div>
-              <div class="pay">PPS</div>
-              <div class="pay">Bill pay</div>
-              <div class="pay">Circle K</div>
-              <div class="pay">7-Eleven</div>
-              <div class="pay">Gift</div>
-              <div class="pay">Notify</div>
-            </div>
-          </div>
-          <div class="col" style="width:210px">
-            <div class="panel" style="flex:1"><h3 style="margin:0">Internal platform<br>Ops UI · CSP</h3></div>
-            <div class="panel" style="flex:1"><h3 style="margin:0">Persistent layer <span class="db"></span><br>Wallets · Rewards · CBP</h3></div>
+        <div class="panel" style="width:196px">
+          <h3>Books &amp; statements <span class="l2">L2</span></h3>
+          <div class="col">
+            <div class="inner">Reconciliation <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+            <div class="inner">Statement <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+            <div class="inner">Balance adj / reversal</div>
           </div>
         </div>
       </div>
     </div>
-
-    <div class="side">
-      <div class="legend">
-        <div class="leg"><span class="sw cap"></span> Capability solutions</div>
-        <div class="leg"><span class="sw svc"></span> Services</div>
-        <div class="leg"><span class="sw pay"></span> Partner / coupon rails</div>
-        <div class="leg"><span class="db"></span> Datastore</div>
-        <div class="leg"><span class="l2">L2</span> Details in L2 architecture</div>
-        <div class="leg"><span style="color:#3d87b8">↔</span> Main data flow</div>
+    <div class="col">
+      <div class="panel">
+        <h3>Controls <span class="l2">L2</span></h3>
+        <div class="col">
+          <div class="inner">Ops / Audit trail <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+          <div class="inner">Idempotency <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+          <div class="inner">Rule config <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+          <div class="inner">Eligibility <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+          <div class="inner">Wallet tiering <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+          <div class="inner">Ops entitlements <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+        </div>
       </div>
-      <div class="col grow" style="margin-top:8px">
-        <div class="panel">
-          <h3>Controls <span class="l2">L2</span></h3>
+    </div>
+
+    <!-- ROW 5 fulfill -->
+    <div class="lab">Fulfillment</div>
+    <div class="lane">
+      <div class="arr-down"><i style="--x:18%"></i></div>
+      <div class="row">
+        <div class="panel grow">
+          <h3>CRP · Centralized Redemption <span class="l2">L2</span></h3>
           <div class="col">
-            <div class="inner">Audit trail <span class="db"></span></div>
-            <div class="inner">Idempotency <span class="db"></span></div>
-            <div class="inner">Rule config <span class="db"></span></div>
-            <div class="inner">Eligibility <span class="db"></span></div>
-            <div class="inner">Wallet tiering <span class="db"></span></div>
-            <div class="inner">Ops entitlements <span class="db"></span></div>
+            <div class="inner">Issue / use / redeemable-list</div>
+            <div class="inner">Validation · Engine · Catalog</div>
           </div>
         </div>
-        <div style="flex:1;border:2px solid #7eb6d6;border-radius:16px;position:relative;min-height:90px">
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;transform:rotate(180deg);font-weight:700;color:var(--navy);letter-spacing:.08em">Event Bus · Kafka</div>
+        <div class="panel grow">
+          <h3>Coupon inventory</h3>
+          <div class="col">
+            <div class="inner">Stock &amp; codes <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+            <div class="inner">Low-stock monitoring</div>
+          </div>
+        </div>
+        <div class="panel grow">
+          <h3>Customer coupon</h3>
+          <div class="col">
+            <div class="inner">Ownership <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+            <div class="inner">History &amp; search <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="lane" style="display:flex;align-items:stretch;justify-content:center;border:2.2px solid #7eb8d6;background:transparent;grid-row:5 / span 2">
+      <div style="writing-mode:vertical-rl;transform:rotate(180deg);font-weight:700;letter-spacing:.12em;color:var(--navy);font-size:13px;padding:8px 0">Event Bus · Kafka</div>
+    </div>
+
+    <!-- ROW 6 eco -->
+    <div class="lab">Ecosystem<br>Partners</div>
+    <div class="lane">
+      <div class="arr-down"><i style="--x:14%"></i></div>
+      <div class="row">
+        <div class="panel" style="width:168px;display:flex;flex-direction:column;justify-content:center">
+          <h3 style="margin:0">COD<br>partner fulfill <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg></h3>
+        </div>
+        <div class="panel grow">
+          <h3>External rails</h3>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <div class="pay">e6</div>
+            <div class="pay">FPS</div>
+            <div class="pay">PPS</div>
+            <div class="pay">Bill pay</div>
+            <div class="pay">Circle K</div>
+            <div class="pay">7-Eleven</div>
+            <div class="pay">Gift</div>
+            <div class="pay">Notify</div>
+          </div>
+        </div>
+        <div class="col" style="width:200px">
+          <div class="panel" style="flex:1;display:flex;align-items:center;justify-content:center">
+            <h3 style="margin:0">Internal platform<br>Ops UI · CSP</h3>
+          </div>
+          <div class="panel" style="flex:1;display:flex;align-items:center;justify-content:center">
+            <h3 style="margin:0">Persistent layer <svg class="db" viewBox="0 0 24 22"><use href="#cyl"/></svg><br>Wallets · Rewards · CBP</h3>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
   <footer class="bar">
-    <span>UAF platform architecture  ·  Reward System is a domain we stand up</span>
-    <span style="font-style:italic;opacity:.92">Channels thin · CRP owns coupon reality</span>
+    <span>UAF platform architecture · Reward System is a domain we stand up</span>
+    <span style="font-style:italic;opacity:.9">Channels thin · CRP owns coupon reality</span>
   </footer>
 </div>
 </body>
