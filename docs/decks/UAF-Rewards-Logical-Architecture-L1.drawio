@@ -1,0 +1,400 @@
+<mxfile host="app.diagrams.net" agent="Hermes" version="22.1.0" type="device">
+  <diagram id="l1" name="UAF Rewards L1">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1280" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- title -->
+        <mxCell id="title" value="UAF Rewards  ·  Logical Architecture (L1)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=22;fontColor=#1B4F72;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="820" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="sub" value="Channels stay thin · Reward System is the core domain · CRP owns coupon reality · partners at the edge" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=12;fontColor=#7F8C8D;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="46" width="900" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- legend -->
+        <mxCell id="lg1" value="Capability" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4E6F1;strokeColor=#85C1E9;fontColor=#1C283A;fontStyle=1;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="20" width="110" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg2" value="Service" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontColor=#1C283A;fontStyle=1;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1305" y="18" width="110" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg3" value="Rail / COD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontStyle=1;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="20" width="110" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg4" value="Datastore" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=8;fillColor=#D5DBDB;strokeColor=#BFC9CA;fontColor=#1C283A;fontStyle=1;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1555" y="12" width="90" height="42" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== LANE 1 CHANNELS ========== -->
+        <mxCell id="L1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EAF2F8;strokeColor=#BFC9CA;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="1600" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="L1h" value="01  CHANNELS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1B4F72;strokeColor=#1B4F72;fontColor=#FFFFFF;fontStyle=1;fontSize=11;fontFamily=Helvetica;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="36" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="uc" value="Business use-cases" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BFC9CA;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontStyle=1;fontSize=12;fontColor=#1B4F72;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="96" y="96" width="360" height="128" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc1" value="Card activation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4E6F1;strokeColor=#85C1E9;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="112" y="128" width="100" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc2" value="Merchant" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4E6F1;strokeColor=#85C1E9;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="222" y="128" width="100" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc3" value="App event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4E6F1;strokeColor=#85C1E9;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="332" y="128" width="100" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc4" value="Campaign" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4E6F1;strokeColor=#85C1E9;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="112" y="168" width="100" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc5" value="Game" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4E6F1;strokeColor=#85C1E9;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="222" y="168" width="100" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="uc6" value="Offline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4E6F1;strokeColor=#85C1E9;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="332" y="168" width="100" height="28" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="pc" value="Public clients" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BFC9CA;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontStyle=1;fontSize=12;fontColor=#1B4F72;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="476" y="96" width="340" height="128" as="geometry"/>
+        </mxCell>
+        <mxCell id="pc1" value="Yes UA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#AED6F1;strokeColor=#5DADE2;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="496" y="148" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="pc2" value="sim" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#AED6F1;strokeColor=#5DADE2;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="600" y="148" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="pc3" value="Web / QR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#AED6F1;strokeColor=#5DADE2;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="704" y="148" width="90" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="in" value="Internal platform&#xa;Ops UI · CSP · IAM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BFC9CA;fontSize=12;fontColor=#1C283A;fontFamily=Helvetica;align=center;" vertex="1" parent="1">
+          <mxGeometry x="836" y="96" width="220" height="128" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ext" value="External parties / rails" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BFC9CA;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontStyle=1;fontSize=12;fontColor=#1B4F72;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1076" y="96" width="540" height="128" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="e6" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1096" y="148" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="FPS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="148" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="PPS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1304" y="148" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="Circle K" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1408" y="148" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="7-Eleven" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1512" y="148" width="84" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== LANE 2 ACCESS ========== -->
+        <mxCell id="L2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FDF2E9;strokeColor=#BFC9CA;" vertex="1" parent="1">
+          <mxGeometry x="40" y="250" width="1600" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="L2h" value="02  ACCESS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1B4F72;strokeColor=#1B4F72;fontColor=#FFFFFF;fontStyle=1;fontSize=11;fontFamily=Helvetica;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="250" width="36" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="gw1" value="API Gateway  ·  public ingress" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#C0392B;fontColor=#1C283A;fontStyle=1;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="200" y="268" width="560" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="gw2" value="API Gateway  ·  internal / ops" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#C0392B;fontColor=#1C283A;fontStyle=1;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="800" y="268" width="560" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="gwN" value="Single controlled entry" style="text;html=1;strokeColor=none;fillColor=none;fontSize=11;fontColor=#7F8C8D;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1380" y="278" width="200" height="24" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== LANE 3 DOMAIN ========== -->
+        <mxCell id="L3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EAF2F8;strokeColor=#BFC9CA;" vertex="1" parent="1">
+          <mxGeometry x="40" y="340" width="1600" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="L3h" value="03  DOMAIN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1B4F72;strokeColor=#1B4F72;fontColor=#FFFFFF;fontStyle=1;fontSize=11;fontFamily=Helvetica;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="340" width="36" height="140" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ccbox" value="Credit Card microservices (40+)  ·  existing estate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BFC9CA;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontStyle=1;fontSize=12;fontColor=#1B4F72;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="96" y="356" width="860" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc1" value="CC-ext-sapi" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=10;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="112" y="396" width="96" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc2" value="CC-E6-XAPI" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=10;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="216" y="396" width="96" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc3" value="CC-User-Auth" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=10;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="320" y="396" width="96" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc4" value="CC-Application" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=10;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="424" y="396" width="104" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc5" value="CC-Notification" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=10;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="536" y="396" width="104" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc6" value="CC-Instalment" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=10;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="648" y="396" width="96" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc7" value="CC-Card-ops" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=10;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="752" y="396" width="96" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc8" value="CC-BillPay" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=10;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="856" y="396" width="84" height="48" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="lnbox" value="Loan microservices (20+)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BFC9CA;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontStyle=1;fontSize=12;fontColor=#1B4F72;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="976" y="356" width="360" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="ln1" value="loan-application" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="996" y="396" width="150" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="ln2" value="loan-repayment" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#F5B7B1;strokeColor=#E6B0AA;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="396" width="150" height="48" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="emit" value="Emit events /&#xa;transactions only.&#xa;No scoring math." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BFC9CA;fontSize=11;fontColor=#4A5568;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1356" y="356" width="260" height="108" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== LANE 4 RS ========== -->
+        <mxCell id="L4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8EEF4;strokeColor=#BFC9CA;" vertex="1" parent="1">
+          <mxGeometry x="40" y="490" width="1600" height="280" as="geometry"/>
+        </mxCell>
+        <mxCell id="L4h" value="04  CORE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1B4F72;strokeColor=#1B4F72;fontColor=#FFFFFF;fontStyle=1;fontSize=11;fontFamily=Helvetica;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="490" width="36" height="280" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rs" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A365D;strokeColor=#1B4F72;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="96" y="506" width="1520" height="248" as="geometry"/>
+        </mxCell>
+        <mxCell id="rst" value="Reward System (RS)   ·   NEW DOMAIN WE STAND UP" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=16;fontColor=#FFFFFF;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="518" width="900" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="rss" value="Wallets · posting · calculation · books     Kafka is the integration bus     Does not own coupon stock" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=12;fontColor=#AEC6CF;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="544" width="1100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2rs" value="L2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5DADE2;strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontSize=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="518" width="36" height="22" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m1" value="Reward Wallet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="580" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m2" value="Chart of Accounts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="308" y="580" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m3" value="Points Calculation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="500" y="580" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m4" value="Hold &amp; Release" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="692" y="580" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m5" value="Referral Posting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="884" y="580" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m6" value="Double-Entry Posting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1076" y="580" width="200" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m7" value="Earn Engine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1288" y="580" width="180" height="32" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m8" value="Txn Eligibility Rules" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="624" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m9" value="Balance Inquiry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="308" y="624" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m10" value="Reconciliation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="500" y="624" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m11" value="Accounting Rules" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="692" y="624" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m12" value="Burn Engine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="884" y="624" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m13" value="Rule Configurator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1076" y="624" width="200" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m14" value="Referrer Mgmt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1288" y="624" width="180" height="32" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m15" value="Audit Trail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="668" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m16" value="Idempotency Queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="308" y="668" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m17" value="Wallet Tiering" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="500" y="668" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m18" value="Balance Reversal" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="692" y="668" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m19" value="Balance Adjustment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="884" y="668" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m20" value="Statement" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E86AB;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1076" y="668" width="200" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="m21" value="Runtime: event → admit → calculate → post → books → outbound intent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1288" y="668" width="304" height="32" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== LANE 5 CRP ========== -->
+        <mxCell id="L5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EAF7F0;strokeColor=#BFC9CA;" vertex="1" parent="1">
+          <mxGeometry x="40" y="780" width="1600" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="L5h" value="05  FULFILL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1B4F72;strokeColor=#1B4F72;fontColor=#FFFFFF;fontStyle=1;fontSize=10;fontFamily=Helvetica;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="780" width="36" height="200" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="crp" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E8449;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="96" y="796" width="1520" height="168" as="geometry"/>
+        </mxCell>
+        <mxCell id="crpt" value="CRP  ·  Centralized Redemption Platform     UAF-owned coupon control plane" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=15;fontColor=#14532D;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="808" width="1100" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="crps" value="Cross-boundary verbs from RS only:  Request to issue coupon  ·  Request to use coupon  ·  Retrieve redeemable list" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=12;fontColor=#7F8C8D;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="832" width="1200" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2crp" value="L2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#58D68D;strokeColor=none;fontColor=#14532D;fontStyle=1;fontSize=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="808" width="36" height="22" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c1" value="Coupon Validation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="864" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2" value="Inventory Mgmt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="288" y="864" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3" value="Coupon Catalog" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="460" y="864" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c4" value="Redemption Engine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="632" y="864" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c5" value="Code Generation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="804" y="864" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c6" value="Usage Reporting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="976" y="864" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c7" value="Vendor Mgmt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1148" y="864" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c8" value="UA Coupon Provider" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="864" width="180" height="32" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c9" value="Audit Trail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="908" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c10" value="Low-stock Monitor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="288" y="908" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c11" value="Customer Ownership" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="460" y="908" width="160" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c12" value="Coupon Wallet History" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="632" y="908" width="180" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c13" value="Coupon Wallet Search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#82E0AA;fontColor=#14532D;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="824" y="908" width="180" height="32" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== LANE 6 STORE ========== -->
+        <mxCell id="L6" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F6F7;strokeColor=#BFC9CA;" vertex="1" parent="1">
+          <mxGeometry x="40" y="990" width="1600" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="L6h" value="06  EDGE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1B4F72;strokeColor=#1B4F72;fontColor=#FFFFFF;fontStyle=1;fontSize=11;fontFamily=Helvetica;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="990" width="36" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ds1" value="Wallets" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#D5DBDB;strokeColor=#BFC9CA;fontColor=#1C283A;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="116" y="1016" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="ds2" value="Rewards" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#D5DBDB;strokeColor=#BFC9CA;fontColor=#1C283A;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="276" y="1016" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="ds3" value="CBP" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#D5DBDB;strokeColor=#BFC9CA;fontColor=#1C283A;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="436" y="1016" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="ds4" value="Coupon stocks" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#D5DBDB;strokeColor=#BFC9CA;fontColor=#1C283A;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="596" y="1016" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="ds5" value="Coupon wallet" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#D5DBDB;strokeColor=#BFC9CA;fontColor=#1C283A;fontStyle=1;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="756" y="1016" width="140" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cod" value="COD  ·  partner fulfill" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#1E8449;fontColor=#14532D;fontStyle=1;fontSize=14;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="960" y="1028" width="280" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="rule" value="RS never holds coupon stock.&#xa;CRP executes coupon reality." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BFC9CA;fontColor=#4A5568;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="1028" width="330" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- EVENT BUS -->
+        <mxCell id="bus" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A365D;strokeColor=#1B4F72;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="80" width="220" height="1060" as="geometry"/>
+        </mxCell>
+        <mxCell id="bust" value="EVENT BUS" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=14;fontColor=#FFFFFF;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="96" width="220" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="busk" value="Kafka" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=16;fontColor=#5DADE2;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="122" width="220" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="b1" value="CC / Loan events" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="170" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="b2" value="Idempotent ingest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="260" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="b3" value="Balance updated" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="350" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="b4" value="Issue-coupon intent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="440" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="b5" value="Use-coupon intent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="530" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="b6" value="Redeemable list" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="620" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="b7" value="Audit / trail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="710" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="b8" value="Ops entitlements" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2C5282;strokeColor=#5DADE2;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="800" width="180" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="b9" value="Hard boundary:&#xa;RS ↛ COD / INV" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B4F72;strokeColor=#E74C3C;fontColor=#FFFFFF;fontSize=11;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="900" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- flow arrows between lanes (conceptual) -->
+        <mxCell id="a12" style="edgeStyle=none;html=1;strokeColor=#7F8C8D;strokeWidth=1.5;endArrow=block;endFill=1;dashed=0;" edge="1" parent="1" source="pc" target="gw1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a23" style="edgeStyle=none;html=1;strokeColor=#7F8C8D;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="gw1" target="ccbox">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a34" style="edgeStyle=none;html=1;strokeColor=#7F8C8D;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="ccbox" target="rs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a45" value="issue / use / list" style="edgeStyle=none;html=1;strokeColor=#1E8449;strokeWidth=2;endArrow=block;endFill=1;fontColor=#14532D;fontStyle=1;fontSize=11;fontFamily=Helvetica;" edge="1" parent="1" source="rs" target="crp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a56" style="edgeStyle=none;html=1;strokeColor=#1E8449;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="crp" target="cod">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
