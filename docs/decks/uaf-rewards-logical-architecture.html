@@ -43,7 +43,8 @@
   .lg-kafka{width:16px;height:16px;object-fit:contain;justify-self:center}
   .badge-pub{position:absolute;top:-10px;right:4px;z-index:2;font-size:16px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}
   .badge-rest{position:absolute;top:-8px;right:14px;z-index:2;background:#163a6b;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;letter-spacing:.04em;line-height:1.2}
-  .lg-rest{position:static;justify-self:center;font-size:9px;padding:3px 6px}
+  .badge-mq{position:absolute;top:-8px;right:14px;z-index:2;background:#1a7a4c;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;letter-spacing:.04em;line-height:1.2}
+  .lg-rest,.lg-mq{position:static;justify-self:center;font-size:9px;padding:3px 6px}
   .hexrow .svcw{position:relative;width:168px}
   .lg-badge{position:static;font-size:18px}
   .lg-db{width:42px;height:22px;flex-shrink:0}
@@ -115,7 +116,7 @@
       <div class="li"><div class="lg-pay"></div><span>Ecosystem &amp; Partners</span></div>
       <div class="li"><span class="lg-globe">🌎</span><span>Public</span></div>
       <div class="li"><span class="badge-rest lg-rest">REST</span><span>RESTful APIs</span></div>
-      <div class="li"><img class="lg-kafka" src="logos/kafka.png" alt="Kafka"/><span>Message Queue</span></div>
+      <div class="li"><span class="badge-mq lg-mq">MQ</span><span>Message Queue</span></div>
     </div>
   </div>
   <div class="g">
@@ -214,7 +215,7 @@
     <div class="lab l6">Reward<br>System</div>
     <div class="card c5 hexrow thin-int">
       <img class="klogo" src="logos/nodes.png" alt="Kafka"/>
-      <div class="svc">Kafka</div>
+      <div class="svcw"><div class="svc">Kafka</div><span class="badge-mq">MQ</span></div>
       <div class="svcw"><div class="svc">RS Experience APIs</div><span class="badge-rest">REST</span></div>
     </div>
     <div class="rs-islands c6">
