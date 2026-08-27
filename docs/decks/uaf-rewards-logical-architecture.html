@@ -76,7 +76,9 @@
   .prod .hexrow{gap:8px}
   .prod .hexrow .svc{width:130px;min-height:50px;font-size:12px}
   .crp-span{display:grid;grid-template-columns:1fr 42px 240px;gap:8px;align-items:stretch}
-  .crp-left{display:flex;flex-direction:column;gap:14px}
+  .crp-group{background:#fff;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+  .crp-group .inner{background:#f3f8fd;border-radius:12px;padding:10px 12px}
+  .crp-group .inner.thin-int{padding-top:14px}
   .crp-out{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#2faf6e}
   .crp-out span{font-size:10px;font-weight:800;letter-spacing:.08em;writing-mode:vertical-rl;transform:rotate(180deg)}
   .crp-out svg{width:22px;height:22px;stroke:#2faf6e;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
@@ -293,8 +295,8 @@
 
     <div class="lab l8">Centralized<br>Redemption<br>Platform</div>
     <div class="crp-span c7">
-      <div class="crp-left">
-        <div class="card thin-int">
+      <div class="island crp-group">
+        <div class="inner thin-int">
           <div class="hexrow">
             <div class="svcw"><div class="svc">Coupon Categories</div><span class="badge-rest">REST</span></div>
             <div class="svcw"><div class="svc">Coupon Redeem</div><span class="badge-rest">REST</span></div>
@@ -309,7 +311,7 @@
             <div class="svcw"><div class="svc">Redemption Reports</div><span class="badge-rest">REST</span></div>
           </div>
         </div>
-        <div class="card">
+        <div class="inner">
           <h3>
             <svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16v3a2 2 0 0 1 0 4v3H4v-3a2 2 0 0 1 0-4V8z"/><path d="M9 8v10"/></svg>
             CRP
