@@ -70,7 +70,9 @@
   .island h3 .ico{width:20px;height:20px}
   .prod .hexrow{gap:8px}
   .prod .hexrow .svc{width:130px;min-height:50px;font-size:12px}
-  .klogo{width:36px;height:36px;object-fit:contain;flex-shrink:0}
+  .eco{display:grid;grid-template-columns:.9fr .9fr 2.2fr;gap:12px;align-items:stretch}
+  .eco .pay{min-height:42px;width:100%}
+  .eco .rails{padding-top:0;grid-template-columns:repeat(4,1fr)}
   .thin-int{padding:6px 16px}
   .thin-int.hexrow{padding-top:10px}
   .thin-int .svc{min-height:38px;width:140px;padding:6px 10px;font-size:12px}
@@ -257,14 +259,23 @@
     </div>
 
     <div class="lab l9">Ecosystem<br>&amp; Partners</div>
-    <div class="card c9">
-      <div class="rails">
+    <div class="eco c9">
+      <div class="island">
+        <h3>Coupon Redemption</h3>
         <div class="pay">COD<span class="badge-pub">🌎</span></div>
+      </div>
+      <div class="island">
+        <h3>Card</h3>
         <div class="pay">E6<span class="badge-pub">🌎</span></div>
-        <div class="pay">FPS</div>
-        <div class="pay">PPS</div>
-        <div class="pay">Circle K</div>
-        <div class="pay">7-Eleven</div>
+      </div>
+      <div class="island">
+        <h3>Repayment</h3>
+        <div class="rails">
+          <div class="pay">FPS</div>
+          <div class="pay">PPS</div>
+          <div class="pay">Circle K</div>
+          <div class="pay">7-Eleven</div>
+        </div>
       </div>
     </div>
   </div>
