@@ -14,7 +14,7 @@
   .g{
     display:grid;
     grid-template-columns: 130px 1fr;
-    grid-template-rows: repeat(8, auto);
+    grid-template-rows: repeat(7, auto);
     gap: 14px 12px;
     align-items: stretch;
   }
@@ -81,7 +81,7 @@
   .thin-int.hexrow{padding-top:10px}
   .thin-int .svc{min-height:38px;width:158px;padding:6px 10px;font-size:12px}
   .thin-int .svcw{width:158px}
-  .thin-int .klogo{width:26px;height:26px}
+  .klogo{width:36px;height:36px;object-fit:contain;flex-shrink:0}
 
   .acc{display:grid;grid-template-columns:2.4fr 1fr;gap:12px;align-items:stretch}
   .acc .gw{margin-top:8px;font-size:14.5px;min-height:40px}
@@ -91,16 +91,14 @@
   .c3{grid-column:2;grid-row:2}
   .l4{grid-column:1;grid-row:3}
   .c4{grid-column:2;grid-row:3}
-  .l5{grid-column:1;grid-row:4}
-  .c5{grid-column:2;grid-row:4}
-  .l6{grid-column:1;grid-row:5}
-  .c6{grid-column:2;grid-row:5}
-  .l7{grid-column:1;grid-row:6}
-  .c7{grid-column:2;grid-row:6}
-  .l8{grid-column:1;grid-row:7}
-  .c8{grid-column:2;grid-row:7}
-  .l9{grid-column:1;grid-row:8}
-  .c9{grid-column:2;grid-row:8}
+  .l6{grid-column:1;grid-row:4}
+  .c6{grid-column:2;grid-row:4}
+  .l7{grid-column:1;grid-row:5}
+  .c7{grid-column:2;grid-row:5}
+  .l8{grid-column:1;grid-row:6}
+  .c8{grid-column:2;grid-row:6}
+  .l9{grid-column:1;grid-row:7}
+  .c9{grid-column:2;grid-row:7}
 </style>
 </head>
 <body>
@@ -209,14 +207,12 @@
       </div>
     </div>
 
-    <div class="lab l5">Integration</div>
-    <div class="card c5 hexrow thin-int">
-      <img class="klogo" src="logos/kafka.png" alt="Kafka"/>
-      <div class="svc">Kafka</div>
-    </div>
-
     <div class="lab l6">Reward<br>System</div>
     <div class="card c6">
+      <div class="hexrow" style="padding:0 0 12px">
+        <img class="klogo" src="logos/kafka.png" alt="Kafka"/>
+        <div class="svc">Kafka</div>
+      </div>
       <h3>
         <svg class="ico" viewBox="0 0 24 24"><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/><path d="M3 8l2-4h14l2 4"/><path d="M12 8v13"/></svg>
         RS
