@@ -57,6 +57,10 @@
   .gwrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:8px}
   .crp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .ch .cap{flex:1;min-height:62px}
+  .qr-box{flex-direction:column;gap:6px;padding:10px 8px 8px;min-height:72px;flex:1.35}
+  .qr-head{display:flex;align-items:center;justify-content:center;gap:6px}
+  .qr-subs{display:flex;gap:5px;width:100%}
+  .qr-sub{flex:1;background:#fff;border:1.3px solid #6ea8d4;border-radius:7px;font-size:11px;font-weight:700;color:#163a6b;padding:4px 6px;text-align:center;line-height:1.2}
   .caps{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
   .crp-caps{grid-template-columns:repeat(5,1fr)}
   .crp-caps .cap{min-height:48px;font-size:12.5px}
@@ -133,9 +137,15 @@
         <span>thesim.com</span>
         <span class="badge-pub">🌎</span>
       </div>
-      <div class="cap">
-        <svg class="ico" style="fill:#163a6b;stroke:none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
-        <span>QR Code</span>
+      <div class="cap qr-box">
+        <span class="qr-head">
+          <svg class="ico" style="fill:#163a6b;stroke:none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+          <span>QR Code</span>
+        </span>
+        <div class="qr-subs">
+          <span class="qr-sub">thesim.com</span>
+          <span class="qr-sub">uaf.com.hk</span>
+        </div>
         <span class="badge-pub">🌎</span>
       </div>
       <div class="cap">
