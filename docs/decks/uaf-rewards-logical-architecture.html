@@ -12,7 +12,7 @@
   .g{
     display:grid;
     grid-template-columns: 130px 1fr 280px;
-    grid-template-rows: auto auto auto auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto auto auto auto;
     gap: 10px 10px;
     align-items: stretch;
   }
@@ -61,6 +61,9 @@
   .c6{grid-column:2 / span 2;grid-row:6}
   .l7{grid-column:1;grid-row:7}
   .c7{grid-column:2 / span 2;grid-row:7}
+  .l8{grid-column:1;grid-row:8}
+  .c8{grid-column:2 / span 2;grid-row:8}
+  .caps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 </style>
 </head>
 <body>
@@ -119,8 +122,34 @@
       </div>
     </div>
 
-    <div class="lab l6">CRP</div>
-    <div class="c6 crp">
+    <div class="lab l6">Reward<br>System</div>
+    <div class="card c6">
+      <div class="caps">
+        <div class="cap">Reward Wallet<span class="db dbr"></span></div>
+        <div class="cap">Chart of Accounts<span class="db dbr"></span></div>
+        <div class="cap">Points calculation</div>
+        <div class="cap">Hold &amp; release</div>
+        <div class="cap">Referral posting</div>
+        <div class="cap">Double-entry posting</div>
+        <div class="cap">Earn engine</div>
+        <div class="cap">Txn eligibility</div>
+        <div class="cap">Balance inquiry<span class="db dbr"></span></div>
+        <div class="cap">Reconciliation<span class="db dbr"></span></div>
+        <div class="cap">Accounting rules</div>
+        <div class="cap">Burn engine</div>
+        <div class="cap">Rule configurator</div>
+        <div class="cap">Referrer mgmt</div>
+        <div class="cap">Audit trail<span class="db dbr"></span></div>
+        <div class="cap">Idempotency queue</div>
+        <div class="cap">Wallet tiering</div>
+        <div class="cap">Balance reversal</div>
+        <div class="cap">Balance adjustment</div>
+        <div class="cap">Statement<span class="db dbr"></span></div>
+      </div>
+    </div>
+
+    <div class="lab l7">CRP</div>
+    <div class="c7 crp">
       <div class="panel">
         <h3>CRP · Redemption <span class="l2i">L2</span></h3>
         <div class="stack">
@@ -147,8 +176,8 @@
       </div>
     </div>
 
-    <div class="lab l7">Partner</div>
-    <div class="card c7 row">
+    <div class="lab l8">Partner</div>
+    <div class="card c8 row">
       <div class="cap" style="min-width:160px">COD<br>partner fulfill<span class="db dbr"></span></div>
       <div class="panel grow">
         <h3>External rails</h3>
