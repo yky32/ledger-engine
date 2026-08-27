@@ -14,7 +14,7 @@
   .g{
     display:grid;
     grid-template-columns: 130px 1fr;
-    grid-template-rows: repeat(9, auto);
+    grid-template-rows: repeat(10, auto);
     gap: 14px 12px;
     align-items: stretch;
   }
@@ -72,6 +72,8 @@
   .c8{grid-column:2;grid-row:8}
   .l9{grid-column:1;grid-row:9}
   .c9{grid-column:2;grid-row:9}
+  .l10{grid-column:1;grid-row:10}
+  .c10{grid-column:2;grid-row:10}
 </style>
 </head>
 <body>
@@ -130,8 +132,13 @@
       </div>
     </div>
 
-    <div class="lab l6">Reward<br>System</div>
-    <div class="card c6">
+    <div class="lab l6">Integration</div>
+    <div class="card c6 hexrow">
+      <div class="svc">Kafka</div>
+    </div>
+
+    <div class="lab l7">Reward<br>System</div>
+    <div class="card c7">
       <div class="caps">
         <div class="cap">Reward Wallet</div>
         <div class="cap">Chart of Accounts</div>
@@ -156,15 +163,15 @@
       </div>
     </div>
 
-    <div class="lab l7">Interface /<br>Coupon intents</div>
-    <div class="card c7 verbs">
-      <div class="cap">Redeem</div>
-      <div class="cap">Consume</div>
-      <div class="cap">Query</div>
+    <div class="lab l8">Integration</div>
+    <div class="card c8 hexrow">
+      <div class="svc">Redeem</div>
+      <div class="svc">Consume</div>
+      <div class="svc">Query</div>
     </div>
 
-    <div class="lab l8">Centralized<br>Redemption<br>Platform</div>
-    <div class="card c8">
+    <div class="lab l9">Centralized<br>Redemption<br>Platform</div>
+    <div class="card c9">
       <div class="caps" style="grid-template-columns:repeat(3,1fr)">
         <div class="cap">Catalog &amp; stock</div>
         <div class="cap">Code generation</div>
@@ -175,8 +182,8 @@
       </div>
     </div>
 
-    <div class="lab l9">Partner</div>
-    <div class="card c9 row">
+    <div class="lab l10">Partner</div>
+    <div class="card c10 row">
       <div class="cap" style="min-width:160px">COD<br>partner fulfill</div>
       <div class="panel grow">
         <h3>External rails</h3>
