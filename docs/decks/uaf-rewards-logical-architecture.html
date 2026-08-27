@@ -75,8 +75,11 @@
   .island h3 .ico,.card > h3 .ico{width:20px;height:20px}
   .prod .hexrow{gap:8px}
   .prod .hexrow .svc{width:130px;min-height:50px;font-size:12px}
-  .crp-span{display:grid;grid-template-columns:1fr 240px;gap:12px;align-items:stretch}
+  .crp-span{display:grid;grid-template-columns:1fr 42px 240px;gap:8px;align-items:stretch}
   .crp-left{display:flex;flex-direction:column;gap:14px}
+  .crp-out{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#2faf6e}
+  .crp-out span{font-size:10px;font-weight:800;letter-spacing:.08em;writing-mode:vertical-rl;transform:rotate(180deg)}
+  .crp-out svg{width:22px;height:22px;stroke:#2faf6e;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
   .crp-span .island{padding-top:16px;display:flex;flex-direction:column}
   .crp-span .pay{width:100%;min-height:42px}
   .eco{display:flex;gap:12px;align-items:stretch}
@@ -325,6 +328,11 @@
             <div class="cap">Coupon Wallet</div>
           </div>
         </div>
+      </div>
+      <div class="crp-out">
+        <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+        <span>EXTERNAL</span>
+        <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
       </div>
       <div class="island">
         <h3>
