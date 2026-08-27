@@ -7,9 +7,10 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#c9dceb;font-family:"Source Sans 3","Segoe UI",sans-serif;color:#1a2a44}
-  .poster{width:1680px;background:#d9eaf7;padding:24px 28px 28px 18px}
-  .head{display:grid;grid-template-columns:130px 1fr 280px;gap:10px;align-items:start;margin-bottom:12px}
-  h1{grid-column:1 / 3;text-align:center;font-size:52px;font-weight:800;color:#1b3d72;letter-spacing:-.6px;margin:8px 0 0;align-self:center}
+  .poster{width:1680px;background:#d9eaf7;padding:24px 28px 28px 18px;position:relative}
+  .head{position:relative;min-height:118px;margin-bottom:12px}
+  h1{position:absolute;left:0;right:0;top:28px;text-align:center;font-size:52px;font-weight:800;color:#1b3d72;letter-spacing:-.6px;margin:0;pointer-events:none}
+  .legend{position:absolute;top:0;right:0;width:280px;z-index:1}
   .g{
     display:grid;
     grid-template-columns: 130px 1fr;
