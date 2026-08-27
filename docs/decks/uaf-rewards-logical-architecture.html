@@ -8,9 +8,9 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#c9dceb;font-family:"Source Sans 3","Segoe UI",sans-serif;color:#1a2a44}
   .poster{width:1680px;background:#d9eaf7;padding:36px 32px 36px 24px;position:relative}
-  .head{position:relative;min-height:182px;margin-bottom:18px}
-  h1{position:absolute;left:0;right:0;top:36px;text-align:center;font-size:52px;font-weight:800;color:#1b3d72;letter-spacing:-.6px;margin:0;pointer-events:none}
-  .legend{position:absolute;top:0;right:0;width:280px;z-index:1;padding:14px 16px 16px}
+  .head{position:relative;min-height:88px;margin-bottom:14px}
+  h1{position:absolute;left:0;right:0;top:22px;text-align:center;font-size:52px;font-weight:800;color:#1b3d72;letter-spacing:-.6px;margin:0;pointer-events:none}
+  .legend{position:absolute;top:0;right:0;width:340px;z-index:1;background:#fff;border-radius:12px;padding:8px 10px;font-size:12px;color:#3d4d64;display:grid;grid-template-columns:1fr 1fr;gap:4px 8px}
   .g{
     display:grid;
     grid-template-columns: 130px 1fr;
@@ -32,17 +32,15 @@
   h3{text-align:center;font-size:14.5px;color:#163a6b;font-weight:700;margin-bottom:8px}
   .gw{background:#e8f3fc;border:1.7px solid #6ea8d4;border-radius:14px;text-align:center;padding:9px;font-weight:700;font-size:16px;color:#163a6b;display:flex;align-items:center;justify-content:center;min-height:48px;position:relative}
   .stack{display:flex;flex-direction:column;gap:7px}
-  .legend{background:#fff;border-radius:16px;padding:14px 16px 16px;font-size:13.5px;color:#3d4d64}
-  .li{display:grid;grid-template-columns:42px 1fr;align-items:center;column-gap:12px;margin:8px 0}
-  .li:last-child{margin-bottom:2px}
-  .api{background:linear-gradient(#f6d4ed,#ecc0e2);border:1.8px solid #c45aa3;color:#5a2450;font-size:12.5px;font-weight:700;text-align:center;line-height:1.15;padding:10px 22px;display:flex;align-items:center;justify-content:center;border-radius:999px;min-height:44px;min-width:150px}
-  .lg-api{width:42px;height:18px;background:#f3cce8;border:1.6px solid #c45aa3;border-radius:999px;justify-self:center}
-  .lg-cap,.lg-svc,.lg-pay,.lg-globe,.lg-api{width:42px;justify-self:center}
-  .lg-cap{height:18px;border:1.7px solid #6ea8d4;background:#e8f3fc;border-radius:6px}
-  .lg-svc{height:22px;background:#f3cce8;border:1.6px solid #c45aa3;clip-path:polygon(16% 0,84% 0,100% 50%,84% 100%,16% 100%,0 50%)}
-  .lg-pay{height:18px;border:2.2px solid #2faf6e;border-radius:6px;background:#fff}
-  .lg-globe{display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}
-  .lg-kafka{width:22px;height:22px;object-fit:contain;justify-self:center}
+  .legend{background:#fff;border-radius:12px;padding:8px 10px;font-size:12px;color:#3d4d64}
+  .li{display:grid;grid-template-columns:28px 1fr;align-items:center;column-gap:7px;margin:0}
+  .li:last-child{margin-bottom:0}
+  .lg-cap,.lg-svc,.lg-pay,.lg-globe,.lg-api{width:28px;justify-self:center}
+  .lg-cap{height:12px;border:1.5px solid #6ea8d4;background:#e8f3fc;border-radius:4px}
+  .lg-svc{height:14px;background:#f3cce8;border:1.4px solid #c45aa3;clip-path:polygon(16% 0,84% 0,100% 50%,84% 100%,16% 100%,0 50%)}
+  .lg-pay{height:12px;border:1.8px solid #2faf6e;border-radius:4px;background:#fff}
+  .lg-globe{display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}
+  .lg-kafka{width:16px;height:16px;object-fit:contain;justify-self:center}
   .badge-pub{position:absolute;top:-10px;right:4px;z-index:2;font-size:16px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}
   .badge-rest{position:absolute;top:-8px;right:14px;z-index:2;background:#163a6b;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;letter-spacing:.04em;line-height:1.2}
   .lg-rest{position:static;justify-self:center;font-size:9px;padding:3px 6px}
