@@ -14,7 +14,7 @@
   .g{
     display:grid;
     grid-template-columns: 130px 1fr;
-    grid-template-rows: repeat(7, auto);
+    grid-template-rows: repeat(8, auto);
     gap: 14px 12px;
     align-items: stretch;
   }
@@ -93,14 +93,15 @@
   .c3{grid-column:2;grid-row:2}
   .l4{grid-column:1;grid-row:3}
   .c4{grid-column:2;grid-row:3}
-  .l6{grid-column:1;grid-row:4}
-  .c6{grid-column:2;grid-row:4}
-  .l7{grid-column:1;grid-row:5}
-  .c7{grid-column:2;grid-row:5}
-  .l8{grid-column:1;grid-row:6}
-  .c8{grid-column:2;grid-row:6}
-  .l9{grid-column:1;grid-row:7}
-  .c9{grid-column:2;grid-row:7}
+  .l6{grid-column:1;grid-row:4 / span 2}
+  .c5{grid-column:2;grid-row:4}
+  .c6{grid-column:2;grid-row:5}
+  .l7{grid-column:1;grid-row:6}
+  .c7{grid-column:2;grid-row:6}
+  .l8{grid-column:1;grid-row:7}
+  .c8{grid-column:2;grid-row:7}
+  .l9{grid-column:1;grid-row:8}
+  .c9{grid-column:2;grid-row:8}
 </style>
 </head>
 <body>
@@ -210,38 +211,34 @@
     </div>
 
     <div class="lab l6">Reward<br>System</div>
-    <div class="rs-stack c6">
-      <div class="island kafka">
-        <div class="hexrow">
-          <img class="klogo" src="logos/kafka.png" alt="Kafka"/>
-          <div class="svc">Kafka</div>
-        </div>
-      </div>
-      <div class="island">
-        <h3>
-          <svg class="ico" viewBox="0 0 24 24"><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/><path d="M3 8l2-4h14l2 4"/><path d="M12 8v13"/></svg>
-          RS
-        </h3>
-        <div class="caps" style="grid-template-columns:repeat(6,1fr)">
-          <div class="cap">Reward Wallet</div>
-          <div class="cap">Chart of Accounts</div>
-          <div class="cap">Points Calculation</div>
-          <div class="cap">Hold &amp; Release</div>
-          <div class="cap">Referral Posting</div>
-          <div class="cap">Double-Entry Posting</div>
-          <div class="cap">Earn Engine</div>
-          <div class="cap">Transaction Eligibility</div>
-          <div class="cap">Balance Inquiry</div>
-          <div class="cap">Reconciliation</div>
-          <div class="cap">Burn Engine</div>
-          <div class="cap">Rule Configurator</div>
-          <div class="cap">Referrer Management</div>
-          <div class="cap">Audit Trail</div>
-          <div class="cap">Merchant Management</div>
-          <div class="cap">Wallet Tiering</div>
-          <div class="cap">Balance Reversal</div>
-          <div class="cap">Balance Adjustment</div>
-        </div>
+    <div class="card c5 hexrow thin-int">
+      <img class="klogo" src="logos/kafka.png" alt="Kafka"/>
+      <div class="svc">Kafka</div>
+    </div>
+    <div class="card c6">
+      <h3>
+        <svg class="ico" viewBox="0 0 24 24"><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/><path d="M3 8l2-4h14l2 4"/><path d="M12 8v13"/></svg>
+        RS
+      </h3>
+      <div class="caps" style="grid-template-columns:repeat(6,1fr)">
+        <div class="cap">Reward Wallet</div>
+        <div class="cap">Chart of Accounts</div>
+        <div class="cap">Points Calculation</div>
+        <div class="cap">Hold &amp; Release</div>
+        <div class="cap">Referral Posting</div>
+        <div class="cap">Double-Entry Posting</div>
+        <div class="cap">Earn Engine</div>
+        <div class="cap">Transaction Eligibility</div>
+        <div class="cap">Balance Inquiry</div>
+        <div class="cap">Reconciliation</div>
+        <div class="cap">Burn Engine</div>
+        <div class="cap">Rule Configurator</div>
+        <div class="cap">Referrer Management</div>
+        <div class="cap">Audit Trail</div>
+        <div class="cap">Merchant Management</div>
+        <div class="cap">Wallet Tiering</div>
+        <div class="cap">Balance Reversal</div>
+        <div class="cap">Balance Adjustment</div>
       </div>
     </div>
 
