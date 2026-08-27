@@ -75,8 +75,10 @@
   .island h3 .ico,.card > h3 .ico{width:20px;height:20px}
   .prod .hexrow{gap:8px}
   .prod .hexrow .svc{width:130px;min-height:50px;font-size:12px}
-  .crp-row{display:grid;grid-template-columns:1fr 240px;gap:12px;align-items:stretch}
-  .crp-row .island{padding-top:16px}
+  .crp-span{display:grid;grid-template-columns:1fr 240px;gap:12px;align-items:stretch}
+  .crp-left{display:flex;flex-direction:column;gap:14px}
+  .crp-span .island{padding-top:16px;display:flex;flex-direction:column}
+  .crp-span .pay{width:100%;min-height:42px}
   .eco{display:flex;gap:12px;align-items:stretch}
   .eco .island{width:280px}
   .eco .pay{min-height:42px;width:100%}
@@ -102,8 +104,7 @@
   .c5{grid-column:2;grid-row:4}
   .c6{grid-column:2;grid-row:5}
   .l8{grid-column:1;grid-row:6 / span 2}
-  .c7{grid-column:2;grid-row:6}
-  .c8{grid-column:2;grid-row:7}
+  .c7{grid-column:2;grid-row:6 / span 2}
   .l9{grid-column:1;grid-row:8}
   .c9{grid-column:2;grid-row:8}
 </style>
@@ -286,51 +287,52 @@
     </div>
 
     <div class="lab l8">Centralized<br>Redemption<br>Platform</div>
-    <div class="card c7 thin-int">
-      <div class="hexrow">
-        <div class="svcw"><div class="svc">Coupon Categories</div><span class="badge-rest">REST</span></div>
-        <div class="svcw"><div class="svc">Coupon Redeem</div><span class="badge-rest">REST</span></div>
-        <div class="svcw"><div class="svc">Coupon Consume</div><span class="badge-rest">REST</span></div>
-        <div class="svcw"><div class="svc">Eligible Coupons</div><span class="badge-rest">REST</span></div>
-        <div class="svcw"><div class="svc">Wallet Coupons</div><span class="badge-rest">REST</span></div>
+    <div class="crp-span c7">
+      <div class="crp-left">
+        <div class="card thin-int">
+          <div class="hexrow">
+            <div class="svcw"><div class="svc">Coupon Categories</div><span class="badge-rest">REST</span></div>
+            <div class="svcw"><div class="svc">Coupon Redeem</div><span class="badge-rest">REST</span></div>
+            <div class="svcw"><div class="svc">Coupon Consume</div><span class="badge-rest">REST</span></div>
+            <div class="svcw"><div class="svc">Eligible Coupons</div><span class="badge-rest">REST</span></div>
+            <div class="svcw"><div class="svc">Wallet Coupons</div><span class="badge-rest">REST</span></div>
+          </div>
+          <div class="hexrow" style="margin-top:10px">
+            <div class="svcw"><div class="svc">Wallet History</div><span class="badge-rest">REST</span></div>
+            <div class="svcw"><div class="svc">Inventory Alerts</div><span class="badge-rest">REST</span></div>
+            <div class="svcw"><div class="svc">Inventory Summary</div><span class="badge-rest">REST</span></div>
+            <div class="svcw"><div class="svc">Redemption Reports</div><span class="badge-rest">REST</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>
+            <svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16v3a2 2 0 0 1 0 4v3H4v-3a2 2 0 0 1 0-4V8z"/><path d="M9 8v10"/></svg>
+            CRP
+          </h3>
+          <div class="caps crp-caps">
+            <div class="cap">Coupon Eligibility Verification</div>
+            <div class="cap">Redemption Engine</div>
+            <div class="cap">Coupon Issuance</div>
+            <div class="cap">Coupon Catalog</div>
+            <div class="cap">Inventory Management</div>
+            <div class="cap">Internal Coupon Management</div>
+            <div class="cap">Partner Management</div>
+            <div class="cap">Audit Trail</div>
+            <div class="cap">Inventory Monitoring</div>
+            <div class="cap">Analytics &amp; Reporting</div>
+            <div class="cap" style="grid-column:2">Fraud &amp; Abuse Monitoring</div>
+            <div class="cap">Partner API Monitoring</div>
+            <div class="cap">Coupon Wallet</div>
+          </div>
+        </div>
       </div>
-      <div class="hexrow" style="margin-top:10px">
-        <div class="svcw"><div class="svc">Wallet History</div><span class="badge-rest">REST</span></div>
-        <div class="svcw"><div class="svc">Inventory Alerts</div><span class="badge-rest">REST</span></div>
-        <div class="svcw"><div class="svc">Inventory Summary</div><span class="badge-rest">REST</span></div>
-        <div class="svcw"><div class="svc">Redemption Reports</div><span class="badge-rest">REST</span></div>
+      <div class="island">
+        <h3>
+          <svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16v3a2 2 0 0 1 0 4v3H4v-3a2 2 0 0 1 0-4V8z"/><path d="M9 8v10"/></svg>
+          Coupon Redemption
+        </h3>
+        <div class="pay">COD<span class="badge-pub">🌎</span></div>
       </div>
-    </div>
-
-    <div class="crp-row c8">
-    <div class="card">
-      <h3>
-        <svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16v3a2 2 0 0 1 0 4v3H4v-3a2 2 0 0 1 0-4V8z"/><path d="M9 8v10"/></svg>
-        CRP
-      </h3>
-      <div class="caps crp-caps">
-        <div class="cap">Coupon Eligibility Verification</div>
-        <div class="cap">Redemption Engine</div>
-        <div class="cap">Coupon Issuance</div>
-        <div class="cap">Coupon Catalog</div>
-        <div class="cap">Inventory Management</div>
-        <div class="cap">Internal Coupon Management</div>
-        <div class="cap">Partner Management</div>
-        <div class="cap">Audit Trail</div>
-        <div class="cap">Inventory Monitoring</div>
-        <div class="cap">Analytics &amp; Reporting</div>
-        <div class="cap" style="grid-column:2">Fraud &amp; Abuse Monitoring</div>
-        <div class="cap">Partner API Monitoring</div>
-        <div class="cap">Coupon Wallet</div>
-      </div>
-    </div>
-    <div class="island">
-      <h3>
-        <svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16v3a2 2 0 0 1 0 4v3H4v-3a2 2 0 0 1 0-4V8z"/><path d="M9 8v10"/></svg>
-        Coupon Redemption
-      </h3>
-      <div class="pay">COD<span class="badge-pub">🌎</span></div>
-    </div>
     </div>
 
     <div class="lab l9">Ecosystem<br>&amp; Partners</div>
