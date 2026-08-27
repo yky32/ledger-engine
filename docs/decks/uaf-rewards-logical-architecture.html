@@ -83,6 +83,8 @@
   .thin-int .svcw{width:158px}
   .klogo{width:36px;height:36px;object-fit:contain;flex-shrink:0}
 
+  .rs-stack{display:flex;flex-direction:column;gap:12px}
+  .rs-stack .island.kafka{padding:10px 16px}
   .acc{display:grid;grid-template-columns:2.4fr 1fr;gap:12px;align-items:stretch}
   .acc .gw{margin-top:8px;font-size:14.5px;min-height:40px}
   .l1{grid-column:1;grid-row:1}
@@ -208,34 +210,38 @@
     </div>
 
     <div class="lab l6">Reward<br>System</div>
-    <div class="card c6">
-      <div class="hexrow" style="padding:0 0 12px">
-        <img class="klogo" src="logos/kafka.png" alt="Kafka"/>
-        <div class="svc">Kafka</div>
+    <div class="rs-stack c6">
+      <div class="island kafka">
+        <div class="hexrow">
+          <img class="klogo" src="logos/kafka.png" alt="Kafka"/>
+          <div class="svc">Kafka</div>
+        </div>
       </div>
-      <h3>
-        <svg class="ico" viewBox="0 0 24 24"><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/><path d="M3 8l2-4h14l2 4"/><path d="M12 8v13"/></svg>
-        RS
-      </h3>
-      <div class="caps" style="grid-template-columns:repeat(6,1fr)">
-        <div class="cap">Reward Wallet</div>
-        <div class="cap">Chart of Accounts</div>
-        <div class="cap">Points Calculation</div>
-        <div class="cap">Hold &amp; Release</div>
-        <div class="cap">Referral Posting</div>
-        <div class="cap">Double-Entry Posting</div>
-        <div class="cap">Earn Engine</div>
-        <div class="cap">Transaction Eligibility</div>
-        <div class="cap">Balance Inquiry</div>
-        <div class="cap">Reconciliation</div>
-        <div class="cap">Burn Engine</div>
-        <div class="cap">Rule Configurator</div>
-        <div class="cap">Referrer Management</div>
-        <div class="cap">Audit Trail</div>
-        <div class="cap">Merchant Management</div>
-        <div class="cap">Wallet Tiering</div>
-        <div class="cap">Balance Reversal</div>
-        <div class="cap">Balance Adjustment</div>
+      <div class="island">
+        <h3>
+          <svg class="ico" viewBox="0 0 24 24"><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/><path d="M3 8l2-4h14l2 4"/><path d="M12 8v13"/></svg>
+          RS
+        </h3>
+        <div class="caps" style="grid-template-columns:repeat(6,1fr)">
+          <div class="cap">Reward Wallet</div>
+          <div class="cap">Chart of Accounts</div>
+          <div class="cap">Points Calculation</div>
+          <div class="cap">Hold &amp; Release</div>
+          <div class="cap">Referral Posting</div>
+          <div class="cap">Double-Entry Posting</div>
+          <div class="cap">Earn Engine</div>
+          <div class="cap">Transaction Eligibility</div>
+          <div class="cap">Balance Inquiry</div>
+          <div class="cap">Reconciliation</div>
+          <div class="cap">Burn Engine</div>
+          <div class="cap">Rule Configurator</div>
+          <div class="cap">Referrer Management</div>
+          <div class="cap">Audit Trail</div>
+          <div class="cap">Merchant Management</div>
+          <div class="cap">Wallet Tiering</div>
+          <div class="cap">Balance Reversal</div>
+          <div class="cap">Balance Adjustment</div>
+        </div>
       </div>
     </div>
 
