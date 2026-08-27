@@ -63,8 +63,11 @@
   .qr-subs{display:flex;gap:5px;width:100%}
   .qr-sub{flex:1;background:#fff;border:1.3px solid #6ea8d4;border-radius:7px;font-size:11px;font-weight:700;color:#163a6b;padding:4px 6px;text-align:center;line-height:1.2}
   .caps{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-  .crp-caps{grid-template-columns:repeat(5,1fr)}
-  .crp-caps .cap{min-height:48px;font-size:12.5px}
+  .crp-islands{display:grid;grid-template-columns:1.35fr 1fr .85fr 1.15fr;gap:8px;align-items:stretch}
+  .crp-g{background:#f3f8fd;border-radius:12px;padding:8px 8px 10px}
+  .crp-g h4{text-align:center;font-size:12.5px;color:#163a6b;font-weight:700;margin:0 0 8px}
+  .crp-g .caps{grid-template-columns:1fr 1fr;gap:6px}
+  .crp-g .cap{min-height:38px;font-size:11.5px;padding:6px 8px}
   .verbs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
   .verbs .cap{min-height:56px;font-size:15px}
   .stack{display:flex;flex-direction:column;gap:9px}
@@ -338,20 +341,40 @@
             <svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16v3a2 2 0 0 1 0 4v3H4v-3a2 2 0 0 1 0-4V8z"/><path d="M9 8v10"/></svg>
             CRP
           </h3>
-          <div class="caps crp-caps">
-            <div class="cap">Coupon Eligibility Verification</div>
-            <div class="cap">Redemption Engine</div>
-            <div class="cap">Coupon Issuance</div>
-            <div class="cap">Coupon Catalog</div>
-            <div class="cap">Inventory Management</div>
-            <div class="cap">Internal Coupon Management</div>
-            <div class="cap">Partner Management</div>
-            <div class="cap">Audit Trail</div>
-            <div class="cap">Inventory Monitoring</div>
-            <div class="cap">Analytics &amp; Reporting</div>
-            <div class="cap" style="grid-column:2">Fraud &amp; Abuse Monitoring</div>
-            <div class="cap">Partner API Monitoring</div>
-            <div class="cap">Coupon Wallet</div>
+          <div class="crp-islands">
+            <div class="crp-g">
+              <h4>Coupon</h4>
+              <div class="caps">
+                <div class="cap">Coupon Catalog</div>
+                <div class="cap">Coupon Issuance</div>
+                <div class="cap">Coupon Eligibility Verification</div>
+                <div class="cap">Internal Coupon Management</div>
+                <div class="cap">Coupon Wallet</div>
+              </div>
+            </div>
+            <div class="crp-g">
+              <h4>Operations</h4>
+              <div class="caps">
+                <div class="cap">Redemption Engine</div>
+                <div class="cap">Inventory Management</div>
+                <div class="cap">Inventory Monitoring</div>
+              </div>
+            </div>
+            <div class="crp-g">
+              <h4>Partner</h4>
+              <div class="caps">
+                <div class="cap">Partner Management</div>
+                <div class="cap">Partner API Monitoring</div>
+              </div>
+            </div>
+            <div class="crp-g">
+              <h4>Monitor</h4>
+              <div class="caps">
+                <div class="cap">Audit Trail</div>
+                <div class="cap">Analytics &amp; Reporting</div>
+                <div class="cap">Fraud &amp; Abuse Monitoring</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
