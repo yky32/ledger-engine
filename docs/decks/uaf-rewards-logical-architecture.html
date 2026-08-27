@@ -71,6 +71,11 @@
   .prod .hexrow{gap:8px}
   .prod .hexrow .svc{width:130px;min-height:50px;font-size:12px}
   .klogo{width:36px;height:36px;object-fit:contain;flex-shrink:0}
+  .thin-int{padding:6px 16px}
+  .thin-int.hexrow{padding-top:10px}
+  .thin-int .svc{min-height:38px;width:140px;padding:6px 10px;font-size:12px}
+  .thin-int .svcw{width:140px}
+  .thin-int .klogo{width:26px;height:26px}
 
   .l1{grid-column:1;grid-row:1}
   .c1{grid-column:2;grid-row:1}
@@ -181,7 +186,7 @@
     </div>
 
     <div class="lab l5">Integration</div>
-    <div class="card c5 hexrow">
+    <div class="card c5 hexrow thin-int">
       <img class="klogo" src="logos/kafka.png" alt="Kafka"/>
       <div class="svc">Kafka</div>
     </div>
@@ -211,7 +216,7 @@
     </div>
 
     <div class="lab l7">Integration</div>
-    <div class="card c7 hexrow" style="padding-top:18px">
+    <div class="card c7 hexrow thin-int">
       <div class="svcw"><div class="svc">Redeem</div><span class="badge-rest">REST</span></div>
       <div class="svcw"><div class="svc">Consume</div><span class="badge-rest">REST</span></div>
       <div class="svcw"><div class="svc">Query</div><span class="badge-rest">REST</span></div>
