@@ -14,7 +14,7 @@
   .g{
     display:grid;
     grid-template-columns: 130px 1fr;
-    grid-template-rows: repeat(10, auto);
+    grid-template-rows: repeat(9, auto);
     gap: 14px 12px;
     align-items: stretch;
   }
@@ -57,6 +57,11 @@
   .verbs .cap{min-height:56px;font-size:15px}
   .stack{display:flex;flex-direction:column;gap:9px}
   .ch .cap img.logo{width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;background:#fff}
+  .prod{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:start}
+  .prod-col{padding:0 8px}
+  .prod-col + .prod-col{border-left:1.5px solid #c5d9ea}
+  .prod .hexrow{gap:8px}
+  .prod .hexrow .svc{width:130px;min-height:50px;font-size:12px}
   .klogo{width:36px;height:36px;object-fit:contain;flex-shrink:0}
 
   .l1{grid-column:1;grid-row:1}
@@ -77,8 +82,6 @@
   .c8{grid-column:2;grid-row:8}
   .l9{grid-column:1;grid-row:9}
   .c9{grid-column:2;grid-row:9}
-  .l10{grid-column:1;grid-row:10}
-  .c10{grid-column:2;grid-row:10}
 </style>
 </head>
 <body>
@@ -119,33 +122,37 @@
       <div class="svc">IAM</div>
     </div>
 
-    <div class="lab l4">Credit Card<br>microservices</div>
+    <div class="lab l4">Product<br>Microservices</div>
     <div class="card c4">
-      <div class="hexrow">
-        <div class="svc">CC-ext-sapi</div>
-        <div class="svc">CC-E6-XAPI</div>
-        <div class="svc">CC-Application</div>
-        <div class="svc">CC-Notification</div>
-        <div class="svc">CC-BillPayment</div>
+      <div class="prod">
+        <div class="prod-col">
+          <h3>Credit card</h3>
+          <div class="hexrow">
+            <div class="svc">CC-ext-sapi</div>
+            <div class="svc">CC-E6-XAPI</div>
+            <div class="svc">CC-Application</div>
+            <div class="svc">CC-Notification</div>
+            <div class="svc">CC-BillPayment</div>
+          </div>
+        </div>
+        <div class="prod-col">
+          <h3>Loan</h3>
+          <div class="hexrow">
+            <div class="svc">loan-application</div>
+            <div class="svc">loan-repayment</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="lab l5">Loan<br>microservices</div>
-    <div class="card c5">
-      <div class="hexrow">
-        <div class="svc">loan-application</div>
-        <div class="svc">loan-repayment</div>
-      </div>
-    </div>
-
-    <div class="lab l6">Integration</div>
-    <div class="card c6 hexrow">
+    <div class="lab l5">Integration</div>
+    <div class="card c5 hexrow">
       <img class="klogo" src="logos/kafka.png" alt="Kafka"/>
       <div class="svc">Kafka</div>
     </div>
 
-    <div class="lab l7">Reward<br>System</div>
-    <div class="card c7">
+    <div class="lab l6">Reward<br>System</div>
+    <div class="card c6">
       <div class="caps">
         <div class="cap">Reward Wallet</div>
         <div class="cap">Chart of Accounts</div>
@@ -170,15 +177,15 @@
       </div>
     </div>
 
-    <div class="lab l8">Integration</div>
-    <div class="card c8 hexrow">
+    <div class="lab l7">Integration</div>
+    <div class="card c7 hexrow">
       <div class="svc">Redeem</div>
       <div class="svc">Consume</div>
       <div class="svc">Query</div>
     </div>
 
-    <div class="lab l9">Centralized<br>Redemption<br>Platform</div>
-    <div class="card c9">
+    <div class="lab l8">Centralized<br>Redemption<br>Platform</div>
+    <div class="card c8">
       <div class="caps" style="grid-template-columns:repeat(3,1fr)">
         <div class="cap">Catalog &amp; stock</div>
         <div class="cap">Code generation</div>
@@ -189,8 +196,8 @@
       </div>
     </div>
 
-    <div class="lab l10">Partner</div>
-    <div class="card c10">
+    <div class="lab l9">Partner</div>
+    <div class="card c9">
       <div class="rails">
         <div class="pay">COD</div>
         <div class="pay">e6</div>
