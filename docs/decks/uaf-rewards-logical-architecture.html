@@ -8,7 +8,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#c9dceb;font-family:"Source Sans 3","Segoe UI",sans-serif;color:#1a2a44}
   .poster{width:1680px;background:#d9eaf7;padding:36px 32px 36px 24px;position:relative}
-  .head{position:relative;min-height:158px;margin-bottom:18px}
+  .head{position:relative;min-height:182px;margin-bottom:18px}
   h1{position:absolute;left:0;right:0;top:36px;text-align:center;font-size:52px;font-weight:800;color:#1b3d72;letter-spacing:-.6px;margin:0;pointer-events:none}
   .legend{position:absolute;top:0;right:0;width:280px;z-index:1;padding:14px 16px 16px}
   .g{
@@ -42,6 +42,7 @@
   .lg-svc{height:22px;background:#f3cce8;border:1.6px solid #c45aa3;clip-path:polygon(16% 0,84% 0,100% 50%,84% 100%,16% 100%,0 50%)}
   .lg-pay{height:18px;border:2.2px solid #2faf6e;border-radius:6px;background:#fff}
   .lg-globe{display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}
+  .lg-kafka{width:22px;height:22px;object-fit:contain;justify-self:center}
   .badge-pub{position:absolute;top:-10px;right:4px;z-index:2;font-size:16px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}
   .badge-rest{position:absolute;top:-8px;right:14px;z-index:2;background:#163a6b;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;letter-spacing:.04em;line-height:1.2}
   .lg-rest{position:static;justify-self:center;font-size:9px;padding:3px 6px}
@@ -71,8 +72,7 @@
   .prod .hexrow{gap:8px}
   .prod .hexrow .svc{width:130px;min-height:50px;font-size:12px}
   .klogo{width:36px;height:36px;object-fit:contain;flex-shrink:0}
-  .thin-int{padding:4px 16px;background:transparent;border:none;box-shadow:none}
-  .card.thin-int{background:transparent;border:none}
+  .thin-int{padding:6px 16px}
   .thin-int.hexrow{padding-top:10px}
   .thin-int .svc{min-height:38px;width:140px;padding:6px 10px;font-size:12px}
   .thin-int .svcw{width:140px}
@@ -108,6 +108,7 @@
       <div class="li"><div class="lg-pay"></div><span>Ecosystem &amp; Partner</span></div>
       <div class="li"><span class="lg-globe">🌎</span><span>Public</span></div>
       <div class="li"><span class="badge-rest lg-rest">REST</span><span>RESTful API</span></div>
+      <div class="li"><img class="lg-kafka" src="logos/kafka.png" alt="Kafka"/><span>Message Queue</span></div>
     </div>
   </div>
   <div class="g">
