@@ -67,16 +67,16 @@
   .prod{display:grid;grid-template-columns:1.7fr 1fr;gap:12px;align-items:stretch}
   .island{background:#fff;border-radius:16px;padding:14px 16px;min-height:100%}
   .island h3,.card > h3{margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;font-size:14.5px;color:#163a6b;font-weight:700}
-  .island h3 .ico{width:20px;height:20px}
+  .island h3 .ico,.card > h3 .ico{width:20px;height:20px}
   .prod .hexrow{gap:8px}
   .prod .hexrow .svc{width:130px;min-height:50px;font-size:12px}
   .eco{display:grid;grid-template-columns:.9fr .9fr 2.2fr;gap:12px;align-items:stretch}
   .eco .pay{min-height:42px;width:100%}
   .eco .rails{padding-top:0;grid-template-columns:repeat(4,1fr)}
-  .thin-int{padding:6px 16px}
+  .thin-int{padding:12px 16px 8px}
   .thin-int.hexrow{padding-top:10px}
-  .thin-int .svc{min-height:38px;width:140px;padding:6px 10px;font-size:12px}
-  .thin-int .svcw{width:140px}
+  .thin-int .svc{min-height:38px;width:158px;padding:6px 10px;font-size:12px}
+  .thin-int .svcw{width:158px}
   .thin-int .klogo{width:26px;height:26px}
 
   .l1{grid-column:1;grid-row:1}
@@ -210,7 +210,10 @@
 
     <div class="lab l6">Reward<br>System</div>
     <div class="card c6">
-      <h3>RS</h3>
+      <h3>
+        <svg class="ico" viewBox="0 0 24 24"><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/><path d="M3 8l2-4h14l2 4"/><path d="M12 8v13"/></svg>
+        RS
+      </h3>
       <div class="caps" style="grid-template-columns:repeat(6,1fr)">
         <div class="cap">Reward Wallet</div>
         <div class="cap">Chart of Accounts</div>
@@ -234,15 +237,24 @@
     </div>
 
     <div class="lab l7">Integration</div>
-    <div class="card c7 hexrow thin-int">
-      <div class="svcw"><div class="svc">Redeem</div><span class="badge-rest">REST</span></div>
-      <div class="svcw"><div class="svc">Consume</div><span class="badge-rest">REST</span></div>
-      <div class="svcw"><div class="svc">Query</div><span class="badge-rest">REST</span></div>
+    <div class="card c7 thin-int">
+      <div class="hexrow">
+        <div class="svcw"><div class="svc">Redeem</div><span class="badge-rest">REST</span></div>
+        <div class="svcw"><div class="svc">Consume</div><span class="badge-rest">REST</span></div>
+        <div class="svcw"><div class="svc">Query</div><span class="badge-rest">REST</span></div>
+      </div>
+      <div class="hexrow" style="margin-top:10px">
+        <div class="svcw"><div class="svc">Customer Wallet</div><span class="badge-rest">REST</span></div>
+        <div class="svcw"><div class="svc">Query Eligible Coupon</div><span class="badge-rest">REST</span></div>
+      </div>
     </div>
 
     <div class="lab l8">Centralized<br>Redemption<br>Platform</div>
     <div class="card c8">
-      <h3>CRP</h3>
+      <h3>
+        <svg class="ico" viewBox="0 0 24 24"><path d="M4 8h16v3a2 2 0 0 1 0 4v3H4v-3a2 2 0 0 1 0-4V8z"/><path d="M9 8v10"/></svg>
+        CRP
+      </h3>
       <div class="caps crp-caps">
         <div class="cap">Coupon Validation</div>
         <div class="cap">Inventory Management</div>
