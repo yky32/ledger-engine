@@ -41,7 +41,6 @@ public final class DtoWrapper {
             .ownerId(wallet.getOwnerId())
             .vanityCode(wallet.getVanityCode())
             .settlementCurrency(wallet.getSettlementCurrency())
-            .coaProfileCode(wallet.getCoaProfileCode())
             .status(wallet.getStatus())
             .type(wallet.getType())
             .walletType(wallet.getWalletType())
@@ -64,7 +63,6 @@ public final class DtoWrapper {
             .ownerId(wallet.getOwnerId())
             .vanityCode(wallet.getVanityCode())
             .settlementCurrency(wallet.getSettlementCurrency())
-            .coaProfileCode(wallet.getCoaProfileCode())
             .status(wallet.getStatus())
             .type(wallet.getType())
             .walletType(wallet.getWalletType())
@@ -107,6 +105,7 @@ public final class DtoWrapper {
         String name = displayName != null && !displayName.isBlank() ? displayName : a.getSubAccount();
         return GetWalletAccountResponseDto.builder()
             .id(a.getId())
+            .walletId(a.getWalletId())
             .fullNumber(a.getFullNumber())
             .name(name)
             .refCode(refCode)

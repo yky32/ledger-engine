@@ -20,7 +20,9 @@ public record CreateWalletOnboardRequestDto(
     @Size(max = 64) String vanityCode,
     /** Optional COA profile code; null/blank → default profile. */
     @Size(max = 40) String coaProfileCode,
-    @Size(max = 32) List<@Valid AccountOpenSpecDto> accounts
+    @Size(max = 32) List<@Valid AccountOpenSpecDto> accounts,
+    /** Optional client main-account (e.g. 9089…). Blank → engine generates. */
+    @Size(max = 32) String mainAccount
 ) {
     public CreateWalletOnboardRequestDto {
         if (ownerId != null) {
@@ -43,10 +45,16 @@ public record CreateWalletOnboardRequestDto(
                 coaProfileCode = coaProfileCode.toUpperCase(java.util.Locale.ROOT);
             }
         }
+        if (mainAccount != null) {
+            mainAccount = mainAccount.trim();
+            if (mainAccount.isEmpty()) {
+                mainAccount = null;
+            }
+        }
     }
 
     public CreateWalletOnboardRequestDto(String ownerId, Currency settlementCurrency, String name) {
-        this(ownerId, settlementCurrency, name, null, null, null);
+        this(ownerId, settlementCurrency, name, null, null, null, null);
     }
 
     public CreateWalletOnboardRequestDto(
@@ -55,7 +63,7 @@ public record CreateWalletOnboardRequestDto(
         String name,
         List<AccountOpenSpecDto> accounts
     ) {
-        this(ownerId, settlementCurrency, name, null, null, accounts);
+        this(ownerId, settlementCurrency, name, null, null, accounts, null);
     }
 
     public CreateWalletOnboardRequestDto(
@@ -65,6 +73,17 @@ public record CreateWalletOnboardRequestDto(
         String coaProfileCode,
         List<AccountOpenSpecDto> accounts
     ) {
-        this(ownerId, settlementCurrency, name, null, coaProfileCode, accounts);
+        this(ownerId, settlementCurrency, name, null, coaProfileCode, accounts, null);
+    }
+
+    public CreateWalletOnboardRequestDto(
+        String ownerId,
+        Currency settlementCurrency,
+        String name,
+        String vanityCode,
+        String coaProfileCode,
+        List<AccountOpenSpecDto> accounts
+    ) {
+        this(ownerId, settlementCurrency, name, vanityCode, coaProfileCode, accounts, null);
     }
 }

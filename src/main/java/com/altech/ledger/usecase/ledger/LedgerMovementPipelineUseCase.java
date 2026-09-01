@@ -45,7 +45,8 @@ public class LedgerMovementPipelineUseCase {
             req.description(),
             req.mode() == null ? LedgerMovementMode.AUTO : req.mode(),
             null,
-            req.targetId()
+            req.targetId(),
+            null
         ));
     }
 

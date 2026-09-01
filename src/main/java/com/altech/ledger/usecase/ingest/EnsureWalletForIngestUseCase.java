@@ -48,6 +48,16 @@ public class EnsureWalletForIngestUseCase {
 
     @Transactional
     public ResolveResult resolveOrProvision(String ownerId, Currency pointCurrency, Map<String, String> metadata) {
+        return resolveOrProvision(ownerId, pointCurrency, metadata, null);
+    }
+
+    @Transactional
+    public ResolveResult resolveOrProvision(
+        String ownerId,
+        Currency pointCurrency,
+        Map<String, String> metadata,
+        String mainAccount
+    ) {
         Optional<Wallet> existing = _find(ownerId);
         if (existing.isPresent()) {
             Wallet w = existing.get();
@@ -90,7 +100,8 @@ public class EnsureWalletForIngestUseCase {
                 name,
                 null,
                 coaCode,
-                extras
+                extras,
+                mainAccount
             ));
             provisioned = true;
             log.info("auto-created wallet for ownerId={} settlement={} ensure={} coa={}",
@@ -184,6 +195,7 @@ public class EnsureWalletForIngestUseCase {
         String fullNumber = CoaCodes.fullNumber(
             entity, type, subType, primary.getMainAccount(), sub, buffer, ccy);
         Account created = accountRepository.save(Account.builder()
+            .walletId(wallet.getId())
             .fullNumber(fullNumber)
             .entity(entity)
             .type(type)
@@ -229,10 +241,11 @@ public class EnsureWalletForIngestUseCase {
                     "No free sub-account under main " + primary.getMainAccount());
             }
         }
-        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(wallet.getCoaProfileCode());
+        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(null);
         String fullNumber = CoaCodes.fullNumber(
             seg.entity(), seg.type(), seg.subType(), primary.getMainAccount(), sub, seg.buffer(), currency);
         accountRepository.save(Account.builder()
+            .walletId(wallet.getId())
             .fullNumber(fullNumber)
             .entity(seg.entity())
             .type(seg.type())
@@ -243,7 +256,7 @@ public class EnsureWalletForIngestUseCase {
             .currency(currency)
             .allowNegative(false)
             .build());
-        log.info("ensured {} account under wallet {} main={} coa={}",
-            currency, wallet.getId(), primary.getMainAccount(), wallet.getCoaProfileCode());
+        log.info("ensured {} account under wallet {} main={}",
+            currency, wallet.getId(), primary.getMainAccount());
     }
 }

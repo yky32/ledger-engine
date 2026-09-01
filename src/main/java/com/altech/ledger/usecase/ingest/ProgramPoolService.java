@@ -50,7 +50,7 @@ public class ProgramPoolService {
             pool = primary;
         } else {
             pool = accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency)
-                .orElseGet(() -> _openCurrencyBook(primary, currency));
+                .orElseGet(() -> _openCurrencyBook(program, primary, currency));
         }
         if (!pool.isAllowNegative()) {
             pool.setAllowNegative(true);
@@ -78,7 +78,7 @@ public class ProgramPoolService {
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "PROGRAM wallet missing after bootstrap"));
     }
 
-    private Account _openCurrencyBook(Account primary, Currency currency) {
+    private Account _openCurrencyBook(Wallet program, Account primary, Currency currency) {
         String main = primary.getMainAccount();
         int n = accountRepository.allSubAccountNumbers(main).size() + 1;
         String sub = String.format("%04d", n);
@@ -87,6 +87,7 @@ public class ProgramPoolService {
             sub = String.format("%04d", n);
         }
         Account a = Account.builder()
+            .walletId(program.getId())
             .entity(primary.getEntity())
             .type(primary.getType())
             .subType(primary.getSubType())

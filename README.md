@@ -228,7 +228,7 @@ curl -sS 'http://localhost:8080/wallets/01A47158227?currencies=LP'
 ```
 
 Required: `ownerId`, `settlementCurrency` (`HKD`, `USD`, `LP`, …).  
-Response: `ownerId`, `settlementCurrency`, `coaProfileCode`, primary `account` / `balance`, full `accounts[]`.  
+Response: `ownerId`, `settlementCurrency`, primary `account` / `balance`, full `accounts[]`.  
 Envelope: `Result` with `response` / `data` / `requestId`. Duplicate `ownerId` → `WAL0409`.
 
 **PROD bulk:** stream CRM CUST ids into `POST /wallets/batch` (≤1000/chunk, soft-idempotent).

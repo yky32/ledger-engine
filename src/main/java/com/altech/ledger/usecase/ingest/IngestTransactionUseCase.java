@@ -8,7 +8,9 @@ import com.altech.ledger.entity.dto.ingest.LedgerLegDto;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.OrderType;
+import com.altech.ledger.entity.po.coa.CoaProfile;
 import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
+import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
@@ -91,12 +93,14 @@ public class IngestTransactionUseCase {
             return IngestionResult.previewSkipped(event.eventId(), reason, outcome.trace());
         }
         TransactionRuleEngine.RuleDecision rule = outcome.decision().orElseThrow();
+        CoaProfile coa = coaProfileUseCase.resolveForEvent(_txnCode(event), event.metadata());
         return IngestionResult.preview(
             event.eventId(),
             rule.operation(),
             rule.points(),
             rule.matchedRule(),
-            outcome.trace()
+            outcome.trace(),
+            _coaHit(coa, null)
         );
     }
 
@@ -133,10 +137,13 @@ public class IngestTransactionUseCase {
         Currency pointCurrency = Currency.get(rule.pointCurrency());
         String custId = event.ownerId();
         String matchedCode = rule.matchedRule();
+        CoaProfile coa = coaProfileUseCase.resolveForEvent(_txnCode(event), event.metadata());
+        Currency bookCcy = Currency.get(coa.getCurrency() == null ? rule.pointCurrency() : coa.getCurrency());
 
         EnsureWalletForIngestUseCase.ResolveResult resolved;
         try {
-            resolved = ensureWalletForIngestUseCase.resolveOrProvision(custId, pointCurrency, event.metadata());
+            resolved = ensureWalletForIngestUseCase.resolveOrProvision(
+                custId, pointCurrency, event.metadata(), event.mainAccount());
         } catch (RuntimeException ex) {
             log.error("wallet resolve/provision failed custId={}", custId, ex);
             return _fail(event, "WALLET_PROVISION",
@@ -150,6 +157,8 @@ public class IngestTransactionUseCase {
         }
         Wallet wallet = resolved.wallet();
         String walletKey = custId;
+        Account book = ensureWalletForIngestUseCase.ensureAccountForCoa(wallet, coa);
+        IngestionResult.CoaHit coaHit = _coaHit(coa, book);
 
         if (rule.operation() == TransactionRuleEngine.Operation.PROCESS) {
             String processType = rule.processType() == null ? "UNSPECIFIED" : rule.processType().toUpperCase();
@@ -165,24 +174,10 @@ public class IngestTransactionUseCase {
         String movementKey = "loyalty-" + rule.operation().name().toLowerCase() + "-" + event.eventId();
         String recipeKeyBase = "loyalty-recipe-" + event.eventId();
 
-        String txnCode = event.eventType();
-        if (event.metadata() != null) {
-            String uc = event.metadata().get("useCase");
-            if (uc == null) {
-                uc = event.metadata().get("use_case");
-            }
-            if (uc != null && !uc.isBlank()) {
-                txnCode = uc;
-            }
-        }
+        String txnCode = _txnCode(event);
         Optional<PostingRecipe> recipe = postingRecipeCatalog.find(txnCode);
         if (recipe.isEmpty()) {
             recipe = postingRecipeCatalog.find(event.eventType());
-        }
-        // Operator COA binding: coa_profile.transactionCode → profile (segments / currency)
-        var coaByTxn = coaProfileUseCase.findByTransactionCode(txnCode);
-        if (coaByTxn.isEmpty()) {
-            coaByTxn = coaProfileUseCase.findByTransactionCode(event.eventType());
         }
 
         // Idempotency: plain earn/burn key OR first recipe step
@@ -206,19 +201,20 @@ public class IngestTransactionUseCase {
 
             GetLedgerMovementResponseDto applied;
             if (recipe.isPresent() && rule.operation() != TransactionRuleEngine.Operation.BURN) {
-                // Use-case recipe path (CC_TXN_*, LOAN_DD_*)
                 var run = applyPostingRecipeUseCase.execute(
                     wallet.getId(),
                     recipe.get(),
                     rule.points(),
                     recipeKeyBase,
-                    desc + " recipe=" + recipe.get().code()+ (coaByTxn.map(c -> " coa=" + c.getCode()).orElse(""))
+                    desc + " recipe=" + recipe.get().code() + " coa=" + coa.getCode(),
+                    book.getId(),
+                    bookCcy
                 );
                 applied = run.last();
             } else {
                 PostingCommand cmd = orderType == OrderType.BURN
-                    ? PostingCommand.burn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc)
-                    : PostingCommand.earn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc);
+                    ? PostingCommand.burn(wallet.getId(), rule.points(), bookCcy, movementKey, desc, book.getId())
+                    : PostingCommand.earn(wallet.getId(), rule.points(), bookCcy, movementKey, desc, book.getId());
                 applied = applyPostingUseCase.execute(cmd);
             }
 
@@ -226,7 +222,7 @@ public class IngestTransactionUseCase {
                 : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());
             return IngestionResult.applied(
                 event.eventId(), rule.operation(), rule.points(), txnId, walletKey,
-                applied.id(), _legs(applied.id()), matchedCode, trace);
+                applied.id(), _legs(applied.id()), matchedCode, trace, coaHit);
         } catch (RuntimeException ex) {
             log.error("ingest apply failed eventId={}", event.eventId(), ex);
             return _fail(event, "ERROR", ex.getMessage() == null ? "apply failed" : ex.getMessage(), trace);
@@ -275,6 +271,33 @@ public class IngestTransactionUseCase {
             out.add(new LedgerLegDto(e.getId(), accountId, e.getDirection(), e.getAmount(), e.getCurrency()));
         }
         return out;
+    }
+
+    private static String _txnCode(TransactionalEvent event) {
+        if (event.metadata() != null) {
+            String uc = event.metadata().get("useCase");
+            if (uc == null) {
+                uc = event.metadata().get("use_case");
+            }
+            if (uc != null && !uc.isBlank()) {
+                return uc;
+            }
+        }
+        return event.eventType();
+    }
+
+    private static IngestionResult.CoaHit _coaHit(CoaProfile p, Account a) {
+        if (p == null) {
+            return null;
+        }
+        return new IngestionResult.CoaHit(
+            p.getCode(),
+            p.getEntity(),
+            p.getType(),
+            p.getSubType(),
+            p.getCurrency(),
+            a == null ? null : a.getId(),
+            a == null ? null : a.getFullNumber());
     }
 
     private IngestionResult _fail(

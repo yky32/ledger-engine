@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetWalletAccountResponseDto extends BaseResponseDto {
     private Long id;
+    private Long walletId;
     /** Same as DB column {@code account.full_number} (numeric COA key). */
     private String fullNumber;
     private String name;

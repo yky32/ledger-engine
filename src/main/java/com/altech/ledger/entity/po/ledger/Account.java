@@ -10,6 +10,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -24,15 +25,20 @@ import java.math.BigDecimal;
 
 /** Chart-of-accounts bucket that holds live balances. */
 @Entity
-@Table(uniqueConstraints = {
-    @UniqueConstraint(name = "uniqueAccountKey", columnNames = {
-        "entity", "type", "sub_type", "main_account", "sub_account", "buffer", "currency"
-    }),
-    @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
-        "main_account", "sub_account"
-    }),
-    @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
-})
+@Table(
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uniqueAccountKey", columnNames = {
+            "entity", "type", "sub_type", "main_account", "sub_account", "buffer", "currency"
+        }),
+        @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
+            "main_account", "sub_account"
+        }),
+        @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
+    },
+    indexes = {
+        @Index(name = "account_idx_wallet_id", columnList = "wallet_id")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -45,6 +51,10 @@ public class Account extends AuditEntityWithIsActive {
     @GenericGenerator(name = "account_id_generator", type = SnowflakeIdGenerator.class)
     @GeneratedValue(generator = "account_id_generator")
     private Long id;
+
+    /** Owning wallet. Set after wallet insert (accounts are opened first). */
+    @Column
+    private Long walletId;
 
     @Column
     private String fullNumber;
@@ -67,11 +77,9 @@ public class Account extends AuditEntityWithIsActive {
     private Currency currency;
     // == COA end ===
 
-
     @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal ledgerBalance = BigDecimal.ZERO;
-
     @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
     private BigDecimal availableBalance = BigDecimal.ZERO;

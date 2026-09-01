@@ -36,7 +36,7 @@ import java.util.Set;
 
 /**
  * Wallet create: <b>1 ownerId → 1 Wallet</b>.
- * COA segments from {@code coaProfileCode} (product stream) or default profile.
+ * Initial account COA segments from request {@code coaProfileCode} or DEFAULT. Not stored on Wallet.
  */
 @Component
 @RequiredArgsConstructor
@@ -100,6 +100,18 @@ public class CreateWalletOnboardingUseCase {
         return walletRepository.existsByOwnerId(ownerId);
     }
 
+    /** Client mainAccount (9089… / 9088…) if unique; else engine allocates. */
+    private String _resolveMainAccount(String requested) {
+        if (requested != null && !requested.isBlank()) {
+            String m = requested.trim();
+            if (!accountRepository.findAllByMainAccount(m).isEmpty()) {
+                throw new BizException(AccountErrorResponse.ACC0409, "mainAccount already in use: " + m);
+            }
+            return m;
+        }
+        return commonService.getNextMainAccount();
+    }
+
     private GetWalletOnboardResponseDto _createWallet(CreateWalletOnboardRequestDto request) {
         String ownerId = request.ownerId();
         Currency settlement = commonUseCase.requireCurrency(request.settlementCurrency());
@@ -114,11 +126,9 @@ public class CreateWalletOnboardingUseCase {
             : request.name();
 
         List<AccountOpenSpecDto> specs = _normalizeAccounts(request.accounts(), settlement);
-        String mainAccount = commonService.getNextMainAccount();
+        String mainAccount = _resolveMainAccount(request.mainAccount());
         String profileCode = request.coaProfileCode();
         CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(profileCode);
-        // resolved code for wallet stamp (DEFAULT if blank)
-        String resolvedProfileCode = coaProfileUseCase.requireByCodeOrDefault(profileCode).getCode();
 
         Map<String, AccountOpenSpecDto> byKey = new LinkedHashMap<>();
         Map<String, Account> opened = new LinkedHashMap<>();
@@ -185,8 +195,11 @@ public class CreateWalletOnboardingUseCase {
         wallet.setOwnerId(ownerId);
         wallet.setVanityCode(WalletVanityCodes.resolveForCreate(request.vanityCode(), ownerId));
         wallet.setSettlementCurrency(settlement);
-        wallet.setCoaProfileCode(resolvedProfileCode);
         wallet = walletRepository.save(wallet);
+        for (Account a : opened.values()) {
+            a.setWalletId(wallet.getId());
+            accountRepository.save(a);
+        }
 
         List<GetWalletAccountResponseDto> accountDtos = new ArrayList<>();
         for (Map.Entry<String, Account> e : opened.entrySet()) {

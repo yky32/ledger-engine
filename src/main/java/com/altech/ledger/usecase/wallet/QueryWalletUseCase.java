@@ -88,9 +88,12 @@ public class QueryWalletUseCase {
 
     private GetWalletOnboardResponseDto _toWalletWithAccounts(Wallet wallet, Set<Currency> currencyFilter) {
         Account primary = commonUseCase.requireAccount(wallet.getAccountId());
-        List<Account> set = primary.getMainAccount() == null
-            ? List.of(primary)
-            : accountRepository.findAllByMainAccount(primary.getMainAccount());
+        List<Account> set = wallet.getId() != null
+            ? accountRepository.findAllByWalletId(wallet.getId())
+            : List.of();
+        if (set.isEmpty() && primary.getMainAccount() != null) {
+            set = accountRepository.findAllByMainAccount(primary.getMainAccount());
+        }
         if (set.isEmpty()) {
             set = List.of(primary);
         }

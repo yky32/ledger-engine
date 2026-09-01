@@ -27,6 +27,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     List<Account> findAllByMainAccount(String mainAccount);
 
+    List<Account> findAllByWalletId(Long walletId);
+
     Optional<Account> findByMainAccountAndCurrency(String mainAccount, Currency currency);
 
     Optional<Account> findFirstByMainAccountAndEntityAndTypeAndSubTypeAndCurrency(

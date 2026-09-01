@@ -28,8 +28,6 @@ public class GetWalletOnboardResponseDto extends BaseResponseDto {
     /** Customer-facing vanity / premium display (optional). */
     private String vanityCode;
     private Currency settlementCurrency;
-    /** COA product-stream profile used at onboard. */
-    private String coaProfileCode;
     private WalletStatus status;
     private WalletAssociationType type;
     private WalletType walletType;
