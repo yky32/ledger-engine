@@ -92,11 +92,23 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     @Transactional
     public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
                                        Currency currency, String movementKey, String description) {
-        return doEarnBurn(walletId, orderType, amount, currency, movementKey, description, null);
+        return doEarnBurn(walletId, orderType, amount, currency, movementKey, description, null, null);
     }
 
     public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
                                        Currency currency, String movementKey, String description, Long accountId) {
+        return doEarnBurn(walletId, orderType, amount, currency, movementKey, description, accountId, null);
+    }
+
+    public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
+                                       Currency currency, String movementKey, String description, Long accountId,
+                                       String eventType) {
+        return doEarnBurn(walletId, orderType, amount, currency, movementKey, description, accountId, eventType, null);
+    }
+
+    public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
+                                       Currency currency, String movementKey, String description, Long accountId,
+                                       String eventType, String mainAccount) {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);
         String key = key(movementKey, orderType.name().toLowerCase());
@@ -107,6 +119,12 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
                 ? bookRef : null;
             LedgerMovement m = newMovement(key, walletId, orderType, LedgerMovementMode.AUTO,
                 origin, target, amount, currency, description);
+            if (eventType != null && !eventType.isBlank()) {
+                m.setEvent(eventType.trim().toUpperCase());
+            }
+            if (mainAccount != null && !mainAccount.isBlank()) {
+                m.setMainAccount(mainAccount.trim());
+            }
             ledgerMovementRepository().save(m);
             return DtoMapper.toMovement(execute(m));
         });
@@ -124,6 +142,18 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         String movementKey,
         String description
     ) {
+        return doHoldRelease(walletId, orderType, amount, currency, movementKey, description, null);
+    }
+
+    public GetLedgerMovementResponseDto doHoldRelease(
+        Long walletId,
+        OrderType orderType,
+        java.math.BigDecimal amount,
+        Currency currency,
+        String movementKey,
+        String description,
+        Long accountId
+    ) {
         if (orderType != OrderType.HOLD && orderType != OrderType.RELEASE) {
             throw new BizException(MovementErrorResponse.MOV0400, "orderType must be HOLD or RELEASE");
         }
@@ -131,10 +161,10 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         requireActive(wallet);
         String key = key(movementKey, orderType.name().toLowerCase());
         return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
-            String walletRef = String.valueOf(walletId);
-            // HOLD uses originator; RELEASE uses target (same wallet)
-            String origin = orderType == OrderType.HOLD ? walletRef : null;
-            String target = orderType == OrderType.RELEASE ? walletRef : null;
+            String bookRef = accountId != null ? String.valueOf(accountId) : String.valueOf(walletId);
+            // HOLD uses originator; RELEASE uses target (same book)
+            String origin = orderType == OrderType.HOLD ? bookRef : null;
+            String target = orderType == OrderType.RELEASE ? bookRef : null;
             LedgerMovement m = newMovement(key, walletId, orderType, LedgerMovementMode.AUTO,
                 origin, target, amount, currency, description);
             ledgerMovementRepository().save(m);

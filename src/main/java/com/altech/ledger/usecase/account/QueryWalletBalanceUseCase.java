@@ -79,7 +79,7 @@ public class QueryWalletBalanceUseCase {
         if (primary.getCurrency() == currency) {
             return DtoMapper.toAccount(primary);
         }
-        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency)
+        return accountRepository.findFirstByMainAccountAndCurrency(primary.getMainAccount(), currency)
             .map(DtoMapper::toAccount)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Account not found for wallet " + walletId + " currency " + currency));
@@ -98,7 +98,11 @@ public class QueryWalletBalanceUseCase {
         List<GetLedgerAccountBalanceResponseDto> result = new ArrayList<>();
         for (Wallet w : walletRepository.findAllByOwnerId(ownerId)) {
             Account primary = commonUseCase.requireAccount(w.getAccountId());
-            for (Account a : accountRepository.findAllByMainAccount(primary.getMainAccount())) {
+            List<Account> books = accountRepository.findAllByWalletId(w.getId());
+            if (books.isEmpty()) {
+                books = accountRepository.findAllByMainAccount(primary.getMainAccount());
+            }
+            for (Account a : books) {
                 result.add(new GetLedgerAccountBalanceResponseDto(a.getId(), a.getCurrency(), a.getLedgerBalance(),
                     a.getAvailableBalance(), null));
             }
@@ -108,7 +112,10 @@ public class QueryWalletBalanceUseCase {
 
     private GetLedgerWalletResponseDto _withFx(Wallet wallet, String fxTarget) {
         Account primary = commonUseCase.requireAccount(wallet.getAccountId());
-        List<Account> list = new ArrayList<>(accountRepository.findAllByMainAccount(primary.getMainAccount()));
+        List<Account> list = new ArrayList<>(accountRepository.findAllByWalletId(wallet.getId()));
+        if (list.isEmpty() && primary.getMainAccount() != null) {
+            list.addAll(accountRepository.findAllByMainAccount(primary.getMainAccount()));
+        }
         GetLedgerWalletResponseDto base = DtoMapper.toWallet(wallet, list);
         if (fxTarget == null || fxTarget.isBlank()) {
             return base;

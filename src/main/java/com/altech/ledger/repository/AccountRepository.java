@@ -31,6 +31,10 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByMainAccountAndCurrency(String mainAccount, Currency currency);
 
+    Optional<Account> findFirstByMainAccountAndCurrency(String mainAccount, Currency currency);
+
+    List<Account> findAllByMainAccountAndCurrency(String mainAccount, Currency currency);
+
     Optional<Account> findFirstByMainAccountAndEntityAndTypeAndSubTypeAndCurrency(
         String mainAccount, String entity, String type, String subType, Currency currency);
 

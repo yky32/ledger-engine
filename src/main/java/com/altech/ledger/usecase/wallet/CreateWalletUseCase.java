@@ -71,7 +71,7 @@ public class CreateWalletUseCase {
         Currency currency = commonUseCase.requireCurrency(mainCurrency);
         String mainAccountNo = commonService.getNextMainAccount();
         GetLedgerAccountResponseDto main = createAccountUseCase.execute(new CreateLedgerAccountRequestDto(
-            "10", "99", "00", "NA", mainAccountNo, "0000", currency, false));
+            "10", "99", "00", "NA", mainAccountNo, "0000", currency, false, null));
         if (extraCurrencies != null && !extraCurrencies.isEmpty()) {
             createAccountUseCase.executeByAssociatedCurrencies(mainAccountNo, extraCurrencies);
         }

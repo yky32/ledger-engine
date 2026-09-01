@@ -22,8 +22,11 @@ import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.MovementBus;
+import com.altech.ledger.entity.po.accounting.AccountingRule;
+import com.altech.ledger.entity.po.accounting.AccountingRuleExecution;
+import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.usecase.ingest.ProgramPoolService;
-import com.altech.ledger.usecase.rule.QueryRuleExecutionUseCase;
+import com.altech.ledger.usecase.rule.AccountingRuleCatalogUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -53,7 +56,8 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     /** @Lazy breaks cycle MovementBus ↔ this use case */
     @Lazy
     private final MovementBus movementBus;
-    private final QueryRuleExecutionUseCase queryRuleExecutionUseCase;
+    private final AccountingRuleCatalogUseCase accountingRuleCatalogUseCase;
+    private final CoaBookResolver coaBookResolver;
     private final ProgramPoolService programPoolService;
 
     @Override
@@ -96,10 +100,6 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             return movement;
         }
         try {
-            // Old always fetched accounting rules by OrderType; empty rules list still OK
-            queryRuleExecutionUseCase.findByOrderType(movement.getOrderType()).ifPresent(re ->
-                log.debug("RuleExecution found for {}: {}", movement.getOrderType(), re.name()));
-
             BalanceExecutionResultCommand command = rulesExecution(movement);
             applyCommand(command, movement);
             movement.setStatus(LedgerMovementStatus.SETTLED);
@@ -118,9 +118,14 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     }
 
     /**
-     * rulesExecution — builds BalanceExecutionResultCommand from OrderType.
-         */
+     * Posting sequence from {@link AccountingRuleExecution} when present;
+     * otherwise OrderType switch (deposit / withdraw / transfer / hold).
+     */
     public BalanceExecutionResultCommand rulesExecution(LedgerMovement movement) {
+        BalanceExecutionResultCommand fromRules = executeAccountingRules(movement);
+        if (fromRules != null) {
+            return fromRules;
+        }
         BalanceExecutionResultCommand command = new BalanceExecutionResultCommand();
         BigDecimal amount = movement.getAmount();
         Currency currency = movement.getCurrency();
@@ -178,6 +183,41 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         return command;
     }
 
+    /**
+     * Walk AccountingRule legs. Member targetAccount (no house walletId) resolves against
+     * {@code movement.walletId} so each CUST gets a different account id.
+     * {@code movement.mainAccount} selects the member product tree (9089 vs 9088); house ignores it.
+     */
+    private BalanceExecutionResultCommand executeAccountingRules(LedgerMovement movement) {
+        OrderType orderType = movement.getOrderType();
+        if (orderType != OrderType.EARN && orderType != OrderType.BURN && orderType != OrderType.ADJUSTMENT) {
+            return null;
+        }
+        accountingRuleCatalogUseCase.ensureDefault();
+        Optional<AccountingRuleExecution> seq = accountingRuleCatalogUseCase.findSequence(
+            movement.getEvent(), orderType);
+        if (seq.isEmpty()) {
+            return null;
+        }
+        List<AccountingRule> rules = accountingRuleCatalogUseCase.loadRules(seq.get());
+        if (rules.isEmpty()) {
+            return null;
+        }
+        log.info("posting sequence {} eventType={} legs={}",
+            seq.get().getName(), seq.get().getEventType(), rules.size());
+        BalanceExecutionResultCommand command = new BalanceExecutionResultCommand();
+        BigDecimal base = movement.getAmount();
+        for (AccountingRule rule : rules) {
+            Account account = coaBookResolver.resolve(
+                rule.getTargetAccount(), movement.getWalletId(), movement.getMainAccount());
+            BigDecimal amt = rule.getMultiplier() == null ? base : base.multiply(rule.getMultiplier());
+            BalanceOperation op = rule.getDirection() == MovementDirection.CREDIT
+                ? BalanceOperation.ADD
+                : BalanceOperation.SUBTRACT;
+            command.add(account, amt, op);
+        }
+        return command;
+    }
 
     private void applyCommand(BalanceExecutionResultCommand command, LedgerMovement movement) {
         for (BalanceExecutionResultCommand.CommandDetail detail : command.getDetails()) {
@@ -234,7 +274,9 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             entry.setTargetId(String.valueOf(cmd.getAccount().getId()));
             entry.setAmount(cmd.getAmount());
             entry.setDirection(direction);
-            entry.setCurrency(movement.getCurrency());
+            entry.setCurrency(cmd.getAccount() != null && cmd.getAccount().getCurrency() != null
+                ? cmd.getAccount().getCurrency()
+                : movement.getCurrency());
             entry.setAffectsLedger(!holdLike);
             entry.setAffectsAvailable(true);
             ledgerEntryRepository.save(entry);
@@ -324,7 +366,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         if (primary.getCurrency() == currency) {
             return primary;
         }
-        return accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency)
+        return accountRepository.findFirstByMainAccountAndCurrency(primary.getMainAccount(), currency)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Account currency not found for wallet " + wallet.getId() + " / " + currency));
     }

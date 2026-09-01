@@ -16,5 +16,7 @@ public record CreateCoaProfileRequestDto(
     @Size(max = 8) String subType,
     @Size(max = 8) String buffer,
     @JsonAlias("lpCurrency") @Size(max = 16) String currency,
-    Boolean poolAllowNegative
+    Boolean poolAllowNegative,
+    /** House books: bind to this company wallet. Member event COA omit. */
+    Long walletId
 ) {}

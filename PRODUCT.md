@@ -91,7 +91,7 @@ Status key: **Shipped** | **Partial** | **Planned**
 | **Linked bank accounts** | CRUD for withdrawal targets | — | **Planned** |
 | **Payment methods** | Card/bank per wallet | — | **Planned** |
 | **FX rates** | CRUD + wallet view conversion | CRUD endpoints | **Partial** |
-| **Accounting rules** | Rule + RuleExecution per OrderType | Legacy `/rules`; **loyalty earn uses `digestion_rule` DB** (not YAML) | **Partial** |
+| **Accounting rules** | AccountingRule + AccountingRuleExecution per OrderType | `/accounting-rules`; **loyalty earn uses `digestion_rule` DB** (not YAML) | **Partial** |
 | **Compliance** | Movement compliance context + files | Movement metadata field | **Planned** |
 | **Kafka pipeline** | MOVEMENT_INITIATED → BALANCE_UPDATE → DONE | Transaction events consumer; movement events planned | **Partial** |
 | **Webhooks inbound** | Activation + deposit callback | **Transaction webhook + digestion + DE legs** | **Shipped** (loyalty path) |

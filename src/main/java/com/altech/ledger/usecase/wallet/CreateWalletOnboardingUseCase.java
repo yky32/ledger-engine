@@ -57,6 +57,14 @@ public class CreateWalletOnboardingUseCase {
         return _createWallet(request);
     }
 
+    /**
+     * Ingest auto-create: own transaction so a unique-key conflict cannot mark the ingest TX rollback-only.
+     */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public GetWalletOnboardResponseDto executeIsolated(CreateWalletOnboardRequestDto request) {
+        return execute(request);
+    }
+
     /** CRM bulk import — soft-idempotent (existing rows counted, not errors). */
     @Transactional
     public BatchCreateWalletOnboardResponseDto executeBatch(BatchCreateWalletOnboardRequestDto request) {

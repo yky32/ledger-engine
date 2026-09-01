@@ -59,6 +59,7 @@ public class CreateAccountUseCase {
 
         boolean allowNegative = dto.allowNegative() != null && dto.allowNegative();
         Account account = Account.builder()
+            .walletId(dto.walletId())
             .fullNumber(fullNumber)
             .entity(entity)
             .type(type)
@@ -80,7 +81,7 @@ public class CreateAccountUseCase {
             CreateLedgerAccountRequestDto req = new CreateLedgerAccountRequestDto(
                 CoaCodes.ENTITY, "20", CoaCodes.SUB_TYPE, CoaCodes.BUFFER, mainAccount,
                 commonService.getNextSubAccount(mainAccount),
-                currency, false);
+                currency, false, null);
             created.add(execute(req));
         }
         return created;

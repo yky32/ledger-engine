@@ -3,9 +3,9 @@ package com.altech.ledger.entity.json_context;
 import java.util.List;
 
 /**
- * JSON shape for {@code RuleExecution.metadata}: ordered list of rule ids.
+ * JSON shape for {@code AccountingRuleExecution.metadata}: ordered list of account-rule ids.
  */
-public record RuleExecutionMetadata(
+public record AccountingRuleExecutionMetadata(
     List<Detail> rules
 ) {
     /** One rule reference with sequence order. */

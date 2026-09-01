@@ -5,8 +5,8 @@ import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletBalanceResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
 import com.altech.ledger.entity.po.FxRate;
-import com.altech.ledger.entity.po.accounting.Rule;
-import com.altech.ledger.entity.po.accounting.RuleExecution;
+import com.altech.ledger.entity.po.accounting.AccountingRule;
+import com.altech.ledger.entity.po.accounting.AccountingRuleExecution;
 import com.altech.ledger.entity.po.configuration.SystemConfiguration;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
@@ -17,8 +17,8 @@ import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
 import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
-import com.altech.ledger.entity.dto.response.GetRuleExecutionResponseDto;
-import com.altech.ledger.entity.dto.response.GetRuleResponseDto;
+import com.altech.ledger.entity.dto.response.GetAccountingRuleExecutionResponseDto;
+import com.altech.ledger.entity.dto.response.GetAccountingRuleResponseDto;
 import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 
 /**
@@ -168,12 +168,12 @@ public final class DtoWrapper {
         return DtoMapper.toMovement(m);
     }
 
-    public static GetRuleResponseDto getRuleResponseDto(Rule r) {
-        return DtoMapper.toRule(r);
+    public static GetAccountingRuleResponseDto getAccountingRuleResponseDto(AccountingRule r) {
+        return DtoMapper.toAccountingRule(r);
     }
 
-    public static GetRuleExecutionResponseDto getRuleExecutionResponseDto(RuleExecution r) {
-        return DtoMapper.toRuleExecution(r);
+    public static GetAccountingRuleExecutionResponseDto getAccountingRuleExecutionResponseDto(AccountingRuleExecution r) {
+        return DtoMapper.toAccountingRuleExecution(r);
     }
 
     public static GetFxRateResponseDto getFxRateResponseDto(FxRate r) {

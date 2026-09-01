@@ -17,7 +17,6 @@ public class Result <T> {
     private Response response;
     private T data;
     private String requestId;
-    private String tenantKey; // REMINDER: only for PG using....
     private Pagination pagination;
 
     public Result(Response response) {

@@ -7,7 +7,9 @@ import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.WalletErrorResponse;
+import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.repository.WalletRepository;
+import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class HoldReleaseUseCase {
     private final WalletRepository walletRepository;
     private final ApplyPostingUseCase applyPostingUseCase;
+    private final CoaBookResolver coaBookResolver;
 
     @Transactional
     public GetLedgerMovementResponseDto hold(CreateHoldReleaseRequestDto req) {
@@ -34,9 +37,10 @@ public class HoldReleaseUseCase {
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
                 "Wallet not found: " + req.ownerId()));
         String desc = req.description() != null ? req.description() : type.name() + " " + req.currency();
+        Account book = coaBookResolver.resolveMemberBook(w.getId(), req.currency());
         PostingCommand cmd = type == OrderType.HOLD
-            ? PostingCommand.hold(w.getId(), req.amount(), req.currency(), req.movementKey(), desc)
-            : PostingCommand.release(w.getId(), req.amount(), req.currency(), req.movementKey(), desc);
+            ? PostingCommand.hold(w.getId(), req.amount(), req.currency(), req.movementKey(), desc, book.getId())
+            : PostingCommand.release(w.getId(), req.amount(), req.currency(), req.movementKey(), desc, book.getId());
         return applyPostingUseCase.execute(cmd);
     }
 }

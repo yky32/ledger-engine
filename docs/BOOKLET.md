@@ -326,10 +326,11 @@ Phase-1 engine DE still uses **PROGRAM pool**; labels map to Finance COA outside
 | Webhook | `/integrations/webhooks/transactions` · `/dry-run` |
 | Fail / legs | `/integrations/failed-transactions` · `ledger-entries` |
 | COA | `/coa-profiles` |
+| Accounting rules | `/accounting-rules` · `/accounting-rule-executions` |
 
 ### Legacy (deprecated)
 
-`/ledger-wallets` · `/ledger-accounts` · `/rules` — do not use for new work.
+`/ledger-wallets` · `/ledger-accounts` — do not use for new work.
 
 ### Money use cases
 

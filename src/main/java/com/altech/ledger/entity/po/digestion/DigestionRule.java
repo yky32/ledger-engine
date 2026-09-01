@@ -120,5 +120,8 @@ public class DigestionRule extends AuditEntityWithIsActive {
         } else {
             formula = DigestionFormulaConfig.normalize(formula);
         }
+        if (eventType != null) {
+            eventType = eventType.trim().toUpperCase(java.util.Locale.ROOT);
+        }
     }
 }

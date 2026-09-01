@@ -86,7 +86,9 @@ public class ApplyPostingUseCase {
                 cmd.currency(),
                 cmd.movementKey(),
                 cmd.description(),
-                cmd.accountId()
+                cmd.accountId(),
+                cmd.eventType(),
+                cmd.mainAccount()
             );
             case HOLD, RELEASE -> ledgerMovementShooter.doHoldRelease(
                 cmd.walletId(),
@@ -94,7 +96,8 @@ public class ApplyPostingUseCase {
                 cmd.amount(),
                 cmd.currency(),
                 cmd.movementKey(),
-                cmd.description()
+                cmd.description(),
+                cmd.accountId()
             );
         };
     }

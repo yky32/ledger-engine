@@ -16,7 +16,8 @@ public record CreateLedgerAccountRequestDto(
     String mainAccount,
     String subAccount,
     @NotNull Currency currency,
-    Boolean allowNegative
+    Boolean allowNegative,
+    Long walletId
 ) {
     public CreateLedgerAccountRequestDto {
         if (allowNegative == null) {

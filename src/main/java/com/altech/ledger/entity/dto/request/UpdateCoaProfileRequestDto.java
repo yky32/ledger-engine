@@ -14,5 +14,6 @@ public record UpdateCoaProfileRequestDto(
     @Size(max = 8) String subType,
     @Size(max = 8) String buffer,
     @JsonAlias("lpCurrency") @Size(max = 16) String currency,
-    Boolean poolAllowNegative
+    Boolean poolAllowNegative,
+    Long walletId
 ) {}

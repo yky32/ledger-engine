@@ -28,7 +28,7 @@ import java.math.BigDecimal;
  * Business operation log (deposit, earn/burn, hold, …).
  * <p>
  * Free-form context fields stay TEXT (often plain description strings, not JSON objects).
- * True JSON config POs use jsonb — see SystemConfiguration / Rule.
+ * True JSON config POs use jsonb — see SystemConfiguration / AccountingRule.
  */
 @Entity
 @Table(
@@ -58,6 +58,10 @@ public class LedgerMovement extends AuditEntityWithIsActive {
 
     @Column(nullable = false)
     private Long walletId;
+
+    /** Client product book key for member legs (event {@code mainAccount}). House books ignore this. */
+    @Column(length = 32)
+    private String mainAccount;
 
     @Column
     private String originatorId;

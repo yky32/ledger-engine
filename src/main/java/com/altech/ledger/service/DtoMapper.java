@@ -1,8 +1,8 @@
 package com.altech.ledger.service;
 
 import com.altech.ledger.entity.po.FxRate;
-import com.altech.ledger.entity.po.accounting.Rule;
-import com.altech.ledger.entity.po.accounting.RuleExecution;
+import com.altech.ledger.entity.po.accounting.AccountingRule;
+import com.altech.ledger.entity.po.accounting.AccountingRuleExecution;
 import com.altech.ledger.entity.po.configuration.SystemConfiguration;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
@@ -13,8 +13,8 @@ import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
 import com.altech.ledger.entity.dto.response.GetLedgerAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
-import com.altech.ledger.entity.dto.response.GetRuleExecutionResponseDto;
-import com.altech.ledger.entity.dto.response.GetRuleResponseDto;
+import com.altech.ledger.entity.dto.response.GetAccountingRuleExecutionResponseDto;
+import com.altech.ledger.entity.dto.response.GetAccountingRuleResponseDto;
 import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 
 /**
@@ -53,17 +53,18 @@ public final class DtoMapper {
             m.getOriginatorId(), m.getTargetId(), m.getAmount(), m.getCurrency(),
             m.getOrderType(), m.getStatus(), m.getMode(), m.getType(),
             m.getRemarks(), m.getMetadata(), m.getComplianceContext(), m.getFiles(),
+            m.getMainAccount(),
             m.getCreateDt(), m.getUpdateDt());
     }
 
-    public static GetRuleResponseDto toRule(Rule r) {
-        return new GetRuleResponseDto(r.getId(), r.getName(), r.getDescription(), r.getDirection(),
+    public static GetAccountingRuleResponseDto toAccountingRule(AccountingRule r) {
+        return new GetAccountingRuleResponseDto(r.getId(), r.getName(), r.getDescription(), r.getDirection(),
             r.getMultiplier(), r.getTargetAccount(), r.getContent(), r.getCreateDt());
     }
 
-    public static GetRuleExecutionResponseDto toRuleExecution(RuleExecution r) {
-        return new GetRuleExecutionResponseDto(r.getId(), r.getName(), r.getDescription(),
-            r.getOrderType(), r.getMetadata(), r.getCreateDt());
+    public static GetAccountingRuleExecutionResponseDto toAccountingRuleExecution(AccountingRuleExecution r) {
+        return new GetAccountingRuleExecutionResponseDto(r.getId(), r.getName(), r.getDescription(),
+            r.getOrderType(), r.getEventType(), r.getMetadata(), r.getCreateDt());
     }
 
     public static GetFxRateResponseDto toFx(FxRate r) {

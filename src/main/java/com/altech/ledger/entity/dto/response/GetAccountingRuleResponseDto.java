@@ -5,7 +5,7 @@ import com.altech.ledger.entity.enu.MovementDirection;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-public record GetRuleResponseDto(
+public record GetAccountingRuleResponseDto(
     Long id,
     String name,
     String description,

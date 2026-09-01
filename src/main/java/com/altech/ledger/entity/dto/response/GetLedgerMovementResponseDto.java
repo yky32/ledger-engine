@@ -27,6 +27,7 @@ public record GetLedgerMovementResponseDto(
     String metadata,
     String complianceContext,
     String files,
+    String mainAccount,
     Instant createDt,
     Instant updateDt
 ) {}

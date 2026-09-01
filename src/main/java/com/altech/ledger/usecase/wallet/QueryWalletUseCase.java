@@ -11,6 +11,7 @@ import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
+import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,7 @@ public class QueryWalletUseCase {
     private final WalletRepository walletRepository;
     private final AccountRepository accountRepository;
     private final CommonUseCase commonUseCase;
+    private final CoaBookResolver coaBookResolver;
 
     @Transactional(readOnly = true)
     public GetWalletOnboardResponseDto byOwnerId(String ownerId) {
@@ -107,9 +109,20 @@ public class QueryWalletUseCase {
             .toList();
 
         if (!currencyFilter.isEmpty()) {
-            ordered = ordered.stream()
-                .filter(a -> a.getCurrency() != null && currencyFilter.contains(a.getCurrency()))
-                .toList();
+            List<Account> source = ordered;
+            List<Account> preferred = new ArrayList<>();
+            for (Currency ccy : currencyFilter) {
+                var member = coaBookResolver.findMemberBook(wallet.getId(), ccy);
+                if (member.isPresent()) {
+                    preferred.add(member.get());
+                } else {
+                    source.stream()
+                        .filter(a -> a.getCurrency() == ccy)
+                        .findFirst()
+                        .ifPresent(preferred::add);
+                }
+            }
+            ordered = preferred;
         }
 
         List<GetWalletAccountResponseDto> accounts = new ArrayList<>();

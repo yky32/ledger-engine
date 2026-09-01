@@ -49,7 +49,7 @@ public class ProgramPoolService {
         if (primary.getCurrency() == currency) {
             pool = primary;
         } else {
-            pool = accountRepository.findByMainAccountAndCurrency(primary.getMainAccount(), currency)
+            pool = accountRepository.findFirstByMainAccountAndCurrency(primary.getMainAccount(), currency)
                 .orElseGet(() -> _openCurrencyBook(program, primary, currency));
         }
         if (!pool.isAllowNegative()) {

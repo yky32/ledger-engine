@@ -17,19 +17,21 @@ import org.hibernate.annotations.GenericGenerator;
 import java.math.BigDecimal;
 
 /**
- * Reusable accounting rule definition.
+ * One posting-sequence leg.
+ * {@code targetAccount} is a {@code CoaProfile.code} (chart structure), never a member account id.
+ * Member books are resolved at runtime from the movement wallet + that COA.
  * {@code content} kept as TEXT for now (API still string; promote to jsonb when payload is structured).
  */
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
-public class Rule extends AuditEntityWithIsActive {
+public class AccountingRule extends AuditEntityWithIsActive {
 
     @Id
     @Column
-    @GenericGenerator(name = "rule_id_generator", type = SnowflakeIdGenerator.class)
-    @GeneratedValue(generator = "rule_id_generator")
+    @GenericGenerator(name = "accounting_rule_id_generator", type = SnowflakeIdGenerator.class)
+    @GeneratedValue(generator = "accounting_rule_id_generator")
     private Long id;
 
     @Column
@@ -45,6 +47,7 @@ public class Rule extends AuditEntityWithIsActive {
     @Column(precision = 38, scale = 18)
     private BigDecimal multiplier;
 
+    /** CoaProfile.code — chart pointer. Not a snowflake account id. */
     @Column
     private String targetAccount;
 

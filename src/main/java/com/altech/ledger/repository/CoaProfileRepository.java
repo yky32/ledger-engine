@@ -20,4 +20,6 @@ public interface CoaProfileRepository extends JpaRepository<CoaProfile, Long> {
     List<CoaProfile> findEnabledDefaults();
 
     List<CoaProfile> findAllByIsActiveTrueOrderByCodeAsc();
+
+    List<CoaProfile> findAllByWalletId(Long walletId);
 }

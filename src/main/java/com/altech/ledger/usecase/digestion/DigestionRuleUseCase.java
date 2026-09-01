@@ -52,7 +52,7 @@ public class DigestionRuleUseCase {
         DigestionRule r = new DigestionRule();
         r.setCode(code);
         r.setName(req.name());
-        r.setEventType(req.eventType().trim());
+        r.setEventType(req.eventType().trim().toUpperCase(Locale.ROOT));
         r.setOperation(req.operation() == null || req.operation().isBlank()
             ? "EARN" : req.operation().trim().toUpperCase(Locale.ROOT));
         r.setIsEnabled(req.isEnabled() == null || req.isEnabled());
@@ -90,7 +90,7 @@ public class DigestionRuleUseCase {
             r.setName(req.name());
         }
         if (req.eventType() != null && !req.eventType().isBlank()) {
-            r.setEventType(req.eventType().trim());
+            r.setEventType(req.eventType().trim().toUpperCase(Locale.ROOT));
         }
         if (req.operation() != null && !req.operation().isBlank()) {
             r.setOperation(req.operation().trim().toUpperCase(Locale.ROOT));

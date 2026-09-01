@@ -8,7 +8,6 @@ import com.altech.ledger.entity.dto.ingest.LedgerLegDto;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.OrderType;
-import com.altech.ledger.entity.po.coa.CoaProfile;
 import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
@@ -21,11 +20,14 @@ import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.factor.FactorMatcher;
 import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
-import com.altech.ledger.usecase.ledger.ApplyPostingRecipeUseCase;
-import com.altech.ledger.usecase.ledger.PostingRecipeCatalog;
+import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.usecase.coa.CoaProfileUseCase;
+import com.altech.ledger.usecase.rule.AccountingRuleCatalogUseCase;
 import com.altech.ledger.entity.dto.posting.PostingCommand;
-import com.altech.ledger.entity.dto.posting.PostingRecipe;
+import com.altech.ledger.entity.dto.response.GetCoaProfileResponseDto;
+import com.altech.ledger.entity.enu.MovementDirection;
+import com.altech.ledger.entity.po.accounting.AccountingRule;
+import com.altech.ledger.entity.po.accounting.AccountingRuleExecution;
 import com.altech.core.utils.JSONUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,8 +53,8 @@ public class IngestTransactionUseCase {
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final ApplyPostingUseCase applyPostingUseCase;
-    private final ApplyPostingRecipeUseCase applyPostingRecipeUseCase;
-    private final PostingRecipeCatalog postingRecipeCatalog;
+    private final AccountingRuleCatalogUseCase accountingRuleCatalogUseCase;
+    private final CoaBookResolver coaBookResolver;
     private final CoaProfileUseCase coaProfileUseCase;
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
 
@@ -93,14 +95,13 @@ public class IngestTransactionUseCase {
             return IngestionResult.previewSkipped(event.eventId(), reason, outcome.trace());
         }
         TransactionRuleEngine.RuleDecision rule = outcome.decision().orElseThrow();
-        CoaProfile coa = coaProfileUseCase.resolveForEvent(_txnCode(event), event.metadata());
         return IngestionResult.preview(
             event.eventId(),
             rule.operation(),
             rule.points(),
             rule.matchedRule(),
             outcome.trace(),
-            _coaHit(coa, null)
+            _coaHitFromSequence(event.eventType(), _orderType(rule.operation()), null, event.mainAccount())
         );
     }
 
@@ -137,8 +138,8 @@ public class IngestTransactionUseCase {
         Currency pointCurrency = Currency.get(rule.pointCurrency());
         String custId = event.ownerId();
         String matchedCode = rule.matchedRule();
-        CoaProfile coa = coaProfileUseCase.resolveForEvent(_txnCode(event), event.metadata());
-        Currency bookCcy = Currency.get(coa.getCurrency() == null ? rule.pointCurrency() : coa.getCurrency());
+        String eventType = event.eventType();
+        OrderType orderType = _orderType(rule.operation());
 
         EnsureWalletForIngestUseCase.ResolveResult resolved;
         try {
@@ -157,8 +158,6 @@ public class IngestTransactionUseCase {
         }
         Wallet wallet = resolved.wallet();
         String walletKey = custId;
-        Account book = ensureWalletForIngestUseCase.ensureAccountForCoa(wallet, coa);
-        IngestionResult.CoaHit coaHit = _coaHit(coa, book);
 
         if (rule.operation() == TransactionRuleEngine.Operation.PROCESS) {
             String processType = rule.processType() == null ? "UNSPECIFIED" : rule.processType().toUpperCase();
@@ -167,24 +166,9 @@ public class IngestTransactionUseCase {
             }
         }
 
-        OrderType orderType = switch (rule.operation()) {
-            case EARN, PROCESS -> OrderType.EARN;
-            case BURN -> OrderType.BURN;
-        };
         String movementKey = "loyalty-" + rule.operation().name().toLowerCase() + "-" + event.eventId();
-        String recipeKeyBase = "loyalty-recipe-" + event.eventId();
 
-        String txnCode = _txnCode(event);
-        Optional<PostingRecipe> recipe = postingRecipeCatalog.find(txnCode);
-        if (recipe.isEmpty()) {
-            recipe = postingRecipeCatalog.find(event.eventType());
-        }
-
-        // Idempotency: plain earn/burn key OR first recipe step
         Optional<LedgerMovement> existing = ledgerMovementRepository.findByMovementKey(movementKey);
-        if (existing.isEmpty()) {
-            existing = ledgerMovementRepository.findByMovementKey(recipeKeyBase + "-credit_reward-1");
-        }
         if (existing.isPresent()) {
             LedgerMovement m = existing.get();
             UUID id = m.getId() == null ? null
@@ -199,30 +183,19 @@ public class IngestTransactionUseCase {
                 + " rule=" + matchedCode
                 + (resolved.provisioned() ? " [wallet-auto]" : "");
 
-            GetLedgerMovementResponseDto applied;
-            if (recipe.isPresent() && rule.operation() != TransactionRuleEngine.Operation.BURN) {
-                var run = applyPostingRecipeUseCase.execute(
-                    wallet.getId(),
-                    recipe.get(),
-                    rule.points(),
-                    recipeKeyBase,
-                    desc + " recipe=" + recipe.get().code() + " coa=" + coa.getCode(),
-                    book.getId(),
-                    bookCcy
-                );
-                applied = run.last();
-            } else {
-                PostingCommand cmd = orderType == OrderType.BURN
-                    ? PostingCommand.burn(wallet.getId(), rule.points(), bookCcy, movementKey, desc, book.getId())
-                    : PostingCommand.earn(wallet.getId(), rule.points(), bookCcy, movementKey, desc, book.getId());
-                applied = applyPostingUseCase.execute(cmd);
-            }
+            PostingCommand cmd = orderType == OrderType.BURN
+                ? PostingCommand.burn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc, null, eventType,
+                    event.mainAccount())
+                : PostingCommand.earn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc, null, eventType,
+                    event.mainAccount());
+            GetLedgerMovementResponseDto applied = applyPostingUseCase.execute(cmd);
 
             UUID txnId = applied.id() == null ? null
                 : UUID.nameUUIDFromBytes(("movement:" + applied.id()).getBytes());
             return IngestionResult.applied(
                 event.eventId(), rule.operation(), rule.points(), txnId, walletKey,
-                applied.id(), _legs(applied.id()), matchedCode, trace, coaHit);
+                applied.id(), _legs(applied.id()), matchedCode, trace,
+                _coaHitFromSequence(eventType, orderType, wallet.getId(), event.mainAccount()));
         } catch (RuntimeException ex) {
             log.error("ingest apply failed eventId={}", event.eventId(), ex);
             return _fail(event, "ERROR", ex.getMessage() == null ? "apply failed" : ex.getMessage(), trace);
@@ -273,31 +246,48 @@ public class IngestTransactionUseCase {
         return out;
     }
 
-    private static String _txnCode(TransactionalEvent event) {
-        if (event.metadata() != null) {
-            String uc = event.metadata().get("useCase");
-            if (uc == null) {
-                uc = event.metadata().get("use_case");
-            }
-            if (uc != null && !uc.isBlank()) {
-                return uc;
-            }
-        }
-        return event.eventType();
+    private static OrderType _orderType(TransactionRuleEngine.Operation operation) {
+        return switch (operation) {
+            case EARN, PROCESS -> OrderType.EARN;
+            case BURN -> OrderType.BURN;
+        };
     }
 
-    private static IngestionResult.CoaHit _coaHit(CoaProfile p, Account a) {
-        if (p == null) {
+    private IngestionResult.CoaHit _coaHitFromSequence(
+        String eventType,
+        OrderType orderType,
+        Long memberWalletId,
+        String memberMainAccount
+    ) {
+        Optional<AccountingRuleExecution> seq = accountingRuleCatalogUseCase.findSequence(eventType, orderType);
+        if (seq.isEmpty()) {
             return null;
         }
+        AccountingRule credit = accountingRuleCatalogUseCase.loadRules(seq.get()).stream()
+            .filter(r -> r.getDirection() == MovementDirection.CREDIT)
+            .findFirst()
+            .orElse(null);
+        if (credit == null || credit.getTargetAccount() == null) {
+            return null;
+        }
+        GetCoaProfileResponseDto p;
+        try {
+            p = coaProfileUseCase.getByCode(credit.getTargetAccount());
+        } catch (RuntimeException ex) {
+            return null;
+        }
+        Account book = null;
+        if (memberWalletId != null) {
+            try {
+                book = coaBookResolver.resolve(credit.getTargetAccount(), memberWalletId, memberMainAccount);
+            } catch (RuntimeException ex) {
+                log.debug("coa hit resolve skipped: {}", ex.getMessage());
+            }
+        }
         return new IngestionResult.CoaHit(
-            p.getCode(),
-            p.getEntity(),
-            p.getType(),
-            p.getSubType(),
-            p.getCurrency(),
-            a == null ? null : a.getId(),
-            a == null ? null : a.getFullNumber());
+            p.getCode(), p.getEntity(), p.getType(), p.getSubType(), p.getCurrency(),
+            book == null ? null : book.getId(),
+            book == null ? null : book.getFullNumber());
     }
 
     private IngestionResult _fail(

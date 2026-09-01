@@ -68,20 +68,11 @@ public class CoaProfileUseCase {
     }
 
     /**
-     * Per-event COA: metadata.useCase / transactionCode → eventType → DEFAULT.
-     * Decides entity / type / subType / currency for which books this txn updates.
+     * Chart lookup by webhook {@code eventType} only (same token as Door / Brain / accounting).
+     * Not used for posting — accounting rules pick books.
      */
     @Transactional
     public CoaProfile resolveForEvent(String eventType, Map<String, String> metadata) {
-        Map<String, String> md = metadata == null ? Map.of() : metadata;
-        String fromMeta = firstNonBlank(md.get("useCase"), md.get("use_case"),
-            md.get("transactionCode"), md.get("transaction_code"), md.get("coaProfileCode"));
-        if (fromMeta != null) {
-            Optional<CoaProfile> hit = findByTransactionCode(fromMeta);
-            if (hit.isPresent()) {
-                return hit.get();
-            }
-        }
         if (eventType != null && !eventType.isBlank()) {
             Optional<CoaProfile> hit = findByTransactionCode(eventType);
             if (hit.isPresent()) {
@@ -89,18 +80,6 @@ public class CoaProfileUseCase {
             }
         }
         return requireDefault();
-    }
-
-    private static String firstNonBlank(String... vals) {
-        if (vals == null) {
-            return null;
-        }
-        for (String v : vals) {
-            if (v != null && !v.isBlank()) {
-                return v;
-            }
-        }
-        return null;
     }
 
     @Transactional(readOnly = true)
@@ -162,7 +141,7 @@ public class CoaProfileUseCase {
                 return toDto(existing);
             })
             .orElseGet(() -> create(new CreateCoaProfileRequestDto(
-                c, name, null, isDefault, true, entity, null, null, null, "LP", true)));
+                c, name, null, isDefault, true, entity, null, null, null, "LP", true, null)));
     }
 
     @Transactional
@@ -191,7 +170,14 @@ public class CoaProfileUseCase {
             .buffer(blankTo(req.buffer(), CoaCodes.BUFFER))
             .currency(blankTo(req.currency(), "LP"))
             .poolAllowNegative(req.poolAllowNegative() == null || req.poolAllowNegative())
+            .walletId(req.walletId())
             .build();
+        if (p.getWalletId() == null && CoaCodes.isHouseCode(code)) {
+            coaProfileRepository.findAllByIsActiveTrueOrderByCodeAsc().stream()
+                .filter(h -> CoaCodes.isHouseCode(h.getCode()) && h.getWalletId() != null)
+                .findFirst()
+                .ifPresent(h -> p.setWalletId(h.getWalletId()));
+        }
         p.setIsActive(true);
         if (Boolean.TRUE.equals(p.getIsDefault())) {
             _clearOtherDefaults(null);
@@ -239,6 +225,9 @@ public class CoaProfileUseCase {
         }
         if (req.poolAllowNegative() != null) {
             p.setPoolAllowNegative(req.poolAllowNegative());
+        }
+        if (req.walletId() != null) {
+            p.setWalletId(req.walletId());
         }
         if (req.isDefault() != null) {
             p.setIsDefault(req.isDefault());
@@ -311,6 +300,7 @@ public class CoaProfileUseCase {
             .buffer(p.getBuffer())
             .currency(p.getCurrency())
             .poolAllowNegative(p.getPoolAllowNegative())
+            .walletId(p.getWalletId())
             .createDt(p.getCreateDt())
             .updateDt(p.getUpdateDt())
             .build();

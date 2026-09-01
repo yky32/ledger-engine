@@ -15,7 +15,19 @@ public final class CoaCodes {
     public static final String BUFFER = "00";
     public static final String PRIMARY_SUB = "0000";
 
+    /** UA corporate operating account number (house main). */
+    public static final String HOUSE_MAIN_ACCOUNT = "9999";
+
     private CoaCodes() {}
+
+    /** House / company chart codes — not SDK eventTypes. */
+    public static boolean isHouseCode(String code) {
+        if (code == null || code.isBlank()) {
+            return false;
+        }
+        String c = code.trim().toUpperCase(java.util.Locale.ROOT);
+        return c.startsWith("HOUSE_") || c.startsWith("CORP_") || c.startsWith("GL_") || "PROGRAM".equals(c);
+    }
 
     public static String typeCode(CoaType type) {
         if (type == null) {

@@ -100,7 +100,7 @@ class LedgerWalletParityIntegrationTest {
                     """))
             .andExpect(result -> assertThat(result.getResponse().getStatus()).isIn(200, 409));
 
-        mockMvc.perform(post("/rules")
+        mockMvc.perform(post("/accounting-rules")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"name":"deposit-rule-%s","description":"test","direction":"CREDIT","multiplier":1}

@@ -92,6 +92,13 @@ public class CoaProfile extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private Boolean poolAllowNegative = Boolean.TRUE;
 
+    /**
+     * House / corporate COA: the one company wallet these books belong to.
+     * Member event-type profiles leave this null.
+     */
+    @Column
+    private Long walletId;
+
     @PrePersist
     @PreUpdate
     void normalize() {

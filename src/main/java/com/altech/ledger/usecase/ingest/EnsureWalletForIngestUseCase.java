@@ -12,6 +12,7 @@ import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.exception.response.WalletErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
+import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.usecase.wallet.CreateWalletOnboardingUseCase;
 import com.altech.ledger.util.CoaCodes;
@@ -38,6 +39,7 @@ public class EnsureWalletForIngestUseCase {
     private final AccountRepository accountRepository;
     private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
     private final CoaProfileUseCase coaProfileUseCase;
+    private final CoaBookResolver coaBookResolver;
 
     public record ResolveResult(Wallet wallet, boolean provisioned) {}
 
@@ -61,7 +63,8 @@ public class EnsureWalletForIngestUseCase {
         Optional<Wallet> existing = _find(ownerId);
         if (existing.isPresent()) {
             Wallet w = existing.get();
-            _ensureCurrencyAccount(w, pointCurrency);
+            coaBookResolver.assertMemberMainAccountUsable(w, mainAccount);
+            _ensureCurrencyAccount(w, pointCurrency, mainAccount);
             return new ResolveResult(w, false);
         }
 
@@ -94,7 +97,7 @@ public class EnsureWalletForIngestUseCase {
             String name = (cfg.getAutoWalletNamePrefix() == null ? "Auto " : cfg.getAutoWalletNamePrefix())
                 + ownerId;
 
-            createWalletOnboardingUseCase.execute(new CreateWalletOnboardRequestDto(
+            createWalletOnboardingUseCase.executeIsolated(new CreateWalletOnboardRequestDto(
                 ownerId,
                 settlement,
                 name,
@@ -104,12 +107,11 @@ public class EnsureWalletForIngestUseCase {
                 mainAccount
             ));
             provisioned = true;
-            log.info("auto-created wallet for ownerId={} settlement={} ensure={} coa={}",
-                ownerId, settlement, ensure, coaCode);
+            log.info("auto-created wallet for ownerId={} settlement={} ensure={} coa={} mainAccount={}",
+                ownerId, settlement, ensure, coaCode, mainAccount);
         } catch (BizException ex) {
             String code = ex.getResponse() != null ? ex.getResponse().getCode() : null;
-            if (WalletErrorResponse.WAL0409.getCode().equals(code)
-                || AccountErrorResponse.ACC0409.getCode().equals(code)) {
+            if (WalletErrorResponse.WAL0409.getCode().equals(code)) {
                 log.info("auto-create race, wallet already exists for {}", ownerId);
             } else {
                 throw ex;
@@ -119,7 +121,7 @@ public class EnsureWalletForIngestUseCase {
         Wallet wallet = _find(ownerId)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
                 "Wallet not found after auto-create: " + ownerId));
-        _ensureCurrencyAccount(wallet, pointCurrency != null ? pointCurrency : ensure);
+        _ensureCurrencyAccount(wallet, pointCurrency != null ? pointCurrency : ensure, mainAccount);
         return new ResolveResult(wallet, provisioned);
     }
 
@@ -156,78 +158,33 @@ public class EnsureWalletForIngestUseCase {
         return walletRepository.findByOwnerId(ownerId);
     }
 
-    /**
-     * Per-event books: open (or reuse) the account whose COA 4-tuple matches this profile
-     * under the wallet's mainAccount.
-     */
+    /** Chart structure → account under this wallet. Prefer posting via AccountingRule. */
     @Transactional
     public Account ensureAccountForCoa(Wallet wallet, CoaProfile coa) {
-        if (wallet == null || wallet.getAccountId() == null) {
-            throw new BizException(AccountErrorResponse.ACC0404, "Wallet primary missing");
-        }
-        if (coa == null) {
-            throw new BizException(AccountErrorResponse.ACC0400, "COA profile required");
-        }
-        Currency ccy = Currency.get(coa.getCurrency() == null ? "LP" : coa.getCurrency());
-        Account primary = accountRepository.findById(wallet.getAccountId())
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
-                "Primary account missing for wallet " + wallet.getId()));
-        String entity = blank(coa.getEntity(), CoaCodes.ENTITY);
-        String type = blank(coa.getType(), CoaCodes.typeCodeLiability());
-        String subType = blank(coa.getSubType(), CoaCodes.SUB_TYPE);
-        Optional<Account> existing = accountRepository
-            .findFirstByMainAccountAndEntityAndTypeAndSubTypeAndCurrency(
-                primary.getMainAccount(), entity, type, subType, ccy);
-        if (existing.isPresent()) {
-            return existing.get();
-        }
-        String buffer = blank(coa.getBuffer(), CoaCodes.BUFFER);
-        String sub = CoaCodes.subAccountCode(null, 1);
-        int n = 1;
-        while (accountRepository.findByMainAccountAndSubAccount(primary.getMainAccount(), sub).isPresent()) {
-            n++;
-            sub = CoaCodes.subAccountCode(null, n);
-            if (n > 99) {
-                throw new BizException(AccountErrorResponse.ACC0400,
-                    "No free sub-account under main " + primary.getMainAccount());
-            }
-        }
-        String fullNumber = CoaCodes.fullNumber(
-            entity, type, subType, primary.getMainAccount(), sub, buffer, ccy);
-        Account created = accountRepository.save(Account.builder()
-            .walletId(wallet.getId())
-            .fullNumber(fullNumber)
-            .entity(entity)
-            .type(type)
-            .subType(subType)
-            .mainAccount(primary.getMainAccount())
-            .subAccount(sub)
-            .buffer(buffer)
-            .currency(ccy)
-            .allowNegative(false)
-            .build());
-        log.info("event COA account wallet={} coa={} fullNumber={}",
-            wallet.getId(), coa.getCode(), fullNumber);
-        return created;
+        return coaBookResolver.ensureAccount(wallet, coa);
     }
 
-    private static String blank(String v, String d) {
-        return v == null || v.isBlank() ? d : v.trim();
-    }
-
-    private void _ensureCurrencyAccount(Wallet wallet, Currency currency) {
+    private void _ensureCurrencyAccount(Wallet wallet, Currency currency, String memberMainAccount) {
         if (currency == null || wallet.getAccountId() == null) {
             return;
         }
         Account primary = accountRepository.findById(wallet.getAccountId())
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Primary account missing for wallet " + wallet.getId()));
+        String main = CoaBookResolver.normalizeMainAccount(memberMainAccount);
+        if (main != null && !main.equals(primary.getMainAccount())) {
+            // Second product tree is opened by CoaBookResolver at posting time.
+            return;
+        }
         if (primary.getCurrency() == currency) {
             return;
         }
-        Optional<Account> existing = accountRepository.findByMainAccountAndCurrency(
-            primary.getMainAccount(), currency);
-        if (existing.isPresent()) {
+        boolean exists = accountRepository.findAllByMainAccountAndCurrency(
+                primary.getMainAccount(), currency)
+            .stream()
+            .findAny()
+            .isPresent();
+        if (exists) {
             return;
         }
 

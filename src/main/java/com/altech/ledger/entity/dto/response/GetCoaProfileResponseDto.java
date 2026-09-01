@@ -31,6 +31,8 @@ public class GetCoaProfileResponseDto {
     @JsonAlias("lpCurrency")
     private String currency;
     private Boolean poolAllowNegative;
+    /** House COA: company wallet these books live on. */
+    private Long walletId;
     private Instant createDt;
     private Instant updateDt;
 }
