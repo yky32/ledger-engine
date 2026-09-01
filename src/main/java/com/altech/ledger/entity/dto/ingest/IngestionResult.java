@@ -27,8 +27,21 @@ public record IngestionResult(
     /** Candidate rules tried (same eventType); empty if disabled before Brain. */
     List<EligibilityTraceEntry> eligibilityTrace,
     /** True when POST …/dry-run (no wallet / no books). */
-    Boolean dryRun
+    Boolean dryRun,
+    /** Per-event COA books this txn updates. */
+    CoaHit coa
 ) {
+    /** Event COA resolution — entity / type / subType / currency → account. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record CoaHit(
+        String code,
+        String entity,
+        String type,
+        String subType,
+        String currency,
+        Long accountId,
+        String fullNumber
+    ) {}
     public enum Status { EARNED, BURNED, PROCESSED, SKIPPED, DUPLICATE, ERROR }
 
     public static IngestionResult skipped(
@@ -38,7 +51,7 @@ public record IngestionResult(
     ) {
         return new IngestionResult(
             eventId, Status.SKIPPED, null, reason, null, null, null, null,
-            List.of(), null, copyTrace(trace), null);
+            List.of(), null, copyTrace(trace), null, null);
     }
 
     public static IngestionResult skipped(String eventId, String reason) {
@@ -61,10 +74,31 @@ public record IngestionResult(
             case BURN -> Status.BURNED;
             case PROCESS -> Status.PROCESSED;
         };
+        return applied(eventId, operation, points, transactionId, walletRef, movementId, legs,
+            matchedRuleCode, trace, null);
+    }
+
+    public static IngestionResult applied(
+        String eventId,
+        TransactionRuleEngine.Operation operation,
+        BigDecimal points,
+        UUID transactionId,
+        String walletRef,
+        Long movementId,
+        List<LedgerLegDto> legs,
+        String matchedRuleCode,
+        List<EligibilityTraceEntry> trace,
+        CoaHit coa
+    ) {
+        Status status = switch (operation) {
+            case EARN -> Status.EARNED;
+            case BURN -> Status.BURNED;
+            case PROCESS -> Status.PROCESSED;
+        };
         return new IngestionResult(
             eventId, status, operation.name(), null, points, transactionId, walletRef,
             movementId, legs == null ? List.of() : List.copyOf(legs),
-            matchedRuleCode, copyTrace(trace), null);
+            matchedRuleCode, copyTrace(trace), null, coa);
     }
 
     public static IngestionResult duplicate(
@@ -82,7 +116,7 @@ public record IngestionResult(
             eventId, Status.DUPLICATE, operation.name(), "Already processed",
             points, transactionId, walletRef, movementId,
             legs == null ? List.of() : List.copyOf(legs),
-            matchedRuleCode, copyTrace(trace), null);
+            matchedRuleCode, copyTrace(trace), null, null);
     }
 
     /** Preview only — status as if earned/burned but no side effects. */
@@ -98,9 +132,25 @@ public record IngestionResult(
             case BURN -> Status.BURNED;
             case PROCESS -> Status.PROCESSED;
         };
+        return preview(eventId, operation, points, matchedRuleCode, trace, null);
+    }
+
+    public static IngestionResult preview(
+        String eventId,
+        TransactionRuleEngine.Operation operation,
+        BigDecimal points,
+        String matchedRuleCode,
+        List<EligibilityTraceEntry> trace,
+        CoaHit coa
+    ) {
+        Status status = switch (operation) {
+            case EARN -> Status.EARNED;
+            case BURN -> Status.BURNED;
+            case PROCESS -> Status.PROCESSED;
+        };
         return new IngestionResult(
             eventId, status, operation.name(), null, points, null, null, null,
-            List.of(), matchedRuleCode, copyTrace(trace), Boolean.TRUE);
+            List.of(), matchedRuleCode, copyTrace(trace), Boolean.TRUE, coa);
     }
 
     public static IngestionResult previewSkipped(
@@ -110,7 +160,7 @@ public record IngestionResult(
     ) {
         return new IngestionResult(
             eventId, Status.SKIPPED, null, reason, null, null, null, null,
-            List.of(), null, copyTrace(trace), Boolean.TRUE);
+            List.of(), null, copyTrace(trace), Boolean.TRUE, null);
     }
 
     private static List<EligibilityTraceEntry> copyTrace(List<EligibilityTraceEntry> trace) {

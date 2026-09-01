@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -287,12 +288,21 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         }
         try {
             Long id = Long.valueOf(idOrWalletRef);
+            // Per-event COA posts with accountId — prefer the account row over wallet-id collision.
+            Optional<Account> asAccount = accountRepository.findById(id);
+            if (asAccount.isPresent()) {
+                Account a = asAccount.get();
+                if (currency != null && a.getCurrency() != null && a.getCurrency() != currency) {
+                    throw new BizException(AccountErrorResponse.ACC0400,
+                        "Account " + id + " currency " + a.getCurrency() + " != " + currency);
+                }
+                return a;
+            }
             OptionalWalletAccount fromWallet = tryWallet(id, currency);
             if (fromWallet != null) {
                 return fromWallet.account();
             }
-            return accountRepository.findById(id)
-                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id));
+            throw new BizException(AccountErrorResponse.ACC0404, "Account not found: " + id);
         } catch (NumberFormatException ex) {
             Wallet wallet = walletRepository.findByOwnerId(idOrWalletRef)
                 .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,

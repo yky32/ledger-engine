@@ -34,6 +34,26 @@ public final class DtoWrapper {
             List.of(getWalletAccountResponseDto(account, null, true)));
     }
 
+    /** Wallet row for list-all (no accounts / balances). */
+    public static GetWalletOnboardResponseDto getWalletListRowDto(Wallet wallet) {
+        return GetWalletOnboardResponseDto.builder()
+            .walletId(wallet.getId())
+            .ownerId(wallet.getOwnerId())
+            .vanityCode(wallet.getVanityCode())
+            .settlementCurrency(wallet.getSettlementCurrency())
+            .coaProfileCode(wallet.getCoaProfileCode())
+            .status(wallet.getStatus())
+            .type(wallet.getType())
+            .walletType(wallet.getWalletType())
+            .name(wallet.getName())
+            .createDt(wallet.getCreateDt())
+            .updateDt(wallet.getUpdateDt())
+            .createBy(wallet.getCreatedBy())
+            .updateBy(wallet.getUpdatedBy())
+            .isActive(wallet.getIsActive())
+            .build();
+    }
+
     public static GetWalletOnboardResponseDto getWalletOnboardResponseDto(
         Wallet wallet,
         Account primary,

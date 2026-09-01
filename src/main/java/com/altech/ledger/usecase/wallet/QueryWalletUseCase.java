@@ -68,6 +68,14 @@ public class QueryWalletUseCase {
         }
     }
 
+    /** Admin query list — active wallets, no nested accounts. */
+    @Transactional(readOnly = true)
+    public List<GetWalletOnboardResponseDto> listAll() {
+        return walletRepository.findAllByIsActiveTrueOrderByCreateDtDesc().stream()
+            .map(DtoWrapper::getWalletListRowDto)
+            .toList();
+    }
+
     private Wallet _requireByOwnerId(String ownerId) {
         if (ownerId == null || ownerId.isBlank()) {
             throw new BizException(WalletErrorResponse.WAL0400, "ownerId is required");

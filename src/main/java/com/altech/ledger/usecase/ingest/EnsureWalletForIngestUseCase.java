@@ -4,6 +4,7 @@ import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.dto.request.AccountOpenSpecDto;
 import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
+import com.altech.ledger.entity.po.coa.CoaProfile;
 import com.altech.ledger.entity.po.ingest.IngestPolicy;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
@@ -142,6 +143,64 @@ public class EnsureWalletForIngestUseCase {
 
     private Optional<Wallet> _find(String ownerId) {
         return walletRepository.findByOwnerId(ownerId);
+    }
+
+    /**
+     * Per-event books: open (or reuse) the account whose COA 4-tuple matches this profile
+     * under the wallet's mainAccount.
+     */
+    @Transactional
+    public Account ensureAccountForCoa(Wallet wallet, CoaProfile coa) {
+        if (wallet == null || wallet.getAccountId() == null) {
+            throw new BizException(AccountErrorResponse.ACC0404, "Wallet primary missing");
+        }
+        if (coa == null) {
+            throw new BizException(AccountErrorResponse.ACC0400, "COA profile required");
+        }
+        Currency ccy = Currency.get(coa.getCurrency() == null ? "LP" : coa.getCurrency());
+        Account primary = accountRepository.findById(wallet.getAccountId())
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
+                "Primary account missing for wallet " + wallet.getId()));
+        String entity = blank(coa.getEntity(), CoaCodes.ENTITY);
+        String type = blank(coa.getType(), CoaCodes.typeCodeLiability());
+        String subType = blank(coa.getSubType(), CoaCodes.SUB_TYPE);
+        Optional<Account> existing = accountRepository
+            .findFirstByMainAccountAndEntityAndTypeAndSubTypeAndCurrency(
+                primary.getMainAccount(), entity, type, subType, ccy);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        String buffer = blank(coa.getBuffer(), CoaCodes.BUFFER);
+        String sub = CoaCodes.subAccountCode(null, 1);
+        int n = 1;
+        while (accountRepository.findByMainAccountAndSubAccount(primary.getMainAccount(), sub).isPresent()) {
+            n++;
+            sub = CoaCodes.subAccountCode(null, n);
+            if (n > 99) {
+                throw new BizException(AccountErrorResponse.ACC0400,
+                    "No free sub-account under main " + primary.getMainAccount());
+            }
+        }
+        String fullNumber = CoaCodes.fullNumber(
+            entity, type, subType, primary.getMainAccount(), sub, buffer, ccy);
+        Account created = accountRepository.save(Account.builder()
+            .fullNumber(fullNumber)
+            .entity(entity)
+            .type(type)
+            .subType(subType)
+            .mainAccount(primary.getMainAccount())
+            .subAccount(sub)
+            .buffer(buffer)
+            .currency(ccy)
+            .allowNegative(false)
+            .build());
+        log.info("event COA account wallet={} coa={} fullNumber={}",
+            wallet.getId(), coa.getCode(), fullNumber);
+        return created;
+    }
+
+    private static String blank(String v, String d) {
+        return v == null || v.isBlank() ? d : v.trim();
     }
 
     private void _ensureCurrencyAccount(Wallet wallet, Currency currency) {

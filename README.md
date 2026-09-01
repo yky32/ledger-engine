@@ -125,7 +125,7 @@ Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) an
 
 | Area | Examples |
 |---|---|
-| **Wallets** | `POST /wallets`, `POST /wallets/batch`, `GET /wallets/{ownerId}`, `GET /wallets?ownerId=` |
+| **Wallets** | `POST /wallets`, `POST /wallets/batch`, `GET /wallets` (list), `GET /wallets/{ownerId}`, `GET /wallets?ownerId=` |
 | **Movements** | `POST /movements/deposits`, `/withdrawals`, `/transfers/in-wallet`, settle/get/list |
 | **Ledger accounts** | `POST /accounts`, get balance (product COA path) |
 | **Parity** | `/ledger-wallets`, `/ledger-accounts`, `/ledger/deposits`, rules, FX, configs |

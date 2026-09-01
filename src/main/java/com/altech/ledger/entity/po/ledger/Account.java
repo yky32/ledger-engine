@@ -57,7 +57,7 @@ public class Account extends AuditEntityWithIsActive {
     private String subType;
 
     @Column
-    private String mainAccount;
+    private String mainAccount; // more or less linked to client-specific identifier
     @Column
     private String subAccount;
 

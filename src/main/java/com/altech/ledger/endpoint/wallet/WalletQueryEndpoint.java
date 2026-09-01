@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
- * Wallet Query API — all lookups by {@code ownerId}.
+ * Wallet Query API — list-all, or lookup by {@code ownerId}.
  */
 @RestController
 @RequestMapping("/wallets")
@@ -42,5 +44,13 @@ public class WalletQueryEndpoint {
         @RequestParam(required = false) String currencies
     ) {
         return R.success(queryWalletUseCase.byOwnerId(ownerId, currencies));
+    }
+
+    /**
+     * GET /wallets — list active wallets (no nested accounts).
+     */
+    @GetMapping
+    public Result<List<GetWalletOnboardResponseDto>> listAll() {
+        return R.success(queryWalletUseCase.listAll());
     }
 }

@@ -29,6 +29,9 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByMainAccountAndCurrency(String mainAccount, Currency currency);
 
+    Optional<Account> findFirstByMainAccountAndEntityAndTypeAndSubTypeAndCurrency(
+        String mainAccount, String entity, String type, String subType, Currency currency);
+
     @Query("select a.mainAccount from Account a where a.mainAccount is not null")
     List<String> allMainAccountNumbers();
 

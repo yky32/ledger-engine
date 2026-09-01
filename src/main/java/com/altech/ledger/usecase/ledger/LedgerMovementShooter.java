@@ -92,13 +92,19 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     @Transactional
     public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
                                        Currency currency, String movementKey, String description) {
+        return doEarnBurn(walletId, orderType, amount, currency, movementKey, description, null);
+    }
+
+    public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
+                                       Currency currency, String movementKey, String description, Long accountId) {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);
         String key = key(movementKey, orderType.name().toLowerCase());
         return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
-            String origin = orderType == OrderType.BURN ? String.valueOf(walletId) : null;
+            String bookRef = accountId != null ? String.valueOf(accountId) : String.valueOf(walletId);
+            String origin = orderType == OrderType.BURN ? bookRef : null;
             String target = (orderType == OrderType.EARN || orderType == OrderType.ADJUSTMENT)
-                ? String.valueOf(walletId) : null;
+                ? bookRef : null;
             LedgerMovement m = newMovement(key, walletId, orderType, LedgerMovementMode.AUTO,
                 origin, target, amount, currency, description);
             ledgerMovementRepository().save(m);

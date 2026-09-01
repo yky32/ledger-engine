@@ -12,6 +12,8 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
     /** 1 CUST : 1 Wallet — primary lookup. */
     Optional<Wallet> findByOwnerId(String ownerId);
 
+    List<Wallet> findAllByIsActiveTrueOrderByCreateDtDesc();
+
     boolean existsByOwnerId(String ownerId);
 
     Optional<Wallet> findByAccountId(Long accountId);

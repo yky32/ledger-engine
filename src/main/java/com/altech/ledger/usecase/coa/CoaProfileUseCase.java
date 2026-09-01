@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -64,6 +65,42 @@ public class CoaProfileUseCase {
         }
         return coaProfileRepository.findByCode(t)
             .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()));
+    }
+
+    /**
+     * Per-event COA: metadata.useCase / transactionCode → eventType → DEFAULT.
+     * Decides entity / type / subType / currency for which books this txn updates.
+     */
+    @Transactional
+    public CoaProfile resolveForEvent(String eventType, Map<String, String> metadata) {
+        Map<String, String> md = metadata == null ? Map.of() : metadata;
+        String fromMeta = firstNonBlank(md.get("useCase"), md.get("use_case"),
+            md.get("transactionCode"), md.get("transaction_code"), md.get("coaProfileCode"));
+        if (fromMeta != null) {
+            Optional<CoaProfile> hit = findByTransactionCode(fromMeta);
+            if (hit.isPresent()) {
+                return hit.get();
+            }
+        }
+        if (eventType != null && !eventType.isBlank()) {
+            Optional<CoaProfile> hit = findByTransactionCode(eventType);
+            if (hit.isPresent()) {
+                return hit.get();
+            }
+        }
+        return requireDefault();
+    }
+
+    private static String firstNonBlank(String... vals) {
+        if (vals == null) {
+            return null;
+        }
+        for (String v : vals) {
+            if (v != null && !v.isBlank()) {
+                return v;
+            }
+        }
+        return null;
     }
 
     @Transactional(readOnly = true)

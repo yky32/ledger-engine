@@ -66,6 +66,11 @@ class WalletOnboardingIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.accounts.length()").value(2));
 
+        mockMvc.perform(get("/wallets"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("SYS0000"))
+            .andExpect(jsonPath("$.data[?(@.ownerId=='" + ownerId + "')]").exists());
+
         // Duplicate CUST → conflict
         mockMvc.perform(post("/wallets")
                 .contentType(MediaType.APPLICATION_JSON)

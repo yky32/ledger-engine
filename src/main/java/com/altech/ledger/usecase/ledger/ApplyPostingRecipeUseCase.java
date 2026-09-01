@@ -40,6 +40,19 @@ public class ApplyPostingRecipeUseCase {
         String movementKeyBase,
         String description
     ) {
+        return execute(walletId, recipe, amount, movementKeyBase, description, null, null);
+    }
+
+    @Transactional
+    public RecipeRunResult execute(
+        Long walletId,
+        PostingRecipe recipe,
+        BigDecimal amount,
+        String movementKeyBase,
+        String description,
+        Long accountId,
+        Currency coaCurrency
+    ) {
         if (walletId == null || recipe == null) {
             throw new BizException(MovementErrorResponse.MOV0400, "walletId and recipe required");
         }
@@ -52,7 +65,9 @@ public class ApplyPostingRecipeUseCase {
         String desc = description == null ? recipe.code() : description;
 
         List<GetLedgerMovementResponseDto> steps = new ArrayList<>();
-        Currency bookCcy = recipe.rewardCcy() != null ? recipe.rewardCcy() : Currency.LP;
+        Currency bookCcy = coaCurrency != null
+            ? coaCurrency
+            : (recipe.rewardCcy() != null ? recipe.rewardCcy() : Currency.LP);
         int i = 0;
         for (PostingAtom atom : recipe.atoms()) {
             i++;
@@ -60,14 +75,14 @@ public class ApplyPostingRecipeUseCase {
             String stepDesc = desc + " [" + recipe.code() + "/" + atom + "]";
             GetLedgerMovementResponseDto m = switch (atom) {
                 case CREDIT_REWARD -> applyPostingUseCase.execute(PostingCommand.earn(
-                    walletId, amount, bookCcy, key, stepDesc));
+                    walletId, amount, bookCcy, key, stepDesc, accountId));
                 case REDEEM, CASHBACK -> applyPostingUseCase.execute(PostingCommand.burn(
-                    walletId, amount, bookCcy, key, stepDesc));
+                    walletId, amount, bookCcy, key, stepDesc, accountId));
                 case CONVERT_HKD_TO_LP -> {
                     applyPostingUseCase.execute(PostingCommand.burn(
                         walletId, amount, Currency.HKD, key + "-out", stepDesc + " out-HKD"));
                     GetLedgerMovementResponseDto in = applyPostingUseCase.execute(PostingCommand.earn(
-                        walletId, amount, Currency.LP, key + "-in", stepDesc + " in-LP"));
+                        walletId, amount, Currency.LP, key + "-in", stepDesc + " in-LP", accountId));
                     bookCcy = Currency.LP;
                     yield in;
                 }

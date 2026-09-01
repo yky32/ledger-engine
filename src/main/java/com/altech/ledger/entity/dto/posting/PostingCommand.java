@@ -21,7 +21,9 @@ public record PostingCommand(
     /** Transfer destination wallet id (IN_WALLET_TRANSFER). */
     Long counterpartyWalletId,
     /** Optional external / free-text party on withdrawal target. */
-    String externalPartyId
+    String externalPartyId,
+    /** Per-event COA book; when set, earn/burn posts to this account not wallet-primary-by-ccy. */
+    Long accountId
 ) {
     public PostingCommand {
         if (mode == null) {
@@ -38,7 +40,7 @@ public record PostingCommand(
         LedgerMovementMode mode
     ) {
         return new PostingCommand(
-            PostingIntent.DEPOSIT, walletId, amount, currency, movementKey, description, mode, null, null);
+            PostingIntent.DEPOSIT, walletId, amount, currency, movementKey, description, mode, null, null, null);
     }
 
     public static PostingCommand withdrawal(
@@ -52,7 +54,7 @@ public record PostingCommand(
     ) {
         return new PostingCommand(
             PostingIntent.WITHDRAWAL, walletId, amount, currency, movementKey, description, mode,
-            null, externalPartyId);
+            null, externalPartyId, null);
     }
 
     public static PostingCommand inWalletTransfer(
@@ -66,7 +68,7 @@ public record PostingCommand(
     ) {
         return new PostingCommand(
             PostingIntent.IN_WALLET_TRANSFER, fromWalletId, amount, currency, movementKey, description,
-            mode, toWalletId, null);
+            mode, toWalletId, null, null);
     }
 
     public static PostingCommand earn(
@@ -76,9 +78,20 @@ public record PostingCommand(
         String movementKey,
         String description
     ) {
+        return earn(walletId, amount, currency, movementKey, description, null);
+    }
+
+    public static PostingCommand earn(
+        Long walletId,
+        BigDecimal amount,
+        Currency currency,
+        String movementKey,
+        String description,
+        Long accountId
+    ) {
         return new PostingCommand(
             PostingIntent.EARN, walletId, amount, currency, movementKey, description,
-            LedgerMovementMode.AUTO, null, null);
+            LedgerMovementMode.AUTO, null, null, accountId);
     }
 
     public static PostingCommand burn(
@@ -88,9 +101,20 @@ public record PostingCommand(
         String movementKey,
         String description
     ) {
+        return burn(walletId, amount, currency, movementKey, description, null);
+    }
+
+    public static PostingCommand burn(
+        Long walletId,
+        BigDecimal amount,
+        Currency currency,
+        String movementKey,
+        String description,
+        Long accountId
+    ) {
         return new PostingCommand(
             PostingIntent.BURN, walletId, amount, currency, movementKey, description,
-            LedgerMovementMode.AUTO, null, null);
+            LedgerMovementMode.AUTO, null, null, accountId);
     }
 
     public static PostingCommand hold(
@@ -102,7 +126,7 @@ public record PostingCommand(
     ) {
         return new PostingCommand(
             PostingIntent.HOLD, walletId, amount, currency, movementKey, description,
-            LedgerMovementMode.AUTO, null, null);
+            LedgerMovementMode.AUTO, null, null, null);
     }
 
     public static PostingCommand release(
@@ -114,6 +138,6 @@ public record PostingCommand(
     ) {
         return new PostingCommand(
             PostingIntent.RELEASE, walletId, amount, currency, movementKey, description,
-            LedgerMovementMode.AUTO, null, null);
+            LedgerMovementMode.AUTO, null, null, null);
     }
 }
