@@ -24,7 +24,7 @@ import com.altech.ledger.usecase.ledger.PostingRecipeCatalog;
 import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.entity.dto.posting.PostingCommand;
 import com.altech.ledger.entity.dto.posting.PostingRecipe;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.altech.core.utils.JSONUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -53,7 +53,6 @@ public class IngestTransactionUseCase {
     private final PostingRecipeCatalog postingRecipeCatalog;
     private final CoaProfileUseCase coaProfileUseCase;
     private final FailedTransactionIngestRepository failedTransactionIngestRepository;
-    private final ObjectMapper objectMapper;
 
     private static final ThreadLocal<Boolean> SUPPRESS_FAIL_PERSIST = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
@@ -305,7 +304,7 @@ public class IngestTransactionUseCase {
             row.setReason(reason == null ? code : (reason.length() > 500 ? reason.substring(0, 500) : reason));
             row.setStatus("OPEN");
             try {
-                row.setRawPayload(objectMapper.convertValue(event, Object.class));
+                row.setRawPayload(JSONUtil.convertFromObject(event, Object.class));
             } catch (IllegalArgumentException e) {
                 row.setRawPayload(null);
             }

@@ -1,8 +1,8 @@
 package com.altech.ledger.listener.usecase;
 
 import com.altech.ledger.usecase.wallet.CreateWalletUseCase;
+import com.altech.core.utils.JSONUtil;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,6 @@ import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
 public class WalletAccountSetupListener {
     private static final Logger log = LoggerFactory.getLogger(WalletAccountSetupListener.class);
 
-    private final ObjectMapper objectMapper;
     private final CreateWalletUseCase createWalletUseCase;
 
     @KafkaListener(
@@ -34,7 +33,7 @@ public class WalletAccountSetupListener {
     )
     public void onMessage(ConsumerRecord<String, String> record) {
         try {
-            JsonNode node = objectMapper.readTree(record.value());
+            JsonNode node = JSONUtil.readTree(record.value());
             String ownerId = text(node, "ownerId", "userId", "walletAssociatedIdentifier", "associatedIdentifier");
             String currency = text(node, "mainCurrency", "currency");
             if (currency == null) currency = "USD";

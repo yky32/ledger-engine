@@ -7,7 +7,7 @@ import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.usecase.ledger.LedgerMovementExecutionUseCase;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.altech.core.utils.JSONUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -26,7 +26,6 @@ public class MovementBus {
 
     private final MovementKafkaProperties movementKafkaProperties;
     private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
-    private final ObjectMapper objectMapper;
     private final ObjectProvider<KafkaTemplate<String, String>> kafkaTemplate;
 
     public LedgerMovement dispatch(LedgerMovement movement) {
@@ -36,7 +35,7 @@ public class MovementBus {
         if (movementKafkaProperties.isEnabled() && kafkaTemplate.getIfAvailable() != null) {
             try {
                 LedgerMovementEvent event = toEvent(movement, "LEDGER_MOVEMENT_INITIATED");
-                String json = objectMapper.writeValueAsString(event);
+                String json = JSONUtil.writeValue(event);
                 kafkaTemplate.getObject().send(movementKafkaProperties.getInitiatedTopic(),
                     String.valueOf(movement.getId()), json);
                 log.info("Published MOVEMENT_INITIATED id={} requestId={}", movement.getId(), event.getRequestId());
@@ -56,7 +55,7 @@ public class MovementBus {
             LedgerMovementEvent event = toEvent(movement, "LEDGER_MOVEMENT_DONE");
             event.setStatus(LedgerMovementStatus.SETTLED);
             kafkaTemplate.getObject().send(movementKafkaProperties.getDoneTopic(),
-                String.valueOf(movement.getId()), objectMapper.writeValueAsString(event));
+                String.valueOf(movement.getId()), JSONUtil.writeValue(event));
             log.info("Published MOVEMENT_DONE id={} topic={}",
                 movement.getId(), movementKafkaProperties.getDoneTopic());
         } catch (Exception ex) {
@@ -82,7 +81,7 @@ public class MovementBus {
             String key = event.getWalletId() != null
                 ? String.valueOf(event.getWalletId())
                 : String.valueOf(event.getMovementId());
-            String json = objectMapper.writeValueAsString(event);
+            String json = JSONUtil.writeValue(event);
             kafkaTemplate.getObject().send(
                 movementKafkaProperties.getBalanceUpdatedTopic(), key, json);
             log.info("Published BALANCE_UPDATED movementId={} walletId={} ownerId={} topic={}",

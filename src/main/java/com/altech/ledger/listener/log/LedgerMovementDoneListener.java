@@ -1,7 +1,7 @@
 package com.altech.ledger.listener.log;
 
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.altech.core.utils.JSONUtil;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,18 +9,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import lombok.RequiredArgsConstructor;
-
 /**
  * LedgerMovementDoneListener — BALANCE_UPDATE_DONE log sink.
  */
 @Component
 @ConditionalOnProperty(prefix = "ledger.movement.kafka", name = "enabled", havingValue = "true")
-@RequiredArgsConstructor
 public class LedgerMovementDoneListener {
     private static final Logger log = LoggerFactory.getLogger(LedgerMovementDoneListener.class);
-
-    private final ObjectMapper objectMapper;
 
     @KafkaListener(
         topics = "${ledger.movement.kafka.done-topic:ledger.movement.done}",
@@ -28,7 +23,7 @@ public class LedgerMovementDoneListener {
     )
     public void onMessage(ConsumerRecord<String, String> record) {
         try {
-            LedgerMovementEvent event = objectMapper.readValue(record.value(), LedgerMovementEvent.class);
+            LedgerMovementEvent event = JSONUtil.readValue(record.value(), LedgerMovementEvent.class);
             log.info("BALANCE_UPDATE_DONE movementId={} status={} amount={} {}",
                 event.getMovementId(), event.getStatus(), event.getAmount(), event.getCurrency());
         } catch (Exception ex) {

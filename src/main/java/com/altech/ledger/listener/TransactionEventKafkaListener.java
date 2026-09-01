@@ -3,7 +3,7 @@ package com.altech.ledger.listener;
 import com.altech.ledger.entity.dto.ingest.IngestionResult;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.usecase.ingest.IngestTransactionUseCase;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.altech.core.utils.JSONUtil;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,13 +19,12 @@ import lombok.RequiredArgsConstructor;
 public class TransactionEventKafkaListener {
     private static final Logger log = LoggerFactory.getLogger(TransactionEventKafkaListener.class);
 
-    private final ObjectMapper objectMapper;
     private final IngestTransactionUseCase ingestTransactionUseCase;
 
     @KafkaListener(topics = "${ledger.integration.kafka.topic}", groupId = "${ledger.integration.kafka.group-id}")
     public void onMessage(ConsumerRecord<String, String> record) {
         try {
-            TransactionalEvent event = objectMapper.readValue(record.value(), TransactionalEvent.class);
+            TransactionalEvent event = JSONUtil.readValue(record.value(), TransactionalEvent.class);
             IngestionResult result = ingestTransactionUseCase.execute(event);
             log.info("Kafka event {} -> {}", event.eventId(), result.status());
         } catch (Exception ex) {

@@ -11,7 +11,7 @@ import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
 import com.altech.ledger.exception.response.IntegrationErrorResponse;
 import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.altech.core.utils.JSONUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -37,7 +37,6 @@ public class ReplayFailedTransactionIngestUseCase {
 
     private final FailedTransactionIngestRepository repository;
     private final IngestTransactionUseCase ingestTransactionUseCase;
-    private final ObjectMapper objectMapper;
     private final QueryFailedTransactionIngestUseCase queryFailedTransactionIngestUseCase;
 
     @Transactional
@@ -128,7 +127,7 @@ public class ReplayFailedTransactionIngestUseCase {
     private TransactionalEvent _toEvent(FailedTransactionIngest row) {
         if (row.getRawPayload() != null) {
             try {
-                return objectMapper.convertValue(row.getRawPayload(), TransactionalEvent.class);
+                return JSONUtil.convertFromObject(row.getRawPayload(), TransactionalEvent.class);
             } catch (Exception ex) {
                 log.warn("rawPayload parse failed id={} — rebuild from columns", row.getId());
             }

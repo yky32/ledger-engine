@@ -3,7 +3,7 @@ package com.altech.ledger.listener.log;
 import com.altech.ledger.config.MovementKafkaProperties;
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
 import com.altech.ledger.usecase.ledger.LedgerMovementExecutionUseCase;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.altech.core.utils.JSONUtil;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 public class LedgerMovementInitiatedListener {
     private static final Logger log = LoggerFactory.getLogger(LedgerMovementInitiatedListener.class);
 
-    private final ObjectMapper objectMapper;
     private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
 
     @KafkaListener(
@@ -31,7 +30,7 @@ public class LedgerMovementInitiatedListener {
     )
     public void onMessage(ConsumerRecord<String, String> record) {
         try {
-            LedgerMovementEvent event = objectMapper.readValue(record.value(), LedgerMovementEvent.class);
+            LedgerMovementEvent event = JSONUtil.readValue(record.value(), LedgerMovementEvent.class);
             log.info("MOVEMENT_INITIATED movementId={}", event.getMovementId());
             ledgerMovementExecutionUseCase.execute(event);
         } catch (Exception ex) {
