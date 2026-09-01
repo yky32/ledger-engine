@@ -13,19 +13,20 @@ Product depth and integration flows: **[PRODUCT.md](PRODUCT.md)**, **[INTEGRATIO
 ## Model (strong play)
 
 ```text
-Customer (CRM id only)     →  ownerId / associatedIdentifier on wallet
+Customer (CRM id only)     →  ownerId on wallet
         │
      Wallet                →  1 customer : 1 wallet (`settlementCurrency` on row)
         │
-     Account               →  1 primary COA balance row (settlement currency) at onboard
+     Account set           →  primary (settlement ccy) + optional extra currency lines (e.g. LP)
         │
      LedgerMovement        →  business ops (idempotent movementKey)
         └── LedgerEntry    →  applied credit/debit legs
 ```
 
 - **Balances** live on `account` (`ledger_balance`, `available_balance`); movements update them under lock.
-- **Wallet.settlementCurrency** = default settlement currency only (not a uniqueness key).
+- **Wallet.settlementCurrency** = default settlement currency (primary account).
 - **Unique wallet:** `(owner_id)` — 1 CUST : 1 Wallet.
+- Extra books (e.g. LP) are **accounts under the same wallet**, not extra wallet rows.
 - **Currency** enum (`fiat` / `LOYALTY_POINT` / `crypto`): `USD`, `HKD`, `LP`, `BTC`, `USDT`, …
 - **No classic journal_transaction layer** in the product path; ops are movement + account balances.
 - **No startup program-pool seed** — create accounts via API when needed.
@@ -104,13 +105,13 @@ src/main/java/
 | **PO** | `entity/po/**` | `Wallet`, `Account`, `LedgerMovement` |
 | **Repository** | `*Repository` | `WalletRepository` |
 | **Field names** | type camelCase | `ledgerMovementRepository` |
-| **JSON** | camelCase | `associatedIdentifier`, `settlementCurrency` |
+| **JSON** | camelCase | `ownerId`, `settlementCurrency` |
 
 ## Core tables (simplified)
 
 ### `wallet`
 
-Customer-facing root: `owner_id` (unique — **1 CUST : 1 Wallet**), `settlement_currency` (default settlement), `account_id` (primary account), status, external CRM ids.  
+Customer-facing root: `owner_id` (unique — **1 CUST : 1 Wallet**), `settlement_currency` (default settlement), `account_id` (primary account), `coa_profile_code`, optional `vanity_code`.  
 
 ### `account`
 
@@ -132,47 +133,63 @@ Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) an
 
 ## Wallet create (curl)
 
-### One customer → one wallet + one primary account
+### One customer → one wallet
 
-`POST /wallets` opens **1 wallet** and **1 primary account** in the request `settlementCurrency`. `accounts` in the body is ignored for now.
+`POST /wallets` opens **1 wallet** per `ownerId` (CRM CUST id).
 
-Each `accounts` entry:
+- Always opens a **primary** account in `settlementCurrency` (e.g. HKD).
+- Optional `accounts[]` adds extra **currency books** under the same wallet (typical: LP).
+- Optional `coaProfileCode` selects numeric COA segments (blank → default profile).
+- Optional `vanityCode` is display-only.
+
+Each extra `accounts` entry:
 
 ```json
-{ "refCode": "LOAN", "name": "Loan line", "primary": false, "allowNegative": true }
+{ "currency": "LP", "name": "Loyalty points", "refCode": "LP" }
 ```
 
 | Field | Notes |
 |---|---|
-| `refCode` | Opaque suffix under the wallet base ref (SDK-defined). Blank → primary |
-| `name` | Optional display name for the account |
-| `primary` | Primary account (`wallet.accountId`); blank `refCode` also means primary |
+| `currency` | Extra book currency (primary uses `settlementCurrency`) |
+| `refCode` | Optional leaf code; blank + no currency → treated as primary |
+| `name` | Optional display name |
+| `primary` | `true` = main account (`wallet.accountId`); omit for extra lines |
 | `allowNegative` | Default `false` |
 
-Omitted / empty `accounts` → **primary only**. Primary is always ensured first; duplicate `refCode` ignored.
+Omitted / empty `accounts` → **primary only**. Duplicate extra currencies are skipped.
 
-Account COA is **numeric only** (no English keys):
+Numeric COA `fullNumber` (no English keys):
 
 ```text
 fullNumber = entity(2) + type(2) + subType(2) + mainAccount + subAccount(4) + buffer(2) + currency(3)
 example    = 10 + 20 + 00 + 10001 + 0000 + 00 + 344   →  10200010001000000344  (HKD primary)
 ```
 
-- One wallet = one `mainAccount`; product lines = leaf `subAccount` (`0000` primary; numeric `refCode` → e.g. `89` → `0089`).
-- Customer identity stays on wallet (`associatedIdentifier`), not in COA.
-
-**Customer unique field:** `associatedIdentifier` only (CRM cust id). Stored as wallet `ownerId` + `associatedIdentifier`.  
-Optional `associatedFrom` (default `CRM`).
+One wallet = one `mainAccount`; extra books = extra leaves (`0000` primary).
 
 ```bash
-# 1 CUST → 1 wallet + 1 primary account
+# primary only (settlement HKD)
 curl -sS -X POST 'http://localhost:8080/wallets' \
   -H 'Content-Type: application/json' \
   -d '{
-    "associatedIdentifier": "CUST-1001",
-    "settlementCurrency": "USD",
-    "name": "Primary wallet",
-    "associatedFrom": "CRM"
+    "ownerId": "01A47158227",
+    "settlementCurrency": "HKD",
+    "name": "Wilfill Kick"
+  }'
+```
+
+```bash
+# primary HKD + LP book (typical loyalty onboard)
+curl -sS -X POST 'http://localhost:8080/wallets' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ownerId": "01A47158227",
+    "settlementCurrency": "HKD",
+    "name": "Wilfill Kick",
+    "coaProfileCode": "DEFAULT",
+    "accounts": [
+      { "currency": "LP", "name": "Loyalty points", "refCode": "LP" }
+    ]
   }'
 ```
 
@@ -183,30 +200,38 @@ curl -sS -X POST 'http://localhost:8080/wallets/batch' \
   -d '{
     "wallets": [
       {
-        "associatedIdentifier": "CUST-1001",
+        "ownerId": "01A47158227",
         "settlementCurrency": "HKD",
-        "name": "Customer 1001"
+        "name": "Wilfill Kick",
+        "accounts": [
+          { "currency": "LP", "name": "Loyalty points", "refCode": "LP" }
+        ]
       },
       {
-        "associatedIdentifier": "CUST-1002",
+        "ownerId": "01A26182952",
         "settlementCurrency": "HKD",
-        "name": "Customer 1002"
+        "name": "Wayne Yu",
+        "accounts": [
+          { "currency": "LP", "refCode": "LP" }
+        ]
       }
     ]
   }'
 ```
 
 ```bash
-# query by same customer id (path ownerId == associatedIdentifier)
-curl -sS 'http://localhost:8080/wallets/CUST-1001'
-curl -sS 'http://localhost:8080/wallets?ownerId=CUST-1001'
+# query by ownerId
+curl -sS 'http://localhost:8080/wallets/01A47158227'
+curl -sS 'http://localhost:8080/wallets?ownerId=01A47158227'
+# optional: filter books
+curl -sS 'http://localhost:8080/wallets/01A47158227?currencies=LP'
 ```
 
-Required: `associatedIdentifier`, `settlementCurrency` (`USD`, `HKD`, `LP`, `BTC`, `USDT`, …).  
-Response: `ownerId` / `associatedIdentifier` (same CRM id) + `settlementCurrency` + primary `account` / `balance`.  
-Envelope: `Result` with `response` / `data` / `requestId`.
+Required: `ownerId`, `settlementCurrency` (`HKD`, `USD`, `LP`, …).  
+Response: `ownerId`, `settlementCurrency`, `coaProfileCode`, primary `account` / `balance`, full `accounts[]`.  
+Envelope: `Result` with `response` / `data` / `requestId`. Duplicate `ownerId` → `WAL0409`.
 
-**PROD bulk convert:** stream CRM ids into `POST /wallets/batch` (≤1000/chunk, soft-idempotent).
+**PROD bulk:** stream CRM CUST ids into `POST /wallets/batch` (≤1000/chunk, soft-idempotent).
 
 ## Currency
 
@@ -230,7 +255,7 @@ Account / movement amounts still use `"currency"`. Stored as `@Enumerated(STRING
 | Optional Kafka movement/integration events | Compliance UI, notifications |
 | Fiat / LP / crypto units | Multi-party settlement orchestration |
 
-Customer identity and names live in CRM; ledger only stores **`ownerId`** (and optional external ids on the wallet).
+Customer identity and names live in CRM; ledger stores **`ownerId`** (CRM CUST id) plus optional `vanityCode`.
 
 ## Docs
 

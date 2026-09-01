@@ -64,22 +64,22 @@ If **auto-wallet on** (default after bootstrap) → first eligible event creates
 
 ## 1. Wallet onboarding
 
-See [docs/CLIENT_WALLET_ONBOARDING.md](docs/CLIENT_WALLET_ONBOARDING.md).
+See README **Wallet create (curl)**.
 
 ```http
 POST /wallets
 Content-Type: application/json
 
 {
-  "associatedIdentifier": "01A12345678",
+  "ownerId": "01A47158227",
   "settlementCurrency": "HKD",
-  "name": "Alice wallet",
-  "associatedFrom": "CRM",
-  "accounts": [{ "currency": "LP", "name": "Loyalty", "refCode": "LP" }]
+  "name": "Wilfill Kick",
+  "coaProfileCode": "DEFAULT",
+  "accounts": [{ "currency": "LP", "name": "Loyalty points", "refCode": "LP" }]
 }
 ```
 
-Customer key: `associatedIdentifier` only. Bulk: `POST /wallets/batch` (idempotent).
+Customer key: `ownerId` (CRM CUST id). 1 CUST → 1 wallet. Extra `accounts[]` open extra currency books (e.g. LP) under the same wallet. Bulk: `POST /wallets/batch` (soft-idempotent).
 
 PROGRAM pool is **lazy** on first earn/burn (not startup YAML seed).
 
@@ -92,7 +92,7 @@ PROGRAM pool is **lazy** on first earn/burn (not startup YAML seed).
 ```json
 {
   "eventId": "evt-7b2c",
-  "associatedIdentifier": "01A12345678",
+  "ownerId": "01A47158227",
   "eventType": "PURCHASE",
   "amount": 150.00,
   "currency": "HKD",
@@ -101,7 +101,7 @@ PROGRAM pool is **lazy** on first earn/burn (not startup YAML seed).
 }
 ```
 
-(`userId` is accepted as alias for `associatedIdentifier`.)
+(`associatedIdentifier` / `userId` still accepted as JSON aliases for `ownerId`.)
 
 ### Channel
 
