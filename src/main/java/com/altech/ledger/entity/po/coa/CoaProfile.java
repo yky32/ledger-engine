@@ -19,7 +19,8 @@ import org.hibernate.annotations.GenericGenerator;
 
 /**
  * One row = one client COA profile. Flat columns only (no JSONB).
- * Segment defaults via {@link Builder.Default}; normalize on persist.
+ * Segment / flag defaults via {@code @Builder.Default}.
+ * Persist hook only trims/uppercases and fills {@code transactionCode} from {@code code}.
  */
 @Entity
 @Table(uniqueConstraints = {
@@ -81,12 +82,9 @@ public class CoaProfile extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private String buffer = "00";
 
-    /**
-     * Points / loyalty currency for LP books under this profile.
-     * Column name {@code currency} (was lp_currency).
-     */
+    /** Points / loyalty currency for LP books under this profile. */
     @Builder.Default
-    @Column(name = "currency", nullable = false)
+    @Column(nullable = false)
     private String currency = "LP";
 
     /** PROGRAM pool accounts may go negative. */
@@ -108,43 +106,8 @@ public class CoaProfile extends AuditEntityWithIsActive {
         if (transactionCode == null && code != null && !code.isBlank()) {
             transactionCode = code;
         }
-        if (isDefault == null) {
-            isDefault = Boolean.FALSE;
-        }
-        if (isEnabled == null) {
-            isEnabled = Boolean.TRUE;
-        }
-        if (entity == null || entity.isBlank()) {
-            entity = "10";
-        }
-        if (type == null || type.isBlank()) {
-            type = "20";
-        }
-        if (subType == null || subType.isBlank()) {
-            subType = "00";
-        }
-        if (buffer == null || buffer.isBlank()) {
-            buffer = "00";
-        }
-        if (currency == null || currency.isBlank()) {
-            currency = "LP";
-        } else {
+        if (currency != null) {
             currency = currency.trim().toUpperCase();
         }
-        if (poolAllowNegative == null) {
-            poolAllowNegative = Boolean.TRUE;
-        }
-        entity = digits(entity, "10");
-        type = digits(type, "20");
-        subType = digits(subType, "00");
-        buffer = digits(buffer, "00");
-    }
-
-    private static String digits(String v, String fallback) {
-        if (v == null) {
-            return fallback;
-        }
-        String s = v.trim();
-        return s.matches("\\d+") ? s : fallback;
     }
 }
