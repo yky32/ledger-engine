@@ -45,7 +45,7 @@ public final class DigestionRuleTestData {
         r.setMinAmount(minAmount);
         r.setEligibleCurrencies(eligible);
         r.setMaxAgeDays(maxAgeDays);
-        r.setPointCurrency("LP");
+        r.setResultCurrency("LP");
         r.setFormula(formula);
         repo.save(r);
     }

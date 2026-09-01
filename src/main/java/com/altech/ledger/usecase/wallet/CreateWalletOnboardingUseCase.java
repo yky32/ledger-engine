@@ -36,7 +36,7 @@ import java.util.Set;
 
 /**
  * Wallet create: <b>1 ownerId → 1 Wallet</b>.
- * Initial account COA segments from request {@code coaProfileCode} or DEFAULT. Not stored on Wallet.
+ * Initial account COA segments from request {@code coaProfileCode}, else CoaCodes (10-20-00). Not stored on Wallet.
  */
 @Component
 @RequiredArgsConstructor

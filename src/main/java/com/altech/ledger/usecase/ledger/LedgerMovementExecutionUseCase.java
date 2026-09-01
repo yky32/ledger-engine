@@ -102,6 +102,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         try {
             BalanceExecutionResultCommand command = rulesExecution(movement);
             applyCommand(command, movement);
+            stampMemberBookCurrency(movement, command);
             movement.setStatus(LedgerMovementStatus.SETTLED);
             ledgerMovementRepository.save(movement);
             createLedgerEntries(movement, command);
@@ -195,7 +196,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         }
         accountingRuleCatalogUseCase.ensureDefault();
         Optional<AccountingRuleExecution> seq = accountingRuleCatalogUseCase.findSequence(
-            movement.getEvent(), orderType);
+            movement.getEvent(), orderType, movement.getCurrency());
         if (seq.isEmpty()) {
             return null;
         }
@@ -259,6 +260,42 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         locked.setLedgerBalance(ledger);
         locked.setAvailableBalance(available);
         accountRepository.save(locked);
+    }
+
+    /**
+     * Wallet history shows this movement's currency. Brain may score LP while accounting
+     * books HKD (or the reverse) — stamp the member book's currency so history matches the books.
+     */
+    private void stampMemberBookCurrency(LedgerMovement movement, BalanceExecutionResultCommand command) {
+        if (movement == null || movement.getWalletId() == null || command == null || command.getDetails() == null) {
+            return;
+        }
+        Long walletId = movement.getWalletId();
+        Account preferred = null;
+        Account any = null;
+        for (BalanceExecutionResultCommand.CommandDetail d : command.getDetails()) {
+            Account a = d.getAccount();
+            if (a == null || a.getCurrency() == null || !walletId.equals(a.getWalletId())) {
+                continue;
+            }
+            any = a;
+            boolean credit = d.getOperation() == BalanceOperation.ADD
+                || d.getOperation() == BalanceOperation.HOLD_UNLOCK;
+            boolean debit = d.getOperation() == BalanceOperation.SUBTRACT
+                || d.getOperation() == BalanceOperation.HOLD_LOCK;
+            if (movement.getOrderType() == OrderType.EARN && credit) {
+                preferred = a;
+                break;
+            }
+            if (movement.getOrderType() == OrderType.BURN && debit) {
+                preferred = a;
+                break;
+            }
+        }
+        Account book = preferred != null ? preferred : any;
+        if (book != null) {
+            movement.setCurrency(book.getCurrency());
+        }
     }
 
     private void createLedgerEntries(LedgerMovement movement, BalanceExecutionResultCommand command) {

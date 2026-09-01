@@ -1,5 +1,6 @@
 package com.altech.ledger.entity.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -16,7 +17,8 @@ public record UpdateDigestionRuleRequestDto(
     List<@Size(max = 16) String> eligibleCurrencies,
     List<@Size(max = 16) String> eligibleMccs,
     Integer maxAgeDays,
-    @Size(max = 16) String pointCurrency,
+    @JsonAlias({"pointCurrency", "point_currency"})
+    @Size(max = 16) String resultCurrency,
     Object formula,
     @Size(max = 40) String processType,
     /** Pass empty list/object to clear whenFactors. */

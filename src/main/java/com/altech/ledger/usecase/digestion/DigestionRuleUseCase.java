@@ -61,8 +61,8 @@ public class DigestionRuleUseCase {
         r.setEligibleCurrencies(joinCodes(req.eligibleCurrencies()));
         r.setEligibleMccs(joinCodes(req.eligibleMccs()));
         r.setMaxAgeDays(req.maxAgeDays());
-        r.setPointCurrency(req.pointCurrency() == null || req.pointCurrency().isBlank()
-            ? "LP" : req.pointCurrency().trim().toUpperCase(Locale.ROOT));
+        r.setResultCurrency(req.resultCurrency() == null || req.resultCurrency().isBlank()
+            ? "LP" : req.resultCurrency().trim().toUpperCase(Locale.ROOT));
         try {
             r.setFormula(DigestionFormulaConfig.normalize(req.formula()));
         } catch (IllegalArgumentException ex) {
@@ -113,8 +113,8 @@ public class DigestionRuleUseCase {
         if (req.maxAgeDays() != null) {
             r.setMaxAgeDays(req.maxAgeDays());
         }
-        if (req.pointCurrency() != null && !req.pointCurrency().isBlank()) {
-            r.setPointCurrency(req.pointCurrency().trim().toUpperCase(Locale.ROOT));
+        if (req.resultCurrency() != null && !req.resultCurrency().isBlank()) {
+            r.setResultCurrency(req.resultCurrency().trim().toUpperCase(Locale.ROOT));
         }
         if (req.formula() != null) {
             try {
@@ -197,7 +197,7 @@ public class DigestionRuleUseCase {
             .eligibleCurrencies(splitCodes(r.getEligibleCurrencies()))
             .eligibleMccs(splitCodes(r.getEligibleMccs()))
             .maxAgeDays(r.getMaxAgeDays())
-            .pointCurrency(r.getPointCurrency())
+            .resultCurrency(r.getResultCurrency())
             .formula(r.getFormula())
             .processType(r.getProcessType())
             .whenFactors(r.getWhenFactors())

@@ -26,8 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -62,7 +66,13 @@ public class WalletHistoryQueryUseCase {
         }
         Instant fromBound = Pageables.parseStartDt(startDt);
         Instant toBound = Pageables.parseEndDt(endDt);
-        return ledgerMovementRepository.search(
+        Set<String> memberAccountIds = new HashSet<>();
+        for (Account a : accountRepository.findAllByWalletId(w.getId())) {
+            if (a.getId() != null) {
+                memberAccountIds.add(String.valueOf(a.getId()));
+            }
+        }
+        Page<GetLedgerMovementResponseDto> page = ledgerMovementRepository.search(
             w.getId(),
             ot != null, ot,
             ccy != null, ccy,
@@ -70,6 +80,51 @@ public class WalletHistoryQueryUseCase {
             fromBound, toBound,
             Pageables.toZeroBased(pageable)
         ).map(DtoMapper::toMovement);
+        List<Long> ids = page.getContent().stream()
+            .map(GetLedgerMovementResponseDto::id)
+            .filter(id -> id != null)
+            .toList();
+        if (ids.isEmpty() || memberAccountIds.isEmpty()) {
+            return page;
+        }
+        Map<Long, OrderType> orderById = new HashMap<>();
+        for (GetLedgerMovementResponseDto d : page.getContent()) {
+            if (d.id() != null) {
+                orderById.put(d.id(), d.orderType());
+            }
+        }
+        Map<Long, Currency> booked = new HashMap<>();
+        for (LedgerEntry e : ledgerEntryRepository.findByTxnIdIn(ids)) {
+            if (e.getTxnId() == null || e.getCurrency() == null || e.getTargetId() == null) {
+                continue;
+            }
+            if (!memberAccountIds.contains(e.getTargetId())) {
+                continue;
+            }
+            OrderType movementOt = orderById.get(e.getTxnId());
+            boolean prefer = (movementOt == OrderType.EARN && e.getDirection() == MovementDirection.CREDIT)
+                || (movementOt != OrderType.EARN && e.getDirection() == MovementDirection.DEBIT);
+            Currency prev = booked.get(e.getTxnId());
+            if (prev == null || prefer) {
+                booked.put(e.getTxnId(), e.getCurrency());
+            }
+        }
+        if (booked.isEmpty()) {
+            return page;
+        }
+        return page.map(dto -> {
+            Currency overlay = dto.id() == null ? null : booked.get(dto.id());
+            return overlay == null || overlay == dto.currency() ? dto : withCurrency(dto, overlay);
+        });
+    }
+
+    private static GetLedgerMovementResponseDto withCurrency(GetLedgerMovementResponseDto d, Currency ccy) {
+        return new GetLedgerMovementResponseDto(
+            d.id(), d.movementKey(), d.walletId(), d.txnId(), d.alias(),
+            d.originatorId(), d.targetId(), d.amount(), ccy,
+            d.orderType(), d.status(), d.mode(), d.type(),
+            d.remarks(), d.metadata(), d.complianceContext(), d.files(),
+            d.mainAccount(), d.createDt(), d.updateDt());
     }
 
     @Transactional(readOnly = true)

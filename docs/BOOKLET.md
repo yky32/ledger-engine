@@ -425,7 +425,7 @@ Not a spend / payment. Upstream still sends a **webhook event**; Brain uses **FI
   "priority": 10,
   "minAmount": 0,
   "formula": { "type": "FIXED", "value": 5 },
-  "pointCurrency": "LP"
+  "resultCurrency": "LP"
 }
 ```
 

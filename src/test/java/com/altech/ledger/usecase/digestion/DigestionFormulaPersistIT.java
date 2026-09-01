@@ -26,7 +26,7 @@ class DigestionFormulaPersistIT {
         r.setIsActive(true);
         r.setPriority(1);
         r.setMinAmount(BigDecimal.ZERO);
-        r.setPointCurrency("LP");
+        r.setResultCurrency("LP");
         r.setFormula(DigestionFormulaConfig.ofRate(new BigDecimal("0.01")));
         r = repo.saveAndFlush(r);
         repo.flush();

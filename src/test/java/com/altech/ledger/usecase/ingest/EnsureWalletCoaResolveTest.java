@@ -26,7 +26,7 @@ class EnsureWalletCoaResolveTest {
     }
 
     @Test
-    void blankIsDefault() {
+    void blankMeansNoProfile() {
         assertThat(EnsureWalletForIngestUseCase.resolveCoaProfileCode(new IngestPolicy(), Map.of()))
             .isNull();
     }

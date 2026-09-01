@@ -27,7 +27,7 @@ public class GetDigestionRuleResponseDto {
     private List<String> eligibleCurrencies;
     private List<String> eligibleMccs;
     private Integer maxAgeDays;
-    private String pointCurrency;
+    private String resultCurrency;
     /** JSON config object, e.g. {@code {"type":"RATE","rate":0.01,"multiplier":2}}. */
     private Object formula;
     private String processType;

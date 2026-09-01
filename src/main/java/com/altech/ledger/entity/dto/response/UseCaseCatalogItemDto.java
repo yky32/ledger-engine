@@ -16,13 +16,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UseCaseCatalogItemDto {
-    /** Stable invoke key = eventType (e.g. LIKE_FB_PAGE, CC_TXN_LP). */
+    /** Stable invoke key = eventType (e.g. CC_TXN, CC_CIP, CC_SIP, LN_TXN). */
     private String code;
     private String name;
     private Boolean enabled;
     private String operation;
     private Integer priority;
-    private String pointCurrency;
+    private String resultCurrency;
     /** ZERO | SPEND | ANY */
     private String amountMode;
     private Object formula;

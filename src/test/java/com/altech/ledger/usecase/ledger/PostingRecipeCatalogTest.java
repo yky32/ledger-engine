@@ -17,6 +17,20 @@ class PostingRecipeCatalogTest {
     }
 
     @Test
+    void upstreamBusinessCases_singleCredit() {
+        for (String code : java.util.List.of("CC_TXN", "CC_CIP", "CC_SIP")) {
+            var r = catalog.find(code).orElseThrow();
+            assertEquals(Currency.LP, r.rewardCcy());
+            assertEquals(PostingAtom.CREDIT_REWARD, r.atoms().get(0));
+            assertEquals("UA_CC", r.profileHint());
+        }
+        var loan = catalog.find("LN_TXN").orElseThrow();
+        assertEquals(Currency.LP, loan.rewardCcy());
+        assertEquals("UA_LOAN", loan.profileHint());
+        assertEquals(PostingAtom.CREDIT_REWARD, loan.atoms().get(0));
+    }
+
+    @Test
     void ccTxnLp_singleCredit() {
         var r = catalog.find("CC_TXN_LP").orElseThrow();
         assertEquals(Currency.LP, r.rewardCcy());

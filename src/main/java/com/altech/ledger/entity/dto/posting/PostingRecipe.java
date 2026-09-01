@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * One product use-case → ordered atoms. Outer code only; COA is internal.
  *
- * @param code        stable key = webhook / Brain {@code eventType} (e.g. CC_TXN_LP)
+ * @param code        stable key = webhook / Brain {@code eventType} (e.g. CC_TXN)
  * @param profileHint UA_CC | UA_LOAN (documentation / future coaProfile filter)
  * @param atoms       execution order
  * @param rewardCcy   if non-null, force reward book currency for CREDIT_REWARD

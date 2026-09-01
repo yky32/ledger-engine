@@ -104,7 +104,7 @@ class DigestionRuleRuntimeIntegrationTest {
                       "priority":5,
                       "minAmount":0,
                       "formula":{"type":"FIXED","value":1},
-                      "pointCurrency":"LP"
+                      "resultCurrency":"LP"
                     }
                     """.formatted(code)))
             .andExpect(status().isOk())

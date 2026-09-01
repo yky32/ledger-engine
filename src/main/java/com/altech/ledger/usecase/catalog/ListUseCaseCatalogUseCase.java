@@ -48,7 +48,7 @@ public class ListUseCaseCatalogUseCase {
                 .enabled(Boolean.TRUE.equals(r.getIsEnabled()))
                 .operation(r.getOperation())
                 .priority(r.getPriority())
-                .pointCurrency(r.getPointCurrency() != null ? r.getPointCurrency() : "LP")
+                .resultCurrency(r.getResultCurrency() != null ? r.getResultCurrency() : "LP")
                 .amountMode(spend ? "SPEND" : "ZERO")
                 .formula(formula)
                 .formulaSummary(summarizeFormula(formula))
@@ -98,15 +98,15 @@ public class ListUseCaseCatalogUseCase {
                     .name(code)
                     .enabled(false)
                     .amountMode("ANY")
-                    .pointCurrency(recipe.rewardCcy() != null ? recipe.rewardCcy().name() : "LP")
+                    .resultCurrency(recipe.rewardCcy() != null ? recipe.rewardCcy().name() : "LP")
                     .hasBrainRule(false)
                     .hasCoaProfile(false)
                     .hasRecipe(true)
                     .build());
             } else {
                 existing.setHasRecipe(true);
-                if (existing.getPointCurrency() == null && recipe.rewardCcy() != null) {
-                    existing.setPointCurrency(recipe.rewardCcy().name());
+                if (existing.getResultCurrency() == null && recipe.rewardCcy() != null) {
+                    existing.setResultCurrency(recipe.rewardCcy().name());
                 }
             }
         }

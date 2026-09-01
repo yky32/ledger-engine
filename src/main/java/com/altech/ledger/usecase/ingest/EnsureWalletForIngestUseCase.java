@@ -28,7 +28,7 @@ import java.util.Optional;
 
 /**
  * Resolve wallet for ingest: find existing or auto-create from DB {@link IngestPolicy}.
- * COA: event metadata override → Door autoWalletCoaProfileCode → DEFAULT.
+ * COA: event metadata override → Door autoWalletCoaProfileCode → CoaCodes (no DEFAULT profile).
  */
 @Slf4j
 @Component
@@ -126,7 +126,7 @@ public class EnsureWalletForIngestUseCase {
     }
 
     /**
-     * Priority: metadata.coaProfileCode → Door autoWalletCoaProfileCode → null (DEFAULT).
+     * Priority: metadata.coaProfileCode → Door autoWalletCoaProfileCode → null (CoaCodes, no DEFAULT row).
      * Standalone product: no client-specific stream aliases.
      */
     static String resolveCoaProfileCode(IngestPolicy cfg, Map<String, String> metadata) {

@@ -76,8 +76,9 @@ public class DigestionRule extends AuditEntityWithIsActive {
     @Column
     private Integer maxAgeDays;
 
-    @Column(nullable = false)
-    private String pointCurrency;
+    /** Reward result: LP = loyalty, HKD = realtime cashback. */
+    @Column(name = "result_currency", nullable = false)
+    private String resultCurrency;
 
     /**
      * Scoring config (JSONB). See {@link DigestionFormulaConfig}.
@@ -112,8 +113,8 @@ public class DigestionRule extends AuditEntityWithIsActive {
         if (minAmount == null) {
             minAmount = BigDecimal.ZERO;
         }
-        if (pointCurrency == null) {
-            pointCurrency = "LP";
+        if (resultCurrency == null) {
+            resultCurrency = "LP";
         }
         if (formula == null) {
             formula = DigestionFormulaConfig.ofAmount();

@@ -101,7 +101,12 @@ public class IngestTransactionUseCase {
             rule.points(),
             rule.matchedRule(),
             outcome.trace(),
-            _coaHitFromSequence(event.eventType(), _orderType(rule.operation()), null, event.mainAccount())
+            _coaHitFromSequence(
+                event.eventType(),
+                _orderType(rule.operation()),
+                null,
+                event.mainAccount(),
+                Currency.get(rule.resultCurrency()))
         );
     }
 
@@ -135,7 +140,7 @@ public class IngestTransactionUseCase {
         }
 
         TransactionRuleEngine.RuleDecision rule = outcome.decision().orElseThrow();
-        Currency pointCurrency = Currency.get(rule.pointCurrency());
+        Currency resultCurrency = Currency.get(rule.resultCurrency());
         String custId = event.ownerId();
         String matchedCode = rule.matchedRule();
         String eventType = event.eventType();
@@ -144,7 +149,7 @@ public class IngestTransactionUseCase {
         EnsureWalletForIngestUseCase.ResolveResult resolved;
         try {
             resolved = ensureWalletForIngestUseCase.resolveOrProvision(
-                custId, pointCurrency, event.metadata(), event.mainAccount());
+                custId, resultCurrency, event.metadata(), event.mainAccount());
         } catch (RuntimeException ex) {
             log.error("wallet resolve/provision failed custId={}", custId, ex);
             return _fail(event, "WALLET_PROVISION",
@@ -184,9 +189,9 @@ public class IngestTransactionUseCase {
                 + (resolved.provisioned() ? " [wallet-auto]" : "");
 
             PostingCommand cmd = orderType == OrderType.BURN
-                ? PostingCommand.burn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc, null, eventType,
+                ? PostingCommand.burn(wallet.getId(), rule.points(), resultCurrency, movementKey, desc, null, eventType,
                     event.mainAccount())
-                : PostingCommand.earn(wallet.getId(), rule.points(), pointCurrency, movementKey, desc, null, eventType,
+                : PostingCommand.earn(wallet.getId(), rule.points(), resultCurrency, movementKey, desc, null, eventType,
                     event.mainAccount());
             GetLedgerMovementResponseDto applied = applyPostingUseCase.execute(cmd);
 
@@ -195,7 +200,7 @@ public class IngestTransactionUseCase {
             return IngestionResult.applied(
                 event.eventId(), rule.operation(), rule.points(), txnId, walletKey,
                 applied.id(), _legs(applied.id()), matchedCode, trace,
-                _coaHitFromSequence(eventType, orderType, wallet.getId(), event.mainAccount()));
+                _coaHitFromSequence(eventType, orderType, wallet.getId(), event.mainAccount(), resultCurrency));
         } catch (RuntimeException ex) {
             log.error("ingest apply failed eventId={}", event.eventId(), ex);
             return _fail(event, "ERROR", ex.getMessage() == null ? "apply failed" : ex.getMessage(), trace);
@@ -257,9 +262,11 @@ public class IngestTransactionUseCase {
         String eventType,
         OrderType orderType,
         Long memberWalletId,
-        String memberMainAccount
+        String memberMainAccount,
+        Currency reward
     ) {
-        Optional<AccountingRuleExecution> seq = accountingRuleCatalogUseCase.findSequence(eventType, orderType);
+        Optional<AccountingRuleExecution> seq = accountingRuleCatalogUseCase.findSequence(
+            eventType, orderType, reward);
         if (seq.isEmpty()) {
             return null;
         }

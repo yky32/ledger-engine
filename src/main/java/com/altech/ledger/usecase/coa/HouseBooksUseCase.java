@@ -247,6 +247,10 @@ public class HouseBooksUseCase {
                     existing.setCurrency(s.currency());
                     dirty = true;
                 }
+                if (!Boolean.TRUE.equals(existing.getPoolAllowNegative())) {
+                    existing.setPoolAllowNegative(true);
+                    dirty = true;
+                }
                 if (dirty) {
                     existing.setName(s.name());
                     coaProfileRepository.save(existing);

@@ -1,5 +1,6 @@
 package com.altech.ledger.usecase.rule;
 
+import com.altech.core.constant.enu.Currency;
 import com.altech.core.utils.JSONUtil;
 import com.altech.ledger.entity.enu.MovementDirection;
 import com.altech.ledger.entity.enu.OrderType;
@@ -37,6 +38,7 @@ public class AccountingRuleCatalogUseCase {
     public static final String MEMBER_CUST_HKD = "MEMBER_CUST_HKD";
     public static final String MEMBER_CUST_LP = "MEMBER_CUST_LP";
     public static final String HOUSE_CC_OP_HKD = "HOUSE_CC_OP_HKD";
+    public static final String HOUSE_CC_OP_LP = "HOUSE_CC_OP_LP";
 
     public static final String SEQ_EARN_LP = "EARN_LP";
     public static final String SEQ_EARN_HKD = "EARN_HKD";
@@ -54,20 +56,22 @@ public class AccountingRuleCatalogUseCase {
         _seedMemberCustodian(MEMBER_CUST_HKD, "Member Custodian HKD", "HKD");
         _seedMemberCustodian(MEMBER_CUST_LP, "Member Custodian LP", "LP");
 
-        // UA movement example: house DR is always Operating HKD 01-02-01.
+        // Double-entry is same-currency first: LP earn DR/CR LP; HKD earn DR/CR HKD.
         AccountingRule drOpHkd = _seedRule("TXN_DR_OP_HKD",
             "Debit operating HKD 01-02-01", MovementDirection.DEBIT, HOUSE_CC_OP_HKD);
+        AccountingRule drOpLp = _seedRule("TXN_DR_OP_LP",
+            "Debit operating LP 01-02-01", MovementDirection.DEBIT, HOUSE_CC_OP_LP);
         AccountingRule crCustHkd = _seedRule("TXN_CR_CUST_HKD",
             "Credit customer reward HKD 01-01-01", MovementDirection.CREDIT, MEMBER_CUST_HKD);
         AccountingRule crCustLp = _seedRule("TXN_CR_CUST_LP",
             "Credit customer reward LP 01-01-01", MovementDirection.CREDIT, MEMBER_CUST_LP);
 
-        _seedSequence(SEQ_EARN_HKD, "Transaction → HKD", OrderType.EARN, "CC_TXN_HKD",
-            List.of(drOpHkd, crCustHkd));
-        _seedSequence(SEQ_CC_TXN_LP, "Transaction → LP (house DR still HKD)", OrderType.EARN, "CC_TXN_LP",
-            List.of(drOpHkd, crCustLp));
-        _seedSequence(SEQ_EARN_LP, "Default EARN = Transaction → LP", OrderType.EARN, null,
-            List.of(drOpHkd, crCustLp));
+        _seedSequence(SEQ_EARN_HKD, "Transaction → HKD (same currency)", OrderType.EARN, "CC_TXN_HKD",
+            List.of(drOpHkd, crCustHkd), true);
+        _seedSequence(SEQ_CC_TXN_LP, "Transaction → LP (same currency)", OrderType.EARN, "CC_TXN_LP",
+            List.of(drOpLp, crCustLp), true);
+        _seedSequence(SEQ_EARN_LP, "Default EARN = Transaction → LP (same currency)", OrderType.EARN, null,
+            List.of(drOpLp, crCustLp), true);
     }
 
     /** createIfNotFound UA movement sequences, then list what is in DB. */
@@ -80,15 +84,40 @@ public class AccountingRuleCatalogUseCase {
     }
 
     /**
-     * eventType first, then default sequence for the orderType (eventType null).
+     * 1. Bound combo for webhook {@code eventType} ({@code CC_TXN} / {@code CC_CIP} /
+     *    {@code CC_SIP} / {@code LN_TXN}, or a legacy ccy-suffixed bind).
+     * 2. Else Brain {@code resultCurrency} → cashback HKD ({@code EARN_HKD} / {@code CC_TXN_HKD})
+     *    or loyalty LP ({@code EARN_LP} / {@code CC_TXN_LP}).
+     * 3. Else default EARN (LP).
      */
     @Transactional(readOnly = true)
     public Optional<AccountingRuleExecution> findSequence(String eventType, OrderType orderType) {
+        return findSequence(eventType, orderType, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<AccountingRuleExecution> findSequence(
+        String eventType,
+        OrderType orderType,
+        Currency reward
+    ) {
         if (eventType != null && !eventType.isBlank()) {
             String et = eventType.trim().toUpperCase(Locale.ROOT);
             Optional<AccountingRuleExecution> byEvent = accountingRuleExecutionRepository.findByEventType(et);
             if (byEvent.isPresent()) {
                 return byEvent;
+            }
+        }
+        if (reward != null) {
+            Optional<AccountingRuleExecution> byReward = accountingRuleExecutionRepository.findByEventType(
+                "CC_TXN_" + reward.getIsoCode());
+            if (byReward.isPresent()) {
+                return byReward;
+            }
+            Optional<AccountingRuleExecution> byName = accountingRuleExecutionRepository.findByName(
+                "EARN_" + reward.getIsoCode());
+            if (byName.isPresent()) {
+                return byName;
             }
         }
         if (orderType != null) {
@@ -177,17 +206,26 @@ public class AccountingRuleCatalogUseCase {
         String description,
         OrderType orderType,
         String eventType,
-        List<AccountingRule> rules
+        List<AccountingRule> rules,
+        boolean realignLegs
     ) {
         List<AccountingRuleExecutionMetadata.Detail> details = new ArrayList<>();
         int seq = 1;
         for (AccountingRule r : rules) {
             details.add(new AccountingRuleExecutionMetadata.Detail(String.valueOf(r.getId()), seq++));
         }
-        if (accountingRuleExecutionRepository.findByName(name).isPresent()) {
+        String metadata = JSONUtil.writeValue(new AccountingRuleExecutionMetadata(details));
+        Optional<AccountingRuleExecution> existing = accountingRuleExecutionRepository.findByName(name);
+        if (existing.isPresent()) {
+            if (realignLegs && !_sameRuleIds(existing.get(), rules)) {
+                AccountingRuleExecution ex = existing.get();
+                ex.setDescription(description);
+                ex.setMetadata(metadata);
+                accountingRuleExecutionRepository.save(ex);
+                log.info("Realigned posting sequence {} legs={}", name, rules.size());
+            }
             return;
         }
-        String metadata = JSONUtil.writeValue(new AccountingRuleExecutionMetadata(details));
         AccountingRuleExecution ex = new AccountingRuleExecution();
         ex.setName(name);
         ex.setDescription(description);
@@ -197,5 +235,20 @@ public class AccountingRuleCatalogUseCase {
         ex.setIsActive(true);
         accountingRuleExecutionRepository.save(ex);
         log.info("Seeded posting sequence {} eventType={} legs={}", name, eventType, rules.size());
+    }
+
+    private boolean _sameRuleIds(AccountingRuleExecution execution, List<AccountingRule> rules) {
+        List<AccountingRule> loaded = loadRules(execution);
+        if (loaded.size() != rules.size()) {
+            return false;
+        }
+        for (int i = 0; i < rules.size(); i++) {
+            Long a = loaded.get(i).getId();
+            Long b = rules.get(i).getId();
+            if (a == null || b == null || !a.equals(b)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

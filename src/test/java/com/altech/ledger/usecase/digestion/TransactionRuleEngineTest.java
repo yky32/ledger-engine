@@ -36,7 +36,7 @@ class TransactionRuleEngineTest {
         purchase.setIsEnabled(true);
         purchase.setPriority(10);
         purchase.setMinAmount(new BigDecimal("0.01"));
-        purchase.setPointCurrency("LP");
+        purchase.setResultCurrency("LP");
         purchase.setFormula(DigestionFormulaConfig.ofRate(new BigDecimal("0.01")));
         purchase.setMaxAgeDays(7);
         purchase.setEligibleCurrencies("HKD,USD");
@@ -109,7 +109,7 @@ class TransactionRuleEngineTest {
         grocery.setIsEnabled(true);
         grocery.setPriority(5);
         grocery.setMinAmount(BigDecimal.ZERO);
-        grocery.setPointCurrency("LP");
+        grocery.setResultCurrency("LP");
         grocery.setFormula(DigestionFormulaConfig.ofRate(new BigDecimal("0.03")));
         grocery.setEligibleCurrencies("HKD");
         grocery.setEligibleMccs("5411");
@@ -141,7 +141,7 @@ class TransactionRuleEngineTest {
         grocery.setIsEnabled(true);
         grocery.setPriority(5);
         grocery.setMinAmount(BigDecimal.ZERO);
-        grocery.setPointCurrency("LP");
+        grocery.setResultCurrency("LP");
         grocery.setFormula(DigestionFormulaConfig.ofRate(new BigDecimal("0.01")));
         grocery.setEligibleMccs("5411");
         grocery.setIsActive(true);

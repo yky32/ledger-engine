@@ -88,7 +88,10 @@ class AccountingRulePostingIntegrationTest {
         assertThat(house.getEntity()).isEqualTo("01");
         assertThat(house.getType()).isEqualTo("02");
         assertThat(house.getSubType()).isEqualTo("01");
-        assertThat(house.getCurrency()).isEqualTo(Currency.HKD);
+        assertThat(house.getCurrency()).isEqualTo(Currency.LP);
+        assertThat(house.getCurrency()).isEqualTo(memberA.getCurrency());
+        assertThat(debitA.getCurrency()).isEqualTo(creditA.getCurrency());
+        assertThat(debitA.getCurrency()).isEqualTo(Currency.LP);
     }
 
     @Test
@@ -130,6 +133,124 @@ class AccountingRulePostingIntegrationTest {
         assertThat(house9089.getId()).isEqualTo(house9088.getId());
         assertThat(house9089.getMainAccount()).isEqualTo(CoaCodes.HOUSE_MAIN_ACCOUNT);
         assertThat(house9089.getWalletId()).isNotEqualTo(wallet.getId());
+    }
+
+    @Test
+    void ccTxnLoyalty_resultCurrencyLp_booksLp() throws Exception {
+        _seedDigestion("CC_TXN_LP_" + UUID.randomUUID().toString().substring(0, 6),
+            "CC_TXN", "LP");
+        long movementId = _earnEvent("CT-" + UUID.randomUUID().toString().substring(0, 8),
+            "CC_TXN", new BigDecimal("100"));
+        _assertSameCurrencyBooks(movementId, Currency.LP);
+    }
+
+    @Test
+    void ccTxnCashback_resultCurrencyHkd_booksHkd() throws Exception {
+        _seedDigestion("CC_TXN_HKD_" + UUID.randomUUID().toString().substring(0, 6),
+            "CC_TXN", "HKD");
+        long movementId = _earnEvent("CH-" + UUID.randomUUID().toString().substring(0, 8),
+            "CC_TXN", new BigDecimal("100"));
+        _assertSameCurrencyBooks(movementId, Currency.HKD);
+    }
+
+    @Test
+    void ccCipAndLnTxn_followResultCurrency() throws Exception {
+        _seedDigestion("CC_CIP_" + UUID.randomUUID().toString().substring(0, 6),
+            "CC_CIP", "LP");
+        _seedDigestion("LN_TXN_" + UUID.randomUUID().toString().substring(0, 6),
+            "LN_TXN", "HKD");
+        _assertSameCurrencyBooks(
+            _earnEvent("CIP-" + UUID.randomUUID().toString().substring(0, 8),
+                "CC_CIP", new BigDecimal("100")),
+            Currency.LP);
+        _assertSameCurrencyBooks(
+            _earnEvent("LN-" + UUID.randomUUID().toString().substring(0, 8),
+                "LN_TXN", new BigDecimal("100")),
+            Currency.HKD);
+    }
+
+    @Test
+    void transactionToHkd_eventTypeBooksHkdEvenIfBrainSaysLp() throws Exception {
+        _seedDigestion("TXN_HKD_" + UUID.randomUUID().toString().substring(0, 6),
+            "CC_TXN_HKD", "LP");
+        long movementId = _earnEvent("TH-" + UUID.randomUUID().toString().substring(0, 8),
+            "CC_TXN_HKD", new BigDecimal("100"));
+        _assertSameCurrencyBooks(movementId, Currency.HKD);
+    }
+
+    @Test
+    void transactionToLp_eventTypeBooksLp() throws Exception {
+        _seedDigestion("TXN_LP_" + UUID.randomUUID().toString().substring(0, 6),
+            "CC_TXN_LP", "LP");
+        long movementId = _earnEvent("TL-" + UUID.randomUUID().toString().substring(0, 8),
+            "CC_TXN_LP", new BigDecimal("100"));
+        _assertSameCurrencyBooks(movementId, Currency.LP);
+    }
+
+    @Test
+    void unboundEventWithHkdReward_fallsBackToCashbackBooks() throws Exception {
+        String eventType = "UNBOUND_CB";
+        _seedDigestion("UNB_HKD_" + UUID.randomUUID().toString().substring(0, 6),
+            eventType, "HKD");
+        long movementId = _earnEvent("UB-" + UUID.randomUUID().toString().substring(0, 8),
+            eventType, new BigDecimal("100"));
+        _assertSameCurrencyBooks(movementId, Currency.HKD);
+    }
+
+    @Test
+    void rewardHkdCashback_booksSameCurrencyHkd() throws Exception {
+        _seedDigestion("CASHBACK_HKD_" + UUID.randomUUID().toString().substring(0, 8),
+            "CC_TXN", "HKD");
+        long movementId = _earnEvent("CB-" + UUID.randomUUID().toString().substring(0, 8),
+            "CC_TXN", new BigDecimal("5"));
+        _assertSameCurrencyBooks(movementId, Currency.HKD);
+    }
+
+    private void _seedDigestion(String code, String eventType, String resultCurrency) throws Exception {
+        digestionRuleRepository.findAll().stream()
+            .filter(r -> eventType.equalsIgnoreCase(r.getEventType()) && Boolean.TRUE.equals(r.getIsEnabled()))
+            .forEach(r -> {
+                r.setIsEnabled(false);
+                digestionRuleRepository.save(r);
+            });
+        mockMvc.perform(post("/digestion-rules")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"code":"%s","name":"%s","eventType":"%s","operation":"EARN",
+                     "resultCurrency":"%s","priority":5,"isEnabled":true,
+                     "formula":{"type":"RATE","rate":0.01}}
+                    """.formatted(code, code, eventType, resultCurrency)))
+            .andExpect(status().isOk());
+    }
+
+    private long _earnEvent(String ownerId, String eventType, BigDecimal amount) throws Exception {
+        TransactionalEvent event = new TransactionalEvent(
+            "evt-" + UUID.randomUUID(), ownerId, eventType, amount, Currency.HKD, Instant.now(), Map.of());
+        MvcResult res = mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(event)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("EARNED"))
+            .andReturn();
+        return objectMapper.readTree(res.getResponse().getContentAsString())
+            .get("data").get("movementId").asLong();
+    }
+
+    private void _assertSameCurrencyBooks(long movementId, Currency expected) {
+        LedgerEntry credit = _leg(ledgerEntryRepository.findByTxnId(movementId), MovementDirection.CREDIT);
+        LedgerEntry debit = _leg(ledgerEntryRepository.findByTxnId(movementId), MovementDirection.DEBIT);
+        Account member = accountRepository.findById(Long.valueOf(credit.getTargetId())).orElseThrow();
+        Account house = accountRepository.findById(Long.valueOf(debit.getTargetId())).orElseThrow();
+        assertThat(member.getEntity()).isEqualTo("01");
+        assertThat(member.getType()).isEqualTo("01");
+        assertThat(member.getSubType()).isEqualTo("01");
+        assertThat(house.getEntity()).isEqualTo("01");
+        assertThat(house.getType()).isEqualTo("02");
+        assertThat(house.getSubType()).isEqualTo("01");
+        assertThat(member.getCurrency()).isEqualTo(expected);
+        assertThat(house.getCurrency()).isEqualTo(expected);
+        assertThat(credit.getCurrency()).isEqualTo(expected);
+        assertThat(debit.getCurrency()).isEqualTo(expected);
     }
 
     private void _openWallet(String ownerId) throws Exception {

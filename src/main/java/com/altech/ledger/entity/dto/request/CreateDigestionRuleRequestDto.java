@@ -1,5 +1,6 @@
 package com.altech.ledger.entity.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -23,7 +24,8 @@ public record CreateDigestionRuleRequestDto(
     List<@Size(max = 16) String> eligibleCurrencies,
     List<@Size(max = 16) String> eligibleMccs,
     Integer maxAgeDays,
-    @Size(max = 16) String pointCurrency,
+    @JsonAlias({"pointCurrency", "point_currency"})
+    @Size(max = 16) String resultCurrency,
     @NotNull Object formula,
     @Size(max = 40) String processType,
     /** Explicit when-factors: JSON array (AND) or FactorSet object. */

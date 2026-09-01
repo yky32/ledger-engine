@@ -104,7 +104,7 @@ public class TransactionRuleEngine {
                 code, pri, true, null, pathDetail, mr.path()));
             RuleDecision decision = new RuleDecision(
                 operation,
-                rule.getPointCurrency(),
+                rule.getResultCurrency(),
                 points,
                 code,
                 formula,
@@ -122,7 +122,7 @@ public class TransactionRuleEngine {
 
     public record RuleDecision(
         Operation operation,
-        String pointCurrency,
+        String resultCurrency,
         BigDecimal points,
         String matchedRule,
         Object formula,

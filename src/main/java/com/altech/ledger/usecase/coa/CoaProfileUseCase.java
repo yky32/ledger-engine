@@ -27,18 +27,9 @@ public class CoaProfileUseCase {
     private final CoaProfileRepository coaProfileRepository;
 
     @Transactional
-    public CoaProfile requireDefault() {
-        List<CoaProfile> defaults = coaProfileRepository.findEnabledDefaults();
-        if (!defaults.isEmpty()) {
-            return defaults.get(0);
-        }
-        return _seedDefault();
-    }
-
-    @Transactional
-    public CoaProfile requireByCodeOrDefault(String code) {
-        if (code == null || code.isBlank()) {
-            return requireDefault();
+    public CoaProfile requireByCode(String code) {
+        if (code == null || code.isBlank() || "DEFAULT".equalsIgnoreCase(code.trim())) {
+            throw new BizException(CoaErrorResponse.COA0400, "COA profile code required (no default)");
         }
         return coaProfileRepository.findByCode(code.trim().toUpperCase(Locale.ROOT))
             .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()))
@@ -79,7 +70,7 @@ public class CoaProfileUseCase {
                 return hit.get();
             }
         }
-        return requireDefault();
+        throw new BizException(CoaErrorResponse.COA0404, "no COA for eventType=" + eventType);
     }
 
     @Transactional(readOnly = true)
@@ -91,19 +82,28 @@ public class CoaProfileUseCase {
 
     @Transactional
     public Segments segments(String profileCode) {
-        CoaProfile p = requireByCodeOrDefault(profileCode);
+        if (profileCode == null || profileCode.isBlank()
+            || "DEFAULT".equalsIgnoreCase(profileCode.trim())) {
+            return new Segments(
+                CoaCodes.ENTITY, CoaCodes.typeCodeLiability(), CoaCodes.SUB_TYPE, CoaCodes.BUFFER, false);
+        }
+        CoaProfile p = requireByCode(profileCode);
         return new Segments(p.getEntity(), p.getType(), p.getSubType(), p.getBuffer(),
             Boolean.TRUE.equals(p.getPoolAllowNegative()));
     }
 
     @Transactional
     public boolean poolAllowNegative(String profileCode) {
-        return Boolean.TRUE.equals(requireByCodeOrDefault(profileCode).getPoolAllowNegative());
+        if (profileCode == null || profileCode.isBlank()
+            || "DEFAULT".equalsIgnoreCase(profileCode.trim())) {
+            return false;
+        }
+        return Boolean.TRUE.equals(requireByCode(profileCode).getPoolAllowNegative());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<GetCoaProfileResponseDto> list() {
-        requireDefault();
+        _retireDefaultRow();
         return coaProfileRepository.findAllByIsActiveTrueOrderByCodeAsc().stream().map(this::toDto).toList();
     }
 
@@ -121,7 +121,8 @@ public class CoaProfileUseCase {
 
     @Transactional
     public GetCoaProfileResponseDto getOrCreateDefault() {
-        return toDto(requireDefault());
+        _retireDefaultRow();
+        throw new BizException(CoaErrorResponse.COA0404, "no default COA");
     }
 
     @Transactional
@@ -147,6 +148,9 @@ public class CoaProfileUseCase {
     @Transactional
     public GetCoaProfileResponseDto create(CreateCoaProfileRequestDto req) {
         String code = req.code().trim().toUpperCase(Locale.ROOT);
+        if ("DEFAULT".equals(code)) {
+            throw new BizException(CoaErrorResponse.COA0400, "DEFAULT COA is not used");
+        }
         if (coaProfileRepository.existsByCode(code)) {
             throw new BizException(CoaErrorResponse.COA0409, "code=" + code);
         }
@@ -162,7 +166,7 @@ public class CoaProfileUseCase {
             .code(code)
             .name(blankTo(req.name(), code))
             .transactionCode(txn)
-            .isDefault(Boolean.TRUE.equals(req.isDefault()))
+            .isDefault(false)
             .isEnabled(req.isEnabled() == null || req.isEnabled())
             .entity(blankTo(req.entity(), CoaCodes.ENTITY))
             .type(blankTo(req.type(), CoaCodes.typeCodeLiability()))
@@ -179,9 +183,6 @@ public class CoaProfileUseCase {
                 .ifPresent(h -> p.setWalletId(h.getWalletId()));
         }
         p.setIsActive(true);
-        if (Boolean.TRUE.equals(p.getIsDefault())) {
-            _clearOtherDefaults(null);
-        }
         return toDto(coaProfileRepository.save(p));
     }
 
@@ -229,12 +230,7 @@ public class CoaProfileUseCase {
         if (req.walletId() != null) {
             p.setWalletId(req.walletId());
         }
-        if (req.isDefault() != null) {
-            p.setIsDefault(req.isDefault());
-            if (Boolean.TRUE.equals(req.isDefault())) {
-                _clearOtherDefaults(p.getId());
-            }
-        }
+        p.setIsDefault(false);
         return toDto(coaProfileRepository.save(p));
     }
 
@@ -243,26 +239,28 @@ public class CoaProfileUseCase {
             seg.entity(), seg.type(), seg.subType(), mainAccount, subAccount, seg.buffer(), currency);
     }
 
-    private CoaProfile _seedDefault() {
-        CoaProfile p = CoaProfile.builder()
-            .code("DEFAULT")
-            .name("Default COA (legacy CoaCodes)")
-            .isDefault(true)
-            .isEnabled(true)
-            .entity(CoaCodes.ENTITY)
-            .type(CoaCodes.typeCodeLiability())
-            .subType(CoaCodes.SUB_TYPE)
-            .buffer(CoaCodes.BUFFER)
-            .currency("LP")
-            .poolAllowNegative(true)
-            .build();
-        p.setIsActive(true);
-        return coaProfileRepository.save(p);
-    }
-
-    private void _clearOtherDefaults(Long keepId) {
+    /** Hide legacy DEFAULT chart row — COA has no default profile. */
+    private void _retireDefaultRow() {
+        coaProfileRepository.findByCode("DEFAULT").ifPresent(p -> {
+            boolean dirty = false;
+            if (Boolean.TRUE.equals(p.getIsActive())) {
+                p.setIsActive(false);
+                dirty = true;
+            }
+            if (Boolean.TRUE.equals(p.getIsEnabled())) {
+                p.setIsEnabled(false);
+                dirty = true;
+            }
+            if (Boolean.TRUE.equals(p.getIsDefault())) {
+                p.setIsDefault(false);
+                dirty = true;
+            }
+            if (dirty) {
+                coaProfileRepository.save(p);
+            }
+        });
         for (CoaProfile p : coaProfileRepository.findAll()) {
-            if (Boolean.TRUE.equals(p.getIsDefault()) && (keepId == null || !keepId.equals(p.getId()))) {
+            if (Boolean.TRUE.equals(p.getIsDefault())) {
                 p.setIsDefault(false);
                 coaProfileRepository.save(p);
             }

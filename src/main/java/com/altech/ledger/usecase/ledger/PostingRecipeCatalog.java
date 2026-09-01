@@ -2,6 +2,7 @@ package com.altech.ledger.usecase.ledger;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.entity.dto.posting.PostingRecipe;
+import com.altech.ledger.entity.enu.EventTypes;
 import com.altech.ledger.entity.enu.PostingAtom;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,13 @@ public class PostingRecipeCatalog {
     private final Map<String, PostingRecipe> byCode = new LinkedHashMap<>();
 
     public PostingRecipeCatalog() {
-        // —— CC Transaction family ——
+        // —— Upstream business cases (reward ccy is Brain resultCurrency) ——
+        put(EventTypes.CC_TXN, "UA_CC", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
+        put(EventTypes.CC_CIP, "UA_CC", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
+        put(EventTypes.CC_SIP, "UA_CC", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
+        put(EventTypes.LN_TXN, "UA_LOAN", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
+
+        // —— CC Transaction family (legacy ccy-suffixed codes) ——
         put("CC_TXN_HKD", "UA_CC", List.of(PostingAtom.CREDIT_REWARD), Currency.HKD);
         put("CC_TXN_LP", "UA_CC", List.of(PostingAtom.CREDIT_REWARD), Currency.LP);
         put("CC_TXN_HKD_REDEEM", "UA_CC",
@@ -79,6 +86,7 @@ public class PostingRecipeCatalog {
         // sheet prose → code
         alias("TRANSACTION_HKD", "CC_TXN_HKD");
         alias("TRANSACTION_LP", "CC_TXN_LP");
+        alias("LOAN_DD", EventTypes.LN_TXN);
     }
 
     private void put(String code, String profile, List<PostingAtom> atoms, Currency rewardCcy) {

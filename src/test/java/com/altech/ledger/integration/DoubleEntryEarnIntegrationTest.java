@@ -83,6 +83,8 @@ class DoubleEntryEarnIntegrationTest {
         }
         assertThat(debit).isEqualByComparingTo(credit);
         assertThat(debit).isEqualByComparingTo("1");
+        assertThat(legs.get(0).get("currency").asText()).isEqualTo(legs.get(1).get("currency").asText());
+        assertThat(legs.get(0).get("currency").asText()).isEqualTo("LP");
 
         // Query API by eventId / movementId
         mockMvc.perform(get("/integrations/ledger-entries").param("eventId", eventId))
@@ -92,6 +94,10 @@ class DoubleEntryEarnIntegrationTest {
         mockMvc.perform(get("/integrations/ledger-entries").param("movementId", String.valueOf(movementId)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.length()").value(2));
+
+        mockMvc.perform(get("/wallets/" + cust + "/movements"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].currency").value("LP"));
 
         assertThat(ledgerEntryRepository.findByTxnId(movementId)).hasSize(2);
         assertThat(ledgerEntryRepository.findByTxnId(movementId).stream()
