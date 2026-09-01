@@ -49,24 +49,24 @@ public class Account extends AuditEntityWithIsActive {
     @Column
     private String fullNumber;
 
+    // == COA start ===
     @Column
     private String entity;
     @Column
     private String type;
     @Column
     private String subType;
-
     @Column
     private String mainAccount; // more or less linked to client-specific identifier
     @Column
     private String subAccount;
-
     @Column
     private String buffer;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Currency currency;
+    // == COA end ===
+
 
     @Builder.Default
     @Column(nullable = false, precision = 38, scale = 18)
