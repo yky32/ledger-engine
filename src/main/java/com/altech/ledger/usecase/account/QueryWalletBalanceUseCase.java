@@ -9,7 +9,7 @@ import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.FxRateRepository;
 import com.altech.ledger.repository.WalletRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -68,7 +68,7 @@ public class QueryWalletBalanceUseCase {
     @Transactional(readOnly = true)
     public GetLedgerAccountResponseDto findMyAccount(String ownerId, String currency) {
         Wallet wallet = commonUseCase.requireWalletByOwnerAndCurrency(ownerId, currency);
-        return DtoMapper.toAccount(commonUseCase.requireAccount(wallet.getAccountId()));
+        return DtoWrapper.getLedgerAccountResponseDto(commonUseCase.requireAccount(wallet.getAccountId()));
     }
 
     @Transactional(readOnly = true)
@@ -77,10 +77,10 @@ public class QueryWalletBalanceUseCase {
         Wallet wallet = commonUseCase.requireWallet(walletId);
         Account primary = commonUseCase.requireAccount(wallet.getAccountId());
         if (primary.getCurrency() == currency) {
-            return DtoMapper.toAccount(primary);
+            return DtoWrapper.getLedgerAccountResponseDto(primary);
         }
         return accountRepository.findFirstByMainAccountAndCurrency(primary.getMainAccount(), currency)
-            .map(DtoMapper::toAccount)
+            .map(DtoWrapper::getLedgerAccountResponseDto)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
                 "Account not found for wallet " + walletId + " currency " + currency));
     }
@@ -88,8 +88,7 @@ public class QueryWalletBalanceUseCase {
     @Transactional(readOnly = true)
     public List<GetLedgerAccountBalanceResponseDto> allBalances() {
         return accountRepository.findAll().stream()
-            .map(a -> new GetLedgerAccountBalanceResponseDto(a.getId(), a.getCurrency(), a.getLedgerBalance(),
-                a.getAvailableBalance(), null))
+            .map(DtoWrapper::getLedgerAccountBalanceResponseDto)
             .toList();
     }
 
@@ -103,8 +102,7 @@ public class QueryWalletBalanceUseCase {
                 books = accountRepository.findAllByMainAccount(primary.getMainAccount());
             }
             for (Account a : books) {
-                result.add(new GetLedgerAccountBalanceResponseDto(a.getId(), a.getCurrency(), a.getLedgerBalance(),
-                    a.getAvailableBalance(), null));
+                result.add(DtoWrapper.getLedgerAccountBalanceResponseDto(a));
             }
         }
         return result;
@@ -116,7 +114,7 @@ public class QueryWalletBalanceUseCase {
         if (list.isEmpty() && primary.getMainAccount() != null) {
             list.addAll(accountRepository.findAllByMainAccount(primary.getMainAccount()));
         }
-        GetLedgerWalletResponseDto base = DtoMapper.toWallet(wallet, list);
+        GetLedgerWalletResponseDto base = DtoWrapper.getLedgerWalletResponseDto(wallet, list);
         if (fxTarget == null || fxTarget.isBlank()) {
             return base;
         }

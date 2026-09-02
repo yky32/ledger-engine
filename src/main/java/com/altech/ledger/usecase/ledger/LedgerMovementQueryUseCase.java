@@ -6,7 +6,7 @@ import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import com.altech.ledger.util.Pageables;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class LedgerMovementQueryUseCase {
 
     @Transactional(readOnly = true)
     public GetLedgerMovementResponseDto one(Long id) {
-        return DtoMapper.toMovement(commonUseCase.requireMovement(id));
+        return DtoWrapper.getLedgerMovementResponseDto(commonUseCase.requireMovement(id));
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +63,7 @@ public class LedgerMovementQueryUseCase {
     @Transactional(readOnly = true)
     public Page<GetLedgerMovementResponseDto> byWallet(Long walletId, Pageable pageable) {
         return ledgerMovementRepository.findByWalletId(walletId, Pageables.toZeroBased(pageable))
-            .map(DtoMapper::toMovement);
+            .map(DtoWrapper::getLedgerMovementResponseDto);
     }
 
     private Page<GetLedgerMovementResponseDto> _filter(Page<LedgerMovement> page, Instant startDt, Instant endDt,
@@ -73,7 +73,7 @@ public class LedgerMovementQueryUseCase {
             .filter(m -> m.getCreateDt() == null || !m.getCreateDt().isBefore(startDt))
             .filter(m -> m.getCreateDt() == null || !m.getCreateDt().isAfter(endDt))
             .filter(m -> statusSet == null || statusSet.contains(m.getStatus()))
-            .map(DtoMapper::toMovement)
+            .map(DtoWrapper::getLedgerMovementResponseDto)
             .toList();
         boolean noFilter = statusSet == null
             && startDt.equals(Pageables.EARLIEST)

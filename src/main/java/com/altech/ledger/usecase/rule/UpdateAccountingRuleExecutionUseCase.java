@@ -7,7 +7,7 @@ import com.altech.ledger.entity.po.accounting.AccountingRuleExecution;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.exception.response.AccountingRuleErrorResponse;
 import com.altech.ledger.repository.AccountingRuleExecutionRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +42,6 @@ public class UpdateAccountingRuleExecutionUseCase {
         if (meta != null) {
             re.setMetadata(meta);
         }
-        return DtoMapper.toAccountingRuleExecution(accountingRuleExecutionRepository.save(re));
+        return DtoWrapper.getAccountingRuleExecutionResponseDto(accountingRuleExecutionRepository.save(re));
     }
 }

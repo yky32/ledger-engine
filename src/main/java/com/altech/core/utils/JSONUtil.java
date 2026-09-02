@@ -1,9 +1,12 @@
 package com.altech.core.utils;
 
+import com.altech.core.json.MoneyAmountModule;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
@@ -18,7 +21,9 @@ import java.util.Map;
 public class JSONUtil {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .registerModule(new MoneyAmountModule())
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
@@ -51,8 +56,20 @@ public class JSONUtil {
         return CallableUtil.call(() -> OBJECT_MAPPER.readValue(content, valueType));
     }
 
+    /**
+     * Inbound JSON (REST twin / Kafka / SDK). Unwraps {@code payload|data|event|body}
+     * when that object carries {@code eventId}; stringifies {@code metadata} values.
+     */
     public static <T> T readValue(String content, Class<T> valueType) {
-        return CallableUtil.call(() -> OBJECT_MAPPER.readValue(content, valueType));
+        return CallableUtil.call(() -> {
+            JsonNode root = OBJECT_MAPPER.readTree(content);
+            JsonNode body = unwrapInbound(root);
+            stringifyMetadata(body);
+            if (body == null || body.isNull()) {
+                return null;
+            }
+            return OBJECT_MAPPER.convertValue(body, valueType);
+        });
     }
 
     public static <T> T readValue(String content, TypeReference<T> valueType) {
@@ -112,6 +129,42 @@ public class JSONUtil {
         }
         Map<String, Object> converted = convertFromObject(raw, MAP_TYPE);
         return converted == null ? new LinkedHashMap<>() : new LinkedHashMap<>(converted);
+    }
+
+    private static final String[] INBOUND_WRAPPERS = {"payload", "data", "event", "body"};
+
+    private static JsonNode unwrapInbound(JsonNode root) {
+        if (root == null || !root.isObject()) {
+            return root;
+        }
+        if (root.has("eventId")) {
+            return root;
+        }
+        for (String w : INBOUND_WRAPPERS) {
+            JsonNode n = root.get(w);
+            if (n != null && n.isObject() && n.has("eventId")) {
+                return n;
+            }
+        }
+        return root;
+    }
+
+    private static void stringifyMetadata(JsonNode body) {
+        if (!(body instanceof ObjectNode obj)) {
+            return;
+        }
+        JsonNode meta = obj.get("metadata");
+        if (meta == null || !meta.isObject()) {
+            return;
+        }
+        ObjectNode str = obj.putObject("metadata");
+        meta.fields().forEachRemaining(e -> {
+            JsonNode v = e.getValue();
+            if (v == null || v.isNull()) {
+                return;
+            }
+            str.put(e.getKey(), v.asText());
+        });
     }
 
     /** Pretty-ish single-line JSON for logs / movement descriptions. */

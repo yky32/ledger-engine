@@ -3,7 +3,7 @@ package com.altech.ledger.usecase.ledger;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.LedgerMovementRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.service.MovementBus;
 import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +34,11 @@ public class LedgerMovementOperationUseCase {
             ledgerMovementRepository.save(m);
             LedgerMovement done = ledgerMovementExecutionUseCase.execute(m);
             movementBus.publishDone(done);
-            return DtoMapper.toMovement(done);
+            return DtoWrapper.getLedgerMovementResponseDto(done);
         }
         m.setStatus(req.status());
         if (req.remarks() != null) m.setRemarks(req.remarks());
-        return DtoMapper.toMovement(ledgerMovementRepository.save(m));
+        return DtoWrapper.getLedgerMovementResponseDto(ledgerMovementRepository.save(m));
     }
 
 
@@ -46,13 +46,13 @@ public class LedgerMovementOperationUseCase {
     public GetLedgerMovementResponseDto settle(Long id) {
         LedgerMovement m = commonUseCase.requireMovement(id);
         if (m.getStatus() == LedgerMovementStatus.SETTLED) {
-            return DtoMapper.toMovement(m);
+            return DtoWrapper.getLedgerMovementResponseDto(m);
         }
         m.setStatus(LedgerMovementStatus.PROCESSING);
         ledgerMovementRepository.save(m);
         LedgerMovement done = ledgerMovementExecutionUseCase.execute(m);
         movementBus.publishDone(done);
-        return DtoMapper.toMovement(done);
+        return DtoWrapper.getLedgerMovementResponseDto(done);
     }
 
     @Transactional
@@ -60,6 +60,6 @@ public class LedgerMovementOperationUseCase {
         LedgerMovement m = commonUseCase.requireMovement(id);
         if (req.files() != null) m.setFiles(req.files());
         if (req.remarks() != null) m.setRemarks(req.remarks());
-        return DtoMapper.toMovement(ledgerMovementRepository.save(m));
+        return DtoWrapper.getLedgerMovementResponseDto(ledgerMovementRepository.save(m));
     }
 }

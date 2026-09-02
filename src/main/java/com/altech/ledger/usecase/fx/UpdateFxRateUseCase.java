@@ -4,7 +4,7 @@ import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.FxRateRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,6 +25,6 @@ public class UpdateFxRateUseCase {
         rate.setBase(commonUseCase.requireCurrency(dto.base()));
         rate.setTarget(commonUseCase.requireCurrency(dto.target()));
         rate.setRate(dto.rate());
-        return DtoMapper.toFx(fxRateRepository.save(rate));
+        return DtoWrapper.getFxRateResponseDto(fxRateRepository.save(rate));
     }
 }

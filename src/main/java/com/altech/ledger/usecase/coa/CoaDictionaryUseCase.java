@@ -8,6 +8,7 @@ import com.altech.ledger.entity.enu.CoaDictionaryKind;
 import com.altech.ledger.entity.po.coa.CoaDictionary;
 import com.altech.ledger.exception.response.CoaErrorResponse;
 import com.altech.ledger.repository.CoaDictionaryRepository;
+import com.altech.ledger.service.DtoWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,7 +77,7 @@ public class CoaDictionaryUseCase {
     public List<GetCoaDictionaryResponseDto> list() {
         ensureSeed();
         return coaDictionaryRepository.findAllByIsActiveTrueOrderByKindAscCodeAsc().stream()
-            .map(this::toDto)
+            .map(DtoWrapper::getCoaDictionaryResponseDto)
             .toList();
     }
 
@@ -88,7 +89,7 @@ public class CoaDictionaryUseCase {
 
     @Transactional(readOnly = true)
     public GetCoaDictionaryResponseDto get(Long id) {
-        return toDto(_require(id));
+        return DtoWrapper.getCoaDictionaryResponseDto(_require(id));
     }
 
     @Transactional
@@ -106,7 +107,7 @@ public class CoaDictionaryUseCase {
         row.setExample(blankToNull(req.example()));
         row.setSide(blankToNull(req.side()));
         row.setIsActive(true);
-        return toDto(coaDictionaryRepository.save(row));
+        return DtoWrapper.getCoaDictionaryResponseDto(coaDictionaryRepository.save(row));
     }
 
     @Transactional
@@ -136,7 +137,7 @@ public class CoaDictionaryUseCase {
         if (req.side() != null) {
             row.setSide(blankToNull(req.side()));
         }
-        return toDto(coaDictionaryRepository.save(row));
+        return DtoWrapper.getCoaDictionaryResponseDto(coaDictionaryRepository.save(row));
     }
 
     @Transactional
@@ -211,19 +212,5 @@ public class CoaDictionaryUseCase {
 
     private static boolean isBlank(String s) {
         return s == null || s.isBlank();
-    }
-
-    private GetCoaDictionaryResponseDto toDto(CoaDictionary r) {
-        return GetCoaDictionaryResponseDto.builder()
-            .id(r.getId())
-            .kind(r.getKind() == null ? null : r.getKind().name())
-            .code(r.getCode())
-            .name(r.getName())
-            .definition(r.getDefinition())
-            .example(r.getExample())
-            .side(r.getSide())
-            .createDt(r.getCreateDt())
-            .updateDt(r.getUpdateDt())
-            .build();
     }
 }

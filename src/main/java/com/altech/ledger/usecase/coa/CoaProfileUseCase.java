@@ -8,6 +8,7 @@ import com.altech.ledger.entity.dto.response.GetCoaProfileResponseDto;
 import com.altech.ledger.entity.po.coa.CoaProfile;
 import com.altech.ledger.exception.response.CoaErrorResponse;
 import com.altech.ledger.repository.CoaProfileRepository;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -75,7 +76,7 @@ public class CoaProfileUseCase {
 
     @Transactional(readOnly = true)
     public GetCoaProfileResponseDto getByTransactionCode(String transactionCode) {
-        return toDto(findByTransactionCode(transactionCode)
+        return DtoWrapper.getCoaProfileResponseDto(findByTransactionCode(transactionCode)
             .orElseThrow(() -> new BizException(CoaErrorResponse.COA0404,
                 "transactionCode=" + transactionCode)));
     }
@@ -104,19 +105,19 @@ public class CoaProfileUseCase {
     @Transactional
     public List<GetCoaProfileResponseDto> list() {
         _retireDefaultRow();
-        return coaProfileRepository.findAllByIsActiveTrueOrderByCodeAsc().stream().map(this::toDto).toList();
+        return coaProfileRepository.findAllByIsActiveTrueOrderByCodeAsc().stream().map(DtoWrapper::getCoaProfileResponseDto).toList();
     }
 
     @Transactional(readOnly = true)
     public GetCoaProfileResponseDto get(Long id) {
-        return toDto(_require(id));
+        return DtoWrapper.getCoaProfileResponseDto(_require(id));
     }
 
     @Transactional(readOnly = true)
     public GetCoaProfileResponseDto getByCode(String code) {
         CoaProfile p = coaProfileRepository.findByCode(code.trim().toUpperCase(Locale.ROOT))
             .orElseThrow(() -> new BizException(CoaErrorResponse.COA0404, "code=" + code));
-        return toDto(p);
+        return DtoWrapper.getCoaProfileResponseDto(p);
     }
 
     @Transactional
@@ -137,9 +138,9 @@ public class CoaProfileUseCase {
             .map(existing -> {
                 if ((existing.getName() == null || existing.getName().isBlank()) && name != null) {
                     existing.setName(name);
-                    return toDto(coaProfileRepository.save(existing));
+                    return DtoWrapper.getCoaProfileResponseDto(coaProfileRepository.save(existing));
                 }
-                return toDto(existing);
+                return DtoWrapper.getCoaProfileResponseDto(existing);
             })
             .orElseGet(() -> create(new CreateCoaProfileRequestDto(
                 c, name, null, isDefault, true, entity, null, null, null, "LP", true, null)));
@@ -183,7 +184,7 @@ public class CoaProfileUseCase {
                 .ifPresent(h -> p.setWalletId(h.getWalletId()));
         }
         p.setIsActive(true);
-        return toDto(coaProfileRepository.save(p));
+        return DtoWrapper.getCoaProfileResponseDto(coaProfileRepository.save(p));
     }
 
     @Transactional
@@ -231,7 +232,7 @@ public class CoaProfileUseCase {
             p.setWalletId(req.walletId());
         }
         p.setIsDefault(false);
-        return toDto(coaProfileRepository.save(p));
+        return DtoWrapper.getCoaProfileResponseDto(coaProfileRepository.save(p));
     }
 
     public String fullNumber(Segments seg, String mainAccount, Currency currency) {
@@ -282,26 +283,6 @@ public class CoaProfileUseCase {
         }
         String t = raw.trim().toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
         return t.isEmpty() ? null : t;
-    }
-
-    private GetCoaProfileResponseDto toDto(CoaProfile p) {
-        return GetCoaProfileResponseDto.builder()
-            .id(p.getId())
-            .code(p.getCode())
-            .name(p.getName())
-            .transactionCode(p.getTransactionCode())
-            .isDefault(p.getIsDefault())
-            .isEnabled(p.getIsEnabled())
-            .entity(p.getEntity())
-            .type(p.getType())
-            .subType(p.getSubType())
-            .buffer(p.getBuffer())
-            .currency(p.getCurrency())
-            .poolAllowNegative(p.getPoolAllowNegative())
-            .walletId(p.getWalletId())
-            .createDt(p.getCreateDt())
-            .updateDt(p.getUpdateDt())
-            .build();
     }
 
     public record Segments(

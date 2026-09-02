@@ -4,13 +4,12 @@ import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
 import com.altech.ledger.usecase.ledger.LedgerMovementExecutionUseCase;
 import com.altech.core.utils.JSONUtil;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * LedgerMovementEventListener (BALANCE_UPDATE → execute).
@@ -19,9 +18,8 @@ import lombok.RequiredArgsConstructor;
 @Component
 @ConditionalOnProperty(prefix = "ledger.movement.kafka", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
+@Slf4j
 public class LedgerMovementEventListener {
-    private static final Logger log = LoggerFactory.getLogger(LedgerMovementEventListener.class);
-
     private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
 
     @KafkaListener(

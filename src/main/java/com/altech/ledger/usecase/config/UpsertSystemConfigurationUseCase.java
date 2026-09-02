@@ -3,7 +3,7 @@ package com.altech.ledger.usecase.config;
 import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 import com.altech.ledger.entity.po.configuration.SystemConfiguration;
 import com.altech.ledger.repository.SystemConfigurationRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +24,6 @@ public class UpsertSystemConfigurationUseCase {
             });
         cfg.setName(name);
         cfg.setValue(value);
-        return DtoMapper.toConfig(systemConfigurationRepository.save(cfg));
+        return DtoWrapper.getConfigurationResponseDto(systemConfigurationRepository.save(cfg));
     }
 }

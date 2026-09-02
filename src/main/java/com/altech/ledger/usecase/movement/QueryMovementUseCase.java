@@ -4,6 +4,7 @@ import com.altech.ledger.entity.dto.ledger.LedgerDto.PageResponse;
 import com.altech.ledger.entity.dto.movement.MovementDto.MovementResponse;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.LedgerMovementRepository;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,7 +21,7 @@ public class QueryMovementUseCase {
 
     @Transactional(readOnly = true)
     public MovementResponse one(Long id) {
-        return _response(commonUseCase.requireMovement(id));
+        return DtoWrapper.getMovementResponse(commonUseCase.requireMovement(id));
     }
 
     @Transactional(readOnly = true)
@@ -28,14 +29,7 @@ public class QueryMovementUseCase {
         commonUseCase.requireWallet(walletId);
         Page<LedgerMovement> page = ledgerMovementRepository.findByWalletId(walletId, Pageables.toZeroBased(pageable));
         // expose 1-based page number in legacy PageResponse
-        return new PageResponse<>(page.map(this::_response).getContent(), page.getNumber() + 1, page.getSize(),
+        return new PageResponse<>(page.map(DtoWrapper::getMovementResponse).getContent(), page.getNumber() + 1, page.getSize(),
             page.getTotalElements(), page.getTotalPages());
-    }
-
-    private MovementResponse _response(LedgerMovement movement) {
-        return new MovementResponse(movement.getId(), movement.getMovementKey(), movement.getWalletId(),
-            movement.getOrderType(), movement.getStatus(), movement.getMode(), movement.getOriginatorId(),
-            movement.getTargetId(), movement.getAmount(), movement.getCurrency(),
-            movement.getCreateDt(), movement.getUpdateDt());
     }
 }

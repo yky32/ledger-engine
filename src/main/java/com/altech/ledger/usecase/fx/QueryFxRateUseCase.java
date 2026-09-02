@@ -6,7 +6,7 @@ import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.FxRateRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,7 +29,7 @@ public class QueryFxRateUseCase {
 
     @Transactional(readOnly = true)
     public GetFxRateResponseDto one(Long id) {
-        return DtoMapper.toFx(fxRateRepository.findById(id)
+        return DtoWrapper.getFxRateResponseDto(fxRateRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "FxRate not found: " + id)));
     }
 
@@ -40,10 +40,10 @@ public class QueryFxRateUseCase {
             Currency b = commonUseCase.requireCurrency(base);
             Currency t = commonUseCase.requireCurrency(target);
             return fxRateRepository.findByBaseAndTarget(b, t)
-                .<Page<GetFxRateResponseDto>>map(r -> new PageImpl<>(List.of(DtoMapper.toFx(r)), zero, 1))
+                .<Page<GetFxRateResponseDto>>map(r -> new PageImpl<>(List.of(DtoWrapper.getFxRateResponseDto(r)), zero, 1))
                 .orElseGet(() -> Page.empty(zero));
         }
-        return fxRateRepository.findAll(zero).map(DtoMapper::toFx);
+        return fxRateRepository.findAll(zero).map(DtoWrapper::getFxRateResponseDto);
     }
 
     @Transactional(readOnly = true)

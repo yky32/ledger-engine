@@ -9,7 +9,7 @@ import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.exception.response.MovementErrorResponse;
 import com.altech.ledger.repository.LedgerMovementRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.ledger.LedgerMovementExecutionUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +48,7 @@ public class RefundMovementUseCase {
         var existing = ledgerMovementRepository.findByMovementKey(key)
             .or(() -> ledgerMovementRepository.findFirstByAssociatedLedgerMovementId(orig.getId()));
         if (existing.isPresent()) {
-            return DtoMapper.toMovement(existing.get());
+            return DtoWrapper.getLedgerMovementResponseDto(existing.get());
         }
         if (orig.getStatus() == LedgerMovementStatus.REFUNDED) {
             throw new BizException(MovementErrorResponse.MOV0409, "movement already refunded: " + orig.getId());
@@ -85,6 +85,6 @@ public class RefundMovementUseCase {
 
         log.info("refunded movement {} -> {} amount {} -> {}",
             orig.getId(), settled.getId(), orig.getAmount(), settled.getAmount());
-        return DtoMapper.toMovement(settled);
+        return DtoWrapper.getLedgerMovementResponseDto(settled);
     }
 }

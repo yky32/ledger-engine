@@ -1,15 +1,15 @@
 # LedgeRX Booklet
 
 **Single product & engineering document.**  
-Do not add parallel topic files under `docs/` — extend this booklet.
+Do not add parallel topic files — extend this booklet.
 
 | | |
 |--|--|
 | **Product** | LedgeRX |
 | **Module** | `ledger-engine` |
 | **Admin** | `ledger-engine-admin-portal` |
-| **SDK** | `ledger-engine-sdk` (optional) |
-| **Deploy** | In-cluster only |
+| **SDK** | `ledger-engine-sdk` (optional JAR, not Maven Central) |
+| **Deploy** | In-cluster / client VPC |
 | **Tagline** | Earn · burn · books — without redeploy |
 
 ---
@@ -31,14 +31,20 @@ Do not add parallel topic files under `docs/` — extend this booklet.
 
 **C · Integration**
 10. [API surface](#10-api-surface)
-11. [Webhook](#11-webhook)
-12. [UA use-case recipes](#12-ua-use-case-recipes)
+11. [Webhook & Kafka ingest](#11-webhook--kafka-ingest)
+12. [Critical path — CC_TXN earn + refund](#12-critical-path--cc_txn-earn--refund)
+13. [SDK](#13-sdk)
+14. [UA use-case recipes](#14-ua-use-case-recipes)
+15. [Non-financial engagement](#15-non-financial-engagement)
 
 **D · Ops**
-13. [Local bootstrap](#13-local-bootstrap)
-14. [Admin](#14-admin)
-15. [Decks](#15-decks)
-16. [Freeze & debt](#16-freeze--debt)
+16. [Local run](#16-local-run)
+17. [Admin](#17-admin)
+18. [Simulator](#18-simulator)
+19. [Layout & conventions](#19-layout--conventions)
+20. [Decks](#20-decks)
+21. [Freeze & debt](#21-freeze--debt)
+22. [Quick curls](#22-quick-curls)
 
 ---
 
@@ -51,7 +57,7 @@ LedgeRX is the **points / multi-currency wallet system of record**.
 - Upstream sends **what happened**
 - **Door** admits the event
 - **Brain** scores points (rules, no redeploy)
-- **Books** post balances (double-entry loyalty + money rails)
+- **Books** post balances (same-currency double-entry)
 
 ```text
 LedgeRX
@@ -62,9 +68,14 @@ LedgeRX
 
 | | |
 |--|--|
-| Java / Boot | 17 / 3.x |
-| DB | PostgreSQL (local often `:5433`) |
+| Java / Boot | 17 / 3.5.x |
+| DB | PostgreSQL (local often `:5433`, DB `ledger-engine`) |
 | Schema | `JPA_DDL_AUTO=create` pre-UAT; Flyway later |
+| API envelope | `R.success` / `Result` (`com.altech.core`) |
+| Errors | `BizException` + domain `*ErrorResponse` |
+| JSON | camelCase; money amounts as currency-scaled **strings** |
+
+Ledger core only — not payment rails, identity/CRM, compliance UI, or settlement orchestration.
 
 ---
 
@@ -72,51 +83,80 @@ LedgeRX
 
 | Rule | |
 |------|--|
-| **1 `ownerId` → 1 Wallet** | Hard product rule |
-| **Multi-ccy** | Accounts under wallet (e.g. HKD + LP) |
-| **No AccountSet** | Removed |
+| **1 `ownerId` → 1 Wallet** | Hard product rule (CRM CUST id) |
+| **Multi-ccy** | Accounts under that wallet (settlement HKD + LP) |
+| **No AccountSet / no subAccount** | Removed |
 | **Standalone** | No hardcoded client seed in engine |
 | **COA** | Internal Finance structure — not a public API concern |
+| **Balances** | Live on `account` (`ledgerBalance`, `availableBalance`) under lock |
+| **Book display name** | `{ownerId}-{iso}` computed on GET (not stored) |
 
 ```text
-ownerId 01A1  →  Wallet  →  HKD account
-                          →  LP account
-ownerId 01A2  →  Wallet  →  …
+ownerId 01A31658334  →  Wallet  →  01A31658334-HKD   (01-01-01 settlement)
+                                 →  01A31658334-LP    (01-01-01 loyalty)
+ownerId HOUSE        →  House   →  01-02-01 operating (earn counterparty)
 ```
 
-UA sheet: `W_1` ↔ owner `01A1`, `W_2` ↔ `01A2` (aligned with 1:1).
+**fullNumber** (digit-only, no English keys):
+
+```text
+entity(2) + type(2) + subType(2) + mainAccount + buffer(2) + currency(3)
+example    01 + 01 + 01 + 908951901284 + 00 + 344   → member HKD book
+```
+
+Account uniqueness: `entity + type + subType + mainAccount + buffer + currency`.  
+Every customer `mainAccount` tree includes the settlement (HKD) twin.
+
+| Type | Examples |
+|------|----------|
+| **FIAT** | `HKD` (4 dp), `USD` (2 dp), … |
+| **LOYALTY_POINT** | `LP` (0 dp, DOWN) |
+| **CRYPTO** | `BTC`, `USDT`, … |
+
+Customer identity and names live in CRM; ledger stores **`ownerId`** plus optional `vanityCode`.
 
 ---
 
 ## 3. End-to-end pipeline
 
 ```text
-TransactionalEvent
+TransactionalEvent  (REST or Kafka — same JSON)
       │
       ▼
 ┌─────────────┐
 │ Door        │  isEnabled + entryFactors
-│ ingest-     │  optional auto-wallet
+│ ingest-     │  optional auto-wallet (HKD + LP)
 │ policies    │
 └──────┬──────┘
        │ entered
        ▼
 ┌─────────────┐
 │ Brain       │  whenFactors + legacy filters
-│ digestion-  │  formula → points
-│ rules       │  first match by priority
+│ digestion-  │  formula → points + resultCurrency
+│ rules       │  first bingo (priority ASC, id ASC)
 └──────┬──────┘
        │
        ▼
 ┌─────────────┐
-│ Recipe?     │  if eventType ∈ catalog (CC_TXN_*, LOAN_DD_*)
-│ else plain  │  EARN / BURN
-│ EARN/BURN   │
+│ Accounting  │  AccountingRuleExecution walk
+│ rules       │  CR/DR onto COA (same currency)
 └──────┬──────┘
        │
        ▼
  ApplyPostingUseCase → movements + DE legs + balances
 ```
+
+Go-live:
+
+```text
+Step 0  Engine + Postgres
+Step 1  bootstrap-runtime.sh  → Door + Brain defaults
+Step 2  Optional CRM  POST /wallets/batch
+Step 3  POS / OMS → webhook or Kafka
+```
+
+If Phase 2 runs without a wallet and **auto-wallet off** → `NO_WALLET`.  
+If **auto-wallet on** (default after bootstrap) → first eligible event creates HKD+LP in the same TX.
 
 ---
 
@@ -134,11 +174,13 @@ TransactionalEvent
 
 Legacy Brain columns (`minAmount`, ccy, mcc, age) still **AND** with `whenFactors`.
 
+Door, Brain, and Accounting all key off the **same** `eventType` token (`CC_TXN`, `CC_CIP`, `CC_SIP`, `LN_TXN`).
+
 ---
 
 ## 5. Factors
 
-Shared matcher on Door + Brain.
+Shared matcher on Door + Brain (`FactorMatcher` / `FactorSpec`).
 
 ### Leaf
 
@@ -200,7 +242,7 @@ Optional on any: `multiplier` · `cap` · `floor`.
 { "type": "RATE", "rate": 0.01, "cap": 50, "floor": 1 }
 ```
 
-Demo: 500 HKD × 1% → **5 LP**.
+Demo: 500 HKD × 1% → **5 LP**. Reward currency = Brain `resultCurrency` (`LP` loyalty / `HKD` cashback).
 
 ---
 
@@ -211,7 +253,7 @@ Demo: 500 HKD × 1% → **5 LP**.
 ```text
 PostingCommand + PostingIntent
   → ApplyPostingUseCase.execute
-  → Shooter → execution → accounts
+  → Shooter → MovementBus → execution → accounts
 ```
 
 | Intent | Member | Counterparty |
@@ -219,9 +261,10 @@ PostingCommand + PostingIntent
 | DEPOSIT | + | single-sided |
 | WITHDRAWAL | − | single-sided |
 | IN_WALLET_TRANSFER | ± | other wallet |
-| EARN | + | PROGRAM pool DE |
-| BURN | − | PROGRAM pool DE |
+| EARN | + | HOUSE operating DE |
+| BURN | − | HOUSE operating DE |
 | HOLD / RELEASE | available only | ledger unchanged |
+| ADJUSTMENT_REFUND | reverse original legs | same books |
 
 ```java
 applyPostingUseCase.execute(PostingCommand.earn(...));
@@ -230,15 +273,17 @@ applyPostingUseCase.execute(PostingCommand.deposit(...));
 
 | ❌ | |
 |----|--|
-| Earn via deposit API | breaks PROGRAM DE |
+| Earn via deposit API | breaks HOUSE DE |
 | Bypass `ApplyPostingUseCase` | drift |
 
-Loyalty DE:
+Loyalty DE (CREDIT = ADD, DEBIT = SUBTRACT). House operating books allow negative.
 
 ```text
-EARN  DR PROGRAM.LP / CR member.LP
-BURN  DR member.LP  / CR PROGRAM.LP
+EARN  DR HOUSE  01-02-01  /  CR member 01-01-01   (same currency)
+BURN  DR member 01-01-01  /  CR HOUSE  01-02-01
 ```
+
+T-accounts: **DR left / CR right**. Legs stored with positive amounts + `MovementDirection`.
 
 ---
 
@@ -262,33 +307,36 @@ POST /wallets/releases
 
 Finance may use Entity / AccountType / SubType / full numbers (**inner gem**).
 
-### Operator mapping (no extra table)
+Customer custodian **01-01-01**. House operating **01-02-01** `mainAccount` 9999. House expense **01-04-02**. House wallet `ownerId` **HOUSE** (canonical; legacy `PROGRAM` renamed in place).
+
+### Operator mapping
 
 **Default: `code` ≡ `transactionCode` ≡ webhook `eventType`.**  
 Only set `transactionCode` differently if you need to extend later.
 
 | Column | |
 |--------|--|
-| **`code`** | Profile id **and** (by default) eventType, e.g. `CC_TXN_LP` |
+| **`code`** | Profile id **and** (by default) eventType |
 | `transactionCode` | Optional override; blank → same as `code` |
 | `currency` | Points book (default LP) |
 | entity/type/subType/buffer | fullNumber segments |
 
 ```text
-eventType CC_TXN_LP
-    → coa_profile.code OR transaction_code = CC_TXN_LP
+eventType CC_TXN
+    → coa_profile.code OR transaction_code
     → segments + currency
-    → PostingRecipeCatalog(CC_TXN_LP)
+    → AccountingRuleExecution walk
 ```
 
-Create (simplest — one field):
+Create (simplest):
 
 ```json
 {
-  "code": "CC_TXN_LP",
+  "code": "CC_TXN",
   "name": "CC spend → LP",
   "entity": "01",
-  "type": "20",
+  "type": "01",
+  "subType": "01",
   "currency": "LP"
 }
 ```
@@ -297,15 +345,13 @@ Create (simplest — one field):
 
 | Layer | Example |
 |-------|---------|
-| Outer | `eventType=CC_TXN_LP`, `ownerId` |
-| Mid | Posting recipe atoms |
-| Inner | Custodian / Expense segments (GL export later) |
+| Outer | `eventType=CC_TXN`, `ownerId` |
+| Mid | Accounting rule atoms |
+| Inner | Custodian / operating segments |
 
-| API | `/coa-profiles` |
-| Onboard | `coaProfileCode` optional → DEFAULT |
+| API | `/coa-profiles` · `/coa-dictionary` · `/corporate-coa` |
+| Onboard | `coaProfileCode` optional |
 | Wallet | stamps profile at create |
-
-Phase-1 engine DE still uses **PROGRAM pool**; labels map to Finance COA outside or later.
 
 ---
 
@@ -317,128 +363,177 @@ Phase-1 engine DE still uses **PROGRAM pool**; labels map to Finance COA outside
 
 | Area | Path |
 |------|------|
-| Wallet | `/wallets` |
+| Wallet | `POST/GET /wallets` · `/wallets/batch` · `/wallets/{ownerId}` |
 | Money | `/movements/deposits` · `withdrawals` · `transfers/in-wallet` |
 | Hold | `/wallets/holds` · `/releases` |
 | History | `/wallets/{ownerId}/movements` · as-of |
+| Refund | `POST /movements/{id}/refund` |
 | Door | `/ingest-policies` |
 | Brain | `/digestion-rules` |
 | Webhook | `/integrations/webhooks/transactions` · `/dry-run` |
 | Fail / legs | `/integrations/failed-transactions` · `ledger-entries` |
-| COA | `/coa-profiles` |
-| Accounting rules | `/accounting-rules` · `/accounting-rule-executions` |
+| COA | `/coa-profiles` · `/coa-dictionary` · `/corporate-coa` |
+| Accounting | `/accounting-rules` · `/accounting-rule-executions` |
 
 ### Money use cases
 
 `CreateDepositUseCase` · `CreateWithdrawalUseCase` · `CreateInWalletTransferUseCase` → posting intents above.
 
+PO → DTO mapping is **`DtoWrapper` only**.
+
 ---
 
-## 11. Use-case catalog (for SDK)
+## 11. Webhook & Kafka ingest
 
-Ops configures Brain + COA in Admin. Upstream discovers:
-
-`GET /integrations/use-cases?enabledOnly=true`
-
-Handshake: `GET /integrations/sdk-info` (engineVersion, minSdkVersion, features).
-
-SDK: `client.verifyEngine()` · `client.catalog().listUseCasesCached()` · `client.useCases().invoke(...)`.
-
-## 11a. Use-case catalog detail
-
-Ops configures Brain + COA in Admin. Upstream discovers:
-
-`GET /integrations/use-cases?enabledOnly=true`
-
-Each row: `code` (eventType), `amountMode`, `formulaSummary`, `coaProfileCode`, …
-
-SDK: `client.catalog().listUseCases()` → `client.useCases().invoke(code, …)`.
-
-## 11b. Webhook
-
-Upstream **SDK** (`ledger-engine-sdk`): call `client.useCases().likeFacebookPage(...)` etc.  
-Wire contract: SDK repo `docs/EXPECTED_CONTRACT.md` — do not hand-build JSON.
-
-## 11b. Webhook (HTTP detail)
+Same SDK JSON either way. Both call `IngestTransactionUseCase.execute`.
 
 ```http
 POST /integrations/webhooks/transactions
 POST /integrations/webhooks/transactions/dry-run
 ```
 
-```json
-{
-  "eventId": "txn-1",
-  "ownerId": "01A1",
-  "eventType": "CC_TXN_LP",
-  "amount": 100,
-  "currency": "HKD",
-  "occurredAt": "2026-08-20T12:00:00Z",
-  "metadata": { "mcc": "5411", "useCase": "CC_TXN_LP" }
-}
-```
-
-Response: `status` · `points` · `matchedRuleCode` · `movementId` · `legs` · `eligibilityTrace` (+ `matchedPath`).
-
-Idempotency: `loyalty-*` / `loyalty-recipe-{eventId}-…` movement keys.
-
----
-
-## 12. Kafka balance updated
-
-After each **SETTLED** movement (balances applied), when `LEDGER_MOVEMENT_KAFKA_ENABLED=true`:
+Kafka (off by default):
 
 | | |
 |--|--|
-| Topic | `ledger.balance.updated` (`LEDGER_BALANCE_UPDATED_TOPIC`) |
+| Enable | `LEDGER_KAFKA_ENABLED=true` |
+| Topic | `ledger.transaction.events` |
+| Key | `eventId` |
+| Group | `ledger-engine` |
+| Listener | `TransactionEventKafkaListener` → `JSONUtil.readValue` |
+
+Sample: [`docs/samples/transactional-event.sdk.json`](samples/transactional-event.sdk.json)
+
+```json
+{
+  "eventId": "evt-cc-txn-001",
+  "ownerId": "01A31658334",
+  "eventType": "CC_TXN",
+  "amount": "100.00",
+  "currency": "HKD",
+  "occurredAt": "2026-09-02T06:40:00Z",
+  "mainAccount": "908951901284",
+  "metadata": { "mcc": "5411", "channel": "UAF_CC" }
+}
+```
+
+Aliases: `ownerId` ← `associatedIdentifier` / `userId`.  
+`JSONUtil.readValue(String, Class)` unwraps `payload` / `data` / `event` / `body` when that object has `eventId`, and stringifies `metadata` values (`mcc: 5411` → `"5411"`).
+
+Response: `status` · `points` · `matchedRuleCode` · `movementId` · `legs` · `eligibilityTrace`.  
+Idempotency: `loyalty-earn-{eventId}` / `loyalty-burn-{eventId}`.
+
+### Movement Kafka (internal bus)
+
+After each **SETTLED** movement, when `LEDGER_MOVEMENT_KAFKA_ENABLED=true`:
+
+| | |
+|--|--|
+| Topic | `ledger.balance.updated` |
 | Key | walletId |
 | eventName | `LEDGER_BALANCE_UPDATED` |
 
-Payload: `movementId`, `ownerId`, `orderType`, `amount`, `currency`, `accounts[]` (ledger + available snapshots).
-
 Also: `ledger.movement.done`. Inbound execute: `initiated` / `balance-update`.
 
-## 13. Non-financial engagement (e.g. like FB page)
+---
 
-Not a spend / payment. Upstream still sends a **webhook event**; Brain uses **FIXED** points.
+## 12. Critical path — CC_TXN earn + refund
 
-| | |
-|--|--|
-| `eventType` | e.g. `LIKE_FB_PAGE` |
-| formula | `{ "type": "FIXED", "value": 5 }` → **5 LP** |
-| `amount` | `0` allowed (`@PositiveOrZero`; FIXED is not spend-based) |
-| `currency` | any valid (e.g. HKD) — points currency from rule / recipe = LP |
-| COA | optional `code=LIKE_FB_PAGE` |
-| recipe | `LIKE_FB_PAGE` → CREDIT_REWARD LP |
+Happy path for a credit-card earn (`eventType=CC_TXN`).
 
-```json
-// Digestion rule
-{
-  "code": "LIKE_FB_PAGE",
-  "eventType": "LIKE_FB_PAGE",
-  "operation": "EARN",
-  "isEnabled": true,
-  "priority": 10,
-  "minAmount": 0,
-  "formula": { "type": "FIXED", "value": 5 },
-  "resultCurrency": "LP"
-}
+```text
+Upstream (POS / OMS / card)
+  REST  POST /integrations/webhooks/transactions
+  Kafka topic ledger.transaction.events
+        └── IngestTransactionUseCase (Door → Brain → books)
+
+1. Door     eventType + MCC/ccy/amount/age → admit?
+            no wallet + auto-create on:
+              POST /wallets  settlement=HKD
+              open 01-01-01 on event.mainAccount → HKD + LP
+              book names: {ownerId}-HKD , {ownerId}-LP
+
+2. Brain    same eventType, first bingo
+            formula → points + resultCurrency (LP or HKD)
+
+3. Accounting  bound combo walks CR/DR (same currency)
+
+            Txn → LP
+              DR  HOUSE  01-02-01 LP
+              CR  member 01-01-01 LP   ({ownerId}-LP)
+
+            Txn → HKD
+              DR  HOUSE  01-02-01 HKD
+              CR  member 01-01-01 HKD  ({ownerId}-HKD)
+
+4. Ledger   ledger_movement + 2 ledger_entry legs
+            GET /wallets/{ownerId}
+            GET /wallets/{ownerId}/movements
+            GET /integrations/ledger-entries?movementId=
 ```
 
-```json
-// Upstream webhook
-{
-  "eventId": "like-001",
-  "ownerId": "01A1",
-  "eventType": "LIKE_FB_PAGE",
-  "amount": 0,
-  "currency": "HKD",
-  "occurredAt": "2026-08-20T12:00:00Z",
-  "metadata": { "channel": "facebook", "pageId": "ua-finance" }
-}
+### What gets created
+
+| Layer | Persist | Notes |
+|---|---|---|
+| Wallet | `wallet` | `ownerId`, `settlementCurrency=HKD` |
+| Member books | `account` 01-01-01 | HKD + LP on `event.mainAccount`; name `{ownerId}-{ccy}` |
+| House books | HOUSE wallet 01-02 operating | Counterparty for earn; skip settlement twin |
+| Movement | `ledger_movement` | `orderType=EARN`, `status=SETTLED`, `movementKey=loyalty-earn-{eventId}` |
+| Legs | `ledger_entry` × 2 | One DEBIT, one CREDIT, same amount, same currency |
+
+### Refund — reverse from the movement
+
+Ride the earn. Do **not** re-ingest the webhook.
+
+```http
+POST /movements/{id}/refund
 ```
 
-Door open + auto-wallet → **+5 LP** on member book (PROGRAM DE).
+`{id}` is the **settled EARN** (or BURN) movement.
+
+| Original | Refund |
+|---|---|
+| `orderType=EARN` | `ADJUSTMENT_REFUND` |
+| `amount=10` | `amount=-10` |
+| `status=SETTLED` | new row `SETTLED`; original → `REFUNDED` |
+| CR member / DR house | **DR member / CR house** (same books, same magnitude) |
+| — | `associatedLedgerMovementId` → original |
+
+Idempotent: second `POST` returns the existing refund (`movementKey={originalKey}-refund`).  
+Net of earn + refund: balances back to pre-earn numbers.
+
+Admin: wallet history → select SETTLED EARN → **Refund · reverse DR/CR**.
+
+### Skip / fail (not the happy path)
+
+| Code | When |
+|---|---|
+| `NOT_ENTERED` | Door gates reject (MCC / ccy / amount / age) |
+| `NO_WALLET` | No wallet and auto-create off |
+| `NO_RULE` / `SKIPPED` | Brain: no first bingo |
+| `DUPLICATE` | Same `eventId` already earned (`movementKey` hit) |
+| Fail queue | `POST /integrations/failed-transactions/{id}/replay` |
+
+---
+
+## 13. SDK
+
+Product backends may use **ledger-engine-sdk** (Java 17) instead of hand-written HTTP. Manual versioned JAR — not Maven Central.
+
+| Topic | Where |
+|-------|--------|
+| Overview | [SDK OVERVIEW](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/OVERVIEW.md) |
+| JAR delivery | [SDK DELIVERY](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/DELIVERY.md) |
+| Client install | [SDK INTEGRATION](https://github.com/yky32/ledger-engine-sdk/blob/main/docs/INTEGRATION.md) |
+| Wire contract | SDK `docs/EXPECTED_CONTRACT.md` — do not hand-build JSON |
+
+Handshake: `GET /integrations/sdk-info` (engineVersion, minSdkVersion, features).  
+Catalog: `GET /integrations/use-cases?enabledOnly=true`.
+
+SDK: `client.verifyEngine()` · `client.catalog().listUseCasesCached()` · `client.useCases().invoke(...)`.
+
+---
 
 ## 14. UA use-case recipes
 
@@ -455,7 +550,7 @@ eventType | metadata.useCase
 
 | Atom | Phase-1 books |
 |------|----------------|
-| `CREDIT_REWARD` | EARN (member + / PROGRAM −) |
+| `CREDIT_REWARD` | EARN (member + / HOUSE −) |
 | `REDEEM` | BURN |
 | `CASHBACK` | BURN (payout rail later) |
 | `CONVERT_HKD_TO_LP` | BURN HKD + EARN LP (1:1) |
@@ -483,35 +578,167 @@ Unknown types (e.g. `PURCHASE`) → classic EARN/BURN only.
 
 ---
 
+## 15. Non-financial engagement
+
+Not a spend / payment. Upstream still sends a **webhook event**; Brain uses **FIXED** points.
+
+| | |
+|--|--|
+| `eventType` | e.g. `LIKE_FB_PAGE` |
+| formula | `{ "type": "FIXED", "value": 5 }` → **5 LP** |
+| `amount` | `0` allowed (`@PositiveOrZero`; FIXED is not spend-based) |
+| `currency` | any valid (e.g. HKD) — points currency from rule = LP |
+
+```json
+{
+  "code": "LIKE_FB_PAGE",
+  "eventType": "LIKE_FB_PAGE",
+  "operation": "EARN",
+  "isEnabled": true,
+  "priority": 10,
+  "minAmount": 0,
+  "formula": { "type": "FIXED", "value": 5 },
+  "resultCurrency": "LP"
+}
+```
+
+```json
+{
+  "eventId": "like-001",
+  "ownerId": "01A1",
+  "eventType": "LIKE_FB_PAGE",
+  "amount": 0,
+  "currency": "HKD",
+  "occurredAt": "2026-08-20T12:00:00Z",
+  "metadata": { "channel": "facebook", "pageId": "ua-finance" }
+}
+```
+
+Door open + auto-wallet → **+5 LP** on member book (HOUSE DE).
+
+---
+
 # D · Ops
 
-## 15. Local bootstrap
+## 16. Local run
 
 ```bash
 # Postgres :5433 / DB ledger-engine
-mvn spring-boot:run
+# docker exec test-db psql -U postgres -c 'CREATE DATABASE "ledger-engine";'
 
-./scripts/bootstrap-runtime.sh   # if present
+mvn spring-boot:run
+# or: mvn clean package && java -jar target/ledger-engine-1.0.0.jar
+
+./scripts/bootstrap-runtime.sh   # Door + Brain defaults
 ./scripts/e2e-smoke.sh
 ./scripts/upstream-sim.sh
 ```
 
-Admin: `LEDGER_ENGINE_URL=http://localhost:8080`
+Default: `http://localhost:8080` · health `/actuator/health`.
+
+```bash
+mvn test
+```
+
+Docker:
+
+```bash
+docker compose up --build
+cp .env.example .env
+docker compose --profile simulator up --build
+```
+
+Override DB:
+
+```bash
+DB_URL=jdbc:postgresql://host:5432/ledger-engine \
+DB_USERNAME=postgres DB_PASSWORD=postgres \
+mvn spring-boot:run
+```
+
+Admin portal: `LEDGER_ENGINE_URL=http://localhost:8080`
 
 ---
 
-## 16. Admin
+## 17. Admin
 
 | Screen | |
 |--------|--|
 | Door | entryFactors + FactorSet presets |
 | Brain | whenFactors + formula (tier/table/cap) |
 | Webhook | dry-run + matchedPath |
-| Demo / COA / wallets / holds / review | ops |
+| Wallets / Chart / Rules / Ingest / Ledger | ops |
+| Refund | wallet history → SETTLED EARN/BURN |
+
+Nav groups: Wallets / Chart / Rules / Ingest / Ledger / Rails / Guide.  
+Flow strip: Door → Brain → Accounting → Ledger.
 
 ---
 
-## 17. Decks
+## 18. Simulator
+
+Generic CRM / integrator simulator (`simulator/`). Client product catalogs are **not** modeled here.
+
+```bash
+# from ledger-engine root
+cp .env.example .env
+docker compose --profile simulator up --build
+```
+
+Local Python (engine already on `:8080`):
+
+```bash
+cd simulator
+pip install -r requirements.txt
+SIM_MODE=backfill SIM_LEDGER_BASE_URL=http://localhost:8080 \
+  SIM_USER_COUNT=1000 SIM_USER_ID_PREFIX=CUST- python simulator.py
+```
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `SIM_MODE` | `webhook` | `backfill` \| `webhook` \| `kafka` \| `both` |
+| `SIM_USER_COUNT` | `5` | Synthetic customers |
+| `SIM_USER_ID_PREFIX` | `CUST-` | Prefix for synthetic ids |
+| `SIM_CUSTOMER_FILE` | | CSV/JSON/lines of real CRM ids |
+| `SIM_CURRENCY` | `LP` | Wallet currency |
+| `SIM_BATCH_SIZE` | `500` | Batch size (API max 1000) |
+| `SIM_ONBOARD_WALLETS` | `true` | Pre-onboard for event modes |
+| `SIM_WEBHOOK_URL` | `http://app:8080/integrations/webhooks/transactions` | |
+
+Re-run is safe: batch returns `alreadyExists`. Missing wallets on event modes → `SKIPPED`.
+
+Production backfill: export CRM ids → `POST /wallets/batch` (≤1000/chunk) against staging, then production. Enable Phase 2 traffic only after counts match.
+
+---
+
+## 19. Layout & conventions
+
+```text
+src/main/java/
+├── com.altech.core/          # R/Result, BizException, AuditEntity, Currency, JSONUtil
+└── com.altech.ledger/
+    ├── App.java
+    ├── config/
+    ├── endpoint/             # *Endpoint
+    ├── usecase/              # $ActionVerb$UseCase.execute
+    ├── entity/po|dto|enu/
+    ├── repository/
+    ├── service/              # MovementBus, DtoWrapper
+    └── listener/             # optional Kafka
+```
+
+| Layer | Convention | Example |
+|---|---|---|
+| **Endpoint** | `*Endpoint` | `WalletEndpoint` |
+| **Use case** | `$ActionVerb$UseCase` + `execute` | `CreateWalletOnboardingUseCase` |
+| **DTO** | `Create*RequestDto` / `Get*ResponseDto` | `CreateWalletOnboardRequestDto` |
+| **Mapper** | `DtoWrapper` | `DtoWrapper.getLedgerMovementResponseDto` |
+| **Logging** | `@Slf4j` | — |
+| **JSON** | camelCase | `ownerId`, `settlementCurrency` |
+
+---
+
+## 20. Decks
 
 Under `docs/decks/` (assets only — not a second handbook):
 
@@ -521,11 +748,9 @@ Under `docs/decks/` (assets only — not a second handbook):
 | **Factors** | `LedgeRX-Factor-Playbook.pptx` |
 | Sequence | `LedgeRX-UAF-Earn-Process-Burn-Sequence.pptx` + png/html |
 
-Other pptx may be aliases / older cuts of the same story.
-
 ---
 
-## 18. Freeze & debt
+## 21. Freeze & debt
 
 ### Feature freeze (core)
 
@@ -541,35 +766,52 @@ Door/Brain factors · posting · recipes · hold · money rails · Admin path ·
 
 ### Parked
 
-True Expense-GL pool (vs PROGRAM label) · cashback payout rail · stacking · named factor packs · MTD counters.
+True Expense-GL pool (vs HOUSE operating) · cashback payout rail · stacking · named factor packs · MTD counters.
+
+### Out of scope
+
+Payment gateway / card rails · full CRM master · compliance UI · multi-party settlement orchestration.
 
 ---
 
-## Quick curls
+## 22. Quick curls
 
 ```bash
-# Wallet
+# Wallet — primary HKD + LP book
 curl -sS -X POST localhost:8080/wallets -H 'Content-Type: application/json' -d '{
-  "ownerId":"01A1","settlementCurrency":"HKD","accounts":[{"currency":"LP"},{"currency":"HKD"}]
+  "ownerId":"01A31658334","settlementCurrency":"HKD","name":"Wilfill Kick",
+  "accounts":[{"currency":"LP","name":"Loyalty points","refCode":"LP"}]
 }'
 
-# Door / Brain
+# Batch (soft-idempotent, max 1000)
+curl -sS -X POST localhost:8080/wallets/batch -H 'Content-Type: application/json' -d '{
+  "wallets":[{"ownerId":"01A31658334","settlementCurrency":"HKD","accounts":[{"currency":"LP"}]}]
+}'
+
+curl -sS localhost:8080/wallets/01A31658334
 curl -sS localhost:8080/ingest-policies
 curl -sS localhost:8080/digestion-rules
 
-# Loyalty (recipe)
+# Earn (recipe / CC_TXN)
 curl -sS -X POST localhost:8080/integrations/webhooks/transactions/dry-run \
   -H 'Content-Type: application/json' -d '{
-  "eventId":"t1","ownerId":"01A1","eventType":"CC_TXN_LP",
-  "amount":100,"currency":"HKD","occurredAt":"2026-08-20T12:00:00Z"
+  "eventId":"t1","ownerId":"01A31658334","eventType":"CC_TXN",
+  "amount":100,"currency":"HKD","occurredAt":"2026-09-02T06:40:00Z",
+  "mainAccount":"908951901284","metadata":{"mcc":"5411"}
 }'
 
 # Money
 curl -sS -X POST localhost:8080/movements/deposits -H 'Content-Type: application/json' -d '{
-  "ownerId":"01A1","currency":"HKD","amount":100
+  "ownerId":"01A31658334","currency":"HKD","amount":100
 }'
+
+# Refund
+curl -sS -X POST localhost:8080/movements/{id}/refund
 ```
+
+Required onboard: `ownerId`, `settlementCurrency`. Duplicate `ownerId` → `WAL0409`.  
+Envelope: `Result` with `data` / `requestId`.
 
 ---
 
-*End of booklet. Code: `ApplyPostingUseCase` · `ApplyPostingRecipeUseCase` · `PostingRecipeCatalog` · `FactorMatcher`.*
+*End of booklet. Code: `ApplyPostingUseCase` · `IngestTransactionUseCase` · `FactorMatcher` · `DtoWrapper`.*

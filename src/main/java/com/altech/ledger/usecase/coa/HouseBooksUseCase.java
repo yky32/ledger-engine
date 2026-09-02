@@ -307,7 +307,7 @@ public class HouseBooksUseCase {
     }
 
     private List<com.altech.ledger.entity.dto.response.GetCoaProfileResponseDto> _dtos(List<CoaProfile> house) {
-        return house.stream().map(p -> coaProfileUseCase.get(p.getId())).toList();
+        return house.stream().map(DtoWrapper::getCoaProfileResponseDto).toList();
     }
 
     private static String blank(String v, String d) {

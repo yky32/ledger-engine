@@ -15,7 +15,7 @@ import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.repository.WalletRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.util.Pageables;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -79,7 +79,7 @@ public class WalletHistoryQueryUseCase {
             st != null, st,
             fromBound, toBound,
             Pageables.toZeroBased(pageable)
-        ).map(DtoMapper::toMovement);
+        ).map(DtoWrapper::getLedgerMovementResponseDto);
         List<Long> ids = page.getContent().stream()
             .map(GetLedgerMovementResponseDto::id)
             .filter(id -> id != null)
@@ -114,17 +114,10 @@ public class WalletHistoryQueryUseCase {
         }
         return page.map(dto -> {
             Currency overlay = dto.id() == null ? null : booked.get(dto.id());
-            return overlay == null || overlay == dto.currency() ? dto : withCurrency(dto, overlay);
+            return overlay == null || overlay == dto.currency()
+                ? dto
+                : DtoWrapper.getLedgerMovementResponseDto(dto, overlay);
         });
-    }
-
-    private static GetLedgerMovementResponseDto withCurrency(GetLedgerMovementResponseDto d, Currency ccy) {
-        return new GetLedgerMovementResponseDto(
-            d.id(), d.movementKey(), d.walletId(), d.txnId(), d.alias(),
-            d.originatorId(), d.targetId(), d.amount(), ccy,
-            d.orderType(), d.status(), d.mode(), d.type(),
-            d.remarks(), d.metadata(), d.complianceContext(), d.files(),
-            d.mainAccount(), d.associatedLedgerMovementId(), d.createDt(), d.updateDt());
     }
 
     @Transactional(readOnly = true)

@@ -8,22 +8,20 @@ import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.usecase.ledger.LedgerMovementExecutionUseCase;
 import com.altech.core.utils.JSONUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Dispatches movements: sync execute (default) or Kafka MOVEMENT_INITIATED when enabled.
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MovementBus {
-    private static final Logger log = LoggerFactory.getLogger(MovementBus.class);
-
     private final MovementKafkaProperties movementKafkaProperties;
     private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
     private final ObjectProvider<KafkaTemplate<String, String>> kafkaTemplate;

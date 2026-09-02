@@ -1,7 +1,7 @@
 package com.altech.ledger.usecase.account;
 
 import com.altech.ledger.repository.AccountRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,11 +19,11 @@ public class QueryAccountUseCase {
 
     @Transactional(readOnly = true)
     public GetLedgerAccountResponseDto one(Long id) {
-        return DtoMapper.toAccount(commonUseCase.requireAccount(id));
+        return DtoWrapper.getLedgerAccountResponseDto(commonUseCase.requireAccount(id));
     }
 
     @Transactional(readOnly = true)
     public Page<GetLedgerAccountResponseDto> list(Pageable pageable) {
-        return accountRepository.findAll(Pageables.toZeroBased(pageable)).map(DtoMapper::toAccount);
+        return accountRepository.findAll(Pageables.toZeroBased(pageable)).map(DtoWrapper::getLedgerAccountResponseDto);
     }
 }

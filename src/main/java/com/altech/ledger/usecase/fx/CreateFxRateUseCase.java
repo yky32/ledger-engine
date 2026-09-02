@@ -7,7 +7,7 @@ import com.altech.ledger.entity.dto.response.GetFxRateResponseDto;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.exception.response.FxErrorResponse;
 import com.altech.ledger.repository.FxRateRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,6 +30,6 @@ public class CreateFxRateUseCase {
         fx.setBase(base);
         fx.setTarget(target);
         fx.setRate(dto.rate());
-        return DtoMapper.toFx(fxRateRepository.save(fx));
+        return DtoWrapper.getFxRateResponseDto(fxRateRepository.save(fx));
     }
 }

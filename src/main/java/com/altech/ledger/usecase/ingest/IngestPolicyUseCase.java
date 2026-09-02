@@ -5,6 +5,7 @@ import com.altech.ledger.entity.dto.request.UpdateIngestPolicyRequestDto;
 import com.altech.ledger.entity.dto.response.GetIngestPolicyResponseDto;
 import com.altech.ledger.entity.po.ingest.IngestPolicy;
 import com.altech.ledger.repository.IngestPolicyRepository;
+import com.altech.ledger.service.DtoWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,7 @@ public class IngestPolicyUseCase {
 
     @Transactional
     public GetIngestPolicyResponseDto getOrCreate() {
-        return toDto(requireEffective());
+        return DtoWrapper.getIngestPolicyResponseDto(requireEffective());
     }
 
     @Transactional
@@ -68,7 +69,7 @@ public class IngestPolicyUseCase {
                 p.setEntryFactors(ef);
             }
         }
-        return toDto(ingestPolicyRepository.save(p));
+        return DtoWrapper.getIngestPolicyResponseDto(ingestPolicyRepository.save(p));
     }
 
     private IngestPolicy _createDefaultFromEnv() {
@@ -93,21 +94,5 @@ public class IngestPolicyUseCase {
         p.setAutoWalletNamePrefix(aw.getNamePrefix() == null ? "Auto " : aw.getNamePrefix());
         p.setIsActive(true);
         return p;
-    }
-
-    private GetIngestPolicyResponseDto toDto(IngestPolicy p) {
-        return GetIngestPolicyResponseDto.builder()
-            .id(p.getId())
-            .isEnabled(p.getIsEnabled())
-            .isAutoCreateWallet(p.getIsAutoCreateWallet())
-            .autoWalletSettlementCurrency(p.getAutoWalletSettlementCurrency())
-            .autoWalletEnsureCurrency(p.getAutoWalletEnsureCurrency())
-            .autoWalletAssociatedFrom(p.getAutoWalletAssociatedFrom())
-            .autoWalletNamePrefix(p.getAutoWalletNamePrefix())
-            .autoWalletCoaProfileCode(p.getAutoWalletCoaProfileCode())
-            .entryFactors(p.getEntryFactors())
-            .createDt(p.getCreateDt())
-            .updateDt(p.getUpdateDt())
-            .build();
     }
 }

@@ -4,7 +4,7 @@ import com.altech.core.exception.BizException;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.AccountingRuleExecutionRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,14 +22,14 @@ public class QueryAccountingRuleExecutionUseCase {
 
     @Transactional(readOnly = true)
     public GetAccountingRuleExecutionResponseDto one(Long id) {
-        return DtoMapper.toAccountingRuleExecution(accountingRuleExecutionRepository.findById(id)
+        return DtoWrapper.getAccountingRuleExecutionResponseDto(accountingRuleExecutionRepository.findById(id)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "AccountingRuleExecution not found: " + id)));
     }
 
     @Transactional(readOnly = true)
     public Page<GetAccountingRuleExecutionResponseDto> list(Pageable pageable) {
         return accountingRuleExecutionRepository.findAll(Pageables.toZeroBased(pageable))
-            .map(DtoMapper::toAccountingRuleExecution);
+            .map(DtoWrapper::getAccountingRuleExecutionResponseDto);
     }
 
     @Transactional(readOnly = true)
@@ -44,6 +44,6 @@ public class QueryAccountingRuleExecutionUseCase {
         return accountingRuleExecutionRepository.findAll().stream()
             .filter(r -> r.getOrderType() == orderType)
             .findFirst()
-            .map(DtoMapper::toAccountingRuleExecution);
+            .map(DtoWrapper::getAccountingRuleExecutionResponseDto);
     }
 }

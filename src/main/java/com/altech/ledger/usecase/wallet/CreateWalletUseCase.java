@@ -15,7 +15,7 @@ import com.altech.ledger.exception.response.WalletErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.CommonService;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import com.altech.ledger.usecase.account.CreateAccountUseCase;
 import com.altech.ledger.util.WalletVanityCodes;
@@ -62,7 +62,7 @@ public class CreateWalletUseCase {
         wallet.setSettlementCurrency(settlementCurrency);
         wallet = walletRepository.save(wallet);
         List<Account> myAccounts = new ArrayList<>(accountRepository.findAllByMainAccount(account.getMainAccount()));
-        return DtoMapper.toWallet(wallet, myAccounts);
+        return DtoWrapper.getLedgerWalletResponseDto(wallet, myAccounts);
     }
 
     @Transactional

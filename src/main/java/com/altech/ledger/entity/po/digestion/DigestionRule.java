@@ -89,7 +89,7 @@ public class DigestionRule extends AuditEntityWithIsActive {
     private Map<String, Object> formula;
 
     /**
-     * Explicit when-factors (JSONB). Array (AND) or FactorSet object — see docs/FACTORS.md.
+     * Explicit when-factors (JSONB). Array (AND) or FactorSet object — see docs/BOOKLET.md (Factors).
      */
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")

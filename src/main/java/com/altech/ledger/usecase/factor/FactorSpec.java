@@ -10,7 +10,7 @@ import java.util.Map;
  * Shared factor leaf + FactorSet boolean composition (UAF-ready).
  *
  * @see FactorMatcher
- * @see docs/FACTORS.md
+ * @see docs/BOOKLET.md (Factors)
  */
 public final class FactorSpec {
 

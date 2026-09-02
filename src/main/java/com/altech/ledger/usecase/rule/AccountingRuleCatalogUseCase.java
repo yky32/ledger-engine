@@ -14,7 +14,7 @@ import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.usecase.coa.HouseBooksUseCase;
 import com.altech.ledger.entity.dto.request.CreateCoaProfileRequestDto;
 import com.altech.ledger.entity.dto.response.GetAccountingRulesBundleDto;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -79,8 +79,8 @@ public class AccountingRuleCatalogUseCase {
     public GetAccountingRulesBundleDto ensureAndList() {
         ensureDefault();
         return new GetAccountingRulesBundleDto(
-            accountingRuleRepository.findAll().stream().map(DtoMapper::toAccountingRule).toList(),
-            accountingRuleExecutionRepository.findAll().stream().map(DtoMapper::toAccountingRuleExecution).toList());
+            accountingRuleRepository.findAll().stream().map(DtoWrapper::getAccountingRuleResponseDto).toList(),
+            accountingRuleExecutionRepository.findAll().stream().map(DtoWrapper::getAccountingRuleExecutionResponseDto).toList());
     }
 
     /**

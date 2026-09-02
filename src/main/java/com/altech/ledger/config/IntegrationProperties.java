@@ -25,6 +25,12 @@ public class IntegrationProperties {
     /** Defaults used when auto-creating a wallet from webhook. */
     private AutoWallet autoWallet = new AutoWallet();
 
+    /**
+     * Inbound transactional events (same JSON as REST webhook).
+     * {@code LEDGER_KAFKA_ENABLED=true} to start {@code TransactionEventKafkaListener}.
+     */
+    private Kafka kafka = new Kafka();
+
     @Getter
     @Setter
     public static class AutoWallet {
@@ -34,5 +40,14 @@ public class IntegrationProperties {
         private String ensureCurrency = "LP";
         private String associatedFrom = "CRM";
         private String namePrefix = "Auto ";
+    }
+
+    @Getter
+    @Setter
+    public static class Kafka {
+        private boolean enabled = false;
+        /** Same body as POST /integrations/webhooks/transactions. */
+        private String topic = "ledger.transaction.events";
+        private String groupId = "ledger-engine";
     }
 }

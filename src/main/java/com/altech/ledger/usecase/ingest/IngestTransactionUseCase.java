@@ -18,6 +18,7 @@ import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
 import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.factor.FactorMatcher;
 import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
@@ -266,13 +267,7 @@ public class IngestTransactionUseCase {
                 // leave null
             }
             Account book = accountId == null ? null : byId.get(accountId);
-            out.add(new LedgerLegDto(
-                e.getId(),
-                accountId,
-                e.getDirection(),
-                e.getAmount(),
-                e.getCurrency(),
-                book == null ? null : book.getFullNumber()));
+            out.add(DtoWrapper.getLedgerLegDto(e, book));
         }
         return out;
     }

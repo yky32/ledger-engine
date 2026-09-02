@@ -27,8 +27,6 @@ import com.altech.ledger.entity.po.accounting.AccountingRuleExecution;
 import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.usecase.ingest.ProgramPoolService;
 import com.altech.ledger.usecase.rule.AccountingRuleCatalogUseCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * LedgerMovementExecutionUseCase.
@@ -46,9 +45,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LedgerMovementExecutionUseCase implements LedgerHandler {
-    private static final Logger log = LoggerFactory.getLogger(LedgerMovementExecutionUseCase.class);
-
     private final AccountRepository accountRepository;
     private final WalletRepository walletRepository;
     private final LedgerMovementRepository ledgerMovementRepository;

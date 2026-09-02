@@ -6,6 +6,7 @@ import com.altech.ledger.entity.dto.posting.PostingCommand;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.po.ledger.Wallet;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +32,6 @@ public class CreateInWalletTransferUseCase {
             request.description(),
             request.mode() == null ? LedgerMovementMode.AUTO : request.mode()
         ));
-        return _toDto(r);
-    }
-
-    private MovementResponse _toDto(GetLedgerMovementResponseDto r) {
-        return new MovementResponse(
-            r.id(), r.movementKey(), r.walletId(), r.orderType(), r.status(), r.mode(),
-            r.originatorId(), r.targetId(), r.amount(), r.currency(),
-            r.createDt(), r.updateDt());
+        return DtoWrapper.getMovementResponse(r);
     }
 }

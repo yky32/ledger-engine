@@ -7,17 +7,15 @@ import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.LedgerMovementRepository;
 import com.altech.ledger.service.MovementBus;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * BaseLedgerMovementShooter.
  * Handles mode branching (AUTO vs MANUAL) before dispatch.
  */
 @RequiredArgsConstructor
+@Slf4j
 public abstract class BaseLedgerMovementShooter {
-    private static final Logger log = LoggerFactory.getLogger(BaseLedgerMovementShooter.class);
-
     private final MovementBus movementBus;
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerMovementMode ledgerMovementMode;

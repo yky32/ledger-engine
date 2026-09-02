@@ -7,6 +7,7 @@ import com.altech.ledger.entity.dto.response.GetDigestionRuleResponseDto;
 import com.altech.ledger.entity.po.digestion.DigestionRule;
 import com.altech.ledger.exception.response.DigestionErrorResponse;
 import com.altech.ledger.repository.DigestionRuleRepository;
+import com.altech.ledger.service.DtoWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +26,14 @@ public class DigestionRuleUseCase {
 
     @Transactional(readOnly = true)
     public GetDigestionRuleResponseDto get(Long id) {
-        return toDto(_require(id));
+        return DtoWrapper.getDigestionRuleResponseDto(_require(id));
     }
 
     @Transactional(readOnly = true)
     public GetDigestionRuleResponseDto getByCode(String code) {
         DigestionRule r = digestionRuleRepository.findByCode(code.trim())
             .orElseThrow(() -> new BizException(DigestionErrorResponse.DIG0404, "code=" + code));
-        return toDto(r);
+        return DtoWrapper.getDigestionRuleResponseDto(r);
     }
 
     @Transactional(readOnly = true)
@@ -40,7 +41,7 @@ public class DigestionRuleUseCase {
         List<DigestionRule> rows = Boolean.TRUE.equals(enabledOnly)
             ? digestionRuleRepository.findAllEnabledOrdered()
             : digestionRuleRepository.findAllByOrderByPriorityAscIdAsc();
-        return rows.stream().map(this::toDto).toList();
+        return rows.stream().map(DtoWrapper::getDigestionRuleResponseDto).toList();
     }
 
     @Transactional
@@ -80,7 +81,7 @@ public class DigestionRuleUseCase {
             }
         }
         r.setIsActive(true);
-        return toDto(digestionRuleRepository.save(r));
+        return DtoWrapper.getDigestionRuleResponseDto(digestionRuleRepository.save(r));
     }
 
     @Transactional
@@ -136,14 +137,14 @@ public class DigestionRuleUseCase {
                 r.setWhenFactors(wf);
             }
         }
-        return toDto(digestionRuleRepository.save(r));
+        return DtoWrapper.getDigestionRuleResponseDto(digestionRuleRepository.save(r));
     }
 
     @Transactional
     public GetDigestionRuleResponseDto setEnabled(Long id, boolean enabled) {
         DigestionRule r = _require(id);
         r.setIsEnabled(enabled);
-        return toDto(digestionRuleRepository.save(r));
+        return DtoWrapper.getDigestionRuleResponseDto(digestionRuleRepository.save(r));
     }
 
     @Transactional
@@ -196,27 +197,5 @@ public class DigestionRuleUseCase {
 
     public static List<String> splitCurrencies(String csv) {
         return splitCodes(csv);
-    }
-
-    private GetDigestionRuleResponseDto toDto(DigestionRule r) {
-        return GetDigestionRuleResponseDto.builder()
-            .id(r.getId())
-            .code(r.getCode())
-            .name(r.getName())
-            .eventType(r.getEventType())
-            .operation(r.getOperation())
-            .isEnabled(r.getIsEnabled())
-            .priority(r.getPriority())
-            .minAmount(r.getMinAmount())
-            .eligibleCurrencies(splitCodes(r.getEligibleCurrencies()))
-            .eligibleMccs(splitCodes(r.getEligibleMccs()))
-            .maxAgeDays(r.getMaxAgeDays())
-            .resultCurrency(r.getResultCurrency())
-            .formula(r.getFormula())
-            .processType(r.getProcessType())
-            .whenFactors(r.getWhenFactors())
-            .createDt(r.getCreateDt())
-            .updateDt(r.getUpdateDt())
-            .build();
     }
 }

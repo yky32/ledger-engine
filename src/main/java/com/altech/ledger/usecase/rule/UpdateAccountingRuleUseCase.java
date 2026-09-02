@@ -6,7 +6,7 @@ import com.altech.ledger.entity.dto.response.GetAccountingRuleResponseDto;
 import com.altech.ledger.entity.po.accounting.AccountingRule;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.AccountingRuleRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +38,6 @@ public class UpdateAccountingRuleUseCase {
         if (dto.content() != null) {
             rule.setContent(dto.content());
         }
-        return DtoMapper.toAccountingRule(accountingRuleRepository.save(rule));
+        return DtoWrapper.getAccountingRuleResponseDto(accountingRuleRepository.save(rule));
     }
 }

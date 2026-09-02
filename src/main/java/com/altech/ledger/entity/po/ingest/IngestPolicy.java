@@ -54,7 +54,7 @@ public class IngestPolicy extends AuditEntityWithIsActive {
 
     /**
      * Entry factors (JSONB). Array (AND) or FactorSet object. Empty/null = only isEnabled.
-     * See docs/FACTORS.md.
+     * See docs/BOOKLET.md (Factors).
      */
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")

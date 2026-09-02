@@ -5,6 +5,7 @@ import com.altech.ledger.entity.dto.response.GetFailedTransactionIngestResponseD
 import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
 import com.altech.ledger.exception.response.IntegrationErrorResponse;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.util.Pageables;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,12 +27,13 @@ public class QueryFailedTransactionIngestUseCase {
     public GetFailedTransactionIngestResponseDto one(Long id) {
         FailedTransactionIngest row = repository.findById(id)
             .orElseThrow(() -> new BizException(IntegrationErrorResponse.ING0404, "Failed ingest not found: " + id));
-        return _toDto(row);
+        return DtoWrapper.getFailedTransactionIngestResponseDto(row);
     }
 
     @Transactional(readOnly = true)
     public List<GetFailedTransactionIngestResponseDto> byEventId(String eventId) {
-        return repository.findByEventIdOrderByIdDesc(eventId).stream().map(this::_toDto).toList();
+        return repository.findByEventIdOrderByIdDesc(eventId).stream()
+            .map(DtoWrapper::getFailedTransactionIngestResponseDto).toList();
     }
 
     @Transactional(readOnly = true)
@@ -44,7 +46,8 @@ public class QueryFailedTransactionIngestUseCase {
         String st = blankToNull(status);
         String aid = blankToNull(ownerId);
         String code = blankToNull(failureCode);
-        return repository.search(st, aid, code, Pageables.toZeroBased(pageable)).map(this::_toDto);
+        return repository.search(st, aid, code, Pageables.toZeroBased(pageable))
+            .map(DtoWrapper::getFailedTransactionIngestResponseDto);
     }
 
     private static String blankToNull(String s) {
@@ -52,23 +55,5 @@ public class QueryFailedTransactionIngestUseCase {
             return null;
         }
         return s.trim();
-    }
-
-    private GetFailedTransactionIngestResponseDto _toDto(FailedTransactionIngest f) {
-        return new GetFailedTransactionIngestResponseDto(
-            f.getId(),
-            f.getEventId(),
-            f.getOwnerId(),
-            f.getEventType(),
-            f.getAmount(),
-            f.getCurrency(),
-            f.getOccurredAt(),
-            f.getFailureCode(),
-            f.getReason(),
-            f.getStatus(),
-            f.getRawPayload(),
-            f.getCreateDt(),
-            f.getUpdateDt()
-        );
     }
 }

@@ -8,7 +8,7 @@ import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.service.CommonService;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +58,7 @@ public class CreateAccountUseCase {
             .currency(currency)
             .allowNegative(allowNegative)
             .build();
-        return DtoMapper.toAccount(accountRepository.save(account));
+        return DtoWrapper.getLedgerAccountResponseDto(accountRepository.save(account));
     }
 
     @Transactional

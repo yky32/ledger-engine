@@ -10,7 +10,7 @@ import com.altech.ledger.entity.enu.*;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.repository.LedgerMovementRepository;
-import com.altech.ledger.service.DtoMapper;
+import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.service.MovementBus;
 import com.altech.ledger.service.WalletService;
 import com.altech.ledger.usecase.BaseLedgerMovementShooter;
@@ -45,12 +45,12 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         Wallet wallet = walletService.resolve(target);
         requireActive(wallet);
         String key = key(req.movementKey(), "dep");
-        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoWrapper::getLedgerMovementResponseDto).orElseGet(() -> {
             LedgerMovement m = newMovement(key, wallet.getId(), OrderType.DEPOSIT, req.mode(),
                 req.originatorId(), String.valueOf(wallet.getId()), req.amount(),
                 req.currency(), req.description());
             ledgerMovementRepository().save(m);
-            return DtoMapper.toMovement(execute(m));
+            return DtoWrapper.getLedgerMovementResponseDto(execute(m));
         });
     }
 
@@ -63,12 +63,12 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         Wallet wallet = walletService.resolve(origin);
         requireActive(wallet);
         String key = key(req.movementKey(), "wd");
-        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoWrapper::getLedgerMovementResponseDto).orElseGet(() -> {
             LedgerMovement m = newMovement(key, wallet.getId(), OrderType.WITHDRAWAL, req.mode(),
                 String.valueOf(wallet.getId()), req.targetId(), req.amount(),
                 req.currency(), req.description());
             ledgerMovementRepository().save(m);
-            return DtoMapper.toMovement(execute(m));
+            return DtoWrapper.getLedgerMovementResponseDto(execute(m));
         });
     }
 
@@ -79,12 +79,12 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         requireActive(from);
         requireActive(to);
         String key = key(req.movementKey(), "xfer");
-        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoWrapper::getLedgerMovementResponseDto).orElseGet(() -> {
             LedgerMovement m = newMovement(key, from.getId(), OrderType.IN_WALLET_TRANSFER, req.mode(),
                 String.valueOf(from.getId()), String.valueOf(to.getId()), req.amount(),
                 req.currency(), req.description());
             ledgerMovementRepository().save(m);
-            return DtoMapper.toMovement(execute(m));
+            return DtoWrapper.getLedgerMovementResponseDto(execute(m));
         });
     }
 
@@ -112,7 +112,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);
         String key = key(movementKey, orderType.name().toLowerCase());
-        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoWrapper::getLedgerMovementResponseDto).orElseGet(() -> {
             String bookRef = accountId != null ? String.valueOf(accountId) : String.valueOf(walletId);
             String origin = orderType == OrderType.BURN ? bookRef : null;
             String target = (orderType == OrderType.EARN || orderType == OrderType.ADJUSTMENT)
@@ -126,7 +126,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
                 m.setMainAccount(mainAccount.trim());
             }
             ledgerMovementRepository().save(m);
-            return DtoMapper.toMovement(execute(m));
+            return DtoWrapper.getLedgerMovementResponseDto(execute(m));
         });
     }
 
@@ -160,7 +160,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);
         String key = key(movementKey, orderType.name().toLowerCase());
-        return ledgerMovementRepository().findByMovementKey(key).map(DtoMapper::toMovement).orElseGet(() -> {
+        return ledgerMovementRepository().findByMovementKey(key).map(DtoWrapper::getLedgerMovementResponseDto).orElseGet(() -> {
             String bookRef = accountId != null ? String.valueOf(accountId) : String.valueOf(walletId);
             // HOLD uses originator; RELEASE uses target (same book)
             String origin = orderType == OrderType.HOLD ? bookRef : null;
@@ -168,7 +168,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
             LedgerMovement m = newMovement(key, walletId, orderType, LedgerMovementMode.AUTO,
                 origin, target, amount, currency, description);
             ledgerMovementRepository().save(m);
-            return DtoMapper.toMovement(execute(m));
+            return DtoWrapper.getLedgerMovementResponseDto(execute(m));
         });
     }
 
