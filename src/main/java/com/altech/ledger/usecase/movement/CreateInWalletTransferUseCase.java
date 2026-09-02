@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Product in-wallet transfer — debit origin book, credit destination book.
- * Balance write is {@code OperateAccountBalanceUseCase.inWalletTransfer} via {@link ApplyPostingUseCase}.
+ * Product in-wallet transfer — {@code withdrawal} on origin + {@code deposit} on destination
+ * via {@link ApplyPostingUseCase}.
  */
 @Component
 @RequiredArgsConstructor

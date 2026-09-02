@@ -2,9 +2,7 @@ package com.altech.ledger.repository;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.entity.po.ledger.Account;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -38,12 +36,4 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     @Query("select a.mainAccount from Account a where a.mainAccount is not null")
     List<String> allMainAccountNumbers();
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select a from Account a where a.id in :ids order by a.id")
-    List<Account> lockAllById(@Param("ids") List<Long> ids);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select a from Account a where a.id = :id")
-    Optional<Account> lockById(@Param("id") Long id);
 }

@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * LedgerMovementExecutionUseCase.
  * Structure: fetch rules → rulesExecution (command) →
- * {@link com.altech.ledger.usecase.account.OperateAccountBalanceUseCase deposit/withdrawal/inWalletTransfer}
+ * {@link com.altech.ledger.usecase.account.OperateAccountBalanceUseCase deposit/withdrawal}
  * → ledger entries.
  */
 @Service
@@ -103,7 +103,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         }
         try {
             BalanceExecutionResultCommand command = rulesExecution(movement);
-            applyCommand(movement.getOrderType(), command);
+            applyCommand(command);
             stampMemberBookCurrency(movement, command);
             movement.setStatus(LedgerMovementStatus.SETTLED);
             ledgerMovementRepository.save(movement);
@@ -258,33 +258,10 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         return command;
     }
 
-    private void applyCommand(OrderType orderType, BalanceExecutionResultCommand command) {
-        if (orderType == OrderType.IN_WALLET_TRANSFER || orderType == OrderType.WALLET_TRANSFER) {
-            applyInWalletTransfer(command);
-            return;
-        }
+    private void applyCommand(BalanceExecutionResultCommand command) {
         for (BalanceExecutionResultCommand.CommandDetail detail : command.getDetails()) {
             apply(detail);
         }
-    }
-
-    private void applyInWalletTransfer(BalanceExecutionResultCommand command) {
-        BalanceExecutionResultCommand.CommandDetail from = null;
-        BalanceExecutionResultCommand.CommandDetail to = null;
-        for (BalanceExecutionResultCommand.CommandDetail d : command.getDetails()) {
-            if (d.getOperation() == BalanceOperation.SUBTRACT) {
-                from = d;
-            } else if (d.getOperation() == BalanceOperation.ADD) {
-                to = d;
-            }
-        }
-        if (from == null || to == null) {
-            throw new BizException(MovementErrorResponse.MOV0400, "in-wallet transfer needs debit and credit books");
-        }
-        var moved = operateAccountBalanceUseCase.inWalletTransfer(
-            from.getAccount().getId(), to.getAccount().getId(), from.getAmount());
-        from.setAccount(moved.from());
-        to.setAccount(moved.to());
     }
 
     private void apply(BalanceExecutionResultCommand.CommandDetail cmd) {
