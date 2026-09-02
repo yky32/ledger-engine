@@ -156,7 +156,6 @@ class ConcurrencyReplayAsOfIntegrationTest {
             .get("data").get("accounts").get(0);
         assertThat(JsonMoney.bd(acc.get("ledgerBalance"))).isEqualByComparingTo("10");
         assertThat(JsonMoney.bd(acc.get("availableBalance"))).isEqualByComparingTo("6");
-        assertThat(JsonMoney.bd(acc.get("liveAvailableBalance"))).isEqualByComparingTo("6");
     }
 
     private void _onboardLp(String cust) throws Exception {

@@ -6,7 +6,7 @@ External systems deliver **transactional events** via webhook (Kafka optional). 
 IngestPolicy (door) → DigestionRule (brain) → wallet + PROGRAM double-entry
 ```
 
-Detail playbooks: **[docs/START_HERE.md](docs/START_HERE.md)** ⭐ · [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) · [docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md)
+Detail playbooks: **[docs/CRITICAL_PATH.md](docs/CRITICAL_PATH.md)** (CC_TXN earn + refund) · **[docs/START_HERE.md](docs/START_HERE.md)** ⭐ · [docs/CLIENT_EARN_WEBHOOK.md](docs/CLIENT_EARN_WEBHOOK.md) · [docs/INGEST_VS_DIGESTION.md](docs/INGEST_VS_DIGESTION.md)
 
 ## Java client SDK
 

@@ -8,6 +8,7 @@
  * common/       AppContext, AppContextHolder, request/log metadata
  * api/          ApiClient
  * utils/        JSONUtil, EndpointHandler, CallableUtil, ExceptionUtil
+ * json/         MoneyAmountModule, currency-scaled BigDecimal JSON strings
  * aop/log/      LogScope
  * constant/enu/ LogType, Currency, CurrencyType
  * kafka/        BaseEvent, BaseListener

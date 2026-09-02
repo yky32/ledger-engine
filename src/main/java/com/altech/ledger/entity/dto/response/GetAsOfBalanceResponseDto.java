@@ -29,8 +29,5 @@ public class GetAsOfBalanceResponseDto {
         private Currency currency;
         private BigDecimal ledgerBalance;
         private BigDecimal availableBalance;
-        /** Live balances (for comparison). */
-        private BigDecimal liveLedgerBalance;
-        private BigDecimal liveAvailableBalance;
     }
 }

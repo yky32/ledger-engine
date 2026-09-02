@@ -1,4 +1,4 @@
-package com.altech.ledger.json;
+package com.altech.core.json;
 
 import com.altech.core.constant.enu.Currency;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -29,7 +29,8 @@ class DeepParityIntegrationTest {
 
     @Test
     void manualMultipartDepositThenSettle() throws Exception {
-        long walletId = createAndActivate("MANUAL-OWNER", "USD");
+        String owner = "MANUAL-OWNER-" + UUID.randomUUID();
+        long walletId = onboard(owner, "USD");
         String movementKey = "manual-dep-" + UUID.randomUUID();
 
         MvcResult dep = mockMvc.perform(multipart("/ledger/deposits")
@@ -44,17 +45,20 @@ class DeepParityIntegrationTest {
 
         long movementId = objectMapper.readTree(dep.getResponse().getContentAsString()).get("data").get("id").asLong();
 
-        mockMvc.perform(put("/ledger-accounts/movements/" + movementId + "/settle"))
+        mockMvc.perform(put("/movements/" + movementId + "/settle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
-        mockMvc.perform(get("/ledger-wallets/" + walletId))
+        mockMvc.perform(get("/wallets/" + owner))
             .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("50.00"));
     }
 
     @Test
     void depositAcceptsLegacyTargetIdField() throws Exception {
-        long walletId = createAndActivate("LEGACY-TARGET", "USD");
+        String owner = "LEGACY-TARGET-" + UUID.randomUUID();
+        long walletId = onboard(owner, "USD");
 
         mockMvc.perform(post("/ledger/deposits")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -64,14 +68,14 @@ class DeepParityIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
-        mockMvc.perform(get("/ledger-wallets/" + walletId))
+        mockMvc.perform(get("/wallets/" + owner))
             .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("25.00"));
     }
 
     @Test
     void insufficientFundsOnTransfer() throws Exception {
-        long a = createAndActivate("LOW-A", "USD");
-        long b = createAndActivate("LOW-B", "USD");
+        long a = onboard("LOW-A-" + UUID.randomUUID(), "USD");
+        long b = onboard("LOW-B-" + UUID.randomUUID(), "USD");
 
         mockMvc.perform(post("/ledger/wallet-transfers/in-wallet")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -84,7 +88,7 @@ class DeepParityIntegrationTest {
     @Test
     void movementStatusFilter() throws Exception {
         String ownerId = "FILTER-" + UUID.randomUUID();
-        long walletId = createAndActivateFixed(ownerId, "USD");
+        long walletId = onboard(ownerId, "USD");
         mockMvc.perform(post("/ledger/deposits")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -92,9 +96,8 @@ class DeepParityIntegrationTest {
                     """.formatted(walletId, UUID.randomUUID())))
             .andExpect(status().isOk());
 
-        mockMvc.perform(get("/ledger-accounts/movements/my-movements")
-                .param("ownerId", ownerId)
-                .param("statuses", "SETTLED"))
+        mockMvc.perform(get("/wallets/" + ownerId + "/movements")
+                .param("status", "SETTLED"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data").isArray());
     }
@@ -118,19 +121,15 @@ class DeepParityIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("EARNED"));
     }
 
-    private long createAndActivate(String ownerPrefix, String currency) throws Exception {
-        return createAndActivateFixed(ownerPrefix + "-" + UUID.randomUUID(), currency);
-    }
-
-    private long createAndActivateFixed(String ownerId, String currency) throws Exception {
-        MvcResult create = mockMvc.perform(post("/ledger-wallets/full")
-                .param("ownerId", ownerId)
-                .param("currency", currency))
+    private long onboard(String ownerId, String currency) throws Exception {
+        MvcResult create = mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"ownerId":"%s","settlementCurrency":"%s","name":"%s"}
+                    """.formatted(ownerId, currency, ownerId)))
             .andExpect(status().isOk())
             .andReturn();
-        long id = objectMapper.readTree(create.getResponse().getContentAsString()).get("data").get("id").asLong();
-        mockMvc.perform(post("/ledger-wallets/" + id + "/activations"))
-            .andExpect(status().isOk());
-        return id;
+        return objectMapper.readTree(create.getResponse().getContentAsString())
+            .get("data").get("walletId").asLong();
     }
 }

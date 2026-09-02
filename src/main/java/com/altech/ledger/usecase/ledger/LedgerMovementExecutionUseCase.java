@@ -191,6 +191,9 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
      */
     private BalanceExecutionResultCommand executeAccountingRules(LedgerMovement movement) {
         OrderType orderType = movement.getOrderType();
+        if (orderType == OrderType.ADJUSTMENT_REFUND) {
+            return reverseOriginalLegs(movement);
+        }
         if (orderType != OrderType.EARN && orderType != OrderType.BURN && orderType != OrderType.ADJUSTMENT) {
             return null;
         }
@@ -215,6 +218,38 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             BalanceOperation op = rule.getDirection() == MovementDirection.CREDIT
                 ? BalanceOperation.ADD
                 : BalanceOperation.SUBTRACT;
+            command.add(account, amt, op);
+        }
+        return command;
+    }
+
+    /**
+     * Replay original legs with DR/CR swapped (CREDIT→DEBIT, DEBIT→CREDIT).
+     * Amounts stay the original magnitude; the refund movement stores the negated total.
+     */
+    private BalanceExecutionResultCommand reverseOriginalLegs(LedgerMovement refund) {
+        Long origId = refund.getAssociatedLedgerMovementId();
+        if (origId == null) {
+            throw new BizException(MovementErrorResponse.MOV0400, "refund requires associatedLedgerMovementId");
+        }
+        List<LedgerEntry> orig = ledgerEntryRepository.findByTxnId(origId);
+        if (orig == null || orig.isEmpty()) {
+            throw new BizException(MovementErrorResponse.MOV0400, "original movement has no legs to reverse");
+        }
+        BalanceExecutionResultCommand command = new BalanceExecutionResultCommand();
+        for (LedgerEntry e : orig) {
+            Long accountId;
+            try {
+                accountId = Long.valueOf(e.getTargetId());
+            } catch (Exception ex) {
+                throw new BizException(MovementErrorResponse.MOV0400, "original leg missing account: " + e.getId());
+            }
+            Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + accountId));
+            BigDecimal amt = e.getAmount() == null ? BigDecimal.ZERO : e.getAmount().abs();
+            BalanceOperation op = e.getDirection() == MovementDirection.CREDIT
+                ? BalanceOperation.SUBTRACT
+                : BalanceOperation.ADD;
             command.add(account, amt, op);
         }
         return command;

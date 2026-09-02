@@ -137,9 +137,7 @@ public class QueryWalletUseCase {
             boolean isPrimary = primary.getId() != null && primary.getId().equals(a.getId());
             String refCode = isPrimary ? null
                 : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : null);
-            String name = isPrimary && wallet.getName() != null
-                ? wallet.getName()
-                : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : a.getFullNumber());
+            String name = DtoWrapper.bookDisplayName(wallet.getOwnerId(), a.getCurrency());
             accounts.add(DtoWrapper.getWalletAccountResponseDto(a, refCode, isPrimary, name));
         }
 

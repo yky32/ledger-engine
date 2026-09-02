@@ -28,6 +28,7 @@ public record GetLedgerMovementResponseDto(
     String complianceContext,
     String files,
     String mainAccount,
+    Long associatedLedgerMovementId,
     Instant createDt,
     Instant updateDt
 ) {}

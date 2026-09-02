@@ -26,11 +26,29 @@ import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 public final class DtoWrapper {
     private DtoWrapper() {}
 
+    /** Book label: {@code 01A31658334-HKD}. */
+    public static String bookDisplayName(String ownerId, com.altech.core.constant.enu.Currency ccy) {
+        return bookDisplayName(ownerId, ccy == null ? null : ccy.getIsoCode());
+    }
+
+    public static String bookDisplayName(String ownerId, String currency) {
+        String id = ownerId == null ? "" : ownerId.trim();
+        String iso = currency == null ? "" : currency.trim();
+        if (!id.isEmpty() && !iso.isEmpty()) {
+            return id + "-" + iso;
+        }
+        if (!iso.isEmpty()) {
+            return iso;
+        }
+        return id.isEmpty() ? null : id;
+    }
+
     // ---------- product: wallet onboarding ----------
 
     public static GetWalletOnboardResponseDto getWalletOnboardResponseDto(Wallet wallet, Account account) {
         return getWalletOnboardResponseDto(wallet, account,
-            List.of(getWalletAccountResponseDto(account, null, true)));
+            List.of(getWalletAccountResponseDto(
+                account, null, true, bookDisplayName(wallet.getOwnerId(), account.getCurrency()))));
     }
 
     /** Wallet row for list-all (no accounts / balances). */
@@ -68,7 +86,8 @@ public final class DtoWrapper {
             .type(wallet.getType())
             .walletType(wallet.getWalletType())
             .name(wallet.getName())
-            .account(getWalletAccountResponseDto(primary, null, true))
+            .account(getWalletAccountResponseDto(
+                primary, null, true, bookDisplayName(wallet.getOwnerId(), primary.getCurrency())))
             .balance(getWalletBalanceResponseDto(primary))
             .accounts(accounts)
             .createDt(wallet.getCreateDt())

@@ -127,8 +127,8 @@ Business operation log (`movement_key` idempotency, mode AUTO/MANUAL, status) an
 |---|---|
 | **Wallets** | `POST /wallets`, `POST /wallets/batch`, `GET /wallets` (list), `GET /wallets/{ownerId}`, `GET /wallets?ownerId=` |
 | **Movements** | `POST /movements/deposits`, `/withdrawals`, `/transfers/in-wallet`, settle/get/list |
-| **Ledger accounts** | `POST /accounts`, get balance (product COA path) |
-| **Parity** | `/ledger-wallets`, `/ledger-accounts`, `/ledger/deposits`, rules, FX, configs |
+| **Ledger accounts** | COA via `/coa-profiles`; books on `GET /wallets/{ownerId}` |
+| **Money rails** | `/ledger/deposits`, `/ledger/withdrawals`, `/ledger/wallet-transfers/in-wallet` · rules, FX, configs |
 | **Integration** | `POST /integrations/webhooks/transactions` (earn/burn rules) |
 
 ## Wallet create (curl)

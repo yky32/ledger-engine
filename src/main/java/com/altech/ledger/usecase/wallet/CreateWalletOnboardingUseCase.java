@@ -207,9 +207,7 @@ public class CreateWalletOnboardingUseCase {
                 ? (spec.refCode() != null ? spec.refCode()
                     : (spec.currency() != null ? spec.currency().getIsoCode() : null))
                 : null);
-            String name = spec != null && spec.name() != null
-                ? spec.name()
-                : (isPrimary ? displayName : (spec != null ? spec.label() : e.getKey()));
+            String name = DtoWrapper.bookDisplayName(ownerId, e.getValue().getCurrency());
             accountDtos.add(DtoWrapper.getWalletAccountResponseDto(e.getValue(), refCode, isPrimary, name));
         }
         return DtoWrapper.getWalletOnboardResponseDto(wallet, primary, accountDtos);

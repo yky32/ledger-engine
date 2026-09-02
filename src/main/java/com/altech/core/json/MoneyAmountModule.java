@@ -1,4 +1,4 @@
-package com.altech.ledger.json;
+package com.altech.core.json;
 
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -23,8 +23,6 @@ public final class MoneyAmountModule extends SimpleModule {
         "availableBalance",
         "points",
         "fxConvertedBalance",
-        "liveLedgerBalance",
-        "liveAvailableBalance",
         "minAmount"
     );
 

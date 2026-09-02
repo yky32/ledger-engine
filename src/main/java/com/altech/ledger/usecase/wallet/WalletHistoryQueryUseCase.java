@@ -124,7 +124,7 @@ public class WalletHistoryQueryUseCase {
             d.originatorId(), d.targetId(), d.amount(), ccy,
             d.orderType(), d.status(), d.mode(), d.type(),
             d.remarks(), d.metadata(), d.complianceContext(), d.files(),
-            d.mainAccount(), d.createDt(), d.updateDt());
+            d.mainAccount(), d.associatedLedgerMovementId(), d.createDt(), d.updateDt());
     }
 
     @Transactional(readOnly = true)
@@ -160,8 +160,6 @@ public class WalletHistoryQueryUseCase {
                 .currency(a.getCurrency())
                 .ledgerBalance(ledger)
                 .availableBalance(available)
-                .liveLedgerBalance(a.getLedgerBalance())
-                .liveAvailableBalance(a.getAvailableBalance())
                 .build());
         }
         return GetAsOfBalanceResponseDto.builder()

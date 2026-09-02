@@ -16,6 +16,8 @@ import java.util.Optional;
 public interface LedgerMovementRepository extends JpaRepository<LedgerMovement, Long> {
     Optional<LedgerMovement> findByMovementKey(String movementKey);
 
+    Optional<LedgerMovement> findFirstByAssociatedLedgerMovementId(Long associatedLedgerMovementId);
+
     Page<LedgerMovement> findByWalletId(Long walletId, Pageable pageable);
 
     Page<LedgerMovement> findByWalletIdIn(java.util.Collection<Long> walletIds, Pageable pageable);

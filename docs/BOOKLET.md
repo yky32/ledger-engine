@@ -328,10 +328,6 @@ Phase-1 engine DE still uses **PROGRAM pool**; labels map to Finance COA outside
 | COA | `/coa-profiles` |
 | Accounting rules | `/accounting-rules` · `/accounting-rule-executions` |
 
-### Legacy (deprecated)
-
-`/ledger-wallets` · `/ledger-accounts` — do not use for new work.
-
 ### Money use cases
 
 `CreateDepositUseCase` · `CreateWithdrawalUseCase` · `CreateInWalletTransferUseCase` → posting intents above.
@@ -541,7 +537,7 @@ Door/Brain factors · posting · recipes · hold · money rails · Admin path ·
 |----|--|
 | TD-SEC-001 | API key (cluster trust OK now) |
 | TD-OPS-001 | Flyway |
-| TD-API-001 | Remove legacy `/ledger-*` when idle |
+| TD-API-001 | Legacy `/ledger-wallets` · `/ledger-accounts` · `/accounts` removed |
 
 ### Parked
 

@@ -1,4 +1,4 @@
-package com.altech.ledger.json;
+package com.altech.core.json;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;

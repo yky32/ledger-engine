@@ -27,29 +27,26 @@ class LedgerWalletParityIntegrationTest {
         String ownerA = "OWNER-A-" + UUID.randomUUID();
         String ownerB = "OWNER-B-" + UUID.randomUUID();
 
-        MvcResult createA = mockMvc.perform(post("/ledger-wallets/full")
-                .param("ownerId", ownerA)
-                .param("currency", "USD")
-                .param("ownerId", "tenant-a")
-                .param("associatedFrom", "tenant"))
+        MvcResult createA = mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"ownerId":"%s","settlementCurrency":"USD","name":"Wallet A"}
+                    """.formatted(ownerA)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.status").value("PENDING"))
+            .andExpect(jsonPath("$.data.status").value("ACTIVE"))
             .andReturn();
         JsonNode walletA = objectMapper.readTree(createA.getResponse().getContentAsString());
-        long walletAId = walletA.get("data").get("id").asLong();
+        long walletAId = walletA.get("data").get("walletId").asLong();
 
-        MvcResult createB = mockMvc.perform(post("/ledger-wallets/full")
-                .param("ownerId", ownerB)
-                .param("currency", "USD"))
+        MvcResult createB = mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"ownerId":"%s","settlementCurrency":"USD","name":"Wallet B"}
+                    """.formatted(ownerB)))
             .andExpect(status().isOk())
             .andReturn();
-        long walletBId = objectMapper.readTree(createB.getResponse().getContentAsString()).get("data").get("id").asLong();
-
-        mockMvc.perform(post("/ledger-wallets/" + walletAId + "/activations"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.status").value("ACTIVE"));
-        mockMvc.perform(post("/ledger-wallets/" + walletBId + "/activations"))
-            .andExpect(status().isOk());
+        long walletBId = objectMapper.readTree(createB.getResponse().getContentAsString())
+            .get("data").get("walletId").asLong();
 
         mockMvc.perform(post("/ledger/deposits")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -60,7 +57,7 @@ class LedgerWalletParityIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("SETTLED"))
             .andExpect(jsonPath("$.data.orderType").value("DEPOSIT"));
 
-        mockMvc.perform(get("/ledger-wallets/" + walletAId))
+        mockMvc.perform(get("/wallets/" + ownerA))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("100.00"));
 
@@ -72,9 +69,9 @@ class LedgerWalletParityIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
-        mockMvc.perform(get("/ledger-wallets/" + walletAId))
+        mockMvc.perform(get("/wallets/" + ownerA))
             .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("60.00"));
-        mockMvc.perform(get("/ledger-wallets/" + walletBId))
+        mockMvc.perform(get("/wallets/" + ownerB))
             .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("40.00"));
 
         mockMvc.perform(post("/ledger/withdrawals")
@@ -85,14 +82,13 @@ class LedgerWalletParityIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
-        mockMvc.perform(get("/ledger-wallets/" + walletAId))
+        mockMvc.perform(get("/wallets/" + ownerA))
             .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("50.00"));
 
-        mockMvc.perform(get("/ledger-accounts/movements/my-movements").param("ownerId", ownerA))
+        mockMvc.perform(get("/wallets/" + ownerA + "/movements"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data").isArray());
 
-        // FX pair may already exist in shared test DB
         mockMvc.perform(post("/fx-rates")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""

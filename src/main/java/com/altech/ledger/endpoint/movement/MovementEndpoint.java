@@ -7,7 +7,9 @@ import com.altech.ledger.entity.dto.movement.MovementDto.*;
 import com.altech.ledger.usecase.movement.CreateDepositUseCase;
 import com.altech.ledger.usecase.movement.CreateInWalletTransferUseCase;
 import com.altech.ledger.usecase.movement.CreateWithdrawalUseCase;
+import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.usecase.movement.QueryMovementUseCase;
+import com.altech.ledger.usecase.movement.RefundMovementUseCase;
 import com.altech.ledger.usecase.movement.SettleMovementUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class MovementEndpoint {
     private final CreateInWalletTransferUseCase createInWalletTransferUseCase;
     private final SettleMovementUseCase settleMovementUseCase;
     private final QueryMovementUseCase queryMovementUseCase;
+    private final RefundMovementUseCase refundMovementUseCase;
 
     @PostMapping("/deposits")
     public Result<MovementResponse> deposit(@Valid @RequestBody DepositRequest request) {
@@ -44,6 +47,12 @@ public class MovementEndpoint {
     @PutMapping("/{id}/settle")
     public Result<MovementResponse> settle(@PathVariable Long id, @Valid @RequestBody SettleMovementRequest request) {
         return R.success(settleMovementUseCase.execute(id, request));
+    }
+
+    /** Replay original DE legs with DR/CR swapped. Amount on the refund movement is negated. */
+    @PostMapping("/{id}/refund")
+    public Result<GetLedgerMovementResponseDto> refund(@PathVariable Long id) {
+        return R.success(refundMovementUseCase.execute(id));
     }
 
     @GetMapping("/{id}")
