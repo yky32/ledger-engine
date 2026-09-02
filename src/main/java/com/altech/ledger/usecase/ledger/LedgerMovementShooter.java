@@ -91,22 +91,6 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
 
     @Transactional
     public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
-                                       Currency currency, String movementKey, String description) {
-        return doEarnBurn(walletId, orderType, amount, currency, movementKey, description, null, null);
-    }
-
-    public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
-                                       Currency currency, String movementKey, String description, Long accountId) {
-        return doEarnBurn(walletId, orderType, amount, currency, movementKey, description, accountId, null);
-    }
-
-    public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
-                                       Currency currency, String movementKey, String description, Long accountId,
-                                       String eventType) {
-        return doEarnBurn(walletId, orderType, amount, currency, movementKey, description, accountId, eventType, null);
-    }
-
-    public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
                                        Currency currency, String movementKey, String description, Long accountId,
                                        String eventType, String mainAccount) {
         Wallet wallet = walletService.get(walletId);
@@ -134,17 +118,6 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
      * HOLD locks available only; RELEASE unlocks available only (ledger unchanged).
      */
     @Transactional
-    public GetLedgerMovementResponseDto doHoldRelease(
-        Long walletId,
-        OrderType orderType,
-        java.math.BigDecimal amount,
-        Currency currency,
-        String movementKey,
-        String description
-    ) {
-        return doHoldRelease(walletId, orderType, amount, currency, movementKey, description, null);
-    }
-
     public GetLedgerMovementResponseDto doHoldRelease(
         Long walletId,
         OrderType orderType,

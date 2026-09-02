@@ -6,7 +6,6 @@ import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
 import com.altech.ledger.entity.dto.request.CreateLedgerInWalletTransferRequestDto;
 import com.altech.ledger.entity.dto.request.CreateLedgerWithdrawalRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
-import com.altech.ledger.entity.enu.PostingIntent;
 import com.altech.ledger.exception.response.MovementErrorResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,14 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Central apply-posting use case — reusable entry for all balance-affecting intents.
- * <p>
- * Product APIs (deposit/withdraw/transfer), loyalty (earn/burn), and hold/release
- * all go through {@link #execute(PostingCommand)}. Accounting differences stay in
- * {@link PostingIntent} → OrderType → execution rules (HOUSE DE for earn/burn).
- OperateAccountBalanceUseCase * Book mutations: {@code OperateAccountBalanceUseCase.deposit} / {@code withdrawal}.
- * Transfer / earn / burn are those two composed (one debit leg, one credit leg).
- * <p>
- * Shared application capability (multi-caller) — not a product HTTP verb by itself.
+ * Book mutations: {@code OperateAccountBalanceUseCase.deposit} / {@code withdrawal}.
+ * Transfer / earn / burn compose those two (one debit leg, one credit leg).
  */
 @Component
 @RequiredArgsConstructor
@@ -102,29 +95,5 @@ public class ApplyPostingUseCase {
                 cmd.accountId()
             );
         };
-    }
-
-    /** Convenience — loyalty earn (HOUSE DE). */
-    @Transactional
-    public GetLedgerMovementResponseDto earn(
-        Long walletId,
-        java.math.BigDecimal amount,
-        com.altech.core.constant.enu.Currency currency,
-        String movementKey,
-        String description
-    ) {
-        return execute(PostingCommand.earn(walletId, amount, currency, movementKey, description));
-    }
-
-    /** Convenience — loyalty burn (HOUSE DE). */
-    @Transactional
-    public GetLedgerMovementResponseDto burn(
-        Long walletId,
-        java.math.BigDecimal amount,
-        com.altech.core.constant.enu.Currency currency,
-        String movementKey,
-        String description
-    ) {
-        return execute(PostingCommand.burn(walletId, amount, currency, movementKey, description));
     }
 }

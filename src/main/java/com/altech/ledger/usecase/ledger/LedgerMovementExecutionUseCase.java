@@ -265,15 +265,8 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     }
 
     private void apply(BalanceExecutionResultCommand.CommandDetail cmd) {
-        Long accountId = cmd.getAccount().getId();
-        BigDecimal amount = cmd.getAmount();
-        Account updated = switch (cmd.getOperation()) {
-            case ADD -> operateAccountBalanceUseCase.deposit(accountId, amount);
-            case SUBTRACT -> operateAccountBalanceUseCase.withdrawal(accountId, amount);
-            case HOLD_LOCK -> operateAccountBalanceUseCase.lockAvailable(accountId, amount);
-            case HOLD_UNLOCK -> operateAccountBalanceUseCase.unlockAvailable(accountId, amount);
-        };
-        cmd.setAccount(updated);
+        cmd.setAccount(operateAccountBalanceUseCase.apply(
+            cmd.getOperation(), cmd.getAccount().getId(), cmd.getAmount()));
     }
 
     /**

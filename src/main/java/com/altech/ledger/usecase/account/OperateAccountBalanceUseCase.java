@@ -1,6 +1,7 @@
 package com.altech.ledger.usecase.account;
 
 import com.altech.core.exception.BizException;
+import com.altech.ledger.entity.enu.BalanceOperation;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.exception.response.MovementErrorResponse;
@@ -25,6 +26,16 @@ import java.math.BigDecimal;
 public class OperateAccountBalanceUseCase {
     private final AccountRepository accountRepository;
 
+    @Transactional
+    public Account apply(BalanceOperation operation, Long accountId, BigDecimal amount) {
+        return switch (operation) {
+            case ADD -> deposit(accountId, amount);
+            case SUBTRACT -> withdrawal(accountId, amount);
+            case HOLD_LOCK -> lockAvailable(accountId, amount);
+            case HOLD_UNLOCK -> unlockAvailable(accountId, amount);
+        };
+    }
+
     /** Credit ledger and available (product deposit, earn CREDIT, refund CREDIT). */
     @Transactional
     public Account deposit(Long accountId, BigDecimal amount) {
@@ -40,13 +51,9 @@ public class OperateAccountBalanceUseCase {
     public Account withdrawal(Long accountId, BigDecimal amount) {
         Account account = requireAccount(accountId);
         BigDecimal delta = requireAmount(amount);
-        BigDecimal available = account.getAvailableBalance();
-        if (!account.isAllowNegative() && available.compareTo(delta) < 0) {
-            throw new BizException(MovementErrorResponse.MOV0403,
-                "Insufficient available balance on account " + account.getId());
-        }
+        requireSufficientAvailable(account, delta);
         account.setLedgerBalance(account.getLedgerBalance().subtract(delta));
-        account.setAvailableBalance(available.subtract(delta));
+        account.setAvailableBalance(account.getAvailableBalance().subtract(delta));
         return accountRepository.save(account);
     }
 
@@ -55,12 +62,8 @@ public class OperateAccountBalanceUseCase {
     public Account lockAvailable(Long accountId, BigDecimal amount) {
         Account account = requireAccount(accountId);
         BigDecimal delta = requireAmount(amount);
-        BigDecimal available = account.getAvailableBalance();
-        if (!account.isAllowNegative() && available.compareTo(delta) < 0) {
-            throw new BizException(MovementErrorResponse.MOV0403,
-                "Insufficient available to hold on account " + account.getId());
-        }
-        account.setAvailableBalance(available.subtract(delta));
+        requireSufficientAvailable(account, delta);
+        account.setAvailableBalance(account.getAvailableBalance().subtract(delta));
         return accountRepository.save(account);
     }
 
@@ -76,6 +79,13 @@ public class OperateAccountBalanceUseCase {
         }
         account.setAvailableBalance(next);
         return accountRepository.save(account);
+    }
+
+    private static void requireSufficientAvailable(Account account, BigDecimal delta) {
+        if (!account.isAllowNegative() && account.getAvailableBalance().compareTo(delta) < 0) {
+            throw new BizException(MovementErrorResponse.MOV0403,
+                "Insufficient available balance on account " + account.getId());
+        }
     }
 
     private Account requireAccount(Long accountId) {
