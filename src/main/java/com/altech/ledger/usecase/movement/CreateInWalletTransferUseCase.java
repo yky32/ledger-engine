@@ -13,6 +13,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Product in-wallet transfer — debit origin book, credit destination book.
+ * Balance write is {@code OperateAccountBalanceUseCase.inWalletTransfer} via {@link ApplyPostingUseCase}.
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateInWalletTransferUseCase {

@@ -14,8 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Product deposit — credits member book for currency (single-sided).
- * Posts via central {@link ApplyPostingUseCase} (not loyalty EARN / PROGRAM DE).
+ * Product deposit — single-sided credit on the member book.
+ * Balance write is {@code OperateAccountBalanceUseCase.deposit} via {@link ApplyPostingUseCase}.
+ * Do not call this for loyalty earn (that needs HOUSE DEBIT + member CREDIT).
  */
 @Component
 @RequiredArgsConstructor

@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Product APIs (deposit/withdraw/transfer), loyalty (earn/burn), and hold/release
  * all go through {@link #execute(PostingCommand)}. Accounting differences stay in
  * {@link PostingIntent} → OrderType → execution rules (HOUSE DE for earn/burn).
+ OperateAccountBalanceUseCase * Book mutations: {@code OperateAccountBalanceUseCase.deposit} / {@code withdrawal} /
+ * {@code inWalletTransfer}. Earn/burn compose withdrawal + deposit on HOUSE vs member.
  * <p>
  * Shared application capability (multi-caller) — not a product HTTP verb by itself.
  */

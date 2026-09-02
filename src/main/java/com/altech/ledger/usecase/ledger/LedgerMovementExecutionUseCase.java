@@ -24,6 +24,7 @@ import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.MovementBus;
 import com.altech.ledger.entity.po.accounting.AccountingRule;
 import com.altech.ledger.entity.po.accounting.AccountingRuleExecution;
+import com.altech.ledger.usecase.account.OperateAccountBalanceUseCase;
 import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.usecase.ingest.ProgramPoolService;
 import com.altech.ledger.usecase.rule.AccountingRuleCatalogUseCase;
@@ -41,7 +42,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * LedgerMovementExecutionUseCase.
- * Structure: fetch rules → rulesExecution (command) → updateBalances → ledger ledgerEntryRepository.
+ * Structure: fetch rules → rulesExecution (command) →
+ * {@link com.altech.ledger.usecase.account.OperateAccountBalanceUseCase deposit/withdrawal/inWalletTransfer}
+ * → ledger entries.
  */
 @Service
 @RequiredArgsConstructor
@@ -57,6 +60,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     private final AccountingRuleCatalogUseCase accountingRuleCatalogUseCase;
     private final CoaBookResolver coaBookResolver;
     private final ProgramPoolService programPoolService;
+    private final OperateAccountBalanceUseCase operateAccountBalanceUseCase;
 
     @Override
     @Transactional
@@ -99,7 +103,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         }
         try {
             BalanceExecutionResultCommand command = rulesExecution(movement);
-            applyCommand(command, movement);
+            applyCommand(movement.getOrderType(), command);
             stampMemberBookCurrency(movement, command);
             movement.setStatus(LedgerMovementStatus.SETTLED);
             ledgerMovementRepository.save(movement);
@@ -149,7 +153,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
                 command.add(origin, amount, BalanceOperation.SUBTRACT);
             }
             case EARN, ADJUSTMENT -> {
-                // Double-entry fallback: DEBIT HOUSE operating + CREDIT customer (same currency)
+                // withdrawal(HOUSE) + deposit(member) — not CreateDepositUseCase.
                 Account customer = resolveAccount(movement.getTargetId() != null
                     ? movement.getTargetId() : String.valueOf(movement.getWalletId()), currency);
                 Account pool = programPoolService.ensurePoolAccount(currency);
@@ -213,6 +217,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             Account account = coaBookResolver.resolve(
                 rule.getTargetAccount(), movement.getWalletId(), movement.getMainAccount());
             BigDecimal amt = rule.getMultiplier() == null ? base : base.multiply(rule.getMultiplier());
+            // CREDIT = deposit; DEBIT = withdrawal
             BalanceOperation op = rule.getDirection() == MovementDirection.CREDIT
                 ? BalanceOperation.ADD
                 : BalanceOperation.SUBTRACT;
@@ -253,46 +258,45 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         return command;
     }
 
-    private void applyCommand(BalanceExecutionResultCommand command, LedgerMovement movement) {
+    private void applyCommand(OrderType orderType, BalanceExecutionResultCommand command) {
+        if (orderType == OrderType.IN_WALLET_TRANSFER || orderType == OrderType.WALLET_TRANSFER) {
+            applyInWalletTransfer(command);
+            return;
+        }
         for (BalanceExecutionResultCommand.CommandDetail detail : command.getDetails()) {
-            apply(detail, movement);
+            apply(detail);
         }
     }
 
-    private void apply(BalanceExecutionResultCommand.CommandDetail cmd, LedgerMovement movement) {
-        Account locked = accountRepository.lockById(cmd.getAccount().getId())
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "Account not found: " + cmd.getAccount().getId()));
-        BigDecimal ledger = locked.getLedgerBalance();
-        BigDecimal available = locked.getAvailableBalance();
-        BalanceOperation op = cmd.getOperation();
-        if (op == BalanceOperation.HOLD_LOCK) {
-            // ledger unchanged; lock spendable balance
-            if (!locked.isAllowNegative() && available.compareTo(cmd.getAmount()) < 0) {
-                throw new BizException(MovementErrorResponse.MOV0403,
-                    "Insufficient available to hold on account " + locked.getId());
+    private void applyInWalletTransfer(BalanceExecutionResultCommand command) {
+        BalanceExecutionResultCommand.CommandDetail from = null;
+        BalanceExecutionResultCommand.CommandDetail to = null;
+        for (BalanceExecutionResultCommand.CommandDetail d : command.getDetails()) {
+            if (d.getOperation() == BalanceOperation.SUBTRACT) {
+                from = d;
+            } else if (d.getOperation() == BalanceOperation.ADD) {
+                to = d;
             }
-            available = available.subtract(cmd.getAmount());
-        } else if (op == BalanceOperation.HOLD_UNLOCK) {
-            // ledger unchanged; unlock — available cannot exceed ledger
-            BigDecimal next = available.add(cmd.getAmount());
-            if (next.compareTo(ledger) > 0) {
-                throw new BizException(MovementErrorResponse.MOV0400,
-                    "Release would make available > ledger on account " + locked.getId());
-            }
-            available = next;
-        } else if (op == BalanceOperation.ADD) {
-            ledger = ledger.add(cmd.getAmount());
-            available = available.add(cmd.getAmount());
-        } else {
-            if (!locked.isAllowNegative() && available.compareTo(cmd.getAmount()) < 0) {
-                throw new BizException(MovementErrorResponse.MOV0403, "Insufficient available balance on account " + locked.getId());
-            }
-            ledger = ledger.subtract(cmd.getAmount());
-            available = available.subtract(cmd.getAmount());
         }
-        locked.setLedgerBalance(ledger);
-        locked.setAvailableBalance(available);
-        accountRepository.save(locked);
+        if (from == null || to == null) {
+            throw new BizException(MovementErrorResponse.MOV0400, "in-wallet transfer needs debit and credit books");
+        }
+        var moved = operateAccountBalanceUseCase.inWalletTransfer(
+            from.getAccount().getId(), to.getAccount().getId(), from.getAmount());
+        from.setAccount(moved.from());
+        to.setAccount(moved.to());
+    }
+
+    private void apply(BalanceExecutionResultCommand.CommandDetail cmd) {
+        Long accountId = cmd.getAccount().getId();
+        BigDecimal amount = cmd.getAmount();
+        Account updated = switch (cmd.getOperation()) {
+            case ADD -> operateAccountBalanceUseCase.deposit(accountId, amount);
+            case SUBTRACT -> operateAccountBalanceUseCase.withdrawal(accountId, amount);
+            case HOLD_LOCK -> operateAccountBalanceUseCase.lockAvailable(accountId, amount);
+            case HOLD_UNLOCK -> operateAccountBalanceUseCase.unlockAvailable(accountId, amount);
+        };
+        cmd.setAccount(updated);
     }
 
     /**

@@ -14,8 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Product withdrawal — debits member book for currency (single-sided).
- * Posts via central {@link ApplyPostingUseCase} (not loyalty BURN / PROGRAM DE).
+ * Product withdrawal — single-sided debit on the member book.
+ * Balance write is {@code OperateAccountBalanceUseCase.withdrawal} via {@link ApplyPostingUseCase}.
+ * Do not call this for loyalty burn (that needs member DEBIT + HOUSE CREDIT).
  */
 @Component
 @RequiredArgsConstructor
