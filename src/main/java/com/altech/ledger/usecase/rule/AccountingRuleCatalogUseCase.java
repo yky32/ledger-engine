@@ -35,8 +35,8 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class AccountingRuleCatalogUseCase {
-    public static final String MEMBER_CUST_HKD = "MEMBER_CUST_HKD";
-    public static final String MEMBER_CUST_LP = "MEMBER_CUST_LP";
+    public static final String CUSTOMER_CUST_HKD = "CUSTOMER_CUST_HKD";
+    public static final String CUSTOMER_CUST_LP = "CUSTOMER_CUST_LP";
     public static final String HOUSE_CC_OP_HKD = "HOUSE_CC_OP_HKD";
     public static final String HOUSE_CC_OP_LP = "HOUSE_CC_OP_LP";
 
@@ -53,8 +53,8 @@ public class AccountingRuleCatalogUseCase {
     @Transactional
     public void ensureDefault() {
         houseBooksUseCase.ensure(HouseBooksUseCase.DEFAULT_OWNER);
-        _seedMemberCustodian(MEMBER_CUST_HKD, "Member Custodian HKD", "HKD");
-        _seedMemberCustodian(MEMBER_CUST_LP, "Member Custodian LP", "LP");
+        _seedCustomerCustodian(CUSTOMER_CUST_HKD, "Customer Custodian HKD", "HKD");
+        _seedCustomerCustodian(CUSTOMER_CUST_LP, "Customer Custodian LP", "LP");
 
         // Double-entry is same-currency first: LP earn DR/CR LP; HKD earn DR/CR HKD.
         AccountingRule drOpHkd = _seedRule("TXN_DR_OP_HKD",
@@ -62,9 +62,9 @@ public class AccountingRuleCatalogUseCase {
         AccountingRule drOpLp = _seedRule("TXN_DR_OP_LP",
             "Debit operating LP 01-02-01", MovementDirection.DEBIT, HOUSE_CC_OP_LP);
         AccountingRule crCustHkd = _seedRule("TXN_CR_CUST_HKD",
-            "Credit customer reward HKD 01-01-01", MovementDirection.CREDIT, MEMBER_CUST_HKD);
+            "Credit customer reward HKD 01-01-01", MovementDirection.CREDIT, CUSTOMER_CUST_HKD);
         AccountingRule crCustLp = _seedRule("TXN_CR_CUST_LP",
-            "Credit customer reward LP 01-01-01", MovementDirection.CREDIT, MEMBER_CUST_LP);
+            "Credit customer reward LP 01-01-01", MovementDirection.CREDIT, CUSTOMER_CUST_LP);
 
         _seedSequence(SEQ_EARN_HKD, "Transaction → HKD (same currency)", OrderType.EARN, "CC_TXN_HKD",
             List.of(drOpHkd, crCustHkd), true);
@@ -158,13 +158,35 @@ public class AccountingRuleCatalogUseCase {
         return out;
     }
 
-    private void _seedMemberCustodian(String code, String name, String currency) {
+    private void _seedCustomerCustodian(String code, String name, String currency) {
+        _renameCoaCode("MEMBER_CUST_" + currency, code, name);
         if (coaProfileRepository.existsByCode(code)) {
             return;
         }
         coaProfileUseCase.create(new CreateCoaProfileRequestDto(
             code, name, null, false, true,
             "01", "01", "01", "00", currency, false, null));
+    }
+
+    /** MEMBER_CUST_* → CUSTOMER_CUST_* (wording). No-op if already renamed. */
+    private void _renameCoaCode(String from, String to, String name) {
+        if (from == null || to == null || from.equalsIgnoreCase(to)) {
+            return;
+        }
+        if (coaProfileRepository.existsByCode(to)) {
+            return;
+        }
+        coaProfileRepository.findByCode(from).ifPresent(p -> {
+            p.setCode(to);
+            if (p.getTransactionCode() == null || from.equalsIgnoreCase(p.getTransactionCode())) {
+                p.setTransactionCode(to);
+            }
+            if (name != null && !name.isBlank()) {
+                p.setName(name);
+            }
+            coaProfileRepository.save(p);
+            log.info("Renamed COA {} → {}", from, to);
+        });
     }
 
     private AccountingRule _seedRule(String name, String description, MovementDirection direction, String coaCode) {

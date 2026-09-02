@@ -444,7 +444,7 @@ public class FactorMatcher {
         if (!mccs.isEmpty()) {
             out.add(factor("mcc", "in", mccs));
         }
-        if (rule.getMaxAgeDays() != null) {
+        if (rule.getMaxAgeDays() != null && rule.getMaxAgeDays() > 0) {
             out.add(factor("ageDays", "lte", rule.getMaxAgeDays()));
         }
         return out;

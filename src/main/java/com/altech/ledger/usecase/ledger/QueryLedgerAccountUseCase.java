@@ -34,7 +34,9 @@ public class QueryLedgerAccountUseCase {
             coa = CoaType.LIABILITY;
         }
         return new AccountResponse(
-            a.getId(), a.getFullNumber(), a.getSubAccount(), coa, a.getCurrency(), a.getStatus(),
+            a.getId(), a.getFullNumber(),
+            a.getCurrency() != null ? a.getCurrency().getIsoCode() : a.getFullNumber(),
+            coa, a.getCurrency(), a.getStatus(),
             a.isAllowNegative(), a.getLedgerBalance(), a.getAvailableBalance(), a.getVersion(),
             a.getCreateDt(), a.getUpdateDt());
     }

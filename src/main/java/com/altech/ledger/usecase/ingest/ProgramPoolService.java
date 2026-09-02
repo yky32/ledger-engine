@@ -2,106 +2,85 @@ package com.altech.ledger.usecase.ingest;
 
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.exception.BizException;
-import com.altech.ledger.entity.dto.request.AccountOpenSpecDto;
-import com.altech.ledger.entity.dto.request.CreateWalletOnboardRequestDto;
 import com.altech.ledger.entity.enu.AccountStatus;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.exception.response.AccountErrorResponse;
-import com.altech.ledger.exception.response.WalletErrorResponse;
 import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
-import com.altech.ledger.usecase.wallet.CreateWalletOnboardingUseCase;
+import com.altech.ledger.usecase.coa.HouseBooksUseCase;
+import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Comparator;
 
 /**
- * System PROGRAM wallet + per-currency pool accounts (allow-negative) for double-entry
- * earn/burn counterparty legs.
- * <p>
- * Owner id fixed: {@link #PROGRAM_OWNER}. Created lazily on first earn/burn.
+ * House (UAF finance) wallet counterparty for earn/burn when no AccountingRule sequence binds.
+ * Owner id {@link HouseBooksUseCase#DEFAULT_OWNER}; leftover PROGRAM is renamed on ensure.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ProgramPoolService {
-    public static final String PROGRAM_OWNER = "PROGRAM";
+    /** @deprecated use {@link HouseBooksUseCase#DEFAULT_OWNER} */
+    public static final String PROGRAM_OWNER = HouseBooksUseCase.DEFAULT_OWNER;
 
     private final WalletRepository walletRepository;
     private final AccountRepository accountRepository;
-    private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
+    private final HouseBooksUseCase houseBooksUseCase;
 
     @Transactional
     public Account ensurePoolAccount(Currency currency) {
         if (currency == null) {
             throw new BizException(AccountErrorResponse.ACC0400, "pool currency required");
         }
-        Wallet program = walletRepository.findByOwnerId(PROGRAM_OWNER).orElseGet(this::_bootstrapProgramWallet);
-        Account primary = accountRepository.findById(program.getAccountId())
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "PROGRAM primary missing"));
+        houseBooksUseCase.ensure(HouseBooksUseCase.DEFAULT_OWNER);
+        Wallet house = walletRepository.findByOwnerId(HouseBooksUseCase.DEFAULT_OWNER)
+            .or(() -> walletRepository.findByOwnerId(HouseBooksUseCase.LEGACY_OWNER))
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
+                "HOUSE wallet missing after ensure"));
+        Account primary = accountRepository.findById(house.getAccountId())
+            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "HOUSE primary missing"));
 
-        Account pool;
-        if (primary.getCurrency() == currency) {
-            pool = primary;
-        } else {
-            pool = accountRepository.findFirstByMainAccountAndCurrency(primary.getMainAccount(), currency)
-                .orElseGet(() -> _openCurrencyBook(program, primary, currency));
-        }
-        if (!pool.isAllowNegative()) {
-            pool.setAllowNegative(true);
-            pool = accountRepository.save(pool);
-        }
-        return pool;
+        return accountRepository.findAllByWalletId(house.getId()).stream()
+            .filter(a -> a.getCurrency() == currency)
+            .min(Comparator
+                .comparing((Account a) -> !"02".equals(a.getType()))
+                .thenComparing(a -> a.getId() == null ? 0L : a.getId()))
+            .map(pool -> {
+                if (!pool.isAllowNegative()) {
+                    pool.setAllowNegative(true);
+                    return accountRepository.save(pool);
+                }
+                return pool;
+            })
+            .orElseGet(() -> _openOperatingBook(house, primary, currency));
     }
 
-    private Wallet _bootstrapProgramWallet() {
-        log.info("Bootstrapping PROGRAM wallet for double-entry pool");
-        try {
-            createWalletOnboardingUseCase.execute(new CreateWalletOnboardRequestDto(
-                PROGRAM_OWNER,
-                Currency.HKD,
-                "System PROGRAM",
-                List.of(new AccountOpenSpecDto("LP", "PROGRAM LP pool", false, true, Currency.LP))
-            ));
-        } catch (BizException ex) {
-            String code = ex.getResponse() != null ? ex.getResponse().getCode() : null;
-            if (!WalletErrorResponse.WAL0409.getCode().equals(code)) {
-                throw ex;
-            }
-        }
-        return walletRepository.findByOwnerId(PROGRAM_OWNER)
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404, "PROGRAM wallet missing after bootstrap"));
-    }
-
-    private Account _openCurrencyBook(Wallet program, Account primary, Currency currency) {
+    private Account _openOperatingBook(Wallet house, Account primary, Currency currency) {
+        String entity = "01";
+        String type = "02";
+        String subType = "01";
+        String buffer = primary.getBuffer() == null ? CoaCodes.BUFFER : primary.getBuffer();
         String main = primary.getMainAccount();
-        int n = accountRepository.allSubAccountNumbers(main).size() + 1;
-        String sub = String.format("%04d", n);
-        while (accountRepository.findByMainAccountAndSubAccount(main, sub).isPresent()) {
-            n++;
-            sub = String.format("%04d", n);
-        }
         Account a = Account.builder()
-            .walletId(program.getId())
-            .entity(primary.getEntity())
-            .type(primary.getType())
-            .subType(primary.getSubType())
+            .walletId(house.getId())
+            .entity(entity)
+            .type(type)
+            .subType(subType)
             .mainAccount(main)
-            .subAccount(sub)
-            .buffer(primary.getBuffer())
+            .buffer(buffer)
             .currency(currency)
             .allowNegative(true)
             .ledgerBalance(BigDecimal.ZERO)
             .availableBalance(BigDecimal.ZERO)
             .status(AccountStatus.ACTIVE)
             .build();
-        a.setFullNumber(a.getEntity() + a.getType() + a.getSubType() + a.getMainAccount()
-            + a.getSubAccount() + a.getBuffer() + a.getCurrency());
+        a.setFullNumber(CoaCodes.fullNumber(entity, type, subType, main, buffer, currency));
         return accountRepository.save(a);
     }
 }

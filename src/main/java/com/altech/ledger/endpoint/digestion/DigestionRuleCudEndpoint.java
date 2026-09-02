@@ -8,6 +8,7 @@ import com.altech.ledger.entity.dto.response.GetDigestionRuleResponseDto;
 import com.altech.ledger.usecase.digestion.DigestionRuleUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -45,5 +46,11 @@ public class DigestionRuleCudEndpoint {
     @PostMapping("/{id}/disable")
     public Result<GetDigestionRuleResponseDto> disable(@PathVariable Long id) {
         return R.success(digestionRuleUseCase.setEnabled(id, false));
+    }
+
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
+        digestionRuleUseCase.delete(id);
+        return R.success();
     }
 }

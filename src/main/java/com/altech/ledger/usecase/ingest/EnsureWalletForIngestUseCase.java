@@ -8,14 +8,10 @@ import com.altech.ledger.entity.po.coa.CoaProfile;
 import com.altech.ledger.entity.po.ingest.IngestPolicy;
 import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
-import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.exception.response.WalletErrorResponse;
-import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.usecase.coa.CoaBookResolver;
-import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.usecase.wallet.CreateWalletOnboardingUseCase;
-import com.altech.ledger.util.CoaCodes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,8 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Resolve wallet for ingest: find existing or auto-create from DB {@link IngestPolicy}.
- * COA: event metadata override → Door autoWalletCoaProfileCode → CoaCodes (no DEFAULT profile).
+ * Resolve wallet for ingest: 1 ownerId → 1 wallet.
+ * Wallet.settlementCurrency = Door autoWalletSettlementCurrency (HKD).
+ * Opens 01-01-01 books on event.mainAccount for settlement + ensure (HKD + LP).
+ * Not 10-20-00.
  */
 @Slf4j
 @Component
@@ -36,9 +34,7 @@ import java.util.Optional;
 public class EnsureWalletForIngestUseCase {
     private final IngestPolicyUseCase ingestPolicyUseCase;
     private final WalletRepository walletRepository;
-    private final AccountRepository accountRepository;
     private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
-    private final CoaProfileUseCase coaProfileUseCase;
     private final CoaBookResolver coaBookResolver;
 
     public record ResolveResult(Wallet wallet, boolean provisioned) {}
@@ -64,7 +60,6 @@ public class EnsureWalletForIngestUseCase {
         if (existing.isPresent()) {
             Wallet w = existing.get();
             coaBookResolver.assertMemberMainAccountUsable(w, mainAccount);
-            _ensureCurrencyAccount(w, pointCurrency, mainAccount);
             return new ResolveResult(w, false);
         }
 
@@ -73,27 +68,15 @@ public class EnsureWalletForIngestUseCase {
             return null;
         }
 
-        Currency settlement = Currency.get(
-            cfg.getAutoWalletSettlementCurrency() == null ? "HKD" : cfg.getAutoWalletSettlementCurrency());
-        Currency ensure = Currency.get(
-            cfg.getAutoWalletEnsureCurrency() == null ? "LP" : cfg.getAutoWalletEnsureCurrency());
-        if (pointCurrency != null) {
-            ensure = pointCurrency;
-        }
-
+        Currency settlement = _settlement(cfg);
+        Currency ensure = _ensure(cfg);
         String coaCode = resolveCoaProfileCode(cfg, metadata);
+        List<AccountOpenSpecDto> extras = (ensure != null && ensure != settlement)
+            ? List.of(AccountOpenSpecDto.ofCurrency(ensure))
+            : List.of();
 
         boolean provisioned = false;
         try {
-            List<AccountOpenSpecDto> extras = List.of();
-            if (ensure != settlement) {
-                extras = List.of(new AccountOpenSpecDto(
-                    ensure.getIsoCode(),
-                    ensure.getIsoCode() + " book",
-                    false,
-                    false,
-                    ensure));
-            }
             String name = (cfg.getAutoWalletNamePrefix() == null ? "Auto " : cfg.getAutoWalletNamePrefix())
                 + ownerId;
 
@@ -121,13 +104,26 @@ public class EnsureWalletForIngestUseCase {
         Wallet wallet = _find(ownerId)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
                 "Wallet not found after auto-create: " + ownerId));
-        _ensureCurrencyAccount(wallet, pointCurrency != null ? pointCurrency : ensure, mainAccount);
         return new ResolveResult(wallet, provisioned);
     }
 
+    static Currency _settlement(IngestPolicy cfg) {
+        String iso = cfg == null || cfg.getAutoWalletSettlementCurrency() == null
+            || cfg.getAutoWalletSettlementCurrency().isBlank()
+            ? "HKD" : cfg.getAutoWalletSettlementCurrency();
+        return Currency.get(iso);
+    }
+
+    static Currency _ensure(IngestPolicy cfg) {
+        String iso = cfg == null || cfg.getAutoWalletEnsureCurrency() == null
+            || cfg.getAutoWalletEnsureCurrency().isBlank()
+            ? "LP" : cfg.getAutoWalletEnsureCurrency();
+        return Currency.get(iso);
+    }
+
     /**
-     * Priority: metadata.coaProfileCode → Door autoWalletCoaProfileCode → null (CoaCodes, no DEFAULT row).
-     * Standalone product: no client-specific stream aliases.
+     * Priority: metadata.coaProfileCode → Door autoWalletCoaProfileCode → null
+     * (caller uses CUSTOMER_CUST_{ccy} = 01-01-01).
      */
     static String resolveCoaProfileCode(IngestPolicy cfg, Map<String, String> metadata) {
         Map<String, String> md = metadata == null ? Map.of() : metadata;
@@ -162,58 +158,5 @@ public class EnsureWalletForIngestUseCase {
     @Transactional
     public Account ensureAccountForCoa(Wallet wallet, CoaProfile coa) {
         return coaBookResolver.ensureAccount(wallet, coa);
-    }
-
-    private void _ensureCurrencyAccount(Wallet wallet, Currency currency, String memberMainAccount) {
-        if (currency == null || wallet.getAccountId() == null) {
-            return;
-        }
-        Account primary = accountRepository.findById(wallet.getAccountId())
-            .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
-                "Primary account missing for wallet " + wallet.getId()));
-        String main = CoaBookResolver.normalizeMainAccount(memberMainAccount);
-        if (main != null && !main.equals(primary.getMainAccount())) {
-            // Second product tree is opened by CoaBookResolver at posting time.
-            return;
-        }
-        if (primary.getCurrency() == currency) {
-            return;
-        }
-        boolean exists = accountRepository.findAllByMainAccountAndCurrency(
-                primary.getMainAccount(), currency)
-            .stream()
-            .findAny()
-            .isPresent();
-        if (exists) {
-            return;
-        }
-
-        String sub = CoaCodes.subAccountCode(null, 1);
-        int n = 1;
-        while (accountRepository.findByMainAccountAndSubAccount(primary.getMainAccount(), sub).isPresent()) {
-            n++;
-            sub = CoaCodes.subAccountCode(null, n);
-            if (n > 99) {
-                throw new BizException(AccountErrorResponse.ACC0400,
-                    "No free sub-account under main " + primary.getMainAccount());
-            }
-        }
-        CoaProfileUseCase.Segments seg = coaProfileUseCase.segments(null);
-        String fullNumber = CoaCodes.fullNumber(
-            seg.entity(), seg.type(), seg.subType(), primary.getMainAccount(), sub, seg.buffer(), currency);
-        accountRepository.save(Account.builder()
-            .walletId(wallet.getId())
-            .fullNumber(fullNumber)
-            .entity(seg.entity())
-            .type(seg.type())
-            .subType(seg.subType())
-            .mainAccount(primary.getMainAccount())
-            .subAccount(sub)
-            .buffer(seg.buffer())
-            .currency(currency)
-            .allowNegative(false)
-            .build());
-        log.info("ensured {} account under wallet {} main={}",
-            currency, wallet.getId(), primary.getMainAccount());
     }
 }

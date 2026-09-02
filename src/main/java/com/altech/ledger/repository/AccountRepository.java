@@ -23,8 +23,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     @Query("select a from Account a where a.fullNumber = :prefix or a.fullNumber like concat(:prefix, ':%') order by a.id")
     List<Account> findAccountSetByWalletRef(@Param("prefix") String prefix);
 
-    Optional<Account> findByMainAccountAndSubAccount(String mainAccount, String subAccount);
-
     List<Account> findAllByMainAccount(String mainAccount);
 
     List<Account> findAllByWalletId(Long walletId);
@@ -40,9 +38,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     @Query("select a.mainAccount from Account a where a.mainAccount is not null")
     List<String> allMainAccountNumbers();
-
-    @Query("select a.subAccount from Account a where a.mainAccount = :mainAccount")
-    List<String> allSubAccountNumbers(@Param("mainAccount") String mainAccount);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from Account a where a.id in :ids order by a.id")

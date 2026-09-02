@@ -26,7 +26,7 @@ public final class DtoMapper {
     public static GetLedgerAccountResponseDto toAccount(Account a) {
         return new GetLedgerAccountResponseDto(
             a.getId(), a.getFullNumber(), a.getEntity(), a.getType(), a.getSubType(),
-            a.getMainAccount(), a.getSubAccount(), a.getBuffer(), a.getCurrency(),
+            a.getMainAccount(), a.getBuffer(), a.getCurrency(),
             a.getLedgerBalance(), a.getAvailableBalance(), a.getStatus(),
             a.getCreateDt(), a.getUpdateDt());
     }

@@ -6,14 +6,13 @@ import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 /**
  * Numeric COA segment helpers. Account keys are digit strings only — no English words.
  * <p>
- * fullNumber = entity(2) + type(2) + subType(2) + mainAccount + subAccount(4) + buffer(2) + currency(3)
- * Example: {@code 10200010001000000344} = entity 10, LIABILITY 20, sub 00, main 10001, leaf 0000, buf 00, HKD 344.
+ * fullNumber = entity(2) + type(2) + subType(2) + mainAccount + buffer(2) + currency(3)
+ * Example: {@code 1020001000100344} = entity 10, type 20, subType 00, main 10001, buffer 00, HKD 344.
  */
 public final class CoaCodes {
     public static final String ENTITY = "10";
     public static final String SUB_TYPE = "00";
     public static final String BUFFER = "00";
-    public static final String PRIMARY_SUB = "0000";
 
     /** UA corporate operating account number (house main). */
     public static final String HOUSE_MAIN_ACCOUNT = "9999";
@@ -26,7 +25,8 @@ public final class CoaCodes {
             return false;
         }
         String c = code.trim().toUpperCase(java.util.Locale.ROOT);
-        return c.startsWith("HOUSE_") || c.startsWith("CORP_") || c.startsWith("GL_") || "PROGRAM".equals(c);
+        return c.startsWith("HOUSE_") || c.startsWith("CORP_") || c.startsWith("GL_")
+            || "PROGRAM".equals(c) || "HOUSE".equals(c);
     }
 
     public static String typeCode(CoaType type) {
@@ -83,33 +83,14 @@ public final class CoaCodes {
         String type,
         String subType,
         String mainAccount,
-        String subAccount,
         String buffer,
         Currency currency
     ) {
-        return entity + type + subType + mainAccount + subAccount + buffer + currencyCode(currency);
+        return entity + type + subType + mainAccount + buffer + currencyCode(currency);
     }
 
-    public static String fullNumber(String mainAccount, String subAccount, CoaType coaType, Currency currency) {
-        return fullNumber(ENTITY, typeCode(coaType), SUB_TYPE, mainAccount, subAccount, BUFFER, currency);
-    }
-
-    /**
-     * Leaf code: numeric refCode (e.g. 89 → 0089) or zero-padded sequential index.
-     */
-    public static String subAccountCode(String refCode, int sequentialFallback) {
-        if (refCode != null && refCode.matches("\\d{1,4}")) {
-            return String.format("%04d", Integer.parseInt(refCode));
-        }
-        int n = Math.max(0, sequentialFallback);
-        if (n > 9999) {
-            n = n % 10000;
-        }
-        return String.format("%04d", n);
-    }
-
-    public static boolean isPrimarySub(String subAccount) {
-        return subAccount == null || PRIMARY_SUB.equals(subAccount) || "0".equals(subAccount);
+    public static String fullNumber(String mainAccount, CoaType coaType, Currency currency) {
+        return fullNumber(ENTITY, typeCode(coaType), SUB_TYPE, mainAccount, BUFFER, currency);
     }
 
     private static String _fallbackCurrencyCode(String iso) {

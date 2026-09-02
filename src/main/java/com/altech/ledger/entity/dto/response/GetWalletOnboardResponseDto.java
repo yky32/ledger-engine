@@ -23,6 +23,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private Long walletId;
+    /** Wallet.accountId — primary book PK. */
+    private Long accountId;
     /** Query key — CRM / customer id. */
     private String ownerId;
     /** Customer-facing vanity / premium display (optional). */

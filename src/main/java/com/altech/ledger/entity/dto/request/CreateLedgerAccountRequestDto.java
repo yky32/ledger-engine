@@ -14,7 +14,6 @@ public record CreateLedgerAccountRequestDto(
     String subType,
     String buffer,
     String mainAccount,
-    String subAccount,
     @NotNull Currency currency,
     Boolean allowNegative,
     Long walletId

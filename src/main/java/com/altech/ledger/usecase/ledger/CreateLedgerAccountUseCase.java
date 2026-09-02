@@ -28,15 +28,10 @@ public class CreateLedgerAccountUseCase {
     public AccountResponse execute(CreateAccountRequest request) {
         commonUseCase.requireCurrency(request.currency());
         String mainAccount = commonService.getNextMainAccount();
-        String subAccount = CoaCodes.PRIMARY_SUB;
-        String fullNumber = CoaCodes.fullNumber(mainAccount, subAccount, request.type(), request.currency());
+        String fullNumber = CoaCodes.fullNumber(mainAccount, request.type(), request.currency());
 
         if (accountRepository.existsByFullNumber(fullNumber)) {
             throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
-        }
-        if (accountRepository.findByMainAccountAndSubAccount(mainAccount, subAccount).isPresent()) {
-            throw new BizException(AccountErrorResponse.ACC0409,
-                "Main/sub account already exists: " + mainAccount + "/" + subAccount);
         }
 
         Account account = Account.builder()
@@ -45,7 +40,6 @@ public class CreateLedgerAccountUseCase {
             .type(CoaCodes.typeCode(request.type()))
             .subType(CoaCodes.SUB_TYPE)
             .mainAccount(mainAccount)
-            .subAccount(subAccount)
             .buffer(CoaCodes.BUFFER)
             .currency(request.currency())
             .allowNegative(request.allowNegative())
@@ -69,7 +63,9 @@ public class CreateLedgerAccountUseCase {
             coa = CoaType.LIABILITY;
         }
         return new AccountResponse(
-            a.getId(), a.getFullNumber(), a.getSubAccount(), coa, a.getCurrency(), a.getStatus(),
+            a.getId(), a.getFullNumber(),
+            a.getCurrency() != null ? a.getCurrency().getIsoCode() : a.getFullNumber(),
+            coa, a.getCurrency(), a.getStatus(),
             a.isAllowNegative(), a.getLedgerBalance(), a.getAvailableBalance(), a.getVersion(),
             a.getCreateDt(), a.getUpdateDt());
     }

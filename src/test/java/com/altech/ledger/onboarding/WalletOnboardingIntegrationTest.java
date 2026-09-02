@@ -47,7 +47,14 @@ class WalletOnboardingIntegrationTest {
             .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
             .andExpect(jsonPath("$.data.accounts.length()").value(2))
             .andExpect(jsonPath("$.data.accounts[?(@.currency=='HKD' && @.primary==true)]").exists())
-            .andExpect(jsonPath("$.data.accounts[?(@.currency=='LP')]").exists());
+            .andExpect(jsonPath("$.data.accounts[?(@.currency=='LP')]").exists())
+            .andExpect(jsonPath("$.data.accounts[0].entity").exists())
+            .andExpect(jsonPath("$.data.accounts[0].type").value(org.hamcrest.Matchers.matchesPattern("\\d+")))
+            .andExpect(jsonPath("$.data.accounts[0].subType").exists())
+            .andExpect(jsonPath("$.data.accounts[0].mainAccount").exists())
+            .andExpect(jsonPath("$.data.accounts[0].buffer").exists())
+            .andExpect(jsonPath("$.data.accounts[0].fullNumber").exists())
+            .andExpect(jsonPath("$.data.accounts[0].subAccount").doesNotExist());
 
         mockMvc.perform(get("/wallets").param("ownerId", ownerId))
             .andExpect(status().isOk())

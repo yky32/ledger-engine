@@ -17,7 +17,6 @@ public record GetLedgerAccountResponseDto(
     String type,
     String subType,
     String mainAccount,
-    String subAccount,
     String buffer,
     Currency currency,
     BigDecimal ledgerBalance,

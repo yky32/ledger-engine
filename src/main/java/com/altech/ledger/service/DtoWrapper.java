@@ -1,6 +1,5 @@
 package com.altech.ledger.service;
 
-import com.altech.ledger.entity.dto.ledger.LedgerDto.CoaType;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletBalanceResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
@@ -38,6 +37,7 @@ public final class DtoWrapper {
     public static GetWalletOnboardResponseDto getWalletListRowDto(Wallet wallet) {
         return GetWalletOnboardResponseDto.builder()
             .walletId(wallet.getId())
+            .accountId(wallet.getAccountId())
             .ownerId(wallet.getOwnerId())
             .vanityCode(wallet.getVanityCode())
             .settlementCurrency(wallet.getSettlementCurrency())
@@ -60,6 +60,7 @@ public final class DtoWrapper {
     ) {
         return GetWalletOnboardResponseDto.builder()
             .walletId(wallet.getId())
+            .accountId(wallet.getAccountId())
             .ownerId(wallet.getOwnerId())
             .vanityCode(wallet.getVanityCode())
             .settlementCurrency(wallet.getSettlementCurrency())
@@ -101,8 +102,9 @@ public final class DtoWrapper {
         Boolean primary,
         String displayName
     ) {
-        CoaType coa = _coaType(a.getType());
-        String name = displayName != null && !displayName.isBlank() ? displayName : a.getSubAccount();
+        String name = displayName != null && !displayName.isBlank()
+            ? displayName
+            : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : a.getFullNumber());
         return GetWalletAccountResponseDto.builder()
             .id(a.getId())
             .walletId(a.getWalletId())
@@ -110,7 +112,11 @@ public final class DtoWrapper {
             .name(name)
             .refCode(refCode)
             .primary(primary)
-            .type(coa)
+            .entity(a.getEntity())
+            .type(a.getType())
+            .subType(a.getSubType())
+            .mainAccount(a.getMainAccount())
+            .buffer(a.getBuffer())
             .currency(a.getCurrency())
             .status(a.getStatus())
             .allowNegative(a.isAllowNegative())
@@ -123,26 +129,6 @@ public final class DtoWrapper {
             .updateBy(a.getUpdatedBy())
             .isActive(a.getIsActive())
             .build();
-    }
-
-    private static CoaType _coaType(String type) {
-        if (type == null) {
-            return CoaType.LIABILITY;
-        }
-        return switch (type) {
-            case "10" -> CoaType.ASSET;
-            case "20" -> CoaType.LIABILITY;
-            case "30" -> CoaType.EQUITY;
-            case "40" -> CoaType.REVENUE;
-            case "50" -> CoaType.EXPENSE;
-            default -> {
-                try {
-                    yield CoaType.valueOf(type);
-                } catch (Exception ex) {
-                    yield CoaType.LIABILITY;
-                }
-            }
-        };
     }
 
     public static GetWalletBalanceResponseDto getWalletBalanceResponseDto(Account a) {

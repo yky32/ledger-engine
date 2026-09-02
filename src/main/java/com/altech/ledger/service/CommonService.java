@@ -23,17 +23,4 @@ public class CommonService {
         }
         return String.valueOf(max + 1);
     }
-
-    @Transactional(readOnly = true)
-    public String getNextSubAccount(String mainAccount) {
-        long max = 0L;
-        for (String value : accountRepository.allSubAccountNumbers(mainAccount)) {
-            try {
-                max = Math.max(max, Long.parseLong(value.trim()));
-            } catch (NumberFormatException ignored) {
-                // skip
-            }
-        }
-        return String.format("%04d", max + 1);
-    }
 }

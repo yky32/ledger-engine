@@ -96,11 +96,13 @@ class TransactionIngestionIntegrationTest {
             .andExpect(jsonPath("$.data.points").value(1.0))
             .andExpect(jsonPath("$.data.walletExternalReference").value(cust));
 
-        mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
+        mockMvc.perform(get("/wallets/" + cust))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.ownerId").value(cust))
             .andExpect(jsonPath("$.data.settlementCurrency").value("HKD"))
-            .andExpect(jsonPath("$.data.accounts[0].currency").value("LP"));
+            .andExpect(jsonPath("$.data.accounts.length()").value(2))
+            .andExpect(jsonPath("$.data.accounts[*].currency",
+                org.hamcrest.Matchers.containsInAnyOrder("HKD", "LP")));
     }
 
     @Test

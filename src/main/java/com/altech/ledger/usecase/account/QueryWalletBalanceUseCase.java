@@ -124,7 +124,7 @@ public class QueryWalletBalanceUseCase {
         List<GetLedgerAccountResponseDto> converted = base.accounts().stream().map(a -> {
             _convert(a.ledgerBalance(), a.currency(), target);
             return new GetLedgerAccountResponseDto(a.id(), a.fullNumber(), a.entity(), a.type(), a.subType(),
-                a.mainAccount(), a.subAccount(), a.buffer(), a.currency(),
+                a.mainAccount(), a.buffer(), a.currency(),
                 a.ledgerBalance(), a.availableBalance(), a.status(), a.createDt(), a.updateDt());
         }).toList();
         return new GetLedgerWalletResponseDto(

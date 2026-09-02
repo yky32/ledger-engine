@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * Product APIs (deposit/withdraw/transfer), loyalty (earn/burn), and hold/release
  * all go through {@link #execute(PostingCommand)}. Accounting differences stay in
- * {@link PostingIntent} → OrderType → execution rules (PROGRAM DE for earn/burn).
+ * {@link PostingIntent} → OrderType → execution rules (HOUSE DE for earn/burn).
  * <p>
  * Shared application capability (multi-caller) — not a product HTTP verb by itself.
  */
@@ -102,7 +102,7 @@ public class ApplyPostingUseCase {
         };
     }
 
-    /** Convenience — loyalty earn (PROGRAM DE). */
+    /** Convenience — loyalty earn (HOUSE DE). */
     @Transactional
     public GetLedgerMovementResponseDto earn(
         Long walletId,
@@ -114,7 +114,7 @@ public class ApplyPostingUseCase {
         return execute(PostingCommand.earn(walletId, amount, currency, movementKey, description));
     }
 
-    /** Convenience — loyalty burn (PROGRAM DE). */
+    /** Convenience — loyalty burn (HOUSE DE). */
     @Transactional
     public GetLedgerMovementResponseDto burn(
         Long walletId,

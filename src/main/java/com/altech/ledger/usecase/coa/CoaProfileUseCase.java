@@ -84,8 +84,8 @@ public class CoaProfileUseCase {
     public Segments segments(String profileCode) {
         if (profileCode == null || profileCode.isBlank()
             || "DEFAULT".equalsIgnoreCase(profileCode.trim())) {
-            return new Segments(
-                CoaCodes.ENTITY, CoaCodes.typeCodeLiability(), CoaCodes.SUB_TYPE, CoaCodes.BUFFER, false);
+            // Customer CC custodian individual (sheet 01-01-01) — not 10-20-00.
+            return new Segments("01", "01", "01", CoaCodes.BUFFER, false);
         }
         CoaProfile p = requireByCode(profileCode);
         return new Segments(p.getEntity(), p.getType(), p.getSubType(), p.getBuffer(),
@@ -234,9 +234,9 @@ public class CoaProfileUseCase {
         return toDto(coaProfileRepository.save(p));
     }
 
-    public String fullNumber(Segments seg, String mainAccount, String subAccount, Currency currency) {
+    public String fullNumber(Segments seg, String mainAccount, Currency currency) {
         return CoaCodes.fullNumber(
-            seg.entity(), seg.type(), seg.subType(), mainAccount, subAccount, seg.buffer(), currency);
+            seg.entity(), seg.type(), seg.subType(), mainAccount, seg.buffer(), currency);
     }
 
     /** Hide legacy DEFAULT chart row — COA has no default profile. */

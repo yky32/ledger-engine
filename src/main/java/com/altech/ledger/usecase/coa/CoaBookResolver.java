@@ -62,11 +62,9 @@ public class CoaBookResolver {
         if (currency == null) {
             throw new BizException(AccountErrorResponse.ACC0400, "currency required");
         }
-        String code = memberCustodianCode(currency);
-        Optional<CoaProfile> profile = coaProfileRepository.findByCode(code)
-            .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()));
+        Optional<CoaProfile> profile = findCustomerCustodian(currency);
         if (profile.isPresent()) {
-            return resolve(code, memberWalletId);
+            return resolve(profile.get().getCode(), memberWalletId);
         }
         Wallet wallet = walletRepository.findById(memberWalletId)
             .orElseThrow(() -> new BizException(AccountErrorResponse.ACC0404,
@@ -87,32 +85,31 @@ public class CoaBookResolver {
         if (memberWalletId == null || currency == null) {
             return Optional.empty();
         }
-        String code = memberCustodianCode(currency);
-        Optional<CoaProfile> profile = coaProfileRepository.findByCode(code)
-            .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()));
+        Optional<CoaProfile> profile = findCustomerCustodian(currency);
         if (profile.isEmpty()) {
             return Optional.empty();
         }
         CoaProfile coa = profile.get();
-        Wallet wallet = walletRepository.findById(memberWalletId).orElse(null);
-        if (wallet == null || wallet.getAccountId() == null) {
-            return Optional.empty();
-        }
-        Account primary = accountRepository.findById(wallet.getAccountId()).orElse(null);
-        if (primary == null) {
-            return Optional.empty();
-        }
+        String entity = blank(coa.getEntity(), "01");
+        String type = blank(coa.getType(), "01");
+        String subType = blank(coa.getSubType(), "01");
         Currency ccy = Currency.get(coa.getCurrency() == null ? currency.getIsoCode() : coa.getCurrency());
-        return accountRepository.findFirstByMainAccountAndEntityAndTypeAndSubTypeAndCurrency(
-            primary.getMainAccount(),
-            blank(coa.getEntity(), CoaCodes.ENTITY),
-            blank(coa.getType(), CoaCodes.typeCodeLiability()),
-            blank(coa.getSubType(), CoaCodes.SUB_TYPE),
-            ccy);
+        return accountRepository.findAllByWalletId(memberWalletId).stream()
+            .filter(a -> entity.equals(a.getEntity())
+                && type.equals(a.getType())
+                && subType.equals(a.getSubType())
+                && a.getCurrency() == ccy)
+            .findFirst();
     }
 
+    public static String customerCustodianCode(Currency currency) {
+        return "CUSTOMER_CUST_" + currency.getIsoCode();
+    }
+
+    /** @deprecated use {@link #customerCustodianCode(Currency)} */
+    @Deprecated
     public static String memberCustodianCode(Currency currency) {
-        return "MEMBER_CUST_" + currency.getIsoCode();
+        return customerCustodianCode(currency);
     }
 
     @Transactional
@@ -153,18 +150,8 @@ public class CoaBookResolver {
             return dirty ? accountRepository.save(a) : a;
         }
         String buffer = blank(coa.getBuffer(), CoaCodes.BUFFER);
-        String sub = CoaCodes.subAccountCode(null, 1);
-        int n = 1;
-        while (accountRepository.findByMainAccountAndSubAccount(main, sub).isPresent()) {
-            n++;
-            sub = CoaCodes.subAccountCode(null, n);
-            if (n > 99) {
-                throw new BizException(AccountErrorResponse.ACC0400,
-                    "No free sub-account under main " + main);
-            }
-        }
         String fullNumber = CoaCodes.fullNumber(
-            entity, type, subType, main, sub, buffer, ccy);
+            entity, type, subType, main, buffer, ccy);
         Account created = accountRepository.save(Account.builder()
             .walletId(wallet.getId())
             .fullNumber(fullNumber)
@@ -172,7 +159,6 @@ public class CoaBookResolver {
             .type(type)
             .subType(subType)
             .mainAccount(main)
-            .subAccount(sub)
             .buffer(buffer)
             .currency(ccy)
             .allowNegative(Boolean.TRUE.equals(coa.getPoolAllowNegative()))
@@ -246,14 +232,33 @@ public class CoaBookResolver {
                 "Member wallet not found: " + memberWalletId));
     }
 
+    private Optional<CoaProfile> findCustomerCustodian(Currency currency) {
+        String neo = customerCustodianCode(currency);
+        Optional<CoaProfile> hit = enabledByCode(neo);
+        if (hit.isPresent()) {
+            return hit;
+        }
+        return enabledByCode("MEMBER_CUST_" + currency.getIsoCode());
+    }
+
+    private Optional<CoaProfile> enabledByCode(String code) {
+        return coaProfileRepository.findByCode(code)
+            .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()));
+    }
+
     private CoaProfile requireProfile(String coaCode) {
         if (coaCode == null || coaCode.isBlank()) {
             throw new BizException(CoaErrorResponse.COA0400, "AccountingRule.targetAccount (CoaProfile.code) required");
         }
         String code = coaCode.trim().toUpperCase(Locale.ROOT);
-        return coaProfileRepository.findByCode(code)
-            .filter(p -> Boolean.TRUE.equals(p.getIsActive()) && Boolean.TRUE.equals(p.getIsEnabled()))
-            .orElseThrow(() -> new BizException(CoaErrorResponse.COA0404, "code=" + code));
+        Optional<CoaProfile> hit = enabledByCode(code);
+        if (hit.isEmpty() && code.startsWith("MEMBER_CUST_")) {
+            hit = enabledByCode("CUSTOMER_CUST_" + code.substring("MEMBER_CUST_".length()));
+        }
+        if (hit.isEmpty() && code.startsWith("CUSTOMER_CUST_")) {
+            hit = enabledByCode("MEMBER_CUST_" + code.substring("CUSTOMER_CUST_".length()));
+        }
+        return hit.orElseThrow(() -> new BizException(CoaErrorResponse.COA0404, "code=" + code));
     }
 
     private static String blank(String v, String d) {

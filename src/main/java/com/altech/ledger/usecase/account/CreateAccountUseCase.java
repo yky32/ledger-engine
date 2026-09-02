@@ -40,21 +40,10 @@ public class CreateAccountUseCase {
         if (!mainAccount.matches("\\d+")) {
             mainAccount = commonService.getNextMainAccount();
         }
-        String subAccount = _blank(dto.subAccount(), CoaCodes.PRIMARY_SUB);
-        if (!subAccount.matches("\\d+")) {
-            subAccount = CoaCodes.PRIMARY_SUB;
-        }
-        if (subAccount.length() < 4 && subAccount.matches("\\d+")) {
-            subAccount = String.format("%04d", Integer.parseInt(subAccount));
-        }
-        String fullNumber = CoaCodes.fullNumber(entity, type, subType, mainAccount, subAccount, buffer, currency);
+        String fullNumber = CoaCodes.fullNumber(entity, type, subType, mainAccount, buffer, currency);
 
         if (accountRepository.existsByFullNumber(fullNumber)) {
             throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
-        }
-        if (accountRepository.findByMainAccountAndSubAccount(mainAccount, subAccount).isPresent()) {
-            throw new BizException(AccountErrorResponse.ACC0409,
-                "Main/sub account already exists: " + mainAccount + "/" + subAccount);
         }
 
         boolean allowNegative = dto.allowNegative() != null && dto.allowNegative();
@@ -65,7 +54,6 @@ public class CreateAccountUseCase {
             .type(type)
             .subType(subType)
             .mainAccount(mainAccount)
-            .subAccount(subAccount)
             .buffer(buffer)
             .currency(currency)
             .allowNegative(allowNegative)
@@ -80,7 +68,6 @@ public class CreateAccountUseCase {
             Currency currency = commonUseCase.requireCurrency(currencyCode);
             CreateLedgerAccountRequestDto req = new CreateLedgerAccountRequestDto(
                 CoaCodes.ENTITY, "20", CoaCodes.SUB_TYPE, CoaCodes.BUFFER, mainAccount,
-                commonService.getNextSubAccount(mainAccount),
                 currency, false, null);
             created.add(execute(req));
         }

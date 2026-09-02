@@ -133,6 +133,35 @@ class AccountingRulePostingIntegrationTest {
         assertThat(house9089.getId()).isEqualTo(house9088.getId());
         assertThat(house9089.getMainAccount()).isEqualTo(CoaCodes.HOUSE_MAIN_ACCOUNT);
         assertThat(house9089.getWalletId()).isNotEqualTo(wallet.getId());
+
+        List<Account> customerBooks = accountRepository.findAllByWalletId(wallet.getId());
+        assertThat(customerBooks).isNotEmpty();
+        assertThat(customerBooks).allMatch(a ->
+            "01".equals(a.getEntity()) && "01".equals(a.getType()) && "01".equals(a.getSubType()));
+        assertThat(customerBooks).noneMatch(a -> "10".equals(a.getEntity()) || "20".equals(a.getType()));
+    }
+
+    @Test
+    void ingestOpensOnlyCustomerCustodianPerMainAccount() throws Exception {
+        String owner = "01A" + String.format("%08d", Math.abs(UUID.randomUUID().hashCode() % 100_000_000));
+        String suffix = String.format("%08d", Math.abs(UUID.randomUUID().hashCode() % 100_000_000));
+        String card9089 = "9089" + suffix;
+        String card9088 = "9088" + suffix;
+
+        _seedDigestion("CC_TXN_LP_" + UUID.randomUUID().toString().substring(0, 6), "CC_TXN", "LP");
+        _earnEventWithMain(owner, "CC_TXN", new BigDecimal("100"), card9089);
+
+        _seedDigestion("CC_TXN_HKD_" + UUID.randomUUID().toString().substring(0, 6), "CC_TXN", "HKD");
+        _earnEventWithMain(owner, "CC_TXN", new BigDecimal("100"), card9088);
+
+        Wallet wallet = walletRepository.findByOwnerId(owner).orElseThrow();
+        assertThat(wallet.getSettlementCurrency()).isEqualTo(Currency.HKD);
+        List<Account> books = accountRepository.findAllByWalletId(wallet.getId());
+        assertThat(books).allMatch(a ->
+            "01".equals(a.getEntity()) && "01".equals(a.getType()) && "01".equals(a.getSubType()));
+        assertThat(books).anyMatch(a -> card9089.equals(a.getMainAccount()) && a.getCurrency() == Currency.HKD);
+        assertThat(books).anyMatch(a -> card9089.equals(a.getMainAccount()) && a.getCurrency() == Currency.LP);
+        assertThat(books).anyMatch(a -> card9088.equals(a.getMainAccount()) && a.getCurrency() == Currency.HKD);
     }
 
     @Test
@@ -224,8 +253,14 @@ class AccountingRulePostingIntegrationTest {
     }
 
     private long _earnEvent(String ownerId, String eventType, BigDecimal amount) throws Exception {
+        return _earnEventWithMain(ownerId, eventType, amount, null);
+    }
+
+    private long _earnEventWithMain(String ownerId, String eventType, BigDecimal amount, String mainAccount)
+        throws Exception {
         TransactionalEvent event = new TransactionalEvent(
-            "evt-" + UUID.randomUUID(), ownerId, eventType, amount, Currency.HKD, Instant.now(), Map.of());
+            "evt-" + UUID.randomUUID(), ownerId, eventType, amount, Currency.HKD, Instant.now(), Map.of(),
+            mainAccount);
         MvcResult res = mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))

@@ -115,7 +115,7 @@ Customer-facing root: `owner_id` (unique — **1 CUST : 1 Wallet**), `settlement
 
 ### `account`
 
-COA + live balances: segments (`entity`, `type`, `sub_type`, `main_account`, `sub_account`, `buffer`), `full_number`, `currency`, `ledger_balance`, `available_balance`.
+COA + live balances: segments (`entity`, `type`, `sub_type`, `main_account`, `buffer`), `full_number`, `currency`, `ledger_balance`, `available_balance`.
 
 ### `ledger_movement` / `ledger_entry`
 
@@ -161,7 +161,7 @@ Omitted / empty `accounts` → **primary only**. Duplicate extra currencies are 
 Numeric COA `fullNumber` (no English keys):
 
 ```text
-fullNumber = entity(2) + type(2) + subType(2) + mainAccount + subAccount(4) + buffer(2) + currency(3)
+fullNumber = entity(2) + type(2) + subType(2) + mainAccount + buffer(2) + currency(3)
 example    = 10 + 20 + 00 + 10001 + 0000 + 00 + 344   →  10200010001000000344  (HKD primary)
 ```
 

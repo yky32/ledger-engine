@@ -60,7 +60,7 @@ public class DigestionRuleUseCase {
         r.setMinAmount(req.minAmount() == null ? BigDecimal.ZERO : req.minAmount());
         r.setEligibleCurrencies(joinCodes(req.eligibleCurrencies()));
         r.setEligibleMccs(joinCodes(req.eligibleMccs()));
-        r.setMaxAgeDays(req.maxAgeDays());
+        r.setMaxAgeDays(normalizeMaxAgeDays(req.maxAgeDays()));
         r.setResultCurrency(req.resultCurrency() == null || req.resultCurrency().isBlank()
             ? "LP" : req.resultCurrency().trim().toUpperCase(Locale.ROOT));
         try {
@@ -111,7 +111,7 @@ public class DigestionRuleUseCase {
             r.setEligibleMccs(joinCodes(req.eligibleMccs()));
         }
         if (req.maxAgeDays() != null) {
-            r.setMaxAgeDays(req.maxAgeDays());
+            r.setMaxAgeDays(normalizeMaxAgeDays(req.maxAgeDays()));
         }
         if (req.resultCurrency() != null && !req.resultCurrency().isBlank()) {
             r.setResultCurrency(req.resultCurrency().trim().toUpperCase(Locale.ROOT));
@@ -146,9 +146,23 @@ public class DigestionRuleUseCase {
         return toDto(digestionRuleRepository.save(r));
     }
 
+    @Transactional
+    public void delete(Long id) {
+        DigestionRule r = _require(id);
+        digestionRuleRepository.delete(r);
+    }
+
     private DigestionRule _require(Long id) {
         return digestionRuleRepository.findById(id)
             .orElseThrow(() -> new BizException(DigestionErrorResponse.DIG0404, "id=" + id));
+    }
+
+    /** 0 or negative → unrestricted (null). Lets all-any upsert clear a stored age gate. */
+    static Integer normalizeMaxAgeDays(Integer maxAgeDays) {
+        if (maxAgeDays == null || maxAgeDays <= 0) {
+            return null;
+        }
+        return maxAgeDays;
     }
 
     /** Join currency / MCC codes to CSV (upper). Empty list → null (means unrestricted). */

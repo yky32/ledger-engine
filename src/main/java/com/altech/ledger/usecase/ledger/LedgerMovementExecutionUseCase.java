@@ -151,7 +151,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
                 command.add(origin, amount, BalanceOperation.SUBTRACT);
             }
             case EARN, ADJUSTMENT -> {
-                // Double-entry: DEBIT PROGRAM pool + CREDIT customer (same currency, balanced)
+                // Double-entry fallback: DEBIT HOUSE operating + CREDIT customer (same currency)
                 Account customer = resolveAccount(movement.getTargetId() != null
                     ? movement.getTargetId() : String.valueOf(movement.getWalletId()), currency);
                 Account pool = programPoolService.ensurePoolAccount(currency);

@@ -12,7 +12,7 @@ import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.CommonUseCase;
 import com.altech.ledger.usecase.coa.CoaBookResolver;
-import com.altech.ledger.util.CoaCodes;
+import com.altech.ledger.usecase.coa.HouseBooksUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +35,7 @@ public class QueryWalletUseCase {
     private final AccountRepository accountRepository;
     private final CommonUseCase commonUseCase;
     private final CoaBookResolver coaBookResolver;
+    private final HouseBooksUseCase houseBooksUseCase;
 
     @Transactional(readOnly = true)
     public GetWalletOnboardResponseDto byOwnerId(String ownerId) {
@@ -71,8 +72,9 @@ public class QueryWalletUseCase {
     }
 
     /** Admin query list — active wallets, no nested accounts. */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<GetWalletOnboardResponseDto> listAll() {
+        houseBooksUseCase.migrateLegacyOwner();
         return walletRepository.findAllByIsActiveTrueOrderByCreateDtDesc().stream()
             .map(DtoWrapper::getWalletListRowDto)
             .toList();
@@ -83,6 +85,12 @@ public class QueryWalletUseCase {
             throw new BizException(WalletErrorResponse.WAL0400, "ownerId is required");
         }
         String id = ownerId.trim();
+        if (HouseBooksUseCase.isHouseOwner(id)) {
+            return walletRepository.findByOwnerId(HouseBooksUseCase.DEFAULT_OWNER)
+                .or(() -> walletRepository.findByOwnerId(HouseBooksUseCase.LEGACY_OWNER))
+                .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
+                    "Wallet not found for ownerId: " + HouseBooksUseCase.DEFAULT_OWNER));
+        }
         return walletRepository.findByOwnerId(id)
             .orElseThrow(() -> new BizException(WalletErrorResponse.WAL0404,
                 "Wallet not found for ownerId: " + id));
@@ -102,8 +110,7 @@ public class QueryWalletUseCase {
 
         List<Account> ordered = set.stream()
             .sorted(Comparator
-                .comparing((Account a) -> !(primary.getId() != null && primary.getId().equals(a.getId())
-                    || CoaCodes.isPrimarySub(a.getSubAccount())))
+                .comparing((Account a) -> !(primary.getId() != null && primary.getId().equals(a.getId())))
                 .thenComparing(a -> a.getCurrency() == null ? "" : a.getCurrency().getIsoCode())
                 .thenComparing(Account::getId))
             .toList();
@@ -127,13 +134,12 @@ public class QueryWalletUseCase {
 
         List<GetWalletAccountResponseDto> accounts = new ArrayList<>();
         for (Account a : ordered) {
-            boolean isPrimary = primary.getId() != null && primary.getId().equals(a.getId())
-                || CoaCodes.isPrimarySub(a.getSubAccount());
+            boolean isPrimary = primary.getId() != null && primary.getId().equals(a.getId());
             String refCode = isPrimary ? null
-                : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : _stripLeadingZeros(a.getSubAccount()));
+                : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : null);
             String name = isPrimary && wallet.getName() != null
                 ? wallet.getName()
-                : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : a.getSubAccount());
+                : (a.getCurrency() != null ? a.getCurrency().getIsoCode() : a.getFullNumber());
             accounts.add(DtoWrapper.getWalletAccountResponseDto(a, refCode, isPrimary, name));
         }
 
@@ -157,13 +163,5 @@ public class QueryWalletUseCase {
             }
         }
         return out;
-    }
-
-    private static String _stripLeadingZeros(String sub) {
-        if (sub == null) {
-            return null;
-        }
-        String s = sub.replaceFirst("^0+(?!$)", "");
-        return s.isEmpty() ? "0" : s;
     }
 }

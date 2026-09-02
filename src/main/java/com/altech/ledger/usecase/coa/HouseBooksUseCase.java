@@ -40,8 +40,25 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 public class HouseBooksUseCase {
-    /** Product-wide house owner — not a member CUST. Same wallet PROGRAM pool uses for DE. */
-    public static final String DEFAULT_OWNER = "PROGRAM";
+    /** Company wallet for UAF finance. Not a member CUST. */
+    public static final String DEFAULT_OWNER = "HOUSE";
+    /** Pre-HOUSE ownerId — renamed in place on ensure. */
+    public static final String LEGACY_OWNER = "PROGRAM";
+
+    public static boolean isHouseOwner(String ownerId) {
+        if (ownerId == null || ownerId.isBlank()) {
+            return false;
+        }
+        String o = ownerId.trim().toUpperCase(Locale.ROOT);
+        return DEFAULT_OWNER.equals(o) || LEGACY_OWNER.equals(o);
+    }
+
+    public static String canonicalOwner(String ownerId) {
+        if (ownerId == null || ownerId.isBlank() || isHouseOwner(ownerId)) {
+            return DEFAULT_OWNER;
+        }
+        return ownerId.trim();
+    }
 
     private record HouseSeed(String code, String name, String entity, String type, String subType,
                              String buffer, String currency) {}
@@ -62,6 +79,12 @@ public class HouseBooksUseCase {
     private final AccountRepository accountRepository;
     private final CreateWalletOnboardingUseCase createWalletOnboardingUseCase;
     private final CoaProfileUseCase coaProfileUseCase;
+
+    /** Rename leftover PROGRAM → HOUSE. No-op if already HOUSE or neither exists. */
+    @Transactional
+    public void migrateLegacyOwner() {
+        _findOrMigrateHouseWallet(DEFAULT_OWNER);
+    }
 
     @Transactional(readOnly = true)
     public GetHouseBooksResponseDto get() {
@@ -89,7 +112,7 @@ public class HouseBooksUseCase {
 
     @Transactional
     public GetHouseBooksResponseDto assignWallet(String ownerId) {
-        String oid = ownerId == null || ownerId.isBlank() ? DEFAULT_OWNER : ownerId.trim();
+        String oid = canonicalOwner(ownerId);
         List<CoaProfile> house = _houseProfiles();
         if (house.isEmpty()) {
             _seedUaHouseProfiles();
@@ -98,7 +121,7 @@ public class HouseBooksUseCase {
         if (house.isEmpty()) {
             throw new BizException(CoaErrorResponse.COA0400, "Create HOUSE_* COA profiles first");
         }
-        Wallet wallet = walletRepository.findByOwnerId(oid).orElse(null);
+        Wallet wallet = _findOrMigrateHouseWallet(oid);
         if (wallet == null) {
             wallet = _openHouseWallet(oid, house);
         }
@@ -150,7 +173,7 @@ public class HouseBooksUseCase {
             createWalletOnboardingUseCase.execute(new CreateWalletOnboardRequestDto(
                 ownerId,
                 settlement,
-                "System " + ownerId,
+                DEFAULT_OWNER.equals(ownerId) ? "UAF HOUSE" : "System " + ownerId,
                 null,
                 seed.getCode(),
                 extras,
@@ -197,18 +220,8 @@ public class HouseBooksUseCase {
             return;
         }
         String buffer = blank(coa.getBuffer(), CoaCodes.BUFFER);
-        String sub = CoaCodes.subAccountCode(null, 1);
-        int n = 1;
-        while (accountRepository.findByMainAccountAndSubAccount(primary.getMainAccount(), sub).isPresent()) {
-            n++;
-            sub = CoaCodes.subAccountCode(null, n);
-            if (n > 99) {
-                throw new BizException(AccountErrorResponse.ACC0400,
-                    "No free sub-account under main " + primary.getMainAccount());
-            }
-        }
         String fullNumber = CoaCodes.fullNumber(
-            entity, type, subType, primary.getMainAccount(), sub, buffer, ccy);
+            entity, type, subType, primary.getMainAccount(), buffer, ccy);
         accountRepository.save(Account.builder()
             .walletId(wallet.getId())
             .fullNumber(fullNumber)
@@ -216,11 +229,35 @@ public class HouseBooksUseCase {
             .type(type)
             .subType(subType)
             .mainAccount(primary.getMainAccount())
-            .subAccount(sub)
             .buffer(buffer)
             .currency(ccy)
             .allowNegative(Boolean.TRUE.equals(coa.getPoolAllowNegative()))
             .build());
+    }
+
+    /** HOUSE first; rename leftover PROGRAM row in place (same walletId). */
+    private Wallet _findOrMigrateHouseWallet(String oid) {
+        Optional<Wallet> hit = walletRepository.findByOwnerId(oid);
+        if (hit.isPresent()) {
+            return hit.get();
+        }
+        if (!DEFAULT_OWNER.equals(oid)) {
+            return null;
+        }
+        Optional<Wallet> legacy = walletRepository.findByOwnerId(LEGACY_OWNER);
+        if (legacy.isEmpty()) {
+            return null;
+        }
+        Wallet w = legacy.get();
+        w.setOwnerId(DEFAULT_OWNER);
+        w.setName("UAF HOUSE");
+        if (w.getVanityCode() != null && LEGACY_OWNER.equalsIgnoreCase(w.getVanityCode())) {
+            w.setVanityCode(DEFAULT_OWNER);
+        }
+        w.setWalletType(WalletType.CORPORATE);
+        w = walletRepository.save(w);
+        log.info("Renamed house wallet ownerId {} → {} walletId={}", LEGACY_OWNER, DEFAULT_OWNER, w.getId());
+        return w;
     }
 
     private void _seedUaHouseProfiles() {

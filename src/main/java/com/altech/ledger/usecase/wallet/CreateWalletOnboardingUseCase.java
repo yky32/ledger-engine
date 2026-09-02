@@ -36,7 +36,7 @@ import java.util.Set;
 
 /**
  * Wallet create: <b>1 ownerId → 1 Wallet</b>.
- * Initial account COA segments from request {@code coaProfileCode}, else CoaCodes (10-20-00). Not stored on Wallet.
+ * Initial account COA segments from request {@code coaProfileCode}, else customer 01-01-01. Not stored on Wallet.
  */
 @Component
 @RequiredArgsConstructor
@@ -141,9 +141,7 @@ public class CreateWalletOnboardingUseCase {
         Map<String, AccountOpenSpecDto> byKey = new LinkedHashMap<>();
         Map<String, Account> opened = new LinkedHashMap<>();
         Account primary = null;
-        Set<String> usedSubs = new HashSet<>();
         Set<Currency> usedCurrencies = new HashSet<>();
-        int sequential = 0;
 
         for (AccountOpenSpecDto spec : specs) {
             Currency accountCcy = spec.isPrimaryLine()
@@ -155,16 +153,9 @@ public class CreateWalletOnboardingUseCase {
                 continue;
             }
 
-            String sub = _allocateSub(spec, usedSubs, sequential);
-            if (!spec.isPrimaryLine() && (spec.refCode() == null || !spec.refCode().matches("\\d{1,4}"))) {
-                sequential++;
-            }
-            usedSubs.add(sub);
-
             String fullNumber = CoaCodes.fullNumber(
-                seg.entity(), seg.type(), seg.subType(), mainAccount, sub, seg.buffer(), accountCcy);
-            if (accountRepository.existsByFullNumber(fullNumber)
-                || accountRepository.findByMainAccountAndSubAccount(mainAccount, sub).isPresent()) {
+                seg.entity(), seg.type(), seg.subType(), mainAccount, seg.buffer(), accountCcy);
+            if (accountRepository.existsByFullNumber(fullNumber)) {
                 throw new BizException(AccountErrorResponse.ACC0409, "Account already exists: " + fullNumber);
             }
 
@@ -175,13 +166,12 @@ public class CreateWalletOnboardingUseCase {
                 .type(seg.type())
                 .subType(seg.subType())
                 .mainAccount(mainAccount)
-                .subAccount(sub)
                 .buffer(seg.buffer())
                 .currency(accountCcy)
                 .allowNegative(allowNegative)
                 .build());
 
-            String key = sub + ":" + accountCcy.getIsoCode();
+            String key = accountCcy.getIsoCode();
             byKey.put(key, spec);
             opened.put(key, account);
             if (spec.isPrimaryLine()) {
@@ -260,20 +250,5 @@ public class CreateWalletOnboardingUseCase {
             out.add(new AccountOpenSpecDto(ref, name, false, spec.allowNegative(), ccy));
         }
         return out;
-    }
-
-    private String _allocateSub(AccountOpenSpecDto spec, Set<String> used, int sequential) {
-        if (spec.isPrimaryLine()) {
-            return CoaCodes.PRIMARY_SUB;
-        }
-        String candidate = CoaCodes.subAccountCode(spec.refCode(), sequential + 1);
-        if (used.contains(candidate) || CoaCodes.PRIMARY_SUB.equals(candidate)) {
-            int n = sequential + 1;
-            do {
-                n++;
-                candidate = CoaCodes.subAccountCode(null, n);
-            } while (used.contains(candidate));
-        }
-        return candidate;
     }
 }

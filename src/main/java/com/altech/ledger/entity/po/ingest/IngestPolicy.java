@@ -47,7 +47,7 @@ public class IngestPolicy extends AuditEntityWithIsActive {
 
     /**
      * COA profile for Door lazy onboard (product stream), e.g. STREAM_A.
-     * Blank → CoaCodes 10-20-00 (no DEFAULT profile). Overridden by event metadata.coaProfileCode.
+     * Blank → CUSTOMER_CUST_{reward ccy} (01-01-01). Overridden by event metadata.coaProfileCode.
      */
     @Column
     private String autoWalletCoaProfileCode;

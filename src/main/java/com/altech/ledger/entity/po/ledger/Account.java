@@ -28,10 +28,7 @@ import java.math.BigDecimal;
 @Table(
     uniqueConstraints = {
         @UniqueConstraint(name = "uniqueAccountKey", columnNames = {
-            "entity", "type", "sub_type", "main_account", "sub_account", "buffer", "currency"
-        }),
-        @UniqueConstraint(name = "uniqueMainAccountSubAccount", columnNames = {
-            "main_account", "sub_account"
+            "entity", "type", "sub_type", "main_account", "buffer", "currency"
         }),
         @UniqueConstraint(name = "uk_account_full_number", columnNames = "full_number")
     },
@@ -68,8 +65,6 @@ public class Account extends AuditEntityWithIsActive {
     private String subType;
     @Column
     private String mainAccount; // more or less linked to client-specific identifier
-    @Column
-    private String subAccount;
     @Column
     private String buffer;
     @Enumerated(EnumType.STRING)
