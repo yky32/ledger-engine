@@ -139,6 +139,8 @@ class AccountingRulePostingIntegrationTest {
         assertThat(customerBooks).allMatch(a ->
             "01".equals(a.getEntity()) && "01".equals(a.getType()) && "01".equals(a.getSubType()));
         assertThat(customerBooks).noneMatch(a -> "10".equals(a.getEntity()) || "20".equals(a.getType()));
+        assertThat(customerBooks).anyMatch(a -> card9089.equals(a.getMainAccount()) && a.getCurrency() == Currency.HKD);
+        assertThat(customerBooks).anyMatch(a -> card9088.equals(a.getMainAccount()) && a.getCurrency() == Currency.HKD);
     }
 
     @Test
@@ -162,6 +164,9 @@ class AccountingRulePostingIntegrationTest {
         assertThat(books).anyMatch(a -> card9089.equals(a.getMainAccount()) && a.getCurrency() == Currency.HKD);
         assertThat(books).anyMatch(a -> card9089.equals(a.getMainAccount()) && a.getCurrency() == Currency.LP);
         assertThat(books).anyMatch(a -> card9088.equals(a.getMainAccount()) && a.getCurrency() == Currency.HKD);
+        assertThat(books.stream().map(Account::getMainAccount).distinct())
+            .allMatch(main -> books.stream().anyMatch(a ->
+                main.equals(a.getMainAccount()) && a.getCurrency() == wallet.getSettlementCurrency()));
     }
 
     @Test

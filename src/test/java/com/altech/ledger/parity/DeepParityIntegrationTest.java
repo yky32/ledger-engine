@@ -49,7 +49,7 @@ class DeepParityIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletId))
-            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(50.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("50.00"));
     }
 
     @Test
@@ -65,7 +65,7 @@ class DeepParityIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletId))
-            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(25.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("25.00"));
     }
 
     @Test

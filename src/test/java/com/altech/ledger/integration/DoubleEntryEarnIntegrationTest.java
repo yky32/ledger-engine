@@ -1,6 +1,7 @@
 package com.altech.ledger.integration;
 
 import com.altech.core.constant.enu.Currency;
+import com.altech.ledger.JsonMoney;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.enu.MovementDirection;
 import com.altech.ledger.repository.DigestionRuleRepository;
@@ -59,7 +60,7 @@ class DoubleEntryEarnIntegrationTest {
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("EARNED"))
-            .andExpect(jsonPath("$.data.points").value(1.0))
+            .andExpect(jsonPath("$.data.points").value("1"))
             .andExpect(jsonPath("$.data.movementId").isNumber())
             .andExpect(jsonPath("$.data.legs").isArray())
             .andExpect(jsonPath("$.data.legs.length()").value(2))
@@ -73,7 +74,7 @@ class DoubleEntryEarnIntegrationTest {
         BigDecimal debit = BigDecimal.ZERO;
         BigDecimal credit = BigDecimal.ZERO;
         for (JsonNode leg : legs) {
-            BigDecimal amt = leg.get("amount").decimalValue();
+            BigDecimal amt = JsonMoney.bd(leg.get("amount"));
             String dir = leg.get("direction").asText();
             if ("DEBIT".equals(dir)) {
                 debit = debit.add(amt);

@@ -80,7 +80,7 @@ class DigestionRuleRuntimeIntegrationTest {
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("EARNED"))
-            .andExpect(jsonPath("$.data.points").value(5.0));
+            .andExpect(jsonPath("$.data.points").value("5"));
 
         // Restore seed-like rate for other tests in same JVM
         mockMvc.perform(put("/digestion-rules/" + purchaseId)

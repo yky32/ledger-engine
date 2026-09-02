@@ -1,5 +1,6 @@
 package com.altech.ledger.integration;
 
+import com.altech.ledger.JsonMoney;
 import com.altech.ledger.repository.DigestionRuleRepository;
 import com.altech.ledger.support.DigestionRuleTestData;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -55,8 +56,8 @@ class HoldReleaseIntegrationTest {
         MvcResult before = mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
             .andExpect(status().isOk()).andReturn();
         JsonNode lp0 = _lp(before);
-        var ledger0 = lp0.get("ledgerBalance").decimalValue();
-        var avail0 = lp0.get("availableBalance").decimalValue();
+        var ledger0 = JsonMoney.bd(lp0.get("ledgerBalance"));
+        var avail0 = JsonMoney.bd(lp0.get("availableBalance"));
         assertThat(avail0).isEqualByComparingTo(ledger0);
 
         mockMvc.perform(post("/wallets/holds")
@@ -70,8 +71,8 @@ class HoldReleaseIntegrationTest {
         MvcResult held = mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
             .andExpect(status().isOk()).andReturn();
         JsonNode lp1 = _lp(held);
-        assertThat(lp1.get("ledgerBalance").decimalValue()).isEqualByComparingTo(ledger0);
-        assertThat(lp1.get("availableBalance").decimalValue()).isEqualByComparingTo(avail0.subtract(new java.math.BigDecimal("3")));
+        assertThat(JsonMoney.bd(lp1.get("ledgerBalance"))).isEqualByComparingTo(ledger0);
+        assertThat(JsonMoney.bd(lp1.get("availableBalance"))).isEqualByComparingTo(avail0.subtract(new java.math.BigDecimal("3")));
 
         mockMvc.perform(post("/wallets/releases")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -84,8 +85,8 @@ class HoldReleaseIntegrationTest {
         MvcResult after = mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
             .andExpect(status().isOk()).andReturn();
         JsonNode lp2 = _lp(after);
-        assertThat(lp2.get("ledgerBalance").decimalValue()).isEqualByComparingTo(ledger0);
-        assertThat(lp2.get("availableBalance").decimalValue()).isEqualByComparingTo(avail0);
+        assertThat(JsonMoney.bd(lp2.get("ledgerBalance"))).isEqualByComparingTo(ledger0);
+        assertThat(JsonMoney.bd(lp2.get("availableBalance"))).isEqualByComparingTo(avail0);
     }
 
     private JsonNode _lp(MvcResult r) throws Exception {

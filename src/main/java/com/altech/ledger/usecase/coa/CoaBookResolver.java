@@ -133,9 +133,12 @@ public class CoaBookResolver {
         String entity = blank(coa.getEntity(), CoaCodes.ENTITY);
         String type = blank(coa.getType(), CoaCodes.typeCodeLiability());
         String subType = blank(coa.getSubType(), CoaCodes.SUB_TYPE);
+        String buffer = blank(coa.getBuffer(), CoaCodes.BUFFER);
+        boolean house = coa.getWalletId() != null || CoaCodes.isHouseCode(coa.getCode());
         Optional<Account> existing = accountRepository
             .findFirstByMainAccountAndEntityAndTypeAndSubTypeAndCurrency(
                 main, entity, type, subType, ccy);
+        Account book;
         if (existing.isPresent()) {
             Account a = existing.get();
             boolean dirty = false;
@@ -147,12 +150,61 @@ public class CoaBookResolver {
                 a.setAllowNegative(true);
                 dirty = true;
             }
-            return dirty ? accountRepository.save(a) : a;
+            book = dirty ? accountRepository.save(a) : a;
+        } else {
+            String fullNumber = CoaCodes.fullNumber(
+                entity, type, subType, main, buffer, ccy);
+            book = accountRepository.save(Account.builder()
+                .walletId(wallet.getId())
+                .fullNumber(fullNumber)
+                .entity(entity)
+                .type(type)
+                .subType(subType)
+                .mainAccount(main)
+                .buffer(buffer)
+                .currency(ccy)
+                .allowNegative(Boolean.TRUE.equals(coa.getPoolAllowNegative()))
+                .build());
+            log.info("COA account wallet={} coa={} mainAccount={} fullNumber={}",
+                wallet.getId(), coa.getCode(), main, fullNumber);
         }
-        String buffer = blank(coa.getBuffer(), CoaCodes.BUFFER);
-        String fullNumber = CoaCodes.fullNumber(
-            entity, type, subType, main, buffer, ccy);
-        Account created = accountRepository.save(Account.builder()
+        if (!house) {
+            ensureSettlementBook(wallet, primary, entity, type, subType, main, buffer);
+        }
+        return book;
+    }
+
+    /**
+     * Every customer mainAccount tree includes the wallet settlement book (HKD)
+     * even when the posting COA is LP.
+     */
+    private void ensureSettlementBook(
+        Wallet wallet,
+        Account primary,
+        String entity,
+        String type,
+        String subType,
+        String main,
+        String buffer
+    ) {
+        Currency settlement = wallet.getSettlementCurrency() != null
+            ? wallet.getSettlementCurrency() : primary.getCurrency();
+        if (settlement == null) {
+            return;
+        }
+        Optional<Account> twin = accountRepository
+            .findFirstByMainAccountAndEntityAndTypeAndSubTypeAndCurrency(
+                main, entity, type, subType, settlement);
+        if (twin.isPresent()) {
+            Account a = twin.get();
+            if (a.getWalletId() == null) {
+                a.setWalletId(wallet.getId());
+                accountRepository.save(a);
+            }
+            return;
+        }
+        String fullNumber = CoaCodes.fullNumber(entity, type, subType, main, buffer, settlement);
+        accountRepository.save(Account.builder()
             .walletId(wallet.getId())
             .fullNumber(fullNumber)
             .entity(entity)
@@ -160,12 +212,11 @@ public class CoaBookResolver {
             .subType(subType)
             .mainAccount(main)
             .buffer(buffer)
-            .currency(ccy)
-            .allowNegative(Boolean.TRUE.equals(coa.getPoolAllowNegative()))
+            .currency(settlement)
+            .allowNegative(false)
             .build());
-        log.info("COA account wallet={} coa={} mainAccount={} fullNumber={}",
-            wallet.getId(), coa.getCode(), main, fullNumber);
-        return created;
+        log.info("settlement twin wallet={} mainAccount={} ccy={} fullNumber={}",
+            wallet.getId(), main, settlement, fullNumber);
     }
 
     /** Reject a client mainAccount that already belongs to another wallet. Blank is a no-op. */

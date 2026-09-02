@@ -1,6 +1,7 @@
 package com.altech.ledger.integration;
 
 import com.altech.core.constant.enu.Currency;
+import com.altech.ledger.JsonMoney;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.repository.DigestionRuleRepository;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
@@ -76,8 +77,8 @@ class ConcurrencyReplayAsOfIntegrationTest {
         MvcResult w = mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
             .andExpect(status().isOk()).andReturn();
         JsonNode lp = _lp(w);
-        assertThat(lp.get("ledgerBalance").decimalValue()).isEqualByComparingTo("10");
-        assertThat(lp.get("availableBalance").decimalValue()).isEqualByComparingTo("4");
+        assertThat(JsonMoney.bd(lp.get("ledgerBalance"))).isEqualByComparingTo("10");
+        assertThat(JsonMoney.bd(lp.get("availableBalance"))).isEqualByComparingTo("4");
     }
 
     @Test
@@ -95,7 +96,7 @@ class ConcurrencyReplayAsOfIntegrationTest {
             .andExpect(status().isOk());
         JsonNode lp = _lp(mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
             .andExpect(status().isOk()).andReturn());
-        assertThat(lp.get("availableBalance").decimalValue()).isEqualByComparingTo("3");
+        assertThat(JsonMoney.bd(lp.get("availableBalance"))).isEqualByComparingTo("3");
     }
 
     @Test
@@ -153,9 +154,9 @@ class ConcurrencyReplayAsOfIntegrationTest {
             .andReturn();
         JsonNode acc = objectMapper.readTree(asOf.getResponse().getContentAsString())
             .get("data").get("accounts").get(0);
-        assertThat(acc.get("ledgerBalance").decimalValue()).isEqualByComparingTo("10");
-        assertThat(acc.get("availableBalance").decimalValue()).isEqualByComparingTo("6");
-        assertThat(acc.get("liveAvailableBalance").decimalValue()).isEqualByComparingTo("6");
+        assertThat(JsonMoney.bd(acc.get("ledgerBalance"))).isEqualByComparingTo("10");
+        assertThat(JsonMoney.bd(acc.get("availableBalance"))).isEqualByComparingTo("6");
+        assertThat(JsonMoney.bd(acc.get("liveAvailableBalance"))).isEqualByComparingTo("6");
     }
 
     private void _onboardLp(String cust) throws Exception {

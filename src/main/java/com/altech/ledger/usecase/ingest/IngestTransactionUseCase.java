@@ -14,6 +14,7 @@ import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.exception.response.MovementErrorResponse;
+import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.FailedTransactionIngestRepository;
 import com.altech.ledger.repository.LedgerEntryRepository;
 import com.altech.ledger.repository.LedgerMovementRepository;
@@ -35,8 +36,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -52,6 +57,7 @@ public class IngestTransactionUseCase {
     private final EnsureWalletForIngestUseCase ensureWalletForIngestUseCase;
     private final LedgerMovementRepository ledgerMovementRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
+    private final AccountRepository accountRepository;
     private final ApplyPostingUseCase applyPostingUseCase;
     private final AccountingRuleCatalogUseCase accountingRuleCatalogUseCase;
     private final CoaBookResolver coaBookResolver;
@@ -238,15 +244,35 @@ public class IngestTransactionUseCase {
         if (movementId == null) {
             return List.of();
         }
+        List<LedgerEntry> entries = ledgerEntryRepository.findByTxnId(movementId);
+        Set<Long> ids = new LinkedHashSet<>();
+        for (LedgerEntry e : entries) {
+            try {
+                ids.add(Long.valueOf(e.getTargetId()));
+            } catch (Exception ignored) {
+                // skip
+            }
+        }
+        Map<Long, Account> byId = new LinkedHashMap<>();
+        for (Account a : accountRepository.findAllById(ids)) {
+            byId.put(a.getId(), a);
+        }
         List<LedgerLegDto> out = new ArrayList<>();
-        for (LedgerEntry e : ledgerEntryRepository.findByTxnId(movementId)) {
+        for (LedgerEntry e : entries) {
             Long accountId = null;
             try {
                 accountId = Long.valueOf(e.getTargetId());
             } catch (Exception ignored) {
                 // leave null
             }
-            out.add(new LedgerLegDto(e.getId(), accountId, e.getDirection(), e.getAmount(), e.getCurrency()));
+            Account book = accountId == null ? null : byId.get(accountId);
+            out.add(new LedgerLegDto(
+                e.getId(),
+                accountId,
+                e.getDirection(),
+                e.getAmount(),
+                e.getCurrency(),
+                book == null ? null : book.getFullNumber()));
         }
         return out;
     }

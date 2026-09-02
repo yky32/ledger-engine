@@ -62,7 +62,7 @@ class LedgerWalletParityIntegrationTest {
 
         mockMvc.perform(get("/ledger-wallets/" + walletAId))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(100.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("100.00"));
 
         mockMvc.perform(post("/ledger/wallet-transfers/in-wallet")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -73,9 +73,9 @@ class LedgerWalletParityIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletAId))
-            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(60.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("60.00"));
         mockMvc.perform(get("/ledger-wallets/" + walletBId))
-            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(40.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("40.00"));
 
         mockMvc.perform(post("/ledger/withdrawals")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -86,7 +86,7 @@ class LedgerWalletParityIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
         mockMvc.perform(get("/ledger-wallets/" + walletAId))
-            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(50.0));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("50.00"));
 
         mockMvc.perform(get("/ledger-accounts/movements/my-movements").param("ownerId", ownerA))
             .andExpect(status().isOk())

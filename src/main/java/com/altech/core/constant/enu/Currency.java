@@ -4,6 +4,7 @@ import com.altech.core.exception.BizException;
 import com.altech.core.response.SystemResponse;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 
@@ -146,6 +147,31 @@ public enum Currency {
 
     public boolean isLoyaltyPoint() {
         return type == CurrencyType.LOYALTY_POINT;
+    }
+
+    /**
+     * JSON / display amount for this currency (scale + rounding from the enum).
+     * HKD → 4 dp, USD → 2, LP → 0, JPY → 0.
+     */
+    public String formatAmount(BigDecimal amount) {
+        if (amount == null) {
+            return null;
+        }
+        return amount.setScale(decimalPlaces, roundingMode).toPlainString();
+    }
+
+    /**
+     * Same as {@link #formatAmount(BigDecimal)} when {@code currency} is known;
+     * otherwise 2 decimal places HALF_UP.
+     */
+    public static String formatAmount(BigDecimal amount, Currency currency) {
+        if (amount == null) {
+            return null;
+        }
+        if (currency == null) {
+            return amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
+        }
+        return currency.formatAmount(amount);
     }
 
     @Override

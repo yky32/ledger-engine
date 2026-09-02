@@ -54,7 +54,7 @@ class TransactionIngestionIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("EARNED"))
             .andExpect(jsonPath("$.data.operation").value("EARN"))
-            .andExpect(jsonPath("$.data.points").value(2.0));
+            .andExpect(jsonPath("$.data.points").value("2"));
     }
 
     @Test
@@ -76,7 +76,7 @@ class TransactionIngestionIntegrationTest {
                 .content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("EARNED"))
-            .andExpect(jsonPath("$.data.points").value(1.0));
+            .andExpect(jsonPath("$.data.points").value("1"));
     }
 
     @Test
@@ -93,7 +93,7 @@ class TransactionIngestionIntegrationTest {
                 .content(objectMapper.writeValueAsString(event)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("EARNED"))
-            .andExpect(jsonPath("$.data.points").value(1.0))
+            .andExpect(jsonPath("$.data.points").value("1"))
             .andExpect(jsonPath("$.data.walletExternalReference").value(cust));
 
         mockMvc.perform(get("/wallets/" + cust))
@@ -169,7 +169,7 @@ class TransactionIngestionIntegrationTest {
         mockMvc.perform(post("/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("EARNED"))
-            .andExpect(jsonPath("$.data.points").value(100));
+            .andExpect(jsonPath("$.data.points").value("100"));
 
         mockMvc.perform(post("/integrations/webhooks/transactions").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
