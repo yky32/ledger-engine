@@ -13,6 +13,8 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,6 +31,8 @@ import org.hibernate.annotations.GenericGenerator;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CoaDictionary extends AuditEntityWithIsActive {
 
     @Id
@@ -55,9 +59,11 @@ public class CoaDictionary extends AuditEntityWithIsActive {
     private String example;
 
     /** HOUSE | CUSTOMER | BOTH */
+    @Builder.Default
     @Column
-    private String side;
+    private String side = "BOTH";
 
+    /** Persist hook only trims / uppercases. Defaults live on {@code @Builder.Default}. */
     @PrePersist
     @PreUpdate
     void normalize() {
@@ -85,8 +91,10 @@ public class CoaDictionary extends AuditEntityWithIsActive {
         if (side != null) {
             side = side.trim().toUpperCase();
             if (side.isEmpty()) {
-                side = null;
+                side = "BOTH";
             }
+        } else {
+            side = "BOTH";
         }
     }
 }
