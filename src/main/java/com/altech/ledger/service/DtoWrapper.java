@@ -33,6 +33,7 @@ import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
+import com.altech.ledger.entity.po.wallet.WalletTierPolicy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -296,9 +297,7 @@ public final class DtoWrapper {
             .build();
     }
 
-    public static GetWalletTierPolicyResponseDto getWalletTierPolicyResponseDto(
-        com.altech.ledger.entity.po.wallet.WalletTierPolicy p
-    ) {
+    public static GetWalletTierPolicyResponseDto getWalletTierPolicyResponseDto(WalletTierPolicy p) {
         return GetWalletTierPolicyResponseDto.builder()
             .id(p.getId())
             .isEnabled(p.getIsEnabled())
