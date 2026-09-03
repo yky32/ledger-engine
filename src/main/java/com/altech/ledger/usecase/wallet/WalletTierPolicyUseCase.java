@@ -57,20 +57,11 @@ public class WalletTierPolicyUseCase {
             p.setIsEnabled(req.isEnabled());
         }
         if (req.criterion() != null && !req.criterion().isBlank()) {
-            try {
-                p.setCriterion(WalletTierCriterion.from(req.criterion()));
-            } catch (IllegalArgumentException ex) {
-                throw new BizException(WalletErrorResponse.WAL0400, ex.getMessage());
-            }
+            p.setCriterion(WalletTierCriterion.get(req.criterion()));
         }
         if (req.currency() != null && !req.currency().isBlank()) {
-            String iso = req.currency().trim().toUpperCase(Locale.ROOT);
-            try {
-                Currency.get(iso);
-            } catch (RuntimeException ex) {
-                throw new BizException(WalletErrorResponse.WAL0400, "unknown currency " + iso);
-            }
-            p.setCurrency(iso);
+            Currency ccy = Currency.get(req.currency());
+            p.setCurrency(ccy.getIsoCode());
         }
         if (req.bands() != null) {
             p.setBands(validateBands(req.bands()));
