@@ -44,9 +44,6 @@ class WalletTierIntegrationTest {
                     {
                       "isEnabled": true,
                       "criterion": "LEDGER_BALANCE",
-                      "entity": "01",
-                      "type": "01",
-                      "subType": "01",
                       "currency": "LP",
                       "bands": [
                         { "code": "NONE", "upgradeAt": "0" },

@@ -9,9 +9,6 @@ import java.util.List;
 public record UpdateWalletTierPolicyRequestDto(
     Boolean isEnabled,
     String criterion,
-    @Size(max = 8) String entity,
-    @Size(max = 8) String type,
-    @Size(max = 8) String subType,
     @Size(max = 16) String currency,
     List<WalletTierBand> bands
 ) {}

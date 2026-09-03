@@ -19,9 +19,6 @@ public class GetWalletTierPolicyResponseDto {
     private Long id;
     private Boolean isEnabled;
     private String criterion;
-    private String entity;
-    private String type;
-    private String subType;
     private String currency;
     private List<WalletTierBand> bands;
     private Instant createDt;

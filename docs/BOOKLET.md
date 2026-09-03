@@ -477,8 +477,9 @@ Also: `ledger.movement.done`. Inbound execute: `initiated` / `balance-update`.
 
 ### Wallet tiering
 
-Config: `GET/PUT /wallet-tier-policies` (Door-shaped, one row). Criterion v1 = **`LEDGER_BALANCE`** (amount total) on a watched member book (default `01-01-01` LP).  
-GET from admin seeds a **disabled draft** (NONE/SILVER/GOLD/PLATINUM). Settle does **not** insert a policy. Tiering starts when ops **Save as Enabled** in the portal.
+Config: `GET/PUT /wallet-tier-policies` (Door-shaped, one row).  
+Criterion v1 = **`LEDGER_BALANCE`**: sum of `account.ledgerBalance` for this **`wallet.id` + `currency`** (default LP). No COA stem on the policy.  
+GET from admin seeds a **disabled draft**. Settle does **not** insert a policy. Tiering starts when ops **Save as Enabled**.
 
 After each SETTLED movement that touches that book, engine writes **`wallet.tier`** in the **same TX** (not Kafka-only):
 

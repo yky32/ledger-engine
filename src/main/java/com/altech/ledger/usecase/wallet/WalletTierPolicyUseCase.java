@@ -63,15 +63,6 @@ public class WalletTierPolicyUseCase {
                 throw new BizException(WalletErrorResponse.WAL0400, ex.getMessage());
             }
         }
-        if (req.entity() != null && !req.entity().isBlank()) {
-            p.setEntity(req.entity().trim());
-        }
-        if (req.type() != null && !req.type().isBlank()) {
-            p.setType(req.type().trim());
-        }
-        if (req.subType() != null && !req.subType().isBlank()) {
-            p.setSubType(req.subType().trim());
-        }
         if (req.currency() != null && !req.currency().isBlank()) {
             String iso = req.currency().trim().toUpperCase(Locale.ROOT);
             try {
@@ -197,9 +188,6 @@ public class WalletTierPolicyUseCase {
         p.setIsActive(true);
         p.setIsEnabled(false);
         p.setCriterion(WalletTierCriterion.LEDGER_BALANCE);
-        p.setEntity("01");
-        p.setType("01");
-        p.setSubType("01");
         p.setCurrency("LP");
         p.setBands(List.of(
             new WalletTierBand("NONE", BigDecimal.ZERO, null),

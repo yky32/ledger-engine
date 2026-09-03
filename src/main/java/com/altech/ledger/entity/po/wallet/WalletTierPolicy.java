@@ -43,15 +43,7 @@ public class WalletTierPolicy extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private WalletTierCriterion criterion;
 
-    @Column(nullable = false)
-    private String entity;
-
-    @Column(nullable = false)
-    private String type;
-
-    @Column(nullable = false)
-    private String subType;
-
+    /** Sum ledgerBalance of this wallet's accounts in this currency. */
     @Column(nullable = false)
     private String currency;
 
@@ -66,15 +58,6 @@ public class WalletTierPolicy extends AuditEntityWithIsActive {
         }
         if (criterion == null) {
             criterion = WalletTierCriterion.LEDGER_BALANCE;
-        }
-        if (entity == null) {
-            entity = "01";
-        }
-        if (type == null) {
-            type = "01";
-        }
-        if (subType == null) {
-            subType = "01";
         }
         if (currency == null) {
             currency = "LP";

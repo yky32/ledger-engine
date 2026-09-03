@@ -7,6 +7,7 @@ import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerMovement;
 import com.altech.ledger.entity.po.wallet.WalletTierPolicy;
+import com.altech.ledger.repository.AccountRepository;
 import com.altech.ledger.repository.WalletRepository;
 import com.altech.ledger.usecase.coa.HouseBooksUseCase;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +20,14 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Realtime wallet.tier from the watched COA book's ledgerBalance after settle.
+ * Realtime wallet.tier from this wallet's total ledgerBalance in the policy currency.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class AssessWalletTierUseCase {
     private final WalletRepository walletRepository;
+    private final AccountRepository accountRepository;
     private final WalletTierPolicyUseCase walletTierPolicyUseCase;
 
     public record Change(
@@ -47,27 +49,37 @@ public class AssessWalletTierUseCase {
             return Optional.empty();
         }
         WalletTierPolicy policy = walletTierPolicyUseCase.findEnabled().orElse(null);
-        if (policy == null) {
+        if (policy == null || policy.getCurrency() == null) {
             return Optional.empty();
         }
-        Account watched = matchingBook(movement.getWalletId(), policy, command);
-        if (watched == null) {
+        Currency ccy;
+        try {
+            ccy = Currency.get(policy.getCurrency());
+        } catch (RuntimeException ex) {
             return Optional.empty();
+        }
+        if (!touchedCurrency(movement.getWalletId(), ccy, command)) {
+            return Optional.empty();
+        }
+        BigDecimal total = BigDecimal.ZERO;
+        for (Account a : accountRepository.findAllByWalletId(movement.getWalletId())) {
+            if (a.getCurrency() == ccy && a.getLedgerBalance() != null) {
+                total = total.add(a.getLedgerBalance());
+            }
         }
         String from = wallet.getTier() == null || wallet.getTier().isBlank()
             ? policy.getBands().get(0).code()
             : wallet.getTier().trim().toUpperCase(Locale.ROOT);
-        String next = WalletTierPolicyUseCase.nextTier(policy.getBands(), from, watched.getLedgerBalance());
+        String next = WalletTierPolicyUseCase.nextTier(policy.getBands(), from, total);
         if (next == null || next.equalsIgnoreCase(from)) {
             return Optional.empty();
         }
         wallet.setTier(next);
         walletRepository.save(wallet);
         String reason = rank(policy, next) > rank(policy, from) ? "UPGRADE" : "DOWNGRADE";
-        log.info("wallet tier {} {} → {} lp={} movementId={}",
-            wallet.getOwnerId(), from, next, watched.getLedgerBalance(), movement.getId());
-        return Optional.of(new Change(
-            wallet, from, next, watched.getLedgerBalance(), watched.getCurrency(), reason));
+        log.info("wallet tier {} {} → {} {} total={} movementId={}",
+            wallet.getOwnerId(), from, next, ccy.getIsoCode(), total, movement.getId());
+        return Optional.of(new Change(wallet, from, next, total, ccy, reason));
     }
 
     public static WalletTierChangedEvent toEvent(LedgerMovement movement, Change change) {
@@ -86,31 +98,22 @@ public class AssessWalletTierUseCase {
             .build();
     }
 
-    private static Account matchingBook(
+    /** This movement changed a book of the watched currency on this wallet. */
+    private static boolean touchedCurrency(
         Long walletId,
-        WalletTierPolicy policy,
+        Currency ccy,
         BalanceExecutionResultCommand command
     ) {
         if (command == null || command.getDetails() == null) {
-            return null;
+            return false;
         }
-        String entity = policy.getEntity();
-        String type = policy.getType();
-        String subType = policy.getSubType();
-        String ccy = policy.getCurrency() == null ? null : policy.getCurrency().toUpperCase(Locale.ROOT);
         for (BalanceExecutionResultCommand.CommandDetail d : command.getDetails()) {
             Account a = d.getAccount();
-            if (a == null || a.getCurrency() == null || !walletId.equals(a.getWalletId())) {
-                continue;
-            }
-            if (entity.equals(a.getEntity())
-                && type.equals(a.getType())
-                && subType.equals(a.getSubType())
-                && ccy.equals(a.getCurrency().getIsoCode())) {
-                return a;
+            if (a != null && walletId.equals(a.getWalletId()) && a.getCurrency() == ccy) {
+                return true;
             }
         }
-        return null;
+        return false;
     }
 
     private static int rank(WalletTierPolicy policy, String code) {
