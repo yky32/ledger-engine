@@ -46,9 +46,8 @@ public class AssessWalletTierUseCase {
         if (wallet == null || isHouse(wallet.getOwnerId())) {
             return Optional.empty();
         }
-        WalletTierPolicy policy = walletTierPolicyUseCase.requireEffective();
-        if (!Boolean.TRUE.equals(policy.getIsEnabled())
-            || policy.getBands() == null || policy.getBands().isEmpty()) {
+        WalletTierPolicy policy = walletTierPolicyUseCase.findEnabled().orElse(null);
+        if (policy == null) {
             return Optional.empty();
         }
         Account watched = matchingBook(movement.getWalletId(), policy, command);

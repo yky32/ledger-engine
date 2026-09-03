@@ -20,29 +20,39 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 /**
- * Runtime wallet-tier policy from DB (lazy default row), Door-shaped.
+ * Runtime wallet-tier policy. Draft row is created by admin GET/PUT, not by settle.
+ * Default {@code isEnabled=false} until ops turns it on in the portal.
  */
 @Component
 @RequiredArgsConstructor
 public class WalletTierPolicyUseCase {
     private final WalletTierPolicyRepository walletTierPolicyRepository;
 
+    /** Settle path — never inserts. Empty / disabled → no tier change. */
+    @Transactional(readOnly = true)
+    public Optional<WalletTierPolicy> findEnabled() {
+        return walletTierPolicyRepository.findFirstActive()
+            .filter(p -> Boolean.TRUE.equals(p.getIsEnabled())
+                && p.getBands() != null && !p.getBands().isEmpty());
+    }
+
     @Transactional
-    public WalletTierPolicy requireEffective() {
-        return walletTierPolicyRepository.findFirstActive().orElseGet(this::_createDefault);
+    public WalletTierPolicy requireRow() {
+        return walletTierPolicyRepository.findFirstActive().orElseGet(this::_createDraft);
     }
 
     @Transactional
     public GetWalletTierPolicyResponseDto getOrCreate() {
-        return DtoWrapper.getWalletTierPolicyResponseDto(requireEffective());
+        return DtoWrapper.getWalletTierPolicyResponseDto(requireRow());
     }
 
     @Transactional
     public GetWalletTierPolicyResponseDto update(UpdateWalletTierPolicyRequestDto req) {
-        WalletTierPolicy p = requireEffective();
+        WalletTierPolicy p = requireRow();
         if (req.isEnabled() != null) {
             p.setIsEnabled(req.isEnabled());
         }
@@ -182,10 +192,10 @@ public class WalletTierPolicyUseCase {
         return v == null ? BigDecimal.ZERO : v;
     }
 
-    private WalletTierPolicy _createDefault() {
+    private WalletTierPolicy _createDraft() {
         WalletTierPolicy p = new WalletTierPolicy();
         p.setIsActive(true);
-        p.setIsEnabled(true);
+        p.setIsEnabled(false);
         p.setCriterion(WalletTierCriterion.LEDGER_BALANCE);
         p.setEntity("01");
         p.setType("01");

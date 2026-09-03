@@ -101,11 +101,37 @@ class WalletTierIntegrationTest {
     }
 
     @Test
-    void policyGetCreatesDefault() throws Exception {
+    void policyGetSeedsDraftBands() throws Exception {
         mockMvc.perform(get("/wallet-tier-policies"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.criterion").value("LEDGER_BALANCE"))
             .andExpect(jsonPath("$.data.currency").value("LP"))
             .andExpect(jsonPath("$.data.bands[0].code").value("NONE"));
+    }
+
+    @Test
+    void earnDoesNotUpgradeUntilOpsEnables() throws Exception {
+        mockMvc.perform(put("/wallet-tier-policies")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"isEnabled\":false}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.isEnabled").value(false));
+        String cust = "WT0-" + UUID.randomUUID().toString().substring(0, 8);
+        mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"ownerId\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"wt0\"}"
+                    .formatted(cust)))
+            .andExpect(status().isOk());
+        String eventId = "wt0-evt-" + UUID.randomUUID();
+        TransactionalEvent earn = TransactionalEvent.of(
+            eventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD, Instant.now(), Map.of());
+        mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(earn)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("EARNED"));
+        mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.tier").value("NONE"));
     }
 }

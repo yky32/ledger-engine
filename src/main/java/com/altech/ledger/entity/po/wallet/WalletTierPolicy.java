@@ -62,7 +62,7 @@ public class WalletTierPolicy extends AuditEntityWithIsActive {
     @PrePersist
     void applyDefaults() {
         if (isEnabled == null) {
-            isEnabled = Boolean.TRUE;
+            isEnabled = Boolean.FALSE;
         }
         if (criterion == null) {
             criterion = WalletTierCriterion.LEDGER_BALANCE;
