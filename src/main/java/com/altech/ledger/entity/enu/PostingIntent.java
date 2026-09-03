@@ -1,5 +1,10 @@
 package com.altech.ledger.entity.enu;
 
+import com.altech.core.exception.BizException;
+import com.altech.core.response.SystemResponse;
+
+import java.util.Arrays;
+
 /**
  * High-level posting intent — maps to {@link OrderType} for execution.
  * <p>
@@ -32,5 +37,17 @@ public enum PostingIntent {
             case HOLD -> OrderType.HOLD;
             case RELEASE -> OrderType.RELEASE;
         };
+    }
+
+    public static PostingIntent get(String input) {
+        if (input != null) {
+            for (PostingIntent value : PostingIntent.values()) {
+                if (input.equalsIgnoreCase(value.name())) {
+                    return value;
+                }
+            }
+        }
+        String message = String.format("Wrong [%s] value. [%s] not in -> %s", input, input, Arrays.asList(PostingIntent.values()));
+        throw new BizException(SystemResponse.PAM0400, message);
     }
 }

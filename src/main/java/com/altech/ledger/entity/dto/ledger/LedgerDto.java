@@ -1,7 +1,8 @@
 package com.altech.ledger.entity.dto.ledger;
 
 import com.altech.core.constant.enu.Currency;
-
+import com.altech.core.exception.BizException;
+import com.altech.core.response.SystemResponse;
 import com.altech.ledger.entity.enu.AccountStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -19,7 +21,23 @@ public final class LedgerDto {
     private LedgerDto() {}
 
     /** Classic accounting classification stored in Account.type (COA segment). */
-    public enum CoaType { ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE }
+    public enum CoaType {
+        ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE,
+        ;
+
+        public static CoaType get(String input) {
+            if (input != null) {
+                for (CoaType value : CoaType.values()) {
+                    if (input.equalsIgnoreCase(value.name())) {
+                        return value;
+                    }
+                }
+            }
+            String message = String.format("Wrong [%s] value. [%s] not in -> %s",
+                input, input, Arrays.asList(CoaType.values()));
+            throw new BizException(SystemResponse.PAM0400, message);
+        }
+    }
 
     /**
      * Create a product ledger account (fullNumber allocated as numeric COA).
