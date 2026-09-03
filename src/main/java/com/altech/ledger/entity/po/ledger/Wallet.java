@@ -68,6 +68,10 @@ public class Wallet extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private Currency settlementCurrency;
 
+    /** Membership band code from {@code wallet_tier_policy.bands}. Default NONE. */
+    @Column
+    private String tier;
+
     @PrePersist
     void applyDefaults() {
         if (type == null) {
@@ -78,6 +82,9 @@ public class Wallet extends AuditEntityWithIsActive {
         }
         if (status == null) {
             status = WalletStatus.ACTIVE;
+        }
+        if (tier == null || tier.isBlank()) {
+            tier = "NONE";
         }
     }
 }

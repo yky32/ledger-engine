@@ -475,6 +475,22 @@ After each **SETTLED** movement, when `LEDGER_MOVEMENT_KAFKA_ENABLED=true`:
 
 Also: `ledger.movement.done`. Inbound execute: `initiated` / `balance-update`.
 
+### Wallet tiering
+
+Config: `GET/PUT /wallet-tier-policies` (Door-shaped, one row). Criterion v1 = **`LEDGER_BALANCE`** (amount total) on a watched member book (default `01-01-01` LP).
+
+After each SETTLED movement that touches that book, engine writes **`wallet.tier`** in the **same TX** (not Kafka-only):
+
+```text
+applyCommand → legs → AssessWalletTierUseCase → LEDGER_BALANCE_UPDATED (currentTier)
+                                           ↘ WALLET_TIER_CHANGED if the band moved
+```
+
+Upgrade: `ledgerBalance >= band.upgradeAt`.  
+Downgrade: `ledgerBalance < downgradeBelow` (blank → use `upgradeAt`). Refund/void/chargeback reverse LP so they can downgrade. HOUSE skipped. HOLD does not change ledger → no tier change.
+
+Changing bands does **not** recalc every wallet; the next LP movement does.
+
 ---
 
 ## 12. Critical path — CC_TXN earn + refund

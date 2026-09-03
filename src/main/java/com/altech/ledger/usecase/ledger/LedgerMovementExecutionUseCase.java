@@ -28,6 +28,7 @@ import com.altech.ledger.usecase.account.OperateAccountBalanceUseCase;
 import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.usecase.ingest.ProgramPoolService;
 import com.altech.ledger.usecase.rule.AccountingRuleCatalogUseCase;
+import com.altech.ledger.usecase.wallet.AssessWalletTierUseCase;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +62,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     private final CoaBookResolver coaBookResolver;
     private final ProgramPoolService programPoolService;
     private final OperateAccountBalanceUseCase operateAccountBalanceUseCase;
+    private final AssessWalletTierUseCase assessWalletTierUseCase;
 
     @Override
     @Transactional
@@ -108,8 +110,18 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             movement.setStatus(LedgerMovementStatus.SETTLED);
             ledgerMovementRepository.save(movement);
             createLedgerEntries(movement, command);
+            var tierChange = assessWalletTierUseCase.assess(movement, command);
             movementBus.publishDone(movement);
-            movementBus.publishBalanceUpdated(buildBalanceUpdatedEvent(movement, command));
+            BalanceUpdatedEvent balanceEvent = buildBalanceUpdatedEvent(movement, command);
+            if (movement.getWalletId() != null) {
+                walletRepository.findById(movement.getWalletId()).ifPresent(w -> {
+                    balanceEvent.setCurrentTier(w.getTier());
+                    balanceEvent.setTierChanged(tierChange.isPresent());
+                });
+            }
+            movementBus.publishBalanceUpdated(balanceEvent);
+            tierChange.ifPresent(c ->
+                movementBus.publishWalletTierChanged(AssessWalletTierUseCase.toEvent(movement, c)));
             notification(MovementBus.toEvent(movement));
         } catch (RuntimeException ex) {
             log.error("movement execution failed id={}", movement.getId(), ex);

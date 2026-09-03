@@ -128,7 +128,7 @@ public class QueryWalletBalanceUseCase {
         return new GetLedgerWalletResponseDto(
             base.id(), base.accountId(), base.ownerId(), base.vanityCode(), base.name(),
             base.type(), base.walletType(), base.status(), base.settlementCurrency(),
-            converted, base.createDt(), base.updateDt());
+            base.tier(), converted, base.createDt(), base.updateDt());
     }
 
     private BigDecimal _convert(BigDecimal amount, Currency from, Currency to) {

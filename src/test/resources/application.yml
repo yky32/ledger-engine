@@ -53,6 +53,7 @@ ledger:
       done-topic: ${LEDGER_MOVEMENT_DONE_TOPIC:ledger.movement.done}
       balance-update-topic: ${LEDGER_MOVEMENT_BALANCE_TOPIC:ledger.movement.balance-update}
       wallet-created-topic: ${LEDGER_WALLET_CREATED_TOPIC:ledger.wallet.created}
+      wallet-tier-changed-topic: ${LEDGER_WALLET_TIER_CHANGED_TOPIC:ledger.wallet.tier-changed}
       group-id: ${LEDGER_MOVEMENT_KAFKA_GROUP:ledger-engine-movement-test}
   integration:
     enabled: ${LEDGER_INTEGRATION_ENABLED:true}
