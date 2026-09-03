@@ -7,6 +7,11 @@ package com.altech.ledger.entity.enu;
 public final class EventTypes {
     /** Credit card transaction. */
     public static final String CC_TXN = "CC_TXN";
+    /**
+     * Legacy combined token. Prefer {@code eventType=CC_TXN} + {@code action=REFUND}
+     * + {@code originalEventId}. Still recognised as refund.
+     */
+    public static final String CC_TXN_REFUND = "CC_TXN_REFUND";
     /** Credit card cash instalment. */
     public static final String CC_CIP = "CC_CIP";
     /** Credit card spending instalment. */

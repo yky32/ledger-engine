@@ -29,7 +29,7 @@ class FactorMatcherTest {
         if (mcc != null) {
             meta.put("mcc", mcc);
         }
-        return new TransactionalEvent(
+        return TransactionalEvent.of(
             "e1",
             "OWN1",
             "PURCHASE",

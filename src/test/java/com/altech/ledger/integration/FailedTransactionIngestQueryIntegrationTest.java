@@ -37,7 +37,7 @@ class FailedTransactionIngestQueryIntegrationTest {
             .andExpect(status().isOk());
 
         String eventId = "fail-api-" + UUID.randomUUID();
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, cust, "PURCHASE", new BigDecimal("50"), Currency.JPY, Instant.now(), Map.of());
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)

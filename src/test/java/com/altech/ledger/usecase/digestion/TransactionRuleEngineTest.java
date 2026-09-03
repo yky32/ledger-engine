@@ -46,7 +46,7 @@ class TransactionRuleEngineTest {
 
     @Test
     void matchesEligiblePurchase() {
-        var event = new TransactionalEvent(
+        var event = TransactionalEvent.of(
             "e1", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
             Instant.now().minus(2, ChronoUnit.DAYS), Map.of());
         var out = engine.evaluate(event);
@@ -59,7 +59,7 @@ class TransactionRuleEngineTest {
 
     @Test
     void rejectsIneligibleCurrencyWithTrace() {
-        var event = new TransactionalEvent(
+        var event = TransactionalEvent.of(
             "e2", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.JPY,
             Instant.now(), Map.of());
         var out = engine.evaluate(event);
@@ -71,7 +71,7 @@ class TransactionRuleEngineTest {
 
     @Test
     void rejectsMissingOccurredAtWhenMaxAgeConfigured() {
-        var event = new TransactionalEvent(
+        var event = TransactionalEvent.of(
             "e3", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
             null, Map.of());
         var out = engine.evaluate(event);
@@ -82,7 +82,7 @@ class TransactionRuleEngineTest {
 
     @Test
     void rejectsTooOld() {
-        var event = new TransactionalEvent(
+        var event = TransactionalEvent.of(
             "e4", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
             Instant.now().minus(10, ChronoUnit.DAYS), Map.of());
         var out = engine.evaluate(event);
@@ -92,7 +92,7 @@ class TransactionRuleEngineTest {
 
     @Test
     void rejectsNonPositiveAmountForRateFormula() {
-        var event = new TransactionalEvent(
+        var event = TransactionalEvent.of(
             "e5", "01A12345678", "PURCHASE", BigDecimal.ZERO, Currency.HKD,
             Instant.now(), Map.of());
         var out = engine.evaluate(event);
@@ -116,14 +116,14 @@ class TransactionRuleEngineTest {
         grocery.setIsActive(true);
         when(repo.findAllEnabledOrdered()).thenReturn(List.of(grocery));
 
-        var bad = new TransactionalEvent(
+        var bad = TransactionalEvent.of(
             "e6", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
             Instant.now(), Map.of("mcc", "5812"));
         var badOut = engine.evaluate(bad);
         assertThat(badOut.skipReasonCode()).isEqualTo("MCC");
         assertThat(badOut.trace().get(0).failStep()).isEqualTo("MCC");
 
-        var ok = new TransactionalEvent(
+        var ok = TransactionalEvent.of(
             "e7", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
             Instant.now(), Map.of("mcc", "5411"));
         var out = engine.evaluate(ok);
@@ -147,7 +147,7 @@ class TransactionRuleEngineTest {
         grocery.setIsActive(true);
         when(repo.findAllEnabledOrdered()).thenReturn(List.of(grocery));
 
-        var event = new TransactionalEvent(
+        var event = TransactionalEvent.of(
             "e8", "01A12345678", "PURCHASE", new BigDecimal("100"), Currency.HKD,
             Instant.now(), Map.of());
         assertThat(engine.evaluate(event).skipReasonCode()).isEqualTo("MCC");

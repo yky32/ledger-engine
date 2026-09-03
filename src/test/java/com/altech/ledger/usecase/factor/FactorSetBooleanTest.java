@@ -43,7 +43,7 @@ class FactorSetBooleanTest {
             meta.put("mcc", mcc);
         }
         meta.put("channel", "POS");
-        return new TransactionalEvent(
+        return TransactionalEvent.of(
             "e1", "OWN1", "PURCHASE", new BigDecimal(amount), Currency.get(ccy), Instant.now(), meta);
     }
 
@@ -62,7 +62,7 @@ class FactorSetBooleanTest {
         // channel POS hits f5
         assertTrue(matcher.matchAll(evt("USD", "1", "9999"), set).matched());
         // nothing matches
-        var bare = new TransactionalEvent(
+        var bare = TransactionalEvent.of(
             "e2", "OWN1", "PURCHASE", new BigDecimal("1"), Currency.USD, Instant.now(), Map.of());
         assertFalse(matcher.matchAll(bare, set).matched());
     }
@@ -76,7 +76,7 @@ class FactorSetBooleanTest {
         // HKD + grocery 600 → f1,f2,f3,f4,f5
         assertTrue(matcher.matchAll(evt("HKD", "600", "5411"), set).matched());
         // only channel POS (1 hit) → fail need 2
-        var bare = new TransactionalEvent(
+        var bare = TransactionalEvent.of(
             "e3", "OWN1", "PURCHASE", new BigDecimal("1"), Currency.USD, Instant.now(),
             Map.of("channel", "POS"));
         assertFalse(matcher.matchAll(bare, set).matched());

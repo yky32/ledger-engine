@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -51,7 +52,7 @@ class RefundEarnIntegrationTest {
             .andExpect(status().isOk());
 
         String eventId = "rf-evt-" + UUID.randomUUID();
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD, Instant.now(), Map.of());
 
         MvcResult earn = mockMvc.perform(post("/integrations/webhooks/transactions")
@@ -115,5 +116,162 @@ class RefundEarnIntegrationTest {
             .andReturn();
         assertThat(objectMapper.readTree(again.getResponse().getContentAsString())
             .get("data").get("id").asLong()).isEqualTo(refundId);
+    }
+
+    @Test
+    void upstreamRefundEventReversesOriginalEarn() throws Exception {
+        String cust = "RF2-" + UUID.randomUUID().toString().substring(0, 8);
+        mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"ownerId\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"rf2\"}"
+                    .formatted(cust)))
+            .andExpect(status().isOk());
+
+        String originalEventId = "rf2-evt-" + UUID.randomUUID();
+        TransactionalEvent earn = TransactionalEvent.of(
+            originalEventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD, Instant.now(), Map.of());
+        mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(earn)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("EARNED"));
+
+        String refundJson = """
+            {
+              "eventId": "%s",
+              "ownerId": "%s",
+              "eventType": "CC_TXN",
+              "action": "REFUND",
+              "originalEventId": "%s",
+              "amount": "100.00",
+              "currency": "HKD"
+            }
+            """.formatted("rf2-ref-" + UUID.randomUUID(), cust, originalEventId);
+        mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refundJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("REFUNDED"))
+            .andExpect(jsonPath("$.data.operation").value("REFUND"));
+
+        mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("0"));
+    }
+
+    @Test
+    void upstreamVoidEventReversesOriginalEarn() throws Exception {
+        String cust = "RFV-" + UUID.randomUUID().toString().substring(0, 8);
+        mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"ownerId\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"rfv\"}"
+                    .formatted(cust)))
+            .andExpect(status().isOk());
+
+        String originalEventId = "rfv-evt-" + UUID.randomUUID();
+        TransactionalEvent earn = TransactionalEvent.of(
+            originalEventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD, Instant.now(), Map.of());
+        mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(earn)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("EARNED"));
+
+        String voidJson = """
+            {
+              "eventId": "%s",
+              "ownerId": "%s",
+              "eventType": "CC_TXN",
+              "action": "VOID",
+              "originalEventId": "%s",
+              "amount": "0",
+              "currency": "HKD"
+            }
+            """.formatted("rfv-void-" + UUID.randomUUID(), cust, originalEventId);
+        mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(voidJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("REFUNDED"))
+            .andExpect(jsonPath("$.data.operation").value("VOID"));
+
+        mockMvc.perform(get("/wallets/" + cust).param("currencies", "LP"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value("0"));
+
+        String chargebackJson = """
+            {
+              "eventId": "%s",
+              "ownerId": "%s",
+              "eventType": "CC_TXN",
+              "action": "CHARGEBACK",
+              "originalEventId": "%s",
+              "amount": "100.00",
+              "currency": "HKD"
+            }
+            """.formatted("rfv-cb-" + UUID.randomUUID(), cust, originalEventId);
+        MvcResult again = mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(chargebackJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("REFUNDED"))
+            .andReturn();
+        assertThat(objectMapper.readTree(again.getResponse().getContentAsString())
+            .get("data").get("movementId").isNumber()).isTrue();
+    }
+
+    @Test
+    void partialAndAdjustAreUnsupported() throws Exception {
+        String cust = "RFP-" + UUID.randomUUID().toString().substring(0, 8);
+        mockMvc.perform(post("/wallets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"ownerId\":\"%s\",\"settlementCurrency\":\"LP\",\"name\":\"rfp\"}"
+                    .formatted(cust)))
+            .andExpect(status().isOk());
+
+        String originalEventId = "rfp-evt-" + UUID.randomUUID();
+        TransactionalEvent earn = TransactionalEvent.of(
+            originalEventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD, Instant.now(), Map.of());
+        mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(earn)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("EARNED"));
+
+        String partialJson = """
+            {
+              "eventId": "%s",
+              "ownerId": "%s",
+              "eventType": "CC_TXN",
+              "action": "PARTIAL",
+              "originalEventId": "%s",
+              "amount": "40.00",
+              "currency": "HKD"
+            }
+            """.formatted("rfp-part-" + UUID.randomUUID(), cust, originalEventId);
+        mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(partialJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("SKIPPED"))
+            .andExpect(jsonPath("$.data.reason").value(containsString("PARTIAL")));
+
+        String adjustJson = """
+            {
+              "eventId": "%s",
+              "ownerId": "%s",
+              "eventType": "CC_TXN",
+              "action": "ADJUST",
+              "originalEventId": "%s",
+              "amount": "5.00",
+              "currency": "HKD"
+            }
+            """.formatted("rfp-adj-" + UUID.randomUUID(), cust, originalEventId);
+        mockMvc.perform(post("/integrations/webhooks/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(adjustJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("SKIPPED"))
+            .andExpect(jsonPath("$.data.reason").value(containsString("ADJUST")));
     }
 }

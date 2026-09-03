@@ -72,7 +72,7 @@ class DigestionRuleRuntimeIntegrationTest {
             .andExpect(status().isOk());
 
         String eventId = "dig-evt-" + UUID.randomUUID();
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD, Instant.now(), Map.of());
 
         mockMvc.perform(post("/integrations/webhooks/transactions")

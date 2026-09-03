@@ -1,0 +1,16 @@
+{
+  "eventId": "evt-cc-txn-001-partial",
+  "ownerId": "01A31658334",
+  "eventType": "CC_TXN",
+  "action": "PARTIAL",
+  "originalEventId": "evt-cc-txn-001",
+  "amount": "40.00",
+  "currency": "HKD",
+  "occurredAt": "2026-09-03T08:25:00Z",
+  "mainAccount": "908951901284",
+  "metadata": {
+    "mcc": "5411",
+    "channel": "UAF_CC",
+    "source": "ledger-engine-sdk"
+  }
+}

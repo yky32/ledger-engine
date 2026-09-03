@@ -65,6 +65,7 @@ public class ReplayFailedTransactionIngestUseCase {
         boolean applied = result.status() == IngestionResult.Status.EARNED
             || result.status() == IngestionResult.Status.BURNED
             || result.status() == IngestionResult.Status.PROCESSED
+            || result.status() == IngestionResult.Status.REFUNDED
             || result.status() == IngestionResult.Status.DUPLICATE;
 
         row = _require(id);
@@ -138,7 +139,7 @@ public class ReplayFailedTransactionIngestUseCase {
                 "Cannot rebuild event for failed ingest id=" + row.getId());
         }
         Currency ccy = Currency.get(row.getCurrency());
-        return new TransactionalEvent(
+        return TransactionalEvent.of(
             row.getEventId(),
             row.getOwnerId(),
             row.getEventType(),

@@ -7,6 +7,7 @@ import com.altech.ledger.entity.dto.ingest.IngestionResult;
 import com.altech.ledger.entity.dto.ingest.LedgerLegDto;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
+import com.altech.ledger.entity.enu.IngestAction;
 import com.altech.ledger.entity.enu.OrderType;
 import com.altech.ledger.entity.po.ingest.FailedTransactionIngest;
 import com.altech.ledger.entity.po.ledger.Account;
@@ -22,6 +23,7 @@ import com.altech.ledger.service.DtoWrapper;
 import com.altech.ledger.usecase.digestion.TransactionRuleEngine;
 import com.altech.ledger.usecase.factor.FactorMatcher;
 import com.altech.ledger.usecase.ledger.ApplyPostingUseCase;
+import com.altech.ledger.usecase.movement.RefundMovementUseCase;
 import com.altech.ledger.usecase.coa.CoaBookResolver;
 import com.altech.ledger.usecase.coa.CoaProfileUseCase;
 import com.altech.ledger.usecase.rule.AccountingRuleCatalogUseCase;
@@ -60,6 +62,7 @@ public class IngestTransactionUseCase {
     private final LedgerEntryRepository ledgerEntryRepository;
     private final AccountRepository accountRepository;
     private final ApplyPostingUseCase applyPostingUseCase;
+    private final RefundMovementUseCase refundMovementUseCase;
     private final AccountingRuleCatalogUseCase accountingRuleCatalogUseCase;
     private final CoaBookResolver coaBookResolver;
     private final CoaProfileUseCase coaProfileUseCase;
@@ -84,6 +87,13 @@ public class IngestTransactionUseCase {
         var policy = ingestPolicyUseCase.requireEffective();
         if (!Boolean.TRUE.equals(policy.getIsEnabled())) {
             return IngestionResult.previewSkipped(event.eventId(), "Integration disabled", List.of());
+        }
+        if (event.action() != null && event.action().isUnsupported()) {
+            return IngestionResult.previewSkipped(event.eventId(),
+                event.action() + " is not booked yet", List.of());
+        }
+        if (event.isRefund()) {
+            return _refundFromUpstream(event, List.of(), true);
         }
         FactorMatcher.MatchResult entry = factorMatcher.matchAll(
             event, policy.getEntryFactors());
@@ -122,6 +132,14 @@ public class IngestTransactionUseCase {
         var policy = ingestPolicyUseCase.requireEffective();
         if (!Boolean.TRUE.equals(policy.getIsEnabled())) {
             return _fail(event, "DISABLED", "Integration disabled", List.of());
+        }
+
+        if (event.action() != null && event.action().isUnsupported()) {
+            return _fail(event, "ACTION_UNSUPPORTED",
+                event.action() + " is not booked yet (needs amount on this event)", List.of());
+        }
+        if (event.isRefund()) {
+            return _refundFromUpstream(event, List.of(), false);
         }
 
         FactorMatcher.MatchResult entry = factorMatcher.matchAll(
@@ -316,6 +334,48 @@ public class IngestTransactionUseCase {
             p.getCode(), p.getEntity(), p.getType(), p.getSubType(), p.getCurrency(),
             book == null ? null : book.getId(),
             book == null ? null : book.getFullNumber());
+    }
+
+    /**
+     * REFUND / VOID / CHARGEBACK: master switch on; Door/Brain skipped; reverse original books.
+     */
+    private IngestionResult _refundFromUpstream(
+        TransactionalEvent event,
+        List<EligibilityTraceEntry> trace,
+        boolean dryRun
+    ) {
+        IngestAction action = event.action() == null ? IngestAction.REFUND : event.action();
+        String originalEventId = event.originalEventId();
+        if (originalEventId == null) {
+            String msg = action + " requires originalEventId";
+            return dryRun
+                ? IngestionResult.previewSkipped(event.eventId(), msg, trace)
+                : _fail(event, "NO_ORIGINAL", msg, trace);
+        }
+        if (dryRun) {
+            return IngestionResult.previewSkipped(
+                event.eventId(),
+                "dry-run " + action + " of originalEventId=" + originalEventId,
+                trace);
+        }
+        try {
+            GetLedgerMovementResponseDto refund = refundMovementUseCase.executeByOriginalEventId(
+                originalEventId, action);
+            return IngestionResult.refunded(
+                event.eventId(),
+                refund.amount(),
+                refund.id(),
+                _legs(refund.id()),
+                trace,
+                action.name());
+        } catch (BizException ex) {
+            String reason = ex.getMessage();
+            if (reason == null && ex.getData() instanceof Map<?, ?> map && map.get("detail") != null) {
+                reason = String.valueOf(map.get("detail"));
+            }
+            return _fail(event, action.name(),
+                reason == null ? action + " failed" : reason, trace);
+        }
     }
 
     private IngestionResult _fail(

@@ -174,7 +174,8 @@ If **auto-wallet on** (default after bootstrap) → first eligible event creates
 
 Legacy Brain columns (`minAmount`, ccy, mcc, age) still **AND** with `whenFactors`.
 
-Door, Brain, and Accounting all key off the **same** `eventType` token (`CC_TXN`, `CC_CIP`, `CC_SIP`, `LN_TXN`).
+Door, Brain, and Accounting all key off the **same** `eventType` token (`CC_TXN`, `CC_CIP`, `CC_SIP`, `LN_TXN`).  
+`action` is a **second** field (how to book this fire). Omit on the first spend.
 
 ---
 
@@ -402,7 +403,7 @@ Kafka (off by default):
 | Group | `ledger-engine` |
 | Listener | `TransactionEventKafkaListener` → `JSONUtil.readValue` |
 
-Sample: [`docs/samples/transactional-event.sdk.json`](samples/transactional-event.sdk.json)
+Sample spend: [`docs/samples/transactional-event.sdk.json`](samples/transactional-event.sdk.json)
 
 ```json
 {
@@ -422,6 +423,45 @@ Aliases: `ownerId` ← `associatedIdentifier` / `userId`.
 
 Response: `status` · `points` · `matchedRuleCode` · `movementId` · `legs` · `eligibilityTrace`.  
 Idempotency: `loyalty-earn-{eventId}` / `loyalty-burn-{eventId}`.
+
+### `action` — booking, not product family
+
+`eventType` stays the product (`CC_TXN` / `CC_CIP` / `CC_SIP` / `LN_TXN`).  
+`action` says how to book **this** fire. Omit on the first spend (default `SPEND`).
+
+| `action` | When | Books |
+|----------|------|-------|
+| `SPEND` | First fire. **Omit the field.** | Door → Brain → DE |
+| `REFUND` | Customer refund | Full reverse of `originalEventId`. Skip Door/Brain. Amount on this event is not re-scored. |
+| `VOID` | Same-day cancel / never captured | Same reverse as REFUND; remarks `void` |
+| `CHARGEBACK` | Issuer dispute | Same reverse as REFUND; remarks `chargeback` (fee later) |
+| `PARTIAL` | Refund part of the original | Recognised; fail `ACTION_UNSUPPORTED` (needs this event's amount) |
+| `ADJUST` | Tip / amount correction | Recognised; fail `ACTION_UNSUPPORTED` |
+
+Not on `action`: HOLD / RELEASE (REST), deposit / withdraw (rails), BURN / REDEEM (other `eventType`), EXPIRE (batch).
+
+Aliases: `ORIGINAL` / `APPLY` / `NORMAL` → `SPEND`; `REVERSE` → `VOID`; `DISPUTE` → `CHARGEBACK`; `ADJUSTMENT` → `ADJUST`.  
+Legacy `eventType=CC_TXN_REFUND` still infers `REFUND`.
+
+Refund sample: [`docs/samples/transactional-event-refund.sdk.json`](samples/transactional-event-refund.sdk.json)
+
+```json
+{
+  "eventId": "evt-cc-txn-001-refund",
+  "ownerId": "01A31658334",
+  "eventType": "CC_TXN",
+  "action": "REFUND",
+  "originalEventId": "evt-cc-txn-001",
+  "amount": "100.00",
+  "currency": "HKD",
+  "mainAccount": "908951901284"
+}
+```
+
+VOID sample: [`docs/samples/transactional-event-void.sdk.json`](samples/transactional-event-void.sdk.json)  
+PARTIAL shape (not booked yet): [`docs/samples/transactional-event-partial.sdk.json`](samples/transactional-event-partial.sdk.json)
+
+Full reverse is idempotent across `REFUND` / `VOID` / `CHARGEBACK` (`movementKey={originalKey}-refund`).
 
 ### Movement Kafka (internal bus)
 
@@ -482,9 +522,11 @@ Upstream (POS / OMS / card)
 | Movement | `ledger_movement` | `orderType=EARN`, `status=SETTLED`, `movementKey=loyalty-earn-{eventId}` |
 | Legs | `ledger_entry` × 2 | One DEBIT, one CREDIT, same amount, same currency |
 
-### Refund — reverse from the movement
+### Refund — two ways in, one reverse
 
-Ride the earn. Do **not** re-ingest the webhook.
+Same engine path either way: find the settled earn/burn, post `ADJUSTMENT_REFUND` with DR/CR swapped. Brain is **not** re-scored.
+
+**1 · Ops click**
 
 ```http
 POST /movements/{id}/refund
@@ -492,7 +534,11 @@ POST /movements/{id}/refund
 
 `{id}` is the **settled EARN** (or BURN) movement.
 
-| Original | Refund |
+**2 · Upstream event** (`eventType` stays `CC_TXN`, plus `action` + `originalEventId`)
+
+`REFUND` / `VOID` / `CHARGEBACK` intercept **before** Door so a CC_TXN-only entry gate does not `NOT_ENTERED` the reverse.
+
+| Original | Reverse |
 |---|---|
 | `orderType=EARN` | `ADJUSTMENT_REFUND` |
 | `amount=10` | `amount=-10` |
@@ -500,8 +546,8 @@ POST /movements/{id}/refund
 | CR member / DR house | **DR member / CR house** (same books, same magnitude) |
 | — | `associatedLedgerMovementId` → original |
 
-Idempotent: second `POST` returns the existing refund (`movementKey={originalKey}-refund`).  
-Net of earn + refund: balances back to pre-earn numbers.
+Idempotent: second reverse (click or any of REFUND/VOID/CHARGEBACK) returns the existing row (`movementKey={originalKey}-refund`).  
+Net of earn + reverse: balances back to pre-earn numbers.
 
 Admin: wallet history → select SETTLED EARN → **Refund · reverse DR/CR**.
 
@@ -513,6 +559,8 @@ Admin: wallet history → select SETTLED EARN → **Refund · reverse DR/CR**.
 | `NO_WALLET` | No wallet and auto-create off |
 | `NO_RULE` / `SKIPPED` | Brain: no first bingo |
 | `DUPLICATE` | Same `eventId` already earned (`movementKey` hit) |
+| `ACTION_UNSUPPORTED` | `PARTIAL` / `ADJUST` — recognised, not booked yet |
+| `NO_ORIGINAL` | Reverse action without `originalEventId` |
 | Fail queue | `POST /integrations/failed-transactions/{id}/replay` |
 
 ---

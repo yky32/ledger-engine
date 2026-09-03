@@ -52,7 +52,7 @@ class DoubleEntryEarnIntegrationTest {
             .andExpect(status().isOk());
 
         String eventId = "de-evt-" + UUID.randomUUID();
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD, Instant.now(), Map.of());
 
         MvcResult res = mockMvc.perform(post("/integrations/webhooks/transactions")

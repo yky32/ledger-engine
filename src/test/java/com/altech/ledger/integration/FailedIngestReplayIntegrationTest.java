@@ -59,7 +59,7 @@ class FailedIngestReplayIntegrationTest {
 
         // JPY skipped by PURCHASE rule
         String eventId = "rp-evt-" + UUID.randomUUID();
-        TransactionalEvent bad = new TransactionalEvent(
+        TransactionalEvent bad = TransactionalEvent.of(
             eventId, cust, "PURCHASE", new BigDecimal("100"), Currency.JPY, Instant.now(), Map.of());
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)

@@ -44,7 +44,7 @@ class TransactionIngestionIntegrationTest {
     void webhookEarnsLpWhenEligiblePurchase() throws Exception {
         String eventId = "evt-" + UUID.randomUUID();
         // HKD 200 * RATE 0.01 = 2 LP
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, "CUST-9001", "PURCHASE", new BigDecimal("200.00"), Currency.HKD,
             Instant.now().minus(1, ChronoUnit.HOURS), Map.of("source", "pos"));
 
@@ -84,7 +84,7 @@ class TransactionIngestionIntegrationTest {
         String cust = "AUTO-" + UUID.randomUUID().toString().substring(0, 8);
         String eventId = "evt-auto-" + UUID.randomUUID();
         // HKD 100 * 0.01 = 1 LP — no prior onboard
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, cust, "PURCHASE", new BigDecimal("100"), Currency.HKD,
             Instant.now(), Map.of());
 
@@ -109,7 +109,7 @@ class TransactionIngestionIntegrationTest {
     void webhookSkipsIneligibleCurrencyAndPersists() throws Exception {
         ensureOnboarded("CUST-9002");
         String eventId = "evt-ccy-" + UUID.randomUUID();
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, "CUST-9002", "PURCHASE", new BigDecimal("50"), Currency.JPY,
             Instant.now(), Map.of());
 
@@ -127,7 +127,7 @@ class TransactionIngestionIntegrationTest {
     void webhookSkipsWhenOlderThanMaxAgeDays() throws Exception {
         ensureOnboarded("CUST-9004");
         String eventId = "evt-age-" + UUID.randomUUID();
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, "CUST-9004", "PURCHASE", new BigDecimal("50"), Currency.HKD,
             Instant.now().minus(10, ChronoUnit.DAYS), Map.of());
 
@@ -145,7 +145,7 @@ class TransactionIngestionIntegrationTest {
     void webhookSkipsWhenOccurredAtMissingForMaxAgeRule() throws Exception {
         ensureOnboarded("CUST-9005");
         String eventId = "evt-no-ts-" + UUID.randomUUID();
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, "CUST-9005", "PURCHASE", new BigDecimal("50"), Currency.HKD,
             null, Map.of());
 
@@ -162,7 +162,7 @@ class TransactionIngestionIntegrationTest {
     @Test
     void webhookIsIdempotentForSameEventId() throws Exception {
         String eventId = "evt-dup-" + UUID.randomUUID();
-        TransactionalEvent event = new TransactionalEvent(
+        TransactionalEvent event = TransactionalEvent.of(
             eventId, "CUST-9003", "SIGNUP", BigDecimal.ZERO, Currency.LP, null, Map.of());
         String body = objectMapper.writeValueAsString(event);
 

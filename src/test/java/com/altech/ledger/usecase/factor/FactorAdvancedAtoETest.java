@@ -30,7 +30,7 @@ class FactorAdvancedAtoETest {
         Map<String, String> meta = new LinkedHashMap<>();
         if (mcc != null) meta.put("mcc", mcc);
         meta.put("tier", "GOLD");
-        return new TransactionalEvent("e", "O1", "PURCHASE", new BigDecimal(amt), Currency.get(ccy), Instant.now(), meta);
+        return TransactionalEvent.of("e", "O1", "PURCHASE", new BigDecimal(amt), Currency.get(ccy), Instant.now(), meta);
     }
 
     @Test

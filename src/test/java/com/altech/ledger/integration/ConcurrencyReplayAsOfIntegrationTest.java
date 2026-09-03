@@ -104,7 +104,7 @@ class ConcurrencyReplayAsOfIntegrationTest {
         String cust = "RF-" + UUID.randomUUID().toString().substring(0, 8);
         _onboardLp(cust);
         String eventId = "rf-" + UUID.randomUUID();
-        TransactionalEvent bad = new TransactionalEvent(
+        TransactionalEvent bad = TransactionalEvent.of(
             eventId, cust, "PURCHASE", new BigDecimal("10"), Currency.JPY, Instant.now(), Map.of());
         mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)

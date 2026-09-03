@@ -265,7 +265,7 @@ class AccountingRulePostingIntegrationTest {
         throws Exception {
         TransactionalEvent event = new TransactionalEvent(
             "evt-" + UUID.randomUUID(), ownerId, eventType, amount, Currency.HKD, Instant.now(), Map.of(),
-            mainAccount);
+            mainAccount, null, null);
         MvcResult res = mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))
@@ -308,7 +308,7 @@ class AccountingRulePostingIntegrationTest {
     private long _earn(String ownerId, String eventId, String mainAccount) throws Exception {
         TransactionalEvent event = new TransactionalEvent(
             eventId, ownerId, "PURCHASE", new BigDecimal("100"), Currency.HKD, Instant.now(), Map.of(),
-            mainAccount);
+            mainAccount, null, null);
         MvcResult res = mockMvc.perform(post("/integrations/webhooks/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(event)))

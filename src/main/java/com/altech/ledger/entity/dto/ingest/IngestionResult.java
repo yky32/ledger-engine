@@ -42,7 +42,7 @@ public record IngestionResult(
         Long accountId,
         String fullNumber
     ) {}
-    public enum Status { EARNED, BURNED, PROCESSED, SKIPPED, DUPLICATE, ERROR }
+    public enum Status { EARNED, BURNED, PROCESSED, REFUNDED, SKIPPED, DUPLICATE, ERROR }
 
     public static IngestionResult skipped(
         String eventId,
@@ -56,6 +56,32 @@ public record IngestionResult(
 
     public static IngestionResult skipped(String eventId, String reason) {
         return skipped(eventId, reason, List.of());
+    }
+
+    /** Reverse of a prior earn/burn (click or upstream originalEventId). */
+    public static IngestionResult refunded(
+        String eventId,
+        BigDecimal points,
+        Long movementId,
+        List<LedgerLegDto> legs,
+        List<EligibilityTraceEntry> trace
+    ) {
+        return refunded(eventId, points, movementId, legs, trace, "REFUND");
+    }
+
+    public static IngestionResult refunded(
+        String eventId,
+        BigDecimal points,
+        Long movementId,
+        List<LedgerLegDto> legs,
+        List<EligibilityTraceEntry> trace,
+        String operation
+    ) {
+        return new IngestionResult(
+            eventId, Status.REFUNDED, operation == null || operation.isBlank() ? "REFUND" : operation,
+            null, points, null, null, movementId,
+            legs == null ? List.of() : List.copyOf(legs),
+            null, copyTrace(trace), null, null);
     }
 
     public static IngestionResult applied(
