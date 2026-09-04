@@ -190,10 +190,14 @@ Shared matcher on Door + Brain (`FactorMatcher` / `FactorSpec`).
 { "field": "mcc", "op": "in", "value": ["5411"] }
 { "field": "amount", "op": "gte", "value": 100 }
 { "field": "metadata.channel", "op": "eq", "value": "POS" }
+{ "field": "metadata.merchantName", "op": "startsWith", "value": "MTR" }
+{ "field": "metadata.merchantName", "op": "endsWith", "value": "LTD" }
+{ "field": "metadata.merchantName", "op": "contains", "value": "MTR" }
 ```
 
 **Fields:** `currency` · `mcc` · `amount` · `ageDays` · `eventType` · `metadata.*`  
-**Ops:** `eq` `neq` `in` `nin` `gt` `gte` `lt` `lte` `between` `exists`
+**Ops:** `eq` `neq` `in` `nin` `gt` `gte` `lt` `lte` `between` `exists` `startsWith` `endsWith` `contains`  
+(string ops are case-insensitive; `value` may be a list)
 
 ### FactorSet (boolean)
 
@@ -477,7 +481,7 @@ Also: `ledger.movement.done`. Inbound execute: `initiated` / `balance-update`.
 
 ### Wallet tiering
 
-Config: `GET/PUT /wallet-tier-policies` (Door-shaped, one row).  
+Config: `GET/PUT /wallet-tier-policies` (Door-shaped, unique `criterion` + `currency`).  
 Criterion v1 = **`LEDGER_BALANCE`**: sum of `account.ledgerBalance` for this **`wallet.id` + `currency`** (default LP). No COA stem on the policy.  
 GET from admin seeds a **disabled draft**. Settle does **not** insert a policy. Tiering starts when ops **Save as Enabled**.
 

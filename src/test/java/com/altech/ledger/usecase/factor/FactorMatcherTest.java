@@ -84,4 +84,64 @@ class FactorMatcherTest {
         assertTrue(matcher.matchAll(evt("HKD", "1", null, Instant.now()), List.of()).matched());
         assertTrue(matcher.matchAll(evt("HKD", "1", null, Instant.now()), null).matched());
     }
+
+    @Test
+    void merchantNameStartsWithMtr() {
+        Map<String, String> meta = new LinkedHashMap<>();
+        meta.put("merchantName", "MTR Central");
+        var e = TransactionalEvent.of(
+            "e1", "OWN1", "CC_TXN", new BigDecimal("100"), Currency.HKD, Instant.now(), meta);
+        var f = List.of(Map.<String, Object>of(
+            "field", "metadata.merchantName", "op", "startsWith", "value", "MTR"));
+        assertTrue(matcher.matchAll(e, f).matched());
+
+        meta.put("merchantName", "mtr-hk");
+        e = TransactionalEvent.of(
+            "e2", "OWN1", "CC_TXN", new BigDecimal("100"), Currency.HKD, Instant.now(), meta);
+        assertTrue(matcher.matchAll(e, f).matched());
+
+        meta.put("merchantName", "STAR MTR");
+        e = TransactionalEvent.of(
+            "e3", "OWN1", "CC_TXN", new BigDecimal("100"), Currency.HKD, Instant.now(), meta);
+        assertFalse(matcher.matchAll(e, f).matched());
+    }
+
+    @Test
+    void mcc17OrMerchantStartsWithMtr() {
+        Map<String, Object> any = new LinkedHashMap<>();
+        any.put("match", "any");
+        any.put("factors", List.of(
+            Map.<String, Object>of("field", "mcc", "op", "eq", "value", "17"),
+            Map.<String, Object>of("field", "metadata.merchantName", "op", "prefix", "value", "MTR")
+        ));
+        Map<String, String> mtr = new LinkedHashMap<>();
+        mtr.put("merchantName", "MTR Admiralty");
+        var byName = TransactionalEvent.of(
+            "e1", "OWN1", "CC_TXN", new BigDecimal("80"), Currency.HKD, Instant.now(), mtr);
+        assertTrue(matcher.matchAll(byName, any).matched());
+
+        var byMcc = evt("HKD", "80", "17", Instant.now());
+        assertTrue(matcher.matchAll(byMcc, any).matched());
+
+        var other = evt("HKD", "80", "5411", Instant.now());
+        assertFalse(matcher.matchAll(other, any).matched());
+    }
+
+    @Test
+    void merchantNameEndsWithAndContains() {
+        Map<String, String> meta = new LinkedHashMap<>();
+        meta.put("merchantName", "STAR MTR LTD");
+        var e = TransactionalEvent.of(
+            "e1", "OWN1", "CC_TXN", new BigDecimal("100"), Currency.HKD, Instant.now(), meta);
+        assertTrue(matcher.matchAll(e, List.of(Map.<String, Object>of(
+            "field", "metadata.merchantName", "op", "endsWith", "value", "LTD"))).matched());
+        assertTrue(matcher.matchAll(e, List.of(Map.<String, Object>of(
+            "field", "metadata.merchantName", "op", "contains", "value", "MTR"))).matched());
+        assertFalse(matcher.matchAll(e, List.of(Map.<String, Object>of(
+            "field", "metadata.merchantName", "op", "startsWith", "value", "MTR"))).matched());
+        assertFalse(matcher.matchAll(e, List.of(Map.<String, Object>of(
+            "field", "metadata.merchantName", "op", "endsWith", "value", "MTR"))).matched());
+        assertFalse(matcher.matchAll(e, List.of(Map.<String, Object>of(
+            "field", "metadata.merchantName", "op", "contains", "value", "KMB"))).matched());
+    }
 }

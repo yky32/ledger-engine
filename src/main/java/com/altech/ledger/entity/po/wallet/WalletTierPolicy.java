@@ -12,6 +12,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,9 +24,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Ops config for wallet membership bands. One effective row (Door-shaped).
+ * Ops config for wallet membership bands. One row per criterion + currency.
  */
 @Entity
+@Table(uniqueConstraints = {
+    @UniqueConstraint(name = "uk_wallet_tier_policy_criterion_currency",
+        columnNames = {"criterion", "currency"})
+})
 @Getter
 @Setter
 @NoArgsConstructor

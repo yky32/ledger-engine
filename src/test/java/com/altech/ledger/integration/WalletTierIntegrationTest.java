@@ -3,6 +3,7 @@ package com.altech.ledger.integration;
 import com.altech.core.constant.enu.Currency;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.repository.DigestionRuleRepository;
+import com.altech.ledger.repository.WalletTierPolicyRepository;
 import com.altech.ledger.support.DigestionRuleTestData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -30,6 +32,7 @@ class WalletTierIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired DigestionRuleRepository digestionRuleRepository;
+    @Autowired WalletTierPolicyRepository walletTierPolicyRepository;
 
     @BeforeEach
     void seed() {
@@ -104,6 +107,8 @@ class WalletTierIntegrationTest {
             .andExpect(jsonPath("$.data.criterion").value("LEDGER_BALANCE"))
             .andExpect(jsonPath("$.data.currency").value("LP"))
             .andExpect(jsonPath("$.data.bands[0].code").value("NONE"));
+        mockMvc.perform(get("/wallet-tier-policies")).andExpect(status().isOk());
+        assertThat(walletTierPolicyRepository.count()).isEqualTo(1);
     }
 
     @Test

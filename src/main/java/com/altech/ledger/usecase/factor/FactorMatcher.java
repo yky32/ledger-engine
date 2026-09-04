@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * Common factor matcher for Door (entry) and Brain (when / equation selection).
  * <p>
- * Ops: eq, neq, in, nin, gt, gte, lt, lte, between, exists.
+ * Ops: eq, neq, in, nin, gt, gte, lt, lte, between, exists, startsWith, endsWith, contains.
  * Fields: currency, mcc, amount, ageDays, eventType, metadata.*
  */
 @Component
@@ -413,6 +413,12 @@ public class FactorMatcher {
                     case "lt", "<" -> cmp(f, op, actual, expected, -1, false);
                     case "lte", "le", "<=" -> cmp(f, op, actual, expected, -1, true);
                     case "between" -> between(f, op, actual, expected);
+                    case "startswith", "starts_with", "prefix", "sw" ->
+                        needle(f, op, actual, expected, Needle.START);
+                    case "endswith", "ends_with", "suffix", "ew" ->
+                        needle(f, op, actual, expected, Needle.END);
+                    case "contains", "contain", "includes", "has" ->
+                        needle(f, op, actual, expected, Needle.CONTAIN);
                     default -> MatchResult.fail(f, op, "unsupported op: " + op);
                 };
             }
@@ -529,6 +535,37 @@ public class FactorMatcher {
             return MatchResult.ok();
         }
         return MatchResult.fail(field, op, "actual=" + a + " expected=" + e);
+    }
+
+    private enum Needle { START, END, CONTAIN }
+
+    /**
+     * Case-insensitive string needle. {@code value} is one string or a list (any hits).
+     * startsWith {@code MTR} · endsWith {@code LTD} · contains {@code MTR}.
+     */
+    private MatchResult needle(String field, String op, Object actual, Object expected, Needle kind) {
+        if (actual == null) {
+            return MatchResult.fail(field, op, "actual is null");
+        }
+        String a = normStr(actual);
+        Set<String> needles = toStringSet(expected);
+        if (needles.isEmpty()) {
+            return MatchResult.fail(field, op, "empty needle");
+        }
+        for (String n : needles) {
+            if (n.isEmpty()) {
+                continue;
+            }
+            boolean hit = switch (kind) {
+                case START -> a.startsWith(n);
+                case END -> a.endsWith(n);
+                case CONTAIN -> a.contains(n);
+            };
+            if (hit) {
+                return MatchResult.ok();
+            }
+        }
+        return MatchResult.fail(field, op, "actual=" + a + " " + op + " " + needles);
     }
 
     private MatchResult in(String field, String op, Object actual, Object expected, boolean mustContain) {
