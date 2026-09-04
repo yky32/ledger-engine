@@ -19,6 +19,7 @@ public record GetLedgerWalletResponseDto(
     WalletType walletType,
     WalletStatus status,
     Currency settlementCurrency,
+    String tier,
     List<GetLedgerAccountResponseDto> accounts,
     Instant createDt,
     Instant updateDt

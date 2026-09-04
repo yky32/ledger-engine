@@ -1,5 +1,7 @@
 package com.altech.ledger.usecase.digestion;
 
+import com.altech.core.exception.BizException;
+import com.altech.core.response.SystemResponse;
 import com.altech.ledger.entity.dto.ingest.EligibilityTraceEntry;
 import com.altech.ledger.entity.dto.ingest.TransactionalEvent;
 import com.altech.ledger.entity.po.digestion.DigestionRule;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,7 +27,23 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class TransactionRuleEngine {
-    public enum Operation { EARN, BURN, PROCESS }
+    public enum Operation {
+        EARN, BURN, PROCESS,
+        ;
+
+        public static Operation get(String input) {
+            if (input != null) {
+                for (Operation value : Operation.values()) {
+                    if (input.equalsIgnoreCase(value.name())) {
+                        return value;
+                    }
+                }
+            }
+            String message = String.format("Wrong [%s] value. [%s] not in -> %s",
+                input, input, Arrays.asList(Operation.values()));
+            throw new BizException(SystemResponse.PAM0400, message);
+        }
+    }
 
     private final DigestionRuleRepository digestionRuleRepository;
     private final FactorMatcher factorMatcher;

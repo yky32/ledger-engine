@@ -35,6 +35,9 @@ public class BalanceUpdatedEvent extends BaseEvent {
     private BigDecimal amount;
     private Currency currency;
     private String description;
+    /** wallet.tier after this movement's assess. */
+    private String currentTier;
+    private Boolean tierChanged;
 
     @Builder.Default
     private List<AccountBalanceSnapshot> accounts = new ArrayList<>();

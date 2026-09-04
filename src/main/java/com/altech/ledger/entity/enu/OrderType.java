@@ -1,5 +1,10 @@
 package com.altech.ledger.entity.enu;
 
+import com.altech.core.exception.BizException;
+import com.altech.core.response.SystemResponse;
+
+import java.util.Arrays;
+
 /**
  * OrderType. extended with engine loyalty / transfer types.
  */
@@ -23,5 +28,17 @@ public enum OrderType {
     /** Lock available without changing ledger. */
     HOLD,
     /** Unlock available previously held. */
-    RELEASE
+    RELEASE;
+
+    public static OrderType get(String input) {
+        if (input != null) {
+            for (OrderType value : OrderType.values()) {
+                if (input.equalsIgnoreCase(value.name())) {
+                    return value;
+                }
+            }
+        }
+        String message = String.format("Wrong [%s] value. [%s] not in -> %s", input, input, Arrays.asList(OrderType.values()));
+        throw new BizException(SystemResponse.PAM0400, message);
+    }
 }

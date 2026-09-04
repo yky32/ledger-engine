@@ -3,6 +3,7 @@ package com.altech.ledger.service;
 import com.altech.ledger.config.MovementKafkaProperties;
 import com.altech.ledger.entity.dto.event.BalanceUpdatedEvent;
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
+import com.altech.ledger.entity.dto.event.WalletTierChangedEvent;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.po.log.LedgerMovement;
@@ -87,6 +88,31 @@ public class MovementBus {
                 movementKafkaProperties.getBalanceUpdatedTopic());
         } catch (Exception ex) {
             log.warn("Kafka BALANCE_UPDATED publish failed: {}", ex.getMessage());
+        }
+    }
+
+    public void publishWalletTierChanged(WalletTierChangedEvent event) {
+        if (event == null) {
+            return;
+        }
+        if (!movementKafkaProperties.isEnabled() || kafkaTemplate.getIfAvailable() == null) {
+            log.debug("Kafka wallet-tier-changed skipped (disabled) walletId={}", event.getWalletId());
+            return;
+        }
+        try {
+            if (event.getEventName() == null || event.getEventName().isBlank()) {
+                event.setEventName("WALLET_TIER_CHANGED");
+            }
+            String key = event.getWalletId() != null
+                ? String.valueOf(event.getWalletId())
+                : event.getOwnerId();
+            kafkaTemplate.getObject().send(
+                movementKafkaProperties.getWalletTierChangedTopic(), key, JSONUtil.writeValue(event));
+            log.info("Published WALLET_TIER_CHANGED ownerId={} {} → {} topic={}",
+                event.getOwnerId(), event.getFromTier(), event.getToTier(),
+                movementKafkaProperties.getWalletTierChangedTopic());
+        } catch (Exception ex) {
+            log.warn("Kafka WALLET_TIER_CHANGED publish failed: {}", ex.getMessage());
         }
     }
 

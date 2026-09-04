@@ -19,6 +19,7 @@ import com.altech.ledger.entity.dto.response.GetSystemConfigurationResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletAccountResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletBalanceResponseDto;
 import com.altech.ledger.entity.dto.response.GetWalletOnboardResponseDto;
+import com.altech.ledger.entity.dto.response.GetWalletTierPolicyResponseDto;
 import com.altech.ledger.entity.po.FxRate;
 import com.altech.ledger.entity.po.accounting.AccountingRule;
 import com.altech.ledger.entity.po.accounting.AccountingRuleExecution;
@@ -32,6 +33,7 @@ import com.altech.ledger.entity.po.ledger.Account;
 import com.altech.ledger.entity.po.ledger.Wallet;
 import com.altech.ledger.entity.po.log.LedgerEntry;
 import com.altech.ledger.entity.po.log.LedgerMovement;
+import com.altech.ledger.entity.po.wallet.WalletTierPolicy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +80,7 @@ public final class DtoWrapper {
             .status(wallet.getStatus())
             .type(wallet.getType())
             .walletType(wallet.getWalletType())
+            .tier(wallet.getTier())
             .name(wallet.getName())
             .createDt(wallet.getCreateDt())
             .updateDt(wallet.getUpdateDt())
@@ -101,6 +104,7 @@ public final class DtoWrapper {
             .status(wallet.getStatus())
             .type(wallet.getType())
             .walletType(wallet.getWalletType())
+            .tier(wallet.getTier())
             .name(wallet.getName())
             .account(getWalletAccountResponseDto(
                 primary, null, true, bookDisplayName(wallet.getOwnerId(), primary.getCurrency())))
@@ -196,6 +200,7 @@ public final class DtoWrapper {
             w.getWalletType(),
             w.getStatus(),
             w.getSettlementCurrency(),
+            w.getTier(),
             accounts.stream().map(DtoWrapper::getLedgerAccountResponseDto).toList(),
             w.getCreateDt(),
             w.getUpdateDt());
@@ -287,6 +292,18 @@ public final class DtoWrapper {
             .autoWalletNamePrefix(p.getAutoWalletNamePrefix())
             .autoWalletCoaProfileCode(p.getAutoWalletCoaProfileCode())
             .entryFactors(p.getEntryFactors())
+            .createDt(p.getCreateDt())
+            .updateDt(p.getUpdateDt())
+            .build();
+    }
+
+    public static GetWalletTierPolicyResponseDto getWalletTierPolicyResponseDto(WalletTierPolicy p) {
+        return GetWalletTierPolicyResponseDto.builder()
+            .id(p.getId())
+            .isEnabled(p.getIsEnabled())
+            .criterion(p.getCriterion() == null ? null : p.getCriterion().name())
+            .currency(p.getCurrency())
+            .bands(p.getBands())
             .createDt(p.getCreateDt())
             .updateDt(p.getUpdateDt())
             .build();

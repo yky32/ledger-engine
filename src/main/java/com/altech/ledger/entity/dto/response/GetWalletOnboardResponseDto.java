@@ -33,6 +33,8 @@ public class GetWalletOnboardResponseDto extends BaseResponseDto {
     private WalletStatus status;
     private WalletAssociationType type;
     private WalletType walletType;
+    /** Membership band (wallet.tier). */
+    private String tier;
     private String name;
     private GetWalletAccountResponseDto account;
     private GetWalletBalanceResponseDto balance;
