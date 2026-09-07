@@ -167,4 +167,24 @@ class TransactionalEventJsonUtilTest {
         assertThat(voided.action().name()).isEqualTo("VOID");
     }
 
+    @Test
+    void applyToDefaultsBothAndParsesLedger() {
+        TransactionalEvent omit = JSONUtil.readValue("""
+            {"eventId":"s1","ownerId":"o","eventType":"CC_TXN","amount":"10","currency":"HKD"}
+            """, TransactionalEvent.class);
+        assertThat(omit.applyTo().name()).isEqualTo("BOTH");
+
+        TransactionalEvent ledger = JSONUtil.readValue("""
+            {"eventId":"s2","ownerId":"o","eventType":"CC_TXN","amount":"10","currency":"HKD",
+             "applyTo":"LEDGER"}
+            """, TransactionalEvent.class);
+        assertThat(ledger.applyTo().name()).isEqualTo("LEDGER");
+
+        TransactionalEvent alias = JSONUtil.readValue("""
+            {"eventId":"s3","ownerId":"o","eventType":"CC_TXN","amount":"10","currency":"HKD",
+             "applyTo":"LEDGER_ONLY"}
+            """, TransactionalEvent.class);
+        assertThat(alias.applyTo().name()).isEqualTo("LEDGER");
+    }
+
 }

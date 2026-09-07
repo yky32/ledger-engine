@@ -175,7 +175,8 @@ If **auto-wallet on** (default after bootstrap) → first eligible event creates
 Legacy Brain columns (`minAmount`, ccy, mcc, age) still **AND** with `whenFactors`.
 
 Door, Brain, and Accounting all key off the **same** `eventType` token (`CC_TXN`, `CC_CIP`, `CC_SIP`, `LN_TXN`).  
-`action` is a **second** field (how to book this fire). Omit on the first spend.
+`action` is a **second** field (how to book this fire). Omit on the first spend.  
+`applyTo` is a **third** field (which balances to write). Omit → **BOTH** (ledger + available). `LEDGER` = AUTH / pending; `AVAILABLE` = POST after AUTH (cannot exceed ledger). VOID/REFUND of an original copies that original’s `applyTo`.
 
 ---
 
@@ -296,7 +297,9 @@ T-accounts: **DR left / CR right**. Legs stored with positive amounts + `Movemen
 
 | | ledger | available |
 |--|--------|-----------|
-| EARN | ↑ | ↑ |
+| EARN (default `applyTo=BOTH`) | ↑ | ↑ |
+| EARN `applyTo=LEDGER` | ↑ | — |
+| EARN `applyTo=AVAILABLE` | — | ↑ (≤ ledger) |
 | HOLD | — | ↓ |
 | RELEASE | — | ↑ (≤ ledger) |
 | BURN | ↓ | ↓ |

@@ -1,6 +1,7 @@
 package com.altech.ledger.entity.dto.ingest;
 
 import com.altech.core.constant.enu.Currency;
+import com.altech.ledger.entity.enu.ApplyTo;
 import com.altech.ledger.entity.enu.IngestAction;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -55,7 +56,14 @@ public record TransactionalEvent(
      * · {@code CHARGEBACK} · {@code ADJUST}. JSON {@code ORIGINAL}/{@code APPLY}/{@code NORMAL} → SPEND.
      */
     @JsonAlias({"booking", "intent"})
-    IngestAction action
+    IngestAction action,
+
+    /**
+     * Which balances to write. Omit → {@link ApplyTo#BOTH}.
+     * {@code LEDGER} = AUTH / pending; {@code AVAILABLE} = POST after AUTH.
+     */
+    @JsonAlias({"apply_to", "bookTo", "balanceApply"})
+    ApplyTo applyTo
 ) {
     public TransactionalEvent {
         if (ownerId != null) {
@@ -100,6 +108,18 @@ public record TransactionalEvent(
         if (action == null) {
             action = inferAction(eventType, originalEventId);
         }
+        if (applyTo == null && metadata != null) {
+            for (String k : new String[] { "applyTo", "apply_to", "bookTo" }) {
+                String v = metadata.get(k);
+                if (v != null && !v.isBlank()) {
+                    applyTo = ApplyTo.get(v);
+                    break;
+                }
+            }
+        }
+        if (applyTo == null) {
+            applyTo = ApplyTo.BOTH;
+        }
     }
 
     public boolean isRefund() {
@@ -137,6 +157,6 @@ public record TransactionalEvent(
         Map<String, String> metadata
     ) {
         return new TransactionalEvent(
-            eventId, ownerId, eventType, amount, currency, occurredAt, metadata, null, null, null);
+            eventId, ownerId, eventType, amount, currency, occurredAt, metadata, null, null, null, null);
     }
 }

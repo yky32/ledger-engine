@@ -8,6 +8,7 @@ import com.altech.ledger.exception.response.AccountErrorResponse;
 import com.altech.ledger.entity.dto.BalanceExecutionResultCommand;
 import com.altech.ledger.entity.dto.event.BalanceUpdatedEvent;
 import com.altech.ledger.entity.dto.event.LedgerMovementEvent;
+import com.altech.ledger.entity.enu.ApplyTo;
 import com.altech.ledger.entity.enu.BalanceOperation;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.MovementDirection;
@@ -105,6 +106,7 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         }
         try {
             BalanceExecutionResultCommand command = rulesExecution(movement);
+            remapApplyTo(movement, command);
             applyCommand(command);
             stampMemberBookCurrency(movement, command);
             movement.setStatus(LedgerMovementStatus.SETTLED);
@@ -270,6 +272,19 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
         return command;
     }
 
+    private void remapApplyTo(LedgerMovement movement, BalanceExecutionResultCommand command) {
+        if (command == null || command.getDetails() == null) {
+            return;
+        }
+        ApplyTo applyTo = movement.getApplyTo() == null ? ApplyTo.BOTH : movement.getApplyTo();
+        if (applyTo == ApplyTo.BOTH) {
+            return;
+        }
+        for (BalanceExecutionResultCommand.CommandDetail d : command.getDetails()) {
+            d.setOperation(applyTo.remap(d.getOperation()));
+        }
+    }
+
     private void applyCommand(BalanceExecutionResultCommand command) {
         for (BalanceExecutionResultCommand.CommandDetail detail : command.getDetails()) {
             apply(detail);
@@ -299,9 +314,11 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             }
             any = a;
             boolean credit = d.getOperation() == BalanceOperation.ADD
-                || d.getOperation() == BalanceOperation.HOLD_UNLOCK;
+                || d.getOperation() == BalanceOperation.HOLD_UNLOCK
+                || d.getOperation() == BalanceOperation.LEDGER_ADD;
             boolean debit = d.getOperation() == BalanceOperation.SUBTRACT
-                || d.getOperation() == BalanceOperation.HOLD_LOCK;
+                || d.getOperation() == BalanceOperation.HOLD_LOCK
+                || d.getOperation() == BalanceOperation.LEDGER_SUB;
             if (movement.getOrderType() == OrderType.EARN && credit) {
                 preferred = a;
                 break;
@@ -320,11 +337,13 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
     private void createLedgerEntries(LedgerMovement movement, BalanceExecutionResultCommand command) {
         for (BalanceExecutionResultCommand.CommandDetail cmd : command.getDetails()) {
             MovementDirection direction = switch (cmd.getOperation()) {
-                case ADD, HOLD_UNLOCK -> MovementDirection.CREDIT;
-                case SUBTRACT, HOLD_LOCK -> MovementDirection.DEBIT;
+                case ADD, HOLD_UNLOCK, LEDGER_ADD -> MovementDirection.CREDIT;
+                case SUBTRACT, HOLD_LOCK, LEDGER_SUB -> MovementDirection.DEBIT;
             };
-            boolean holdLike = cmd.getOperation() == BalanceOperation.HOLD_LOCK
+            boolean availOnly = cmd.getOperation() == BalanceOperation.HOLD_LOCK
                 || cmd.getOperation() == BalanceOperation.HOLD_UNLOCK;
+            boolean ledgerOnly = cmd.getOperation() == BalanceOperation.LEDGER_ADD
+                || cmd.getOperation() == BalanceOperation.LEDGER_SUB;
             LedgerEntry entry = new LedgerEntry();
             entry.setTxnId(movement.getId());
             entry.setTargetId(String.valueOf(cmd.getAccount().getId()));
@@ -333,8 +352,8 @@ public class LedgerMovementExecutionUseCase implements LedgerHandler {
             entry.setCurrency(cmd.getAccount() != null && cmd.getAccount().getCurrency() != null
                 ? cmd.getAccount().getCurrency()
                 : movement.getCurrency());
-            entry.setAffectsLedger(!holdLike);
-            entry.setAffectsAvailable(true);
+            entry.setAffectsLedger(!availOnly);
+            entry.setAffectsAvailable(!ledgerOnly);
             ledgerEntryRepository.save(entry);
         }
     }

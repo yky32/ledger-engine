@@ -213,6 +213,7 @@ public final class DtoWrapper {
             m.getOrderType(), m.getStatus(), m.getMode(), m.getType(),
             m.getRemarks(), m.getMetadata(), m.getComplianceContext(), m.getFiles(),
             m.getMainAccount(), m.getAssociatedLedgerMovementId(),
+            m.getApplyTo(),
             m.getCreateDt(), m.getUpdateDt());
     }
 
@@ -249,7 +250,7 @@ public final class DtoWrapper {
             d.originatorId(), d.targetId(), d.amount(), currency,
             d.orderType(), d.status(), d.mode(), d.type(),
             d.remarks(), d.metadata(), d.complianceContext(), d.files(),
-            d.mainAccount(), d.associatedLedgerMovementId(), d.createDt(), d.updateDt());
+            d.mainAccount(), d.associatedLedgerMovementId(), d.applyTo(), d.createDt(), d.updateDt());
     }
 
     public static MovementResponse getMovementResponse(LedgerMovement m) {

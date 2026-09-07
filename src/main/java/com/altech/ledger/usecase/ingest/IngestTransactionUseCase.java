@@ -215,9 +215,9 @@ public class IngestTransactionUseCase {
 
             PostingCommand cmd = orderType == OrderType.BURN
                 ? PostingCommand.burn(wallet.getId(), rule.points(), resultCurrency, movementKey, desc, null, eventType,
-                    event.mainAccount())
+                    event.mainAccount(), event.applyTo())
                 : PostingCommand.earn(wallet.getId(), rule.points(), resultCurrency, movementKey, desc, null, eventType,
-                    event.mainAccount());
+                    event.mainAccount(), event.applyTo());
             GetLedgerMovementResponseDto applied = applyPostingUseCase.execute(cmd);
 
             UUID txnId = applied.id() == null ? null

@@ -83,7 +83,8 @@ public class ApplyPostingUseCase {
                 cmd.description(),
                 cmd.accountId(),
                 cmd.eventType(),
-                cmd.mainAccount()
+                cmd.mainAccount(),
+                cmd.applyTo()
             );
             case HOLD, RELEASE -> ledgerMovementShooter.doHoldRelease(
                 cmd.walletId(),

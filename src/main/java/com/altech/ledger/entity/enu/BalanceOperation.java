@@ -11,7 +11,11 @@ public enum BalanceOperation {
     /** Reduce available only (ledger unchanged) — HOLD. */
     HOLD_LOCK,
     /** Restore available only (ledger unchanged) — RELEASE. */
-    HOLD_UNLOCK;
+    HOLD_UNLOCK,
+    /** Credit ledger only (available unchanged) — applyTo=LEDGER. */
+    LEDGER_ADD,
+    /** Debit ledger only (available unchanged) — applyTo=LEDGER reverse. */
+    LEDGER_SUB;
 
     public static BalanceOperation get(String input) {
         if (input != null) {

@@ -92,7 +92,8 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
     @Transactional
     public GetLedgerMovementResponseDto doEarnBurn(Long walletId, OrderType orderType, java.math.BigDecimal amount,
                                        Currency currency, String movementKey, String description, Long accountId,
-                                       String eventType, String mainAccount) {
+                                       String eventType, String mainAccount,
+                                       ApplyTo applyTo) {
         Wallet wallet = walletService.get(walletId);
         requireActive(wallet);
         String key = key(movementKey, orderType.name().toLowerCase());
@@ -109,6 +110,7 @@ public class LedgerMovementShooter extends BaseLedgerMovementShooter {
             if (mainAccount != null && !mainAccount.isBlank()) {
                 m.setMainAccount(mainAccount.trim());
             }
+            m.setApplyTo(applyTo == null ? ApplyTo.BOTH : applyTo);
             ledgerMovementRepository().save(m);
             return DtoWrapper.getLedgerMovementResponseDto(execute(m));
         });

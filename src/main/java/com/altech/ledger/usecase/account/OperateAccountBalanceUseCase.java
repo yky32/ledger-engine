@@ -33,6 +33,8 @@ public class OperateAccountBalanceUseCase {
             case SUBTRACT -> withdrawal(accountId, amount);
             case HOLD_LOCK -> lockAvailable(accountId, amount);
             case HOLD_UNLOCK -> unlockAvailable(accountId, amount);
+            case LEDGER_ADD -> addLedgerOnly(accountId, amount);
+            case LEDGER_SUB -> subLedgerOnly(accountId, amount);
         };
     }
 
@@ -64,6 +66,29 @@ public class OperateAccountBalanceUseCase {
         BigDecimal delta = requireAmount(amount);
         requireSufficientAvailable(account, delta);
         account.setAvailableBalance(account.getAvailableBalance().subtract(delta));
+        return accountRepository.save(account);
+    }
+
+    /** Credit ledger only (AUTH / pending). Available unchanged. */
+    @Transactional
+    public Account addLedgerOnly(Long accountId, BigDecimal amount) {
+        Account account = requireAccount(accountId);
+        BigDecimal delta = requireAmount(amount);
+        account.setLedgerBalance(account.getLedgerBalance().add(delta));
+        return accountRepository.save(account);
+    }
+
+    /** Debit ledger only. Must not fall below available unless the book allows negative. */
+    @Transactional
+    public Account subLedgerOnly(Long accountId, BigDecimal amount) {
+        Account account = requireAccount(accountId);
+        BigDecimal delta = requireAmount(amount);
+        BigDecimal next = account.getLedgerBalance().subtract(delta);
+        if (!account.isAllowNegative() && next.compareTo(account.getAvailableBalance()) < 0) {
+            throw new BizException(MovementErrorResponse.MOV0400,
+                "Ledger would fall below available on account " + account.getId());
+        }
+        account.setLedgerBalance(next);
         return accountRepository.save(account);
     }
 

@@ -100,6 +100,7 @@ public class RefundMovementUseCase {
         refund.setMainAccount(orig.getMainAccount());
         refund.setOriginatorId(orig.getOriginatorId());
         refund.setTargetId(orig.getTargetId());
+        refund.setApplyTo(orig.getApplyTo());
         IngestAction kind = action == null ? IngestAction.REFUND : action;
         String label = kind.name().toLowerCase();
         refund.setMetadata(label + " of " + orig.getMovementKey());

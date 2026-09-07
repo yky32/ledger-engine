@@ -3,6 +3,7 @@ package com.altech.ledger.entity.po.log;
 import com.altech.core.constant.enu.Currency;
 import com.altech.core.entity.AuditEntityWithIsActive;
 import com.altech.core.utils.generator.id.SnowflakeIdGenerator;
+import com.altech.ledger.entity.enu.ApplyTo;
 import com.altech.ledger.entity.enu.LedgerMovementMode;
 import com.altech.ledger.entity.enu.LedgerMovementStatus;
 import com.altech.ledger.entity.enu.LedgerMovementType;
@@ -119,10 +120,18 @@ public class LedgerMovement extends AuditEntityWithIsActive {
     @Column(nullable = false)
     private LedgerMovementMode mode;
 
+    /** Which balances this movement wrote. Default BOTH. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ApplyTo applyTo;
+
     @PrePersist
     void applyDefaults() {
         if (mode == null) {
             mode = LedgerMovementMode.AUTO;
+        }
+        if (applyTo == null) {
+            applyTo = ApplyTo.BOTH;
         }
         if (type == null) {
             type = LedgerMovementType.TRANSFER;
