@@ -12,6 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.altech.ledger.entity.dto.request.CreateLedgerInWalletTransferRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
+/**
+ * Wallet-id rail API (legacy parity with the-wallet-ledger).
+ *
+ * @deprecated Prefer {@code POST /movements/transfers/in-wallet}.
+ */
+@Deprecated(forRemoval = false)
 @RestController
 @RequiredArgsConstructor
 public class WalletTransferEndpoint {

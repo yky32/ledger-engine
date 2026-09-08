@@ -18,6 +18,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Owner-centric money movement API — canonical product surface.
+ * Legacy wallet-id rails live under {@code /ledger/*} (deprecated).
+ */
 @RestController
 @RequestMapping("/movements")
 @RequiredArgsConstructor

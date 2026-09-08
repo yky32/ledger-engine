@@ -11,6 +11,12 @@ import lombok.RequiredArgsConstructor;
 import com.altech.ledger.entity.dto.request.CreateLedgerWithdrawalRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
+/**
+ * Wallet-id rail API (legacy parity with the-wallet-ledger).
+ *
+ * @deprecated Prefer {@code POST /movements/withdrawals}.
+ */
+@Deprecated(forRemoval = false)
 @RestController
 @RequiredArgsConstructor
 public class WithdrawalEndpoint {

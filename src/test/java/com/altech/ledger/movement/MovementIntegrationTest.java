@@ -35,9 +35,9 @@ class MovementIntegrationTest {
             .andExpect(jsonPath("$.data.status").value("SETTLED"))
             .andExpect(jsonPath("$.data.orderType").value("DEPOSIT"));
 
-        mockMvc.perform(get("/wallets/" + owner + "/LP"))
+        mockMvc.perform(get("/wallets/" + owner + "/balances/as-of").param("currency", "LP"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.balance.ledgerBalance").value("250"));
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(250));
     }
 
     @Test
@@ -64,10 +64,10 @@ class MovementIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("SETTLED"));
 
-        mockMvc.perform(get("/wallets/" + ownerA + "/LP"))
-            .andExpect(jsonPath("$.data.balance.ledgerBalance").value("60"));
-        mockMvc.perform(get("/wallets/" + ownerB + "/LP"))
-            .andExpect(jsonPath("$.data.balance.ledgerBalance").value("40"));
+        mockMvc.perform(get("/wallets/" + ownerA + "/balances/as-of").param("currency", "LP"))
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(60));
+        mockMvc.perform(get("/wallets/" + ownerB + "/balances/as-of").param("currency", "LP"))
+            .andExpect(jsonPath("$.data.accounts[0].ledgerBalance").value(40));
     }
 
     @Test

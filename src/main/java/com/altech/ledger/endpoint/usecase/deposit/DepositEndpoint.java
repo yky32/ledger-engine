@@ -18,6 +18,13 @@ import java.util.Map;
 import com.altech.ledger.entity.dto.request.CreateLedgerDepositRequestDto;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 
+/**
+ * Wallet-id rail API (legacy parity with the-wallet-ledger).
+ *
+ * @deprecated Prefer owner-centric {@link com.altech.ledger.endpoint.movement.MovementEndpoint}
+ *     ({@code POST /movements/deposits}). Responses include {@code Deprecation: true}.
+ */
+@Deprecated(forRemoval = false)
 @RestController
 @RequiredArgsConstructor
 public class DepositEndpoint {

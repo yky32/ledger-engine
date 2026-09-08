@@ -11,6 +11,12 @@ import java.util.Map;
 import com.altech.ledger.entity.dto.response.GetLedgerMovementResponseDto;
 import com.altech.ledger.entity.dto.response.GetLedgerWalletResponseDto;
 
+/**
+ * Payment-gateway style webhook callbacks (legacy integration surface).
+ *
+ * @deprecated Prefer {@code POST /movements/deposits} or product ingest webhooks.
+ */
+@Deprecated(forRemoval = false)
 @RestController
 @RequestMapping("/webhooks")
 @RequiredArgsConstructor

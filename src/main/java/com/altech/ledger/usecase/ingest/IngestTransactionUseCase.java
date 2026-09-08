@@ -405,7 +405,7 @@ public class IngestTransactionUseCase {
             row.setReason(reason == null ? code : (reason.length() > 500 ? reason.substring(0, 500) : reason));
             row.setStatus("OPEN");
             try {
-                row.setRawPayload(JSONUtil.convertFromObject(event, Object.class));
+                row.setRawPayload(JSONUtil.toMap(event));
             } catch (IllegalArgumentException e) {
                 row.setRawPayload(null);
             }

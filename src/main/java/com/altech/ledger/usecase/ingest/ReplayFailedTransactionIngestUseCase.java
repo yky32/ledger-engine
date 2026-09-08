@@ -128,7 +128,11 @@ public class ReplayFailedTransactionIngestUseCase {
     private TransactionalEvent _toEvent(FailedTransactionIngest row) {
         if (row.getRawPayload() != null) {
             try {
-                return JSONUtil.convertFromObject(row.getRawPayload(), TransactionalEvent.class);
+                TransactionalEvent parsed = JSONUtil.convertFromObject(row.getRawPayload(), TransactionalEvent.class);
+                if (_validEvent(parsed)) {
+                    return parsed;
+                }
+                log.warn("rawPayload incomplete id={} — rebuild from columns", row.getId());
             } catch (Exception ex) {
                 log.warn("rawPayload parse failed id={} — rebuild from columns", row.getId());
             }
@@ -155,5 +159,14 @@ public class ReplayFailedTransactionIngestUseCase {
             return null;
         }
         return s.length() > 500 ? s.substring(0, 500) : s;
+    }
+
+    private static boolean _validEvent(TransactionalEvent event) {
+        return event != null
+            && event.eventId() != null && !event.eventId().isBlank()
+            && event.eventType() != null && !event.eventType().isBlank()
+            && event.ownerId() != null && !event.ownerId().isBlank()
+            && event.amount() != null
+            && event.currency() != null;
     }
 }
