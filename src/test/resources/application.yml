@@ -29,12 +29,14 @@ spring:
         jdbc:
           time_zone: ${MICROSERVICE_TIME_ZONE:UTC}
     hibernate:
-      # create: greenfield lean Wallet schema each suite (pre-UAT)
-      ddl-auto: ${JPA_DDL_AUTO:create}
+      # Schema must come from Liquibase (same path as prod); Hibernate only validates.
+      ddl-auto: ${JPA_DDL_AUTO:validate}
     show-sql: ${JPA_SHOW_SQL:false}
   liquibase:
-    enabled: ${LIQUIBASE_ENABLED:false}
-    change-log: ${LIQUIBASE_CHANGELOG:classpath:db/changelog/db.changelog-master.yaml}
+    # Clean schema per new Spring test context: dropAll + migrate (replaces ddl-auto=create wipe).
+    enabled: ${SPRING_LIQUIBASE_ENABLED:true}
+    drop-first: true
+    change-log: ${SPRING_LIQUIBASE_CHANGELOG:classpath:db/changelog/db.changelog-master.yaml}
   kafka:
     bootstrap-servers: ${KAFKA_URL:localhost:9092}
     properties:

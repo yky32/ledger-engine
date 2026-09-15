@@ -1,6 +1,5 @@
-# Liquibase master changelog — includes every file under changes/.
-# Keep spring.liquibase.enabled=false while relying on JPA ddl-auto.
+# Liquibase master changelog — schema owner. Includes every file under changes/ (alphabetical order).
 databaseChangeLog:
   - includeAll:
       path: db/changelog/changes
-      errorIfMissingOrEmpty: false
+      errorIfMissingOrEmpty: true

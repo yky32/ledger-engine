@@ -3,5 +3,6 @@
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- failed_transaction_ingest and domain tables are created by Spring JPA ddl-auto
--- (see application.yml JPA_DDL_AUTO / spring.jpa.hibernate.ddl-auto).
+-- All tables are created by Liquibase at app startup
+-- (src/main/resources/db/changelog/changes). pgcrypto is currently unused by
+-- the app; kept as a hook.

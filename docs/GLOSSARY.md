@@ -159,7 +159,7 @@ Plain-English definitions for every key term in [BOOKLET.md](BOOKLET.md) and [SI
 | **Parked** | Deliberately deferred: true Expense-GL pool, cashback payout rail, rule stacking, named factor packs, MTD counters, PARTIAL/ADJUST booking. |
 | **Out of scope** | Never in this engine: payment gateway/card rails, CRM master, compliance UI, multi-party settlement orchestration. |
 | **Removed** | `AccountSet` / sub-accounts (gone), legacy APIs `/ledger-wallets` · `/ledger-accounts` · `/accounts` (removed, TD-API-001). |
-| **Open debt** | TD-SEC-001 (API key), TD-OPS-001 (Flyway), TD-API-001 (legacy API removal). |
+| **Open debt** | TD-SEC-001 (API key), TD-API-001 (legacy API removal). TD-OPS-001 (migrations) done — Liquibase. |
 
 ---
 
