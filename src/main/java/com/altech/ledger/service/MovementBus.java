@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MovementBus {
     private final MovementKafkaProperties movementKafkaProperties;
-    private final LedgerMovementExecutionUseCase ledgerMovementExecutionUseCase;
+    private final ObjectProvider<LedgerMovementExecutionUseCase> ledgerMovementExecutionUseCase;
     private final ObjectProvider<KafkaTemplate<String, String>> kafkaTemplate;
 
     public LedgerMovement dispatch(LedgerMovement movement) {
@@ -43,7 +43,7 @@ public class MovementBus {
                 log.warn("Kafka publish failed; falling back to sync execute: {}", ex.getMessage());
             }
         }
-        return ledgerMovementExecutionUseCase.execute(movement);
+        return ledgerMovementExecutionUseCase.getObject().execute(movement);
     }
 
     public void publishDone(LedgerMovement movement) {
