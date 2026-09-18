@@ -32,15 +32,17 @@ spring:
         jdbc:
           time_zone: ${MICROSERVICE_TIME_ZONE:UTC}
     hibernate:
-      # create | update | validate | none
-      # Default create: greenfield local / pre-UAT — drop+recreate schema each boot (no data kept).
-      # Override when you need persistence: JPA_DDL_AUTO=update (or validate in locked envs).
-      ddl-auto: ${JPA_DDL_AUTO:create}
+      # Schema is owned by Liquibase (db/changelog/changes). Never create/update here.
+      # validate: fail fast if entities drift from the migrated schema.
+      # none: skip the check entirely (escape hatch).
+      ddl-auto: ${JPA_DDL_AUTO:validate}
     show-sql: ${JPA_SHOW_SQL:true}
   liquibase:
-    # Placeholder master changelog (includeAll). Keep false while using JPA ddl-auto.
-    enabled: ${LIQUIBASE_ENABLED:false}
-    change-log: ${LIQUIBASE_CHANGELOG:classpath:db/changelog/db.changelog-master.yaml}
+    # Runs embedded at startup, before EntityManagerFactory (Spring Boot ordering guarantee).
+    # NOTE: use the SPRING_LIQUIBASE_* env prefix — a bare LIQUIBASE_ENABLED env var
+    # collides with Liquibase's own LIQUIBASE_* env-var namespace and logs a warning.
+    enabled: ${SPRING_LIQUIBASE_ENABLED:true}
+    change-log: ${SPRING_LIQUIBASE_CHANGELOG:classpath:db/changelog/db.changelog-master.yaml}
   kafka:
     bootstrap-servers: ${KAFKA_URL:localhost:9092}
     properties:

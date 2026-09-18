@@ -70,7 +70,7 @@ LedgeRX
 |--|--|
 | Java / Boot | 17 / 3.5.x |
 | DB | PostgreSQL (local often `:5433`, DB `ledger-engine`) |
-| Schema | `JPA_DDL_AUTO=create` pre-UAT; Flyway later |
+| Schema | Liquibase (`db/changelog/changes`) at startup; Hibernate `ddl-auto: validate` |
 | API envelope | `R.success` / `Result` (`com.altech.core`) |
 | Errors | `BizException` + domain `*ErrorResponse` |
 | JSON | camelCase; money amounts as currency-scaled **strings** |
@@ -834,7 +834,7 @@ Door/Brain factors · posting · recipes · hold · money rails · Admin path ·
 | ID | |
 |----|--|
 | TD-SEC-001 | API key (cluster trust OK now) |
-| TD-OPS-001 | Flyway |
+| TD-OPS-001 | ~~Flyway~~ done — Liquibase owns schema (`db/changelog/changes`) |
 | TD-API-001 | Legacy `/ledger-wallets` · `/ledger-accounts` · `/accounts` removed |
 
 ### Parked

@@ -29,7 +29,7 @@ One sentence: **upstream systems tell it what happened (a card spend, a loan pay
 |---|---|
 | Language / framework | Java 17 · Spring Boot 3.5.x |
 | Database | PostgreSQL (local `:5433`, DB `ledger-engine`) |
-| Schema | `JPA_DDL_AUTO=create` pre-UAT → Flyway later (TD-OPS-001) |
+| Schema | Liquibase (`db/changelog/changes`), runs at startup; Hibernate `ddl-auto: validate` (TD-OPS-001 done) |
 | Async ingest | Kafka (off by default; `LEDGER_KAFKA_ENABLED=true`, topic `ledger.transaction.events`) |
 | API envelope | `R.success` / `Result` (`com.altech.core`); errors = `BizException` + `*ErrorResponse` |
 | JSON conventions | camelCase; money amounts as currency-scaled **strings** (e.g. `"100.00"`) |

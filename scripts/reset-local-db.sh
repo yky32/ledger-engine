@@ -4,8 +4,9 @@
 #   ./scripts/reset-local-db.sh
 #   POSTGRES_CONTAINER=ledger-engine-postgres ./scripts/reset-local-db.sh
 #
-# Why: Hibernate ddl-auto=update cannot ADD NOT NULL columns when old rows exist
-# (e.g. settlement_currency). Greenfield local is the supported path.
+# Why: Liquibase owns schema now. Reset is only needed to clear data, or to
+# recover a dirty pre-Liquibase volume (the changelog precondition HALTs on
+# tables that exist without a DATABASECHANGELOG entry).
 set -euo pipefail
 
 CONTAINER="${POSTGRES_CONTAINER:-ledger-engine-postgres}"
@@ -28,6 +29,15 @@ docker exec "$CONTAINER" psql -U "$USER" -c \
 info "DROP + CREATE $DB"
 docker exec "$CONTAINER" psql -U "$USER" -c "DROP DATABASE IF EXISTS \"$DB\";"
 docker exec "$CONTAINER" psql -U "$USER" -c "CREATE DATABASE \"$DB\" OWNER $USER;"
+
+# Ensure the test DB exists (nothing else provisions it; tests: mvn test →
+# Liquibase drop-first rebuilds its schema every run).
+TEST_DB="${POSTGRES_TEST_DB:-ledger-engine-test}"
+if ! docker exec "$CONTAINER" psql -U "$USER" -tAc \
+  "SELECT 1 FROM pg_database WHERE datname = '$TEST_DB';" | grep -q 1; then
+  info "CREATE $TEST_DB (missing)"
+  docker exec "$CONTAINER" psql -U "$USER" -c "CREATE DATABASE \"$TEST_DB\" OWNER $USER;"
+fi
 
 green "OK — empty $DB. Restart app: mvn spring-boot:run"
 green "Then: ./scripts/upstream-sim.sh"
